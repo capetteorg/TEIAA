@@ -1,56 +1,79 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from 'chart.js'
+import { gerarPDFTransparencia } from '../lib/pdf'
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
 const LOGO = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']]
 
 export default function Sociedade() {
   const [periodo, setPeriodo] = useState('mes')
+  const [mes, setMes] = useState(new Date().toISOString().slice(0, 7))
+  const [dados, setDados] = useState(null)
+  const [historico, setHistorico] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => { carregar() }, [mes, periodo])
+
+  async function carregar() {
+    setLoading(true)
+    let q = supabase.from('extrato_movs').select('valor, tipo, categoria:categorias(nome, tipo)')
+
+    if (periodo === 'mes') {
+      q = q.gte('data', mes+'-01').lte('data', mes+'-31')
+    } else {
+      const ano = mes.slice(0,4)
+      q = q.gte('data', ano+'-01-01').lte('data', ano+'-12-31')
+    }
+
+    const { data: movs } = await q
+    const lista = movs || []
+
+    const totalEnt = lista.filter(m=>m.valor>0).reduce((a,m)=>a+Number(m.valor),0)
+    const totalSai = Math.abs(lista.filter(m=>m.valor<0).reduce((a,m)=>a+Number(m.valor),0))
+
+    const grupoEnt = {}, grupoSai = {}
+    lista.forEach(m => {
+      const cat = m.categoria?.nome || 'Outros'
+      if (m.valor > 0) { grupoEnt[cat] = (grupoEnt[cat]||0) + Number(m.valor) }
+      else { grupoSai[cat] = (grupoSai[cat]||0) + Math.abs(Number(m.valor)) }
+    })
+
+    setDados({ totalEnt, totalSai, grupoEnt, grupoSai })
+
+    const meses = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(mes + '-01')
+      d.setMonth(d.getMonth() - i)
+      meses.push(d.toISOString().slice(0, 7))
+    }
+    const hist = await Promise.all(meses.map(async m => {
+      const { data } = await supabase.from('extrato_movs').select('valor').gte('data', m+'-01').lte('data', m+'-31')
+      return {
+        mes: m,
+        ent: (data||[]).filter(x=>x.valor>0).reduce((a,x)=>a+Number(x.valor),0),
+        sai: Math.abs((data||[]).filter(x=>x.valor<0).reduce((a,x)=>a+Number(x.valor),0))
+      }
+    }))
+    setHistorico(hist)
+    setLoading(false)
+  }
+
+  const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 0 })
+  const mesLabel = new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})
 
   const barData = {
-    labels: ['Jan','Fev','Mar','Abr','Mai'],
+    labels: historico.map(h => ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(h.mes.split('-')[1])-1]),
     datasets: [
-      { label: 'Entradas', data: [9200,8800,11200,9600,10441], backgroundColor: '#6BBF2B' },
-      { label: 'Gastos',   data: [10100,9400,10800,11200,12606], backgroundColor: '#E8212A' },
+      { label: 'Entradas', data: historico.map(h=>h.ent), backgroundColor: '#6BBF2B' },
+      { label: 'Gastos',   data: historico.map(h=>h.sai), backgroundColor: '#E8212A' },
     ]
   }
   const barOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 11 } } }, y: { ticks: { font: { size: 11 }, callback: v => 'R$'+(v/1000).toFixed(0)+'k' } } } }
 
-  const entradas = [
-    { icon: 'users', cor: '#6BBF2B', bg: '#EAF3DE', nome: 'Contribuição dos associados', sub: '43 recebimentos no mês', val: 'R$ 7.925', pct: 76 },
-    { icon: 'device-mobile', cor: '#4A8FD4', bg: '#E6F1FB', nome: 'Outras entradas', sub: 'Transferências e recebimentos', val: 'R$ 2.516', pct: 24 },
-  ]
-  const gastos = [
-    { icon: 'tool', cor: '#E8212A', bg: '#FCEBEB', nome: 'Serviços terceiros', sub: 'Fornecedores e prestadores', val: 'R$ 9.574', pct: 76 },
-    { icon: 'bolt', cor: '#F4821F', bg: '#FAEEDA', nome: 'Contas de consumo', sub: 'Energia elétrica e água', val: 'R$ 2.855', pct: 23 },
-    { icon: 'receipt', cor: '#5F5E5A', bg: '#F1EFE8', nome: 'Taxas e outros', sub: 'Encargos e demais gastos', val: 'R$ 177', pct: 1 },
-  ]
-
-  function Item({ icon, cor, bg, nome, sub, val, pct, isEnt }) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '0.5px solid #F1EFE8', fontSize: 13 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <i className={`ti ti-${icon}`} style={{ color: cor, fontSize: 15 }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 500 }}>{nome}</div>
-          <div style={{ fontSize: 11, color: '#888780', marginTop: 1 }}>{sub}</div>
-          <div style={{ height: 5, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden', marginTop: 4 }}>
-            <div style={{ height: '100%', width: pct + '%', background: cor, borderRadius: 99 }} />
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontWeight: 500, color: isEnt ? '#6BBF2B' : '#E8212A' }}>{val}</div>
-          <div style={{ fontSize: 10, color: '#888780' }}>{pct}%</div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ minHeight: '100vh', background: '#F8F7F2', padding: '1.5rem' }}>
-      {/* Header */}
       <div style={{ background: '#2C2C2A', borderRadius: 14, padding: '1.5rem', marginBottom: '1.25rem', color: '#fff' }}>
         <div style={{ display: 'flex', gap: 3, alignItems: 'center', marginBottom: 4 }}>
           {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize: 22, fontWeight: 500, color: c, lineHeight: 1 }}>{l}</span>)}
@@ -58,21 +81,26 @@ export default function Sociedade() {
         <div style={{ fontSize: 11, opacity: .6, marginBottom: '.75rem' }}>Casa do Pequeno Trabalhador de Teresópolis · Desde 1974</div>
         <div style={{ fontSize: 16, fontWeight: 500, marginBottom: '.25rem' }}>Transparência financeira</div>
         <div style={{ fontSize: 12, opacity: .7 }}>Prestação de contas à sociedade</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: '1rem' }}>
-          {[
-            { label: 'Entrou em maio/2026', val: 'R$ 10.441', cor: '#9FE1CB' },
-            { label: 'Foi gasto',            val: 'R$ 12.606', cor: '#F09595' },
-            { label: 'Saldo atual',          val: 'R$ 893,13', cor: '#fff' },
-          ].map(t => (
-            <div key={t.label} style={{ background: 'rgba(255,255,255,.1)', borderRadius: 10, padding: '.75rem 1rem' }}>
-              <div style={{ fontSize: 11, opacity: .7, marginBottom: 3 }}>{t.label}</div>
-              <div style={{ fontSize: 18, fontWeight: 500, color: t.cor }}>{t.val}</div>
+        {dados && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: '1rem' }}>
+            <div style={{ background: 'rgba(255,255,255,.1)', borderRadius: 10, padding: '.75rem 1rem' }}>
+              <div style={{ fontSize: 11, opacity: .7, marginBottom: 3 }}>Entrou em {mesLabel}</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: '#9FE1CB' }}>{fmt(dados.totalEnt)}</div>
             </div>
-          ))}
-        </div>
+            <div style={{ background: 'rgba(255,255,255,.1)', borderRadius: 10, padding: '.75rem 1rem' }}>
+              <div style={{ fontSize: 11, opacity: .7, marginBottom: 3 }}>Foi gasto</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: '#F09595' }}>{fmt(dados.totalSai)}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,.1)', borderRadius: 10, padding: '.75rem 1rem' }}>
+              <div style={{ fontSize: 11, opacity: .7, marginBottom: 3 }}>Resultado</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: dados.totalEnt >= dados.totalSai ? '#9FE1CB' : '#F09595' }}>
+                {fmt(dados.totalEnt - dados.totalSai)}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Filtros */}
       <div style={{ display: 'flex', gap: 8, marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 4 }}>
           {['mes','ano'].map(t => (
@@ -81,41 +109,71 @@ export default function Sociedade() {
             </button>
           ))}
         </div>
-        <select style={{ fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 }}><option>Maio/2026</option><option>Abril/2026</option></select>
-        <select style={{ fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, minWidth: 200 }}>
-          <option>Conta Principal — Sicredi 13502-9</option>
-          <option>Emenda Parlamentar I</option>
-        </select>
-        <button style={{ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: '#F4821F', color: '#fff', cursor: 'pointer' }}>Baixar PDF</button>
+        <input type="month" value={mes} onChange={e=>setMes(e.target.value)} style={{fontSize:13,padding:'6px 9px',border:'0.5px solid #D3D1C7',borderRadius:8}} />
+        <button onClick={() => dados && gerarPDFTransparencia(dados, mes)} disabled={!dados}
+          style={{padding:'6px 14px',fontSize:12,borderRadius:8,border:'none',background:dados?'#F4821F':'#D3D1C7',color:'#fff',cursor:dados?'pointer':'default'}}>
+          Baixar PDF
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-        <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#6BBF2B', display: 'inline-block' }} />De onde veio o dinheiro
+      {loading ? (
+        <div style={{ textAlign:'center', padding:'3rem', color:'#888780', fontSize:13 }}>Carregando...</div>
+      ) : !dados ? null : (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            {[
+              { titulo: 'De onde veio o dinheiro', grupo: dados.grupoEnt, cor: '#6BBF2B', isEnt: true },
+              { titulo: 'Como foi gasto',           grupo: dados.grupoSai, cor: '#E8212A', isEnt: false },
+            ].map(bloco => {
+              const total = Object.values(bloco.grupo).reduce((a,v)=>a+v,0)
+              const sorted = Object.entries(bloco.grupo).sort((a,b)=>b[1]-a[1]).slice(0,5)
+              return (
+                <div key={bloco.titulo} style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: bloco.cor, display: 'inline-block' }} />
+                    {bloco.titulo}
+                  </div>
+                  {sorted.length === 0
+                    ? <div style={{ fontSize: 12, color: '#888780' }}>Sem dados.</div>
+                    : sorted.map(([cat, val]) => {
+                      const pct = total > 0 ? Math.round(val/total*100) : 0
+                      return (
+                        <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '0.5px solid #F1EFE8' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 500 }}>{cat}</div>
+                            <div style={{ height: 5, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden', marginTop: 4 }}>
+                              <div style={{ height: '100%', width: pct+'%', background: bloco.cor, borderRadius: 99 }} />
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: bloco.cor }}>{fmt(val)}</div>
+                            <div style={{ fontSize: 10, color: '#888780' }}>{pct}%</div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  }
+                </div>
+              )
+            })}
           </div>
-          {entradas.map(e => <Item key={e.nome} {...e} isEnt={true} />)}
-        </div>
-        <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#E8212A', display: 'inline-block' }} />Como foi gasto
+
+          {historico.length > 0 && (
+            <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Histórico — entradas × gastos</div>
+              <div style={{ height: 180 }}><Bar data={barData} options={barOpts} /></div>
+              <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11, justifyContent: 'center' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 4, borderRadius: 2, background: '#6BBF2B', display: 'inline-block' }}/>Entradas</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 4, borderRadius: 2, background: '#E8212A', display: 'inline-block' }}/>Gastos</span>
+              </div>
+            </div>
+          )}
+
+          <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '.75rem 1rem', fontSize: 11, color: '#888780', lineHeight: 1.6 }}>
+            <strong>Nota de transparência:</strong> Esta página apresenta um resumo das movimentações financeiras da Casa do Pequeno Trabalhador de Teresópolis — Capette, atualizado mensalmente após a conciliação bancária. CNPJ: 00.000.000/0001-00 · Teresópolis-RJ.
           </div>
-          {gastos.map(g => <Item key={g.nome} {...g} isEnt={false} />)}
-        </div>
-      </div>
-
-      <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Histórico — entradas × gastos por mês</div>
-        <div style={{ height: 180 }}><Bar data={barData} options={barOpts} /></div>
-        <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11, justifyContent: 'center' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 4, borderRadius: 2, background: '#6BBF2B', display: 'inline-block' }} />Entradas</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 4, borderRadius: 2, background: '#E8212A', display: 'inline-block' }} />Gastos</span>
-        </div>
-      </div>
-
-      <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '.75rem 1rem', fontSize: 11, color: '#888780', lineHeight: 1.6 }}>
-        <strong>Nota de transparência:</strong> Esta página apresenta um resumo das movimentações financeiras da Casa do Pequeno Trabalhador de Teresópolis — Capette, atualizado mensalmente após a conciliação bancária. CNPJ: 00.000.000/0001-00 · Teresópolis-RJ.
-      </div>
+        </>
+      )}
     </div>
   )
 }

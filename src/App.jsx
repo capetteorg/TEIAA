@@ -15,6 +15,7 @@ import Categorias from './pages/Categorias'
 import Contas from './pages/Contas'
 import Usuarios from './pages/Usuarios'
 import Classificacoes from './pages/Classificacoes'
+import Configuracoes from './pages/Configuracoes'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -25,7 +26,7 @@ function RotaProtegida({ children, perfisPermitidos }) {
 }
 
 export default function App() {
-  const { user, perfil, loading } = useAuth()
+  const { user, loading } = useAuth()
   if (loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:14,color:'#888'}}>Carregando...</div>
 
   return (
@@ -36,12 +37,8 @@ export default function App() {
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="painel" element={<Painel />} />
-
-        {/* Admin + Operacional */}
         <Route path="despesas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Lancamentos tipo="despesa" /></RotaProtegida>} />
-
-        {/* Só Admin */}
-        <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin']}><Entradas /></RotaProtegida>} />
+        <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Entradas /></RotaProtegida>} />
         <Route path="importar" element={<RotaProtegida perfisPermitidos={['admin']}><Importar /></RotaProtegida>} />
         <Route path="conciliacao" element={<RotaProtegida perfisPermitidos={['admin']}><Conciliacao /></RotaProtegida>} />
         <Route path="aplicacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Aplicacoes /></RotaProtegida>} />
@@ -50,6 +47,7 @@ export default function App() {
         <Route path="contas" element={<RotaProtegida perfisPermitidos={['admin']}><Contas /></RotaProtegida>} />
         <Route path="usuarios" element={<RotaProtegida perfisPermitidos={['admin']}><Usuarios /></RotaProtegida>} />
         <Route path="classificacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Classificacoes /></RotaProtegida>} />
+        <Route path="configuracoes" element={<RotaProtegida perfisPermitidos={['admin']}><Configuracoes /></RotaProtegida>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/painel" replace />} />
