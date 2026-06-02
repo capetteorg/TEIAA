@@ -33,7 +33,7 @@ export default function Layout() {
 
   return (
     <div style={{display:'flex',height:'100vh',background:'#F8F7F2'}}>
-      <div style={{width:210,background:'#fff',borderRight:'0.5px solid #E0DDD5',display:'flex',flexDirection:'column',flexShrink:0}}>
+      <div style={{width:215,background:'#fff',borderRight:'0.5px solid #E0DDD5',display:'flex',flexDirection:'column',flexShrink:0}}>
         <div style={{padding:'1rem 1.25rem .75rem',borderBottom:'0.5px solid #E0DDD5',display:'flex',alignItems:'center',gap:8}}>
           <div style={{display:'flex',gap:2,alignItems:'center'}}>
             {LOGO.map(([l,c])=><span key={l+c} style={{fontSize:17,fontWeight:500,color:c,lineHeight:1}}>{l}</span>)}
@@ -43,20 +43,21 @@ export default function Layout() {
 
         <div style={{overflowY:'auto',flex:1}}>
           <div style={{fontSize:10,color:'#888780',padding:'10px 1.25rem 3px',textTransform:'uppercase',letterSpacing:'.08em'}}>Principal</div>
-          <NavItem to="/painel"       icon="layout-dashboard"  label="Painel" />
-          <NavItem to="/despesas"     icon="receipt"           label="Lançar despesa"   visivel={p==='admin'||p==='operacional'} />
-          <NavItem to="/entradas"     icon="arrow-bar-to-down" label="Lançar entrada"   visivel={p==='admin'||p==='operacional'} />
-          <NavItem to="/importar"     icon="upload"            label="Importar extrato" visivel={p==='admin'} />
-          <NavItem to="/conciliacao"  icon="checks"            label="Conciliação"      visivel={p==='admin'} />
-          <NavItem to="/aplicacoes"   icon="chart-line"        label="Aplicações"       visivel={p==='admin'} />
-          <NavItem to="/relatorios"   icon="file-text"         label="Relatórios"       visivel={p==='admin'||p==='diretoria'} />
+          <NavItem to="/painel"        icon="layout-dashboard"  label="Painel" />
+          <NavItem to="/despesas"      icon="receipt"           label="Lançar despesa"    visivel={p==='admin'||p==='operacional'} />
+          <NavItem to="/entradas"      icon="arrow-bar-to-down" label="Lançar entrada"    visivel={p==='admin'||p==='operacional'} />
+          <NavItem to="/importar"      icon="upload"            label="Importar extrato"  visivel={p==='admin'} />
+          <NavItem to="/conciliacao"   icon="checks"            label="Conciliação"       visivel={p==='admin'} />
+          <NavItem to="/aplicacoes"    icon="chart-line"        label="Aplicações"        visivel={p==='admin'} />
+          <NavItem to="/relatorios"    icon="file-text"         label="Relatórios"        visivel={p==='admin'||p==='diretoria'} />
 
           <div style={{fontSize:10,color:'#888780',padding:'10px 1.25rem 3px',textTransform:'uppercase',letterSpacing:'.08em'}}>Configurações</div>
-          <NavItem to="/contas"          icon="building-bank"  label="Contas"           visivel={p==='admin'} />
-          <NavItem to="/categorias"      icon="tag"            label="Categorias"       visivel={p==='admin'} />
-          <NavItem to="/classificacoes"  icon="list-check"     label="Classificações"   visivel={p==='admin'} />
-          <NavItem to="/usuarios"        icon="users"          label="Usuários"         visivel={p==='admin'} />
-          <NavItem to="/configuracoes"   icon="settings"       label="Dados de teste"   visivel={p==='admin'} />
+          <NavItem to="/contas"          icon="building-bank"   label="Contas"            visivel={p==='admin'} />
+          <NavItem to="/categorias"      icon="tag"             label="Categorias"        visivel={p==='admin'} />
+          <NavItem to="/plano-trabalho"  icon="list-details"    label="Plano de trabalho" visivel={p==='admin'} />
+          <NavItem to="/classificacoes"  icon="list-check"      label="Classificações"    visivel={p==='admin'} />
+          <NavItem to="/usuarios"        icon="users"           label="Usuários"          visivel={p==='admin'} />
+          <NavItem to="/configuracoes"   icon="settings"        label="Dados de teste"    visivel={p==='admin'} />
         </div>
 
         <div style={{padding:'.75rem 1.25rem',borderTop:'0.5px solid #E0DDD5'}}>

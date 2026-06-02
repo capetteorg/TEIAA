@@ -16,6 +16,7 @@ import Contas from './pages/Contas'
 import Usuarios from './pages/Usuarios'
 import Classificacoes from './pages/Classificacoes'
 import Configuracoes from './pages/Configuracoes'
+import PlanoTrabalho from './pages/PlanoTrabalho'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="usuarios" element={<RotaProtegida perfisPermitidos={['admin']}><Usuarios /></RotaProtegida>} />
         <Route path="classificacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Classificacoes /></RotaProtegida>} />
         <Route path="configuracoes" element={<RotaProtegida perfisPermitidos={['admin']}><Configuracoes /></RotaProtegida>} />
+        <Route path="plano-trabalho" element={<RotaProtegida perfisPermitidos={['admin']}><PlanoTrabalho /></RotaProtegida>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/painel" replace />} />

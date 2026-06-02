@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
@@ -9,6 +9,8 @@ export default function Conciliacao() {
   const [movs, setMovs] = useState([])
   const [categorias, setCategorias] = useState([])
   const [subcategorias, setSubcategorias] = useState([])
+  const [contas, setContas] = useState([])
+  const [planosTrabalho, setPlanosTrabalho] = useState([])
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
@@ -18,12 +20,14 @@ export default function Conciliacao() {
     carregarExtratos()
     supabase.from('categorias').select('*').order('nome').then(({ data }) => setCategorias(data || []))
     supabase.from('subcategorias').select('*').order('nome').then(({ data }) => setSubcategorias(data || []))
+    supabase.from('contas').select('*').order('nome').then(({ data }) => setContas(data || []))
+    supabase.from('plano_trabalho').select('*, conta:contas(nome)').order('nome').then(({ data }) => setPlanosTrabalho(data || []))
   }, [])
 
   async function carregarExtratos() {
     const { data } = await supabase
       .from('extratos')
-      .select('*, conta:contas(nome, banco)')
+      .select('*, conta:contas(nome, banco, preponderancia)')
       .order('importado_em', { ascending: false })
     setExtratos(data || [])
   }
@@ -33,7 +37,7 @@ export default function Conciliacao() {
     setExtratoSel(ext)
     const { data } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome)')
       .eq('extrato_id', ext.id)
       .order('data')
     setMovs(data || [])
@@ -50,11 +54,19 @@ export default function Conciliacao() {
   }
 
   async function salvarSubcategoria(movId, subId) {
-    await supabase.from('extrato_movs')
-      .update({ subcategoria_id: subId ? parseInt(subId) : null })
-      .eq('id', movId)
+    await supabase.from('extrato_movs').update({ subcategoria_id: subId ? parseInt(subId) : null }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id === movId ? { ...m, subcategoria_id: subId } : m))
+  }
+
+  async function salvarPreponderancia(movId, campo, valor) {
+    await supabase.from('extrato_movs').update({ [campo]: parseFloat(valor) || 0 }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id === movId ? { ...m, [campo]: valor } : m))
+  }
+
+  async function salvarPlanoTrabalho(movId, planoId) {
+    await supabase.from('extrato_movs').update({ plano_trabalho_id: planoId ? parseInt(planoId) : null }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id === movId
-      ? { ...m, subcategoria_id: subId, subcategoria: subcategorias.find(s => String(s.id) === String(subId)) }
+      ? { ...m, plano_trabalho_id: planoId, plano: planosTrabalho.find(p => String(p.id) === String(planoId)) }
       : m))
   }
 
@@ -72,6 +84,7 @@ export default function Conciliacao() {
   }
 
   const subcatsDa = (catId) => subcategorias.filter(s => String(s.categoria_id) === String(catId))
+  const planosDaConta = (contaId) => planosTrabalho.filter(p => String(p.conta_id) === String(contaId))
 
   const movsFiltradas = movs.filter(m => {
     if (filtro === 'pendentes') return !m.conciliado
@@ -94,6 +107,7 @@ export default function Conciliacao() {
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
     btn: (bg, cor = '#fff') => ({ padding: '5px 12px', fontSize: 11, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer', whiteSpace: 'nowrap' }),
     select: { fontSize: 11, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 8, background: '#fff', width: '100%' },
+    input: { fontSize: 11, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 8, background: '#fff', width: '52px' },
     tab: ativo => ({ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: ativo ? VERDE : 'transparent', color: ativo ? '#fff' : '#5F5E5A', cursor: 'pointer' }),
   }
 
@@ -112,7 +126,7 @@ export default function Conciliacao() {
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Extratos importados — clique para abrir e conciliar</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead><tr>
-              {['Competência','Conta','Movimentações','Saldo final','Importado em',''].map(h => (
+              {['Competência','Conta','Preponderância','Movimentações','Saldo final','Importado em',''].map(h => (
                 <th key={h} style={s.th}>{h}</th>
               ))}
             </tr></thead>
@@ -121,6 +135,14 @@ export default function Conciliacao() {
                 <tr key={e.id} style={{ cursor: 'pointer' }} onClick={() => abrirExtrato(e)}>
                   <td style={s.td}><strong>{e.competencia}</strong></td>
                   <td style={s.td}>{e.conta?.nome || '—'}</td>
+                  <td style={s.td}>
+                    <span style={s.badge(
+                      e.conta?.preponderancia === 'rateio' ? '#F1EFE8' : '#EAF3DE',
+                      e.conta?.preponderancia === 'rateio' ? '#5F5E5A' : '#3B6D11'
+                    )}>
+                      {e.conta?.preponderancia === 'rateio' ? 'Rateia' : e.conta?.preponderancia || '—'}
+                    </span>
+                  </td>
                   <td style={s.td}>{e.total_movs} movs</td>
                   <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>R$ {Number(e.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                   <td style={{ ...s.td, color: '#888780' }}>{new Date(e.importado_em).toLocaleDateString('pt-BR')}</td>
@@ -134,6 +156,11 @@ export default function Conciliacao() {
     </div>
   )
 
+  const contaPrep = extratoSel.conta?.preponderancia
+  const isRateio = contaPrep === 'rateio'
+  const isEmenda = contaPrep && contaPrep !== 'rateio'
+  const planosDisponiveis = planosDaConta(extratoSel.conta_id)
+
   // ===== TELA DE CONCILIAÇÃO =====
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
@@ -145,6 +172,8 @@ export default function Conciliacao() {
         <div style={{ fontSize: 15, fontWeight: 500 }}>
           Conciliação — {extratoSel.competencia} · {extratoSel.conta?.nome}
         </div>
+        {isRateio && <span style={s.badge('#FAEEDA', '#854F0B')}>Conta Principal — informar preponderância</span>}
+        {isEmenda && <span style={s.badge('#EAF3DE', '#3B6D11')}>Emenda — {contaPrep} · informar plano de trabalho</span>}
         {totalPendentes === 0 && movs.length > 0 && <span style={s.badge('#EAF3DE', '#3B6D11')}>✓ Tudo conciliado</span>}
       </div>
 
@@ -177,6 +206,18 @@ export default function Conciliacao() {
         </div>
       )}
 
+      {/* Info preponderância */}
+      {isRateio && (
+        <div style={{ background: '#FAEEDA', borderLeft: '3px solid #BA7517', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#854F0B', marginBottom: '1.25rem' }}>
+          <strong>Conta Principal:</strong> informe a preponderância de cada movimentação (Educação + Assistência Social + Saúde = 100%)
+        </div>
+      )}
+      {isEmenda && planosDisponiveis.length === 0 && (
+        <div style={{ background: '#FEF2F2', borderLeft: '3px solid #E8212A', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#A32D2D', marginBottom: '1.25rem' }}>
+          <strong>Nenhum plano de trabalho cadastrado para esta conta.</strong> Vá em Configurações → Plano de Trabalho para cadastrar.
+        </div>
+      )}
+
       <div style={s.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.85rem', flexWrap: 'wrap', gap: 8 }}>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -198,27 +239,36 @@ export default function Conciliacao() {
           <div style={{ maxHeight: 560, overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
-                <tr>{['Data','Descrição','Doc','Categoria','Subcategoria','Valor','Situação',''].map(h => (
-                  <th key={h} style={s.th}>{h}</th>
-                ))}</tr>
+                <tr>
+                  <th style={s.th}>Data</th>
+                  <th style={s.th}>Descrição</th>
+                  <th style={s.th}>Doc</th>
+                  <th style={s.th}>Categoria</th>
+                  <th style={s.th}>Subcategoria</th>
+                  {isRateio && <th style={s.th}>Educ %</th>}
+                  {isRateio && <th style={s.th}>Social %</th>}
+                  {isRateio && <th style={s.th}>Saúde %</th>}
+                  {isEmenda && <th style={s.th}>Plano de trabalho</th>}
+                  <th style={s.th}>Valor</th>
+                  <th style={s.th}>Situação</th>
+                  <th style={s.th}></th>
+                </tr>
               </thead>
               <tbody>
                 {movsFiltradas.length === 0 && (
-                  <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: '#888780' }}>Nenhum item.</td></tr>
+                  <tr><td colSpan={12} style={{ padding: '2rem', textAlign: 'center', color: '#888780' }}>Nenhum item.</td></tr>
                 )}
                 {movsFiltradas.map(m => {
                   const subcats = m.categoria_id ? subcatsDa(m.categoria_id) : []
+                  const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0) + (parseFloat(m.prep_saude)||0)
+                  const prepOk = totalPrep === 100
                   return (
                     <tr key={m.id} style={{ background: m.conciliado ? '#F2FAE8' : '#fff' }}>
                       <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{new Date(m.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
 
-                      {/* Descrição completa ao clicar */}
-                      <td style={{ ...s.td, maxWidth: 220 }}>
-                        <div
-                          onClick={() => setDescExpandida(descExpandida === m.id ? null : m.id)}
-                          style={{ cursor: 'pointer' }}
-                          title="Clique para ver descrição completa"
-                        >
+                      {/* Descrição expandível */}
+                      <td style={{ ...s.td, maxWidth: 180 }}>
+                        <div onClick={() => setDescExpandida(descExpandida === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
                           {descExpandida === m.id ? (
                             <div style={{ whiteSpace: 'normal', wordBreak: 'break-all', background: '#F8F7F2', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
                               {m.descricao}
@@ -226,8 +276,8 @@ export default function Conciliacao() {
                             </div>
                           ) : (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{m.descricao}</span>
-                              {m.descricao?.length > 30 && <span style={{ fontSize: 10, color: '#4A8FD4', flexShrink: 0 }}>▼</span>}
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{m.descricao}</span>
+                              {m.descricao?.length > 25 && <span style={{ fontSize: 10, color: '#4A8FD4', flexShrink: 0 }}>▼</span>}
                             </div>
                           )}
                         </div>
@@ -237,27 +287,56 @@ export default function Conciliacao() {
                         <span style={{ fontSize: 10, background: '#F1EFE8', color: '#5F5E5A', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace' }}>{m.doc}</span>
                       </td>
 
-                      <td style={{ ...s.td, minWidth: 160 }}>
+                      <td style={{ ...s.td, minWidth: 150 }}>
                         <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)} style={s.select}>
                           <option value="">Selecione...</option>
-                          {categorias
-                            .filter(c => c.tipo === (m.tipo === 'entrada' ? 'entrada' : 'despesa'))
-                            .map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                          {categorias.filter(c => c.tipo === (m.tipo === 'entrada' ? 'entrada' : 'despesa')).map(c => (
+                            <option key={c.id} value={c.id}>{c.nome}</option>
+                          ))}
                         </select>
                       </td>
 
-                      <td style={{ ...s.td, minWidth: 150 }}>
+                      <td style={{ ...s.td, minWidth: 130 }}>
                         {subcats.length > 0 ? (
                           <select value={m.subcategoria_id || ''} onChange={e => salvarSubcategoria(m.id, e.target.value)} style={s.select}>
                             <option value="">Selecione...</option>
                             {subcats.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                           </select>
                         ) : (
-                          <span style={{ fontSize: 11, color: '#B4B2A9' }}>
-                            {m.categoria_id ? 'Sem subcategorias' : '—'}
-                          </span>
+                          <span style={{ fontSize: 11, color: '#B4B2A9' }}>{m.categoria_id ? '—' : '—'}</span>
                         )}
                       </td>
+
+                      {/* Preponderância — só Conta Principal */}
+                      {isRateio && (
+                        <>
+                          <td style={s.td}>
+                            <input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0"
+                              onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)}
+                              style={{ ...s.input, borderColor: !prepOk && totalPrep > 0 ? '#E8212A' : '#D3D1C7' }} />
+                          </td>
+                          <td style={s.td}>
+                            <input type="number" min="0" max="100" value={m.prep_social || ''} placeholder="0"
+                              onChange={e => salvarPreponderancia(m.id, 'prep_social', e.target.value)}
+                              style={{ ...s.input, borderColor: !prepOk && totalPrep > 0 ? '#E8212A' : '#D3D1C7' }} />
+                          </td>
+                          <td style={s.td}>
+                            <input type="number" min="0" max="100" value={m.prep_saude || ''} placeholder="0"
+                              onChange={e => salvarPreponderancia(m.id, 'prep_saude', e.target.value)}
+                              style={{ ...s.input, borderColor: !prepOk && totalPrep > 0 ? '#E8212A' : '#D3D1C7' }} />
+                          </td>
+                        </>
+                      )}
+
+                      {/* Plano de trabalho — só Emendas */}
+                      {isEmenda && (
+                        <td style={{ ...s.td, minWidth: 160 }}>
+                          <select value={m.plano_trabalho_id || ''} onChange={e => salvarPlanoTrabalho(m.id, e.target.value)} style={s.select}>
+                            <option value="">Selecione...</option>
+                            {planosDisponiveis.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                          </select>
+                        </td>
+                      )}
 
                       <td style={{ ...s.td, fontWeight: 500, color: m.valor >= 0 ? VERDE : VERMELHO, whiteSpace: 'nowrap' }}>
                         {fmt(m.valor)}
