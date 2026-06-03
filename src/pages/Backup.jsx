@@ -161,13 +161,32 @@ export default function Backup() {
       arquivos.push({ nome: 'cobrancas.csv', conteudo: csvDe(cobrancas, ['id','pagador','data_vencimento','valor','status','pago_informado','pago_confirmado','data_promessa','ultima_obs','lote_importacao']) })
       totalRegistros += (cobrancas||[]).length
 
+
+      // Pagamentos de dívidas
+      setProgresso('Exportando pagamentos de dívidas...')
+      const { data: pgDividas } = await supabase.from('pagamentos_divida').select('*')
+      arquivos.push({ nome: 'pagamentos_divida.csv', conteudo: csvDe(pgDividas, ['id','divida_id','valor','data_pagamento','observacoes']) })
+      totalRegistros += (pgDividas||[]).length
+
+      // Histórico cobranças
+      setProgresso('Exportando histórico de cobranças...')
+      const { data: histCob } = await supabase.from('historico_cobrancas').select('*')
+      arquivos.push({ nome: 'historico_cobrancas.csv', conteudo: csvDe(histCob, ['id','cobranca_id','status_anterior','status_novo','observacao','criado_em']) })
+      totalRegistros += (histCob||[]).length
+
       // 14. Aplicações e rendimentos
       setProgresso('Exportando aplicações...')
       const { data: aplicacoes } = await supabase.from('aplicacoes').select('*')
       arquivos.push({ nome: 'aplicacoes.csv', conteudo: csvDe(aplicacoes, ['id','conta_id','descricao','valor','data','tipo']) })
       totalRegistros += (aplicacoes||[]).length
 
-      // 15. README
+      // 15. Fechamentos
+      setProgresso('Exportando fechamentos...')
+      const { data: fechamentos } = await supabase.from('fechamentos').select('*')
+      arquivos.push({ nome: 'fechamentos.csv', conteudo: csvDe(fechamentos, ['id','conta_id','competencia','tipo','status','fechado_em','reaberto_em','justificativa_reabertura']) })
+      totalRegistros += (fechamentos||[]).length
+
+      // 16. README
       const readme = `BACKUP FINOSC CAPETTE
 =====================
 Data: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
@@ -188,8 +207,12 @@ ARQUIVOS INCLUÍDOS:
 - campanhas.csv
 - funcionarios.csv
 - dividas.csv
+- pagamentos_divida.csv
 - cobrancas.csv
+- historico_cobrancas.csv
 - aplicacoes.csv
+- fechamentos.csv
+- LEIA-ME.txt
 
 INSTITUIÇÃO: Casa do Pequeno Trabalhador de Teresópolis
 CNPJ: 29.213.717/0001-01
@@ -296,7 +319,8 @@ SISTEMA: FinOSC Capette`
             'Usuários', 'Contas bancárias', 'Categorias', 'Subcategorias',
             'Plano de trabalho', 'Extratos importados', 'Movimentações bancárias', 'Lançamentos manuais',
             'Eventos', 'Campanhas', 'Funcionários', 'Dívidas',
-            'Cobranças', 'Aplicações', 'Arquivo LEIA-ME', '',
+            'Cobranças', 'Histórico cobranças', 'Aplicações', 'Fechamentos',
+            'Pagamentos dívidas', 'Arquivo LEIA-ME', '', '',
           ].map((item, i) => item ? (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#5F5E5A' }}>
               <span style={{ color: VERDE, fontSize: 14 }}>✓</span> {item}

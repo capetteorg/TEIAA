@@ -76,7 +76,12 @@ export default function Sociedade() {
     <div style={{ minHeight: '100vh', background: '#F8F7F2', padding: '1.5rem' }}>
       <div style={{ background: '#2C2C2A', borderRadius: 14, padding: '1.5rem', marginBottom: '1.25rem', color: '#fff' }}>
         <div style={{ display: 'flex', gap: 3, alignItems: 'center', marginBottom: 4 }}>
-          {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize: 22, fontWeight: 500, color: c, lineHeight: 1 }}>{l}</span>)}
+          <img src="/logo.png" alt="CAPETTE"
+            style={{ height: 52, width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 4px' }}
+            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+          <div style={{ display: 'none', gap: 2, justifyContent: 'center' }}>
+            {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize: 22, fontWeight: 500, color: c, lineHeight: 1 }}>{l}</span>)}
+          </div>
         </div>
         <div style={{ fontSize: 11, opacity: .6, marginBottom: '.75rem' }}>Casa do Pequeno Trabalhador de Teresópolis · Desde 1974</div>
         <div style={{ fontSize: 16, fontWeight: 500, marginBottom: '.25rem' }}>Transparência financeira</div>

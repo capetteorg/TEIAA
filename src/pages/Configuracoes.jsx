@@ -20,18 +20,51 @@ export default function Configuracoes() {
     setLoading(true)
     try {
       if (tipo === 'extratos') {
+        // Limpa movimentações primeiro (FK), depois extratos
         await supabase.from('extrato_movs').delete().neq('id', 0)
         await supabase.from('extratos').delete().neq('id', 0)
         setMsg('✓ Extratos e movimentações excluídos.')
+
       } else if (tipo === 'lancamentos') {
         await supabase.from('rateios').delete().neq('id', 0)
         await supabase.from('lancamentos').delete().neq('id', 0)
         setMsg('✓ Lançamentos excluídos.')
+
+      } else if (tipo === 'cobrancas') {
+        await supabase.from('historico_cobrancas').delete().neq('id', 0)
+        await supabase.from('cobrancas').delete().neq('id', 0)
+        setMsg('✓ Cobranças excluídas.')
+
+      } else if (tipo === 'eventos_campanhas') {
+        await supabase.from('eventos').delete().neq('id', 0)
+        await supabase.from('campanhas').delete().neq('id', 0)
+        setMsg('✓ Eventos e campanhas excluídos.')
+
+      } else if (tipo === 'funcionarios') {
+        await supabase.from('pagamentos_divida').delete().neq('id', 0)
+        await supabase.from('dividas').delete().neq('id', 0)
+        await supabase.from('funcionarios').delete().neq('id', 0)
+        setMsg('✓ Funcionários e dívidas excluídos.')
+
+      } else if (tipo === 'fechamentos') {
+        await supabase.from('fechamentos').delete().neq('id', 0)
+        setMsg('✓ Fechamentos excluídos.')
+
       } else if (tipo === 'tudo') {
+        // Ordem correta respeitando FKs
+        await supabase.from('historico_cobrancas').delete().neq('id', 0)
+        await supabase.from('cobrancas').delete().neq('id', 0)
+        await supabase.from('historico_movs').delete().neq('id', 0)
+        await supabase.from('pagamentos_divida').delete().neq('id', 0)
+        await supabase.from('dividas').delete().neq('id', 0)
+        await supabase.from('funcionarios').delete().neq('id', 0)
+        await supabase.from('fechamentos').delete().neq('id', 0)
         await supabase.from('extrato_movs').delete().neq('id', 0)
         await supabase.from('extratos').delete().neq('id', 0)
         await supabase.from('rateios').delete().neq('id', 0)
         await supabase.from('lancamentos').delete().neq('id', 0)
+        await supabase.from('eventos').delete().neq('id', 0)
+        await supabase.from('campanhas').delete().neq('id', 0)
         setMsg('✓ Todos os dados de teste foram excluídos. Sistema pronto para uso real!')
       }
     } catch(err) {
@@ -43,41 +76,24 @@ export default function Configuracoes() {
   }
 
   const acoes = [
-    {
-      id: 'extratos',
-      titulo: 'Excluir extratos importados',
-      desc: 'Remove todos os extratos bancários importados e suas movimentações. Não afeta lançamentos manuais.',
-      cor: '#F4821F',
-      bg: '#FEF2F2',
-    },
-    {
-      id: 'lancamentos',
-      titulo: 'Excluir lançamentos manuais',
-      desc: 'Remove todas as despesas e entradas lançadas manualmente. Não afeta extratos importados.',
-      cor: '#E8212A',
-      bg: '#FEF2F2',
-    },
-    {
-      id: 'tudo',
-      titulo: 'Limpar tudo — dados de teste',
-      desc: 'Remove TODOS os dados: extratos, movimentações e lançamentos. Use antes de começar o uso real do sistema.',
-      cor: '#E8212A',
-      bg: '#FCEBEB',
-      destaque: true,
-    },
+    { id: 'extratos',         titulo: 'Excluir extratos importados',    desc: 'Remove todos os extratos bancários e movimentações. Não afeta lançamentos manuais.', cor: '#F4821F' },
+    { id: 'lancamentos',      titulo: 'Excluir lançamentos manuais',    desc: 'Remove despesas e entradas lançadas manualmente. Não afeta extratos.', cor: '#F4821F' },
+    { id: 'cobrancas',        titulo: 'Excluir cobranças',              desc: 'Remove todos os boletos e histórico de cobranças.', cor: '#F4821F' },
+    { id: 'eventos_campanhas',titulo: 'Excluir eventos e campanhas',    desc: 'Remove todos os eventos e campanhas cadastrados.', cor: '#F4821F' },
+    { id: 'funcionarios',     titulo: 'Excluir funcionários e dívidas', desc: 'Remove funcionários, dívidas e pagamentos cadastrados.', cor: '#F4821F' },
+    { id: 'fechamentos',      titulo: 'Excluir fechamentos',            desc: 'Remove todos os registros de fechamento de período.', cor: '#F4821F' },
+    { id: 'tudo',             titulo: 'Limpar TUDO — dados de teste',   desc: 'Remove TODOS os dados operacionais. Use antes de começar o uso real.', cor: '#E8212A', destaque: true },
   ]
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Configurações avançadas</div>
 
-      {/* Aviso */}
       <div style={{ background: '#FEF2F2', border: '0.5px solid #F7C1C1', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: '#A32D2D', marginBottom: 4 }}>⚠ Zona de perigo</div>
-        <div style={{ fontSize: 12, color: '#5F5E5A' }}>As ações abaixo são irreversíveis. Use apenas para limpar dados de teste antes de começar o uso real do sistema.</div>
+        <div style={{ fontSize: 12, color: '#5F5E5A' }}>As ações abaixo são irreversíveis. Use apenas para limpar dados de teste antes de começar o uso real.</div>
       </div>
 
-      {/* Verificação de senha */}
       {!senhaOk ? (
         <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1.5rem', maxWidth: 400 }}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Digite a senha master para continuar</div>
