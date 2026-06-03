@@ -48,12 +48,12 @@ export default function Contas() {
   async function salvar(e) {
     e.preventDefault()
     const dados = { ...form }
-    if (dados.valor_aprovado) dados.valor_aprovado = parseFloat(dados.valor_aprovado)
-    if (dados.valor_recebido) dados.valor_recebido = parseFloat(dados.valor_recebido)
-    if (!dados.data_recebimento) delete dados.data_recebimento
-    if (!dados.vigencia_inicio) delete dados.vigencia_inicio
-    if (!dados.vigencia_fim) delete dados.vigencia_fim
-    if (!dados.prazo_prestacao) delete dados.prazo_prestacao
+    dados.valor_aprovado = dados.valor_aprovado ? parseFloat(dados.valor_aprovado) : null
+    dados.valor_recebido = dados.valor_recebido ? parseFloat(dados.valor_recebido) : null
+    if (!dados.data_recebimento) dados.data_recebimento = null
+    if (!dados.vigencia_inicio) dados.vigencia_inicio = null
+    if (!dados.vigencia_fim) dados.vigencia_fim = null
+    if (!dados.prazo_prestacao) dados.prazo_prestacao = null
 
     const { error } = editando
       ? await supabase.from('contas').update(dados).eq('id', editando)
