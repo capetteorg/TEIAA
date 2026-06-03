@@ -107,10 +107,15 @@ function htmlCabecalho() {
   return `
   <div class="cabecalho">
     <div class="cab-esq">
-      <div class="cab-logo">
-        <span style="color:#F5C800">C</span><span style="color:#F4821F">A</span><span style="color:#8B2FC9">P</span><span style="color:#E8212A">E</span><span style="color:#6BBF2B">T</span><span style="color:#4A8FD4">T</span><span style="color:#E8207A">E</span>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <img src="/logo.png" alt="CAPETTE" style="height:52px;width:auto;object-fit:contain" onerror="this.style.display='none'" />
+        <div>
+          <div class="cab-logo">
+            <span style="color:#F5C800">C</span><span style="color:#F4821F">A</span><span style="color:#8B2FC9">P</span><span style="color:#E8212A">E</span><span style="color:#6BBF2B">T</span><span style="color:#4A8FD4">T</span><span style="color:#E8207A">E</span>
+          </div>
+          <div class="cab-desde">Desde 1974</div>
+        </div>
       </div>
-      <div class="cab-desde">Desde 1974</div>
     </div>
     <div class="cab-dir">
       <strong>${CAPETTE_INFO.nome}</strong>

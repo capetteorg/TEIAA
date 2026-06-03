@@ -38,11 +38,13 @@ export default function Layout() {
   return (
     <div style={{display:'flex',height:'100vh',background:'#F8F7F2'}}>
       <div style={{width:215,background:'#fff',borderRight:'0.5px solid #E0DDD5',display:'flex',flexDirection:'column',flexShrink:0}}>
-        <div style={{padding:'1rem 1.25rem .75rem',borderBottom:'0.5px solid #E0DDD5',display:'flex',alignItems:'center',gap:8}}>
-          <div style={{display:'flex',gap:2,alignItems:'center'}}>
+        <div style={{padding:'.75rem 1.25rem',borderBottom:'0.5px solid #E0DDD5',display:'flex',alignItems:'center',gap:8}}>
+          <img src="/logo.png" alt="CAPETTE" style={{height:36,width:'auto',objectFit:'contain'}}
+            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+          <div style={{display:'none',gap:2,alignItems:'center'}}>
             {LOGO.map(([l,c])=><span key={l+c} style={{fontSize:17,fontWeight:500,color:c,lineHeight:1}}>{l}</span>)}
           </div>
-          <div style={{fontSize:10,color:'#888780',marginLeft:2}}>desde 1974</div>
+          <div style={{fontSize:10,color:'#888780'}}>desde 1974</div>
         </div>
 
         <div style={{overflowY:'auto',flex:1}}>
