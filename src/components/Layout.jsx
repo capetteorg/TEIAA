@@ -68,6 +68,7 @@ export default function Layout() {
           <NavItem to="/plano-trabalho"    icon="list-details"       label="Plano de trabalho"       visivel={p==='admin'} />
           <NavItem to="/classificacoes"    icon="list-check"         label="Classificações"          visivel={p==='admin'} />
           <NavItem to="/usuarios"          icon="users"              label="Usuários"                visivel={p==='admin'} />
+          <NavItem to="/fechamento"     icon="lock"              label="Fechamento"              visivel={p==='admin'} />
           <NavItem to="/backup"            icon="database-export"    label="Backup"                  visivel={p==='admin'} />
           <NavItem to="/configuracoes"     icon="settings"           label="Dados de teste"          visivel={p==='admin'} />
         </div>
