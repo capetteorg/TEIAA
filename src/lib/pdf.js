@@ -503,3 +503,243 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
 
   abrirImpressao(html, 'Relatório de Cobranças', true)
 }
+
+// =============================================
+// PRESTAÇÃO DE CONTA — EMENDA / EDITAL
+// =============================================
+export function gerarPDFPrestacaoContas(dados, pendencias, tipo) {
+  const { conta, entradas, saidas, totalRepasses, totalRendimentos, totalDisponivel, totalDespesas, saldoFinal, bens, rateadas, porPlano, totalMovs, totalConciliados } = dados
+
+  const isPreliminar = tipo === 'preliminar'
+  const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+
+  const TIPO_LABEL = { emenda:'Emenda Parlamentar', edital:'Edital', fomento:'Termo de Fomento', colaboracao:'Termo de Colaboração', convenio:'Convênio', projeto:'Projeto Específico' }
+  const tipoLabel = TIPO_LABEL[conta.tipo_conta] || conta.tipo_conta
+
+  const pendCriticas = pendencias.reduce((a,m) => a + m.pendencias.filter(p=>p.gravidade==='crítica').length, 0)
+
+  // Receitas
+  const linhasReceitas = entradas.map(m => `<tr>
+    <td>${fmtData(m.data)}</td>
+    <td>${m.tipo_receita||m.categoria?.nome||'—'}</td>
+    <td>${m.descricao||'—'}</td>
+    <td style="font-family:monospace;font-size:9px">${m.doc||'—'}</td>
+    <td class="num verde">${fmt(m.valor)}</td>
+    <td>${m.obs_prestacao||'—'}</td>
+  </tr>`).join('')
+
+  // Despesas
+  let seq = 1
+  const linhasDespesas = saidas.map(m => `<tr>
+    <td class="center">${seq++}</td>
+    <td>${fmtData(m.data)}</td>
+    <td>${m.fornecedor||'—'}</td>
+    <td style="font-size:9px">${m.cpf_cnpj||'—'}</td>
+    <td>${m.categoria?.nome||'—'}</td>
+    <td>${m.subcategoria?.nome||'—'}</td>
+    <td>${m.plano?.nome||'—'}</td>
+    <td style="font-family:monospace;font-size:9px">${m.num_nota||'—'}</td>
+    <td>${fmtData(m.data_documento)}</td>
+    <td class="num vermelho">${fmt(Math.abs(m.valor))}</td>
+    <td style="font-size:9px;color:#666">${m.local_comprovante||'—'}</td>
+    <td class="center">${m.conciliado?'✓ OK':'Pend.'}</td>
+  </tr>`).join('')
+
+  // Plano de trabalho
+  const linhasPlano = Object.values(porPlano).map(p => {
+    const saldo = p.valor_previsto - p.executado
+    const pct = p.valor_previsto > 0 ? Math.round(p.executado/p.valor_previsto*100) : 0
+    const sit = pct===0?'Não iniciado':pct>=100?'Executado integralmente':'Em execução'
+    return `<tr>
+      <td>${p.nome}</td>
+      <td class="num">${fmt(p.valor_previsto)}</td>
+      <td class="num vermelho">${fmt(p.executado)}</td>
+      <td class="num ${saldo>=0?'verde':'vermelho'}">${fmt(saldo)}</td>
+      <td class="center">${pct}%</td>
+      <td class="center">${sit}</td>
+    </tr>`
+  }).join('')
+
+  // Bens
+  const linhasBens = bens.map((m,i) => `<tr>
+    <td class="center">${i+1}</td>
+    <td>${m.descricao_produto||m.descricao||'—'}</td>
+    <td>${m.fornecedor||'—'}</td>
+    <td style="font-size:9px">${m.cpf_cnpj||'—'}</td>
+    <td style="font-family:monospace;font-size:9px">${m.num_nota||'—'}</td>
+    <td>${fmtData(m.data)}</td>
+    <td class="num vermelho">${fmt(Math.abs(m.valor))}</td>
+    <td>${m.plano?.nome||'—'}</td>
+    <td>${m.local_guarda_bem||'—'}</td>
+  </tr>`).join('')
+
+  // Rateios
+  const linhasRateio = rateadas.map(m => `<tr>
+    <td>${fmtData(m.data)}</td>
+    <td>${m.descricao||'—'}</td>
+    <td>${m.fornecedor||'—'}</td>
+    <td style="font-family:monospace;font-size:9px">${m.num_nota||'—'}</td>
+    <td class="num">${fmt(Math.abs(m.valor))}</td>
+    <td class="center">${m.percentual_rateio||'—'}%</td>
+    <td class="num vermelho">${fmt(Math.abs(m.valor)*(m.percentual_rateio||100)/100)}</td>
+    <td>${m.fonte_restante||'—'}</td>
+    <td>${m.justificativa_rateio||'—'}</td>
+  </tr>`).join('')
+
+  // Pendências
+  const linhasPend = pendencias.flatMap(m => m.pendencias.map(p => `<tr>
+    <td>${fmtData(m.data)}</td>
+    <td>${m.descricao?.slice(0,40)||'—'}</td>
+    <td class="num">${fmt(Math.abs(m.valor))}</td>
+    <td>${p.tipo}</td>
+    <td class="center"><span style="padding:1px 6px;border-radius:99px;font-size:9px;background:${p.gravidade==='crítica'?'#FCEBEB':'#FAEEDA'};color:${p.gravidade==='crítica'?'#A32D2D':'#854F0B'}">${p.gravidade}</span></td>
+  </tr>`)).join('')
+
+  const pctConc = totalMovs > 0 ? Math.round(totalConciliados/totalMovs*100) : 0
+
+  const html = `
+  ${htmlCabecalho()}
+
+  <div class="titulo-bloco">
+    <div class="titulo-principal">Prestação de Conta — ${tipoLabel}</div>
+    <div class="titulo-sub">Relatório de Execução Financeira</div>
+    <span class="titulo-status ${isPreliminar?'status-preliminar':'status-final'}">
+      ${isPreliminar ? 'RELATÓRIO PRELIMINAR' : 'RELATÓRIO FINAL CONSOLIDADO'}
+    </span>
+    ${isPreliminar ? '<div style="font-size:10px;color:#854F0B;margin-top:4px">Este relatório contém movimentações pendentes de consolidação bancária.</div>' : ''}
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item"><div class="info-label">Conta / Parceria</div><div class="info-valor">${conta.nome}</div></div>
+    <div class="info-item"><div class="info-label">Banco / Agência / Conta</div><div class="info-valor">${conta.banco||'—'} / ${conta.agencia||'—'} / ${conta.conta_num||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Parlamentar / Origem</div><div class="info-valor">${conta.parlamentar||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Órgão concedente</div><div class="info-valor">${conta.orgao_concedente||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Nº Termo / Processo</div><div class="info-valor">${conta.num_termo||'—'} / ${conta.num_processo||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Vigência</div><div class="info-valor">${fmtData(conta.vigencia_inicio)} a ${fmtData(conta.vigencia_fim)}</div></div>
+    <div class="info-item"><div class="info-label">Responsável financeiro</div><div class="info-valor">${conta.responsavel_financeiro||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Representante legal</div><div class="info-valor">${conta.representante_legal||'—'}</div></div>
+  </div>
+
+  ${conta.objeto ? `<div style="background:#F8F7F2;border-radius:4px;padding:6px 10px;margin-bottom:12px;font-size:10px"><strong>Objeto:</strong> ${conta.objeto}</div>` : ''}
+
+  <div class="resumo-box">
+    <div class="resumo-titulo">Resumo Financeiro</div>
+    <div class="resumo-grid">
+      <div class="resumo-item"><div class="resumo-label">Repasses recebidos</div><div class="resumo-valor verde">${fmt(totalRepasses)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Rendimentos</div><div class="resumo-valor azul">${fmt(totalRendimentos)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Total disponível</div><div class="resumo-valor azul">${fmt(totalDisponivel)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Total despesas</div><div class="resumo-valor vermelho">${fmt(totalDespesas)}</div></div>
+    </div>
+    <div class="resumo-grid" style="margin-top:8px">
+      <div class="resumo-item"><div class="resumo-label">Saldo remanescente</div><div class="resumo-valor ${saldoFinal>=0?'verde':'vermelho'}">${fmt(saldoFinal)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor">${totalMovs}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Conciliado</div><div class="resumo-valor ${pctConc===100?'verde':'vermelho'}">${pctConc}%</div></div>
+      <div class="resumo-item"><div class="resumo-label">Situação</div><div class="resumo-valor" style="font-size:11px">${pendCriticas>0?'⚠ Com pendências críticas':pctConc<100?'Com pendências':'✓ Consolidado'}</div></div>
+    </div>
+  </div>
+
+  ${pendencias.length > 0 ? `
+  <div class="alerta ${pendCriticas>0?'alerta-critico':'alerta-aviso'}">
+    <strong>⚠ Pendências encontradas:</strong> ${pendencias.length} movimentações com pendências — ${pendCriticas} críticas.
+    ${pendCriticas>0&&!isPreliminar?'<strong>Este relatório não deveria ser emitido como Final Consolidado com pendências críticas.</strong>':''}
+  </div>` : ''}
+
+  <div class="secao">
+    <div class="secao-titulo">1. Relação de Receitas</div>
+    <table>
+      <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Doc. Bancário</th><th class="num">Valor</th><th>Obs.</th></tr></thead>
+      <tbody>
+        ${linhasReceitas||'<tr><td colspan="6" style="text-align:center;color:#888">Sem receitas</td></tr>'}
+        <tr class="total-row"><td colspan="4"><strong>TOTAL RECEITAS</strong></td><td class="num verde"><strong>${fmt(totalDisponivel)}</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="secao">
+    <div class="secao-titulo">2. Relação de Pagamentos Efetuados</div>
+    <table>
+      <thead><tr><th class="center">Nº</th><th>Data</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Categoria</th><th>Subcategoria</th><th>Item do Plano</th><th>Nota/Recibo</th><th>Data Doc.</th><th class="num">Valor</th><th>Local Comprovante</th><th class="center">Status</th></tr></thead>
+      <tbody>
+        ${linhasDespesas||'<tr><td colspan="12" style="text-align:center;color:#888">Sem despesas</td></tr>'}
+        <tr class="total-row"><td colspan="9"><strong>TOTAL DESPESAS</strong></td><td class="num vermelho"><strong>${fmt(totalDespesas)}</strong></td><td colspan="2"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  ${Object.keys(porPlano).length > 0 ? `
+  <div class="secao">
+    <div class="secao-titulo">3. Execução por Item do Plano de Trabalho</div>
+    <table>
+      <thead><tr><th>Item do Plano</th><th class="num">Valor Previsto</th><th class="num">Executado</th><th class="num">Saldo</th><th class="center">% Exec.</th><th class="center">Situação</th></tr></thead>
+      <tbody>
+        ${linhasPlano}
+        <tr class="total-row">
+          <td><strong>TOTAL</strong></td>
+          <td class="num"><strong>${fmt(Object.values(porPlano).reduce((a,p)=>a+p.valor_previsto,0))}</strong></td>
+          <td class="num vermelho"><strong>${fmt(Object.values(porPlano).reduce((a,p)=>a+p.executado,0))}</strong></td>
+          <td class="num"><strong>${fmt(Object.values(porPlano).reduce((a,p)=>a+(p.valor_previsto-p.executado),0))}</strong></td>
+          <td colspan="2"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  <div class="secao">
+    <div class="secao-titulo">4. Conciliação Bancária</div>
+    <table>
+      <thead><tr><th>Item</th><th class="num">Valor / Qtd</th></tr></thead>
+      <tbody>
+        <tr><td>Total de movimentações importadas</td><td class="num">${totalMovs}</td></tr>
+        <tr><td>Total conciliado</td><td class="num verde">${totalConciliados}</td></tr>
+        <tr><td>Total pendente</td><td class="num ${totalMovs-totalConciliados>0?'vermelho':'verde'}">${totalMovs-totalConciliados}</td></tr>
+        <tr><td>Percentual conciliado</td><td class="num">${pctConc}%</td></tr>
+        <tr class="total-row"><td><strong>Situação da conciliação</strong></td><td class="num"><strong>${pendCriticas>0?'⚠ Com pendências críticas':pctConc<100?'Com pendências':'✓ Conciliado'}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  ${bens.length > 0 ? `
+  <div class="secao">
+    <div class="secao-titulo">5. Relação de Bens Adquiridos</div>
+    <table>
+      <thead><tr><th class="center">Nº</th><th>Especificação do Bem</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Nota</th><th>Data</th><th class="num">Valor</th><th>Item do Plano</th><th>Local de Guarda</th></tr></thead>
+      <tbody>
+        ${linhasBens}
+        <tr class="total-row"><td colspan="6"><strong>TOTAL BENS</strong></td><td class="num vermelho"><strong>${fmt(bens.reduce((a,m)=>a+Math.abs(Number(m.valor)),0))}</strong></td><td colspan="2"></td></tr>
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  ${rateadas.length > 0 ? `
+  <div class="secao">
+    <div class="secao-titulo">6. Memória de Cálculo de Rateio de Despesas</div>
+    <table>
+      <thead><tr><th>Data</th><th>Descrição</th><th>Fornecedor</th><th>Nota</th><th class="num">Valor Total</th><th class="center">% Emenda</th><th class="num">Valor Emenda</th><th>Fonte Restante</th><th>Justificativa</th></tr></thead>
+      <tbody>${linhasRateio}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${pendencias.length > 0 ? `
+  <div class="secao">
+    <div class="secao-titulo">7. Pendências da Consolidação</div>
+    <table>
+      <thead><tr><th>Data</th><th>Descrição</th><th class="num">Valor</th><th>Pendência</th><th class="center">Gravidade</th></tr></thead>
+      <tbody>${linhasPend}</tbody>
+    </table>
+  </div>` : ''}
+
+  <div class="secao">
+    <div class="secao-titulo">Declaração Final</div>
+    <div style="font-size:10px;line-height:1.7;padding:10px;border:1px solid #E0DDD5;border-radius:4px;margin-bottom:12px">
+      Declaramos que as informações financeiras apresentadas neste relatório foram extraídas dos registros do sistema FinOSC Capette, 
+      com base nos extratos bancários importados, conciliações realizadas e dados informados pela equipe responsável. 
+      Os documentos comprobatórios físicos ou digitais encontram-se arquivados externamente, conforme referências indicadas neste relatório.
+    </div>
+  </div>
+
+  ${htmlAssinaturas(['Responsável Financeiro', 'Representante Legal / Diretoria', 'Responsável pela Conferência'])}
+  ${htmlRodape()}`
+
+  abrirImpressao(html, `Prestação de Conta — ${conta.nome}`, true)
+}
