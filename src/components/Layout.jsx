@@ -59,6 +59,7 @@ export default function Layout() {
           <NavItem to="/eventos"       icon="calendar-event"    label="Eventos"           visivel={p==='admin'} />
           <NavItem to="/campanhas"     icon="target"            label="Campanhas"         visivel={p==='admin'} />
           <NavItem to="/funcionarios"  icon="id-badge-2"        label="Funcionários"      visivel={p==='admin'||p==='diretoria'} />
+          <NavItem to="/cobrancas"     icon="receipt-2"         label="Cobranças"         visivel={p==='admin'||p==='operacional'} />
 
           <NavSecao label="Configurações" />
           <NavItem to="/contas"          icon="building-bank"   label="Contas"            visivel={p==='admin'} />
