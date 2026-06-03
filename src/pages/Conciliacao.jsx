@@ -3,31 +3,37 @@ import { supabase } from '../lib/supabase'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
 
+const TIPOS_RECEITA = ['Repasse da emenda', 'Rendimento de aplicação', 'Estorno', 'Devolução recebida', 'Outra entrada']
+
 export default function Conciliacao() {
   const [extratos, setExtratos] = useState([])
   const [extratoSel, setExtratoSel] = useState(null)
   const [movs, setMovs] = useState([])
   const [categorias, setCategorias] = useState([])
   const [subcategorias, setSubcategorias] = useState([])
-  const [contas, setContas] = useState([])
   const [planosTrabalho, setPlanosTrabalho] = useState([])
+  const [eventos, setEventos] = useState([])
+  const [campanhas, setCampanhas] = useState([])
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
   const [descExpandida, setDescExpandida] = useState(null)
+  const [complementarAberto, setComplementarAberto] = useState(null)
+  const [formCompl, setFormCompl] = useState({})
 
   useEffect(() => {
     carregarExtratos()
     supabase.from('categorias').select('*').order('nome').then(({ data }) => setCategorias(data || []))
     supabase.from('subcategorias').select('*').order('nome').then(({ data }) => setSubcategorias(data || []))
-    supabase.from('contas').select('*').order('nome').then(({ data }) => setContas(data || []))
     supabase.from('plano_trabalho').select('*, conta:contas(nome)').order('nome').then(({ data }) => setPlanosTrabalho(data || []))
+    supabase.from('eventos').select('id, nome').order('nome').then(({ data }) => setEventos(data || []))
+    supabase.from('campanhas').select('id, nome').order('nome').then(({ data }) => setCampanhas(data || []))
   }, [])
 
   async function carregarExtratos() {
     const { data } = await supabase
       .from('extratos')
-      .select('*, conta:contas(nome, banco, preponderancia)')
+      .select('*, conta:contas(id, nome, banco, preponderancia, tipo_conta)')
       .order('importado_em', { ascending: false })
     setExtratos(data || [])
   }
@@ -37,7 +43,7 @@ export default function Conciliacao() {
     setExtratoSel(ext)
     const { data } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome), evento:eventos(nome), campanha:campanhas(nome)')
       .eq('extrato_id', ext.id)
       .order('data')
     setMovs(data || [])
@@ -45,9 +51,7 @@ export default function Conciliacao() {
   }
 
   async function salvarCategoria(movId, catId) {
-    await supabase.from('extrato_movs')
-      .update({ categoria_id: catId ? parseInt(catId) : null, subcategoria_id: null })
-      .eq('id', movId)
+    await supabase.from('extrato_movs').update({ categoria_id: catId ? parseInt(catId) : null, subcategoria_id: null }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id === movId
       ? { ...m, categoria_id: catId, subcategoria_id: null, subcategoria: null, categoria: categorias.find(c => String(c.id) === String(catId)) }
       : m))
@@ -70,6 +74,44 @@ export default function Conciliacao() {
       : m))
   }
 
+  async function salvarComplementar(movId) {
+    const dados = { ...formCompl }
+    if (dados.evento_id) dados.evento_id = parseInt(dados.evento_id)
+    if (dados.campanha_id) dados.campanha_id = parseInt(dados.campanha_id)
+    if (dados.percentual_rateio) dados.percentual_rateio = parseFloat(dados.percentual_rateio)
+    if (!dados.data_documento) delete dados.data_documento
+
+    await supabase.from('extrato_movs').update(dados).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id === movId ? { ...m, ...dados } : m))
+    setComplementarAberto(null)
+    setFormCompl({})
+    setMsg('Dados complementares salvos! ✓')
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  function abrirComplementar(m) {
+    setComplementarAberto(m.id)
+    setFormCompl({
+      fornecedor: m.fornecedor || '',
+      cpf_cnpj: m.cpf_cnpj || '',
+      num_nota: m.num_nota || '',
+      data_documento: m.data_documento || '',
+      descricao_produto: m.descricao_produto || '',
+      local_comprovante: m.local_comprovante || '',
+      link_externo: m.link_externo || '',
+      bem_permanente: m.bem_permanente || false,
+      local_guarda_bem: m.local_guarda_bem || '',
+      despesa_rateada: m.despesa_rateada || false,
+      percentual_rateio: m.percentual_rateio || '',
+      fonte_restante: m.fonte_restante || '',
+      justificativa_rateio: m.justificativa_rateio || '',
+      obs_prestacao: m.obs_prestacao || '',
+      tipo_receita: m.tipo_receita || '',
+      evento_id: m.evento_id || '',
+      campanha_id: m.campanha_id || '',
+    })
+  }
+
   async function conciliarMov(movId, valor) {
     await supabase.from('extrato_movs').update({ conciliado: valor }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id === movId ? { ...m, conciliado: valor } : m))
@@ -89,16 +131,20 @@ export default function Conciliacao() {
   const movsFiltradas = movs.filter(m => {
     if (filtro === 'pendentes') return !m.conciliado
     if (filtro === 'conciliados') return m.conciliado
+    if (filtro === 'sem_dados') return !m.categoria_id
     return true
   })
 
   const totalConciliados = movs.filter(m => m.conciliado).length
   const totalPendentes = movs.filter(m => !m.conciliado).length
+  const totalSemCategoria = movs.filter(m => !m.categoria_id).length
 
   const fmt = v => {
     const abs = Math.abs(v)
     return (v >= 0 ? '+' : '-') + 'R$ ' + abs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
   }
+
+  const temDadosCompl = (m) => m.fornecedor || m.num_nota || m.local_comprovante || m.evento_id || m.campanha_id
 
   const s = {
     card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
@@ -109,6 +155,8 @@ export default function Conciliacao() {
     select: { fontSize: 11, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 8, background: '#fff', width: '100%' },
     input: { fontSize: 11, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 8, background: '#fff', width: '52px' },
     tab: ativo => ({ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: ativo ? VERDE : 'transparent', color: ativo ? '#fff' : '#5F5E5A', cursor: 'pointer' }),
+    label: { fontSize: 11, color: '#5F5E5A', display: 'block', marginBottom: 2 },
+    inputCompl: { width: '100%', fontSize: 12, padding: '5px 8px', border: '0.5px solid #D3D1C7', borderRadius: 8 },
   }
 
   // ===== LISTA DE EXTRATOS =====
@@ -117,7 +165,6 @@ export default function Conciliacao() {
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Conciliação bancária</div>
       {extratos.length === 0 ? (
         <div style={{ ...s.card, textAlign: 'center', padding: '3rem', color: '#888780' }}>
-          <i className="ti ti-upload" style={{ fontSize: 32, display: 'block', marginBottom: 8 }} />
           <div style={{ fontSize: 13 }}>Nenhum extrato importado ainda.</div>
           <div style={{ fontSize: 12, marginTop: 4 }}>Vá em <strong>Importar extrato</strong> para começar.</div>
         </div>
@@ -126,7 +173,7 @@ export default function Conciliacao() {
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Extratos importados — clique para abrir e conciliar</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead><tr>
-              {['Competência','Conta','Preponderância','Movimentações','Saldo final','Importado em',''].map(h => (
+              {['Competência','Conta','Tipo','Movimentações','Saldo final','Importado em',''].map(h => (
                 <th key={h} style={s.th}>{h}</th>
               ))}
             </tr></thead>
@@ -137,10 +184,10 @@ export default function Conciliacao() {
                   <td style={s.td}>{e.conta?.nome || '—'}</td>
                   <td style={s.td}>
                     <span style={s.badge(
-                      e.conta?.preponderancia === 'rateio' ? '#F1EFE8' : '#EAF3DE',
-                      e.conta?.preponderancia === 'rateio' ? '#5F5E5A' : '#3B6D11'
+                      e.conta?.tipo_conta === 'principal' ? '#EAF3DE' : '#E6F1FB',
+                      e.conta?.tipo_conta === 'principal' ? '#3B6D11' : '#185FA5'
                     )}>
-                      {e.conta?.preponderancia === 'rateio' ? 'Rateia' : e.conta?.preponderancia || '—'}
+                      {e.conta?.tipo_conta === 'principal' ? 'Principal' : e.conta?.tipo_conta || '—'}
                     </span>
                   </td>
                   <td style={s.td}>{e.total_movs} movs</td>
@@ -157,14 +204,15 @@ export default function Conciliacao() {
   )
 
   const contaPrep = extratoSel.conta?.preponderancia
+  const contaTipo = extratoSel.conta?.tipo_conta
   const isRateio = contaPrep === 'rateio'
-  const isEmenda = contaPrep && contaPrep !== 'rateio'
-  const planosDisponiveis = planosDaConta(extratoSel.conta_id)
+  const isEmenda = contaTipo && contaTipo !== 'principal'
+  const planosDisponiveis = planosDaConta(extratoSel.conta?.id)
 
   // ===== TELA DE CONCILIAÇÃO =====
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <button onClick={() => { setExtratoSel(null); setMovs([]) }}
           style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
           ← Voltar
@@ -173,22 +221,29 @@ export default function Conciliacao() {
           Conciliação — {extratoSel.competencia} · {extratoSel.conta?.nome}
         </div>
         {isRateio && <span style={s.badge('#FAEEDA', '#854F0B')}>Conta Principal — informar preponderância</span>}
-        {isEmenda && <span style={s.badge('#EAF3DE', '#3B6D11')}>Emenda — {contaPrep} · informar plano de trabalho</span>}
+        {isEmenda && <span style={s.badge('#E6F1FB', '#185FA5')}>Emenda/Edital — informar plano de trabalho e dados complementares</span>}
         {totalPendentes === 0 && movs.length > 0 && <span style={s.badge('#EAF3DE', '#3B6D11')}>✓ Tudo conciliado</span>}
       </div>
 
+      {msg && (
+        <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.5rem 1rem', marginBottom: '1rem', fontSize: 12, color: '#3B6D11' }}>
+          {msg}
+        </div>
+      )}
+
       {/* Métricas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: '1.25rem' }}>
         {[
-          { label: 'Total movimentações', val: movs.length, cor: '#4A8FD4' },
+          { label: 'Total', val: movs.length, cor: '#4A8FD4' },
           { label: 'Conciliados', val: totalConciliados, cor: VERDE },
           { label: 'Pendentes', val: totalPendentes, cor: totalPendentes > 0 ? '#BA7517' : VERDE },
+          { label: 'Sem categoria', val: totalSemCategoria, cor: totalSemCategoria > 0 ? VERMELHO : VERDE },
           { label: 'Saldo final', val: 'R$ ' + Number(extratoSel.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }), cor: VERDE },
         ].map(m => (
-          <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.85rem 1rem', border: '0.5px solid #E0DDD5' }}>
-            <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.7rem' }} />
-            <div style={{ fontSize: 11, color: '#888780', marginBottom: 4 }}>{m.label}</div>
-            <div style={{ fontSize: 18, fontWeight: 500, color: m.cor }}>{m.val}</div>
+          <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.75rem 1rem', border: '0.5px solid #E0DDD5' }}>
+            <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.6rem' }} />
+            <div style={{ fontSize: 10, color: '#888780', marginBottom: 3 }}>{m.label}</div>
+            <div style={{ fontSize: 16, fontWeight: 500, color: m.cor }}>{m.val}</div>
           </div>
         ))}
       </div>
@@ -206,27 +261,21 @@ export default function Conciliacao() {
         </div>
       )}
 
-      {/* Info preponderância */}
-      {isRateio && (
-        <div style={{ background: '#FAEEDA', borderLeft: '3px solid #BA7517', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#854F0B', marginBottom: '1.25rem' }}>
-          <strong>Conta Principal:</strong> informe a preponderância de cada movimentação (Educação + Assistência Social + Saúde = 100%)
-        </div>
-      )}
+      {/* Alertas */}
       {isEmenda && planosDisponiveis.length === 0 && (
-        <div style={{ background: '#FEF2F2', borderLeft: '3px solid #E8212A', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#A32D2D', marginBottom: '1.25rem' }}>
+        <div style={{ background: '#FEF2F2', borderLeft: '3px solid #E8212A', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#A32D2D', marginBottom: '1rem' }}>
           <strong>Nenhum plano de trabalho cadastrado para esta conta.</strong> Vá em Configurações → Plano de Trabalho para cadastrar.
         </div>
       )}
 
       <div style={s.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.85rem', flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {[['todos','Todos'], ['pendentes','Pendentes'], ['conciliados','Conciliados']].map(([v, l]) => (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {[['todos','Todos'], ['pendentes','Pendentes'], ['conciliados','Conciliados'], ['sem_dados','Sem categoria']].map(([v, l]) => (
               <button key={v} onClick={() => setFiltro(v)} style={s.tab(filtro === v)}>{l}</button>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {msg && <span style={{ fontSize: 12, color: '#3B6D11', fontWeight: 500 }}>{msg}</span>}
             {totalPendentes > 0 && (
               <button onClick={conciliarTodos} style={s.btn(VERDE)}>✓ Conciliar todos ({totalPendentes})</button>
             )}
@@ -236,7 +285,7 @@ export default function Conciliacao() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#888780', fontSize: 12 }}>Carregando...</div>
         ) : (
-          <div style={{ maxHeight: 560, overflowY: 'auto' }}>
+          <div style={{ maxHeight: 600, overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
                 <tr>
@@ -245,10 +294,11 @@ export default function Conciliacao() {
                   <th style={s.th}>Doc</th>
                   <th style={s.th}>Categoria</th>
                   <th style={s.th}>Subcategoria</th>
-                  {isRateio && <th style={s.th}>Educ %</th>}
-                  {isRateio && <th style={s.th}>Social %</th>}
-                  {isRateio && <th style={s.th}>Saúde %</th>}
+                  {isRateio && <th style={s.th}>Educ%</th>}
+                  {isRateio && <th style={s.th}>Social%</th>}
+                  {isRateio && <th style={s.th}>Saúde%</th>}
                   {isEmenda && <th style={s.th}>Plano de trabalho</th>}
+                  <th style={s.th}>Dados compl.</th>
                   <th style={s.th}>Valor</th>
                   <th style={s.th}>Situação</th>
                   <th style={s.th}></th>
@@ -256,105 +306,216 @@ export default function Conciliacao() {
               </thead>
               <tbody>
                 {movsFiltradas.length === 0 && (
-                  <tr><td colSpan={12} style={{ padding: '2rem', textAlign: 'center', color: '#888780' }}>Nenhum item.</td></tr>
+                  <tr><td colSpan={13} style={{ padding: '2rem', textAlign: 'center', color: '#888780' }}>Nenhum item.</td></tr>
                 )}
                 {movsFiltradas.map(m => {
                   const subcats = m.categoria_id ? subcatsDa(m.categoria_id) : []
                   const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0) + (parseFloat(m.prep_saude)||0)
-                  const prepOk = totalPrep === 100
+                  const prepOk = !isRateio || totalPrep === 100 || totalPrep === 0
+                  const temCompl = temDadosCompl(m)
+                  const isAberto = complementarAberto === m.id
+
                   return (
-                    <tr key={m.id} style={{ background: m.conciliado ? '#F2FAE8' : '#fff' }}>
-                      <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{new Date(m.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+                    <React.Fragment key={m.id}>
+                      <tr style={{ background: m.conciliado ? '#F2FAE8' : '#fff' }}>
+                        <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{new Date(m.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
 
-                      {/* Descrição expandível */}
-                      <td style={{ ...s.td, maxWidth: 180 }}>
-                        <div onClick={() => setDescExpandida(descExpandida === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
-                          {descExpandida === m.id ? (
-                            <div style={{ whiteSpace: 'normal', wordBreak: 'break-all', background: '#F8F7F2', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
-                              {m.descricao}
-                              <div style={{ marginTop: 4, fontSize: 10, color: VERDE }}>▲ recolher</div>
-                            </div>
-                          ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{m.descricao}</span>
-                              {m.descricao?.length > 25 && <span style={{ fontSize: 10, color: '#4A8FD4', flexShrink: 0 }}>▼</span>}
-                            </div>
-                          )}
-                        </div>
-                      </td>
+                        {/* Descrição expandível */}
+                        <td style={{ ...s.td, maxWidth: 160 }}>
+                          <div onClick={() => setDescExpandida(descExpandida === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
+                            {descExpandida === m.id ? (
+                              <div style={{ whiteSpace: 'normal', wordBreak: 'break-all', background: '#F8F7F2', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
+                                {m.descricao}
+                                <div style={{ marginTop: 4, fontSize: 10, color: VERDE }}>▲ recolher</div>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{m.descricao}</span>
+                                {m.descricao?.length > 20 && <span style={{ fontSize: 10, color: '#4A8FD4', flexShrink: 0 }}>▼</span>}
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
-                      <td style={s.td}>
-                        <span style={{ fontSize: 10, background: '#F1EFE8', color: '#5F5E5A', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace' }}>{m.doc}</span>
-                      </td>
+                        <td style={s.td}>
+                          <span style={{ fontSize: 10, background: '#F1EFE8', color: '#5F5E5A', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace' }}>{m.doc}</span>
+                        </td>
 
-                      <td style={{ ...s.td, minWidth: 150 }}>
-                        <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)} style={s.select}>
-                          <option value="">Selecione...</option>
-                          {categorias.filter(c => c.tipo === (m.tipo === 'entrada' ? 'entrada' : 'despesa')).map(c => (
-                            <option key={c.id} value={c.id}>{c.nome}</option>
-                          ))}
-                        </select>
-                      </td>
-
-                      <td style={{ ...s.td, minWidth: 130 }}>
-                        {subcats.length > 0 ? (
-                          <select value={m.subcategoria_id || ''} onChange={e => salvarSubcategoria(m.id, e.target.value)} style={s.select}>
+                        <td style={{ ...s.td, minWidth: 140 }}>
+                          <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)} style={s.select}>
                             <option value="">Selecione...</option>
-                            {subcats.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                          </select>
-                        ) : (
-                          <span style={{ fontSize: 11, color: '#B4B2A9' }}>{m.categoria_id ? '—' : '—'}</span>
-                        )}
-                      </td>
-
-                      {/* Preponderância — só Conta Principal */}
-                      {isRateio && (
-                        <>
-                          <td style={s.td}>
-                            <input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0"
-                              onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)}
-                              style={{ ...s.input, borderColor: !prepOk && totalPrep > 0 ? '#E8212A' : '#D3D1C7' }} />
-                          </td>
-                          <td style={s.td}>
-                            <input type="number" min="0" max="100" value={m.prep_social || ''} placeholder="0"
-                              onChange={e => salvarPreponderancia(m.id, 'prep_social', e.target.value)}
-                              style={{ ...s.input, borderColor: !prepOk && totalPrep > 0 ? '#E8212A' : '#D3D1C7' }} />
-                          </td>
-                          <td style={s.td}>
-                            <input type="number" min="0" max="100" value={m.prep_saude || ''} placeholder="0"
-                              onChange={e => salvarPreponderancia(m.id, 'prep_saude', e.target.value)}
-                              style={{ ...s.input, borderColor: !prepOk && totalPrep > 0 ? '#E8212A' : '#D3D1C7' }} />
-                          </td>
-                        </>
-                      )}
-
-                      {/* Plano de trabalho — só Emendas */}
-                      {isEmenda && (
-                        <td style={{ ...s.td, minWidth: 160 }}>
-                          <select value={m.plano_trabalho_id || ''} onChange={e => salvarPlanoTrabalho(m.id, e.target.value)} style={s.select}>
-                            <option value="">Selecione...</option>
-                            {planosDisponiveis.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                            {categorias.filter(c => c.tipo === (m.valor >= 0 ? 'entrada' : 'despesa')).map(c => (
+                              <option key={c.id} value={c.id}>{c.nome}</option>
+                            ))}
                           </select>
                         </td>
+
+                        <td style={{ ...s.td, minWidth: 120 }}>
+                          {subcats.length > 0 ? (
+                            <select value={m.subcategoria_id || ''} onChange={e => salvarSubcategoria(m.id, e.target.value)} style={s.select}>
+                              <option value="">Selecione...</option>
+                              {subcats.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                            </select>
+                          ) : (
+                            <span style={{ fontSize: 11, color: '#B4B2A9' }}>{m.categoria_id ? '—' : '—'}</span>
+                          )}
+                        </td>
+
+                        {/* Preponderância */}
+                        {isRateio && (
+                          <>
+                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
+                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_social || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_social', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
+                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_saude || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_saude', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
+                          </>
+                        )}
+
+                        {/* Plano de trabalho */}
+                        {isEmenda && (
+                          <td style={{ ...s.td, minWidth: 150 }}>
+                            <select value={m.plano_trabalho_id || ''} onChange={e => salvarPlanoTrabalho(m.id, e.target.value)} style={{ ...s.select, borderColor: isEmenda && m.valor < 0 && !m.plano_trabalho_id ? VERMELHO : '#D3D1C7' }}>
+                              <option value="">Selecione...</option>
+                              {planosDisponiveis.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                            </select>
+                          </td>
+                        )}
+
+                        {/* Dados complementares */}
+                        <td style={s.td}>
+                          <button onClick={() => isAberto ? setComplementarAberto(null) : abrirComplementar(m)}
+                            style={{ ...s.btn(temCompl ? '#EAF3DE' : '#F1EFE8', temCompl ? '#3B6D11' : '#5F5E5A'), fontSize: 10 }}>
+                            {temCompl ? '✓ Preenchido' : '+ Dados'}
+                          </button>
+                        </td>
+
+                        <td style={{ ...s.td, fontWeight: 500, color: m.valor >= 0 ? VERDE : VERMELHO, whiteSpace: 'nowrap' }}>
+                          {fmt(m.valor)}
+                        </td>
+
+                        <td style={s.td}>
+                          <span style={s.badge(m.conciliado ? '#EAF3DE' : '#FAEEDA', m.conciliado ? '#3B6D11' : '#854F0B')}>
+                            {m.conciliado ? '✓ OK' : 'Pendente'}
+                          </span>
+                        </td>
+
+                        <td style={s.td}>
+                          <button onClick={() => conciliarMov(m.id, !m.conciliado)}
+                            style={s.btn(m.conciliado ? '#F1EFE8' : VERDE, m.conciliado ? '#5F5E5A' : '#fff')}>
+                            {m.conciliado ? 'Desfazer' : 'OK ✓'}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* Painel de dados complementares */}
+                      {isAberto && (
+                        <tr>
+                          <td colSpan={13} style={{ padding: 0, borderBottom: '0.5px solid #E0DDD5' }}>
+                            <div style={{ background: '#F8F7F2', padding: '12px 16px', borderLeft: '3px solid #4A8FD4' }}>
+                              <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 10, color: '#4A8FD4' }}>
+                                Dados complementares — {m.descricao?.slice(0,50)}
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
+                                <div>
+                                  <label style={s.label}>Fornecedor / Pagador</label>
+                                  <input value={formCompl.fornecedor||''} onChange={e=>setFormCompl(f=>({...f,fornecedor:e.target.value}))} placeholder="Nome" style={s.inputCompl} />
+                                </div>
+                                <div>
+                                  <label style={s.label}>CPF / CNPJ</label>
+                                  <input value={formCompl.cpf_cnpj||''} onChange={e=>setFormCompl(f=>({...f,cpf_cnpj:e.target.value}))} placeholder="000.000.000-00" style={s.inputCompl} />
+                                </div>
+                                <div>
+                                  <label style={s.label}>Nº Nota / Recibo</label>
+                                  <input value={formCompl.num_nota||''} onChange={e=>setFormCompl(f=>({...f,num_nota:e.target.value}))} placeholder="NF 123" style={s.inputCompl} />
+                                </div>
+                                <div>
+                                  <label style={s.label}>Data do documento</label>
+                                  <input type="date" value={formCompl.data_documento||''} onChange={e=>setFormCompl(f=>({...f,data_documento:e.target.value}))} style={s.inputCompl} />
+                                </div>
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8, marginBottom: 8 }}>
+                                <div>
+                                  <label style={s.label}>Local do comprovante</label>
+                                  <input value={formCompl.local_comprovante||''} onChange={e=>setFormCompl(f=>({...f,local_comprovante:e.target.value}))} placeholder="Ex: Drive > Emendas 2026 > NF 123.pdf" style={s.inputCompl} />
+                                </div>
+                                <div>
+                                  <label style={s.label}>Link externo (opcional)</label>
+                                  <input value={formCompl.link_externo||''} onChange={e=>setFormCompl(f=>({...f,link_externo:e.target.value}))} placeholder="https://..." style={s.inputCompl} />
+                                </div>
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
+                                {m.valor >= 0 && (
+                                  <div>
+                                    <label style={s.label}>Tipo de receita</label>
+                                    <select value={formCompl.tipo_receita||''} onChange={e=>setFormCompl(f=>({...f,tipo_receita:e.target.value}))} style={s.inputCompl}>
+                                      <option value="">Selecione...</option>
+                                      {TIPOS_RECEITA.map(t=><option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                  </div>
+                                )}
+                                <div>
+                                  <label style={s.label}>Evento vinculado</label>
+                                  <select value={formCompl.evento_id||''} onChange={e=>setFormCompl(f=>({...f,evento_id:e.target.value}))} style={s.inputCompl}>
+                                    <option value="">Nenhum</option>
+                                    {eventos.map(ev=><option key={ev.id} value={ev.id}>{ev.nome}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label style={s.label}>Campanha vinculada</label>
+                                  <select value={formCompl.campanha_id||''} onChange={e=>setFormCompl(f=>({...f,campanha_id:e.target.value}))} style={s.inputCompl}>
+                                    <option value="">Nenhuma</option>
+                                    {campanhas.map(cp=><option key={cp.id} value={cp.id}>{cp.nome}</option>)}
+                                  </select>
+                                </div>
+                                <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingTop: 16 }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={formCompl.bem_permanente||false} onChange={e=>setFormCompl(f=>({...f,bem_permanente:e.target.checked}))} />
+                                    Bem permanente
+                                  </label>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={formCompl.despesa_rateada||false} onChange={e=>setFormCompl(f=>({...f,despesa_rateada:e.target.checked}))} />
+                                    Despesa rateada
+                                  </label>
+                                </div>
+                              </div>
+
+                              {formCompl.bem_permanente && (
+                                <div style={{ marginBottom: 8 }}>
+                                  <label style={s.label}>Local de guarda / uso do bem</label>
+                                  <input value={formCompl.local_guarda_bem||''} onChange={e=>setFormCompl(f=>({...f,local_guarda_bem:e.target.value}))} placeholder="Ex: Sala da diretoria" style={s.inputCompl} />
+                                </div>
+                              )}
+
+                              {formCompl.despesa_rateada && (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 8, marginBottom: 8 }}>
+                                  <div>
+                                    <label style={s.label}>% pago com este recurso</label>
+                                    <input type="number" min="0" max="100" value={formCompl.percentual_rateio||''} onChange={e=>setFormCompl(f=>({...f,percentual_rateio:e.target.value}))} placeholder="50" style={s.inputCompl} />
+                                  </div>
+                                  <div>
+                                    <label style={s.label}>Fonte do restante</label>
+                                    <input value={formCompl.fonte_restante||''} onChange={e=>setFormCompl(f=>({...f,fonte_restante:e.target.value}))} placeholder="Ex: Recursos próprios" style={s.inputCompl} />
+                                  </div>
+                                  <div>
+                                    <label style={s.label}>Justificativa do rateio</label>
+                                    <input value={formCompl.justificativa_rateio||''} onChange={e=>setFormCompl(f=>({...f,justificativa_rateio:e.target.value}))} placeholder="Motivo do rateio" style={s.inputCompl} />
+                                  </div>
+                                </div>
+                              )}
+
+                              <div style={{ marginBottom: 10 }}>
+                                <label style={s.label}>Observações de prestação de contas</label>
+                                <input value={formCompl.obs_prestacao||''} onChange={e=>setFormCompl(f=>({...f,obs_prestacao:e.target.value}))} placeholder="Observações para o relatório de prestação de contas" style={s.inputCompl} />
+                              </div>
+
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button onClick={() => salvarComplementar(m.id)} style={s.btn('#4A8FD4')}>Salvar dados complementares</button>
+                                <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-
-                      <td style={{ ...s.td, fontWeight: 500, color: m.valor >= 0 ? VERDE : VERMELHO, whiteSpace: 'nowrap' }}>
-                        {fmt(m.valor)}
-                      </td>
-
-                      <td style={s.td}>
-                        <span style={s.badge(m.conciliado ? '#EAF3DE' : '#FAEEDA', m.conciliado ? '#3B6D11' : '#854F0B')}>
-                          {m.conciliado ? '✓ OK' : 'Pendente'}
-                        </span>
-                      </td>
-
-                      <td style={s.td}>
-                        <button onClick={() => conciliarMov(m.id, !m.conciliado)}
-                          style={s.btn(m.conciliado ? '#F1EFE8' : VERDE, m.conciliado ? '#5F5E5A' : '#fff')}>
-                          {m.conciliado ? 'Desfazer' : 'OK ✓'}
-                        </button>
-                      </td>
-                    </tr>
+                    </React.Fragment>
                   )
                 })}
               </tbody>
