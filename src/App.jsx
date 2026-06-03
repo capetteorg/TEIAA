@@ -7,6 +7,7 @@ import Painel from './pages/Painel'
 import Lancamentos from './pages/Lancamentos'
 import Importar from './pages/Importar'
 import Conciliacao from './pages/Conciliacao'
+import ConciliacaoInteligente from './pages/ConciliacaoInteligente'
 import Entradas from './pages/Entradas'
 import Aplicacoes from './pages/Aplicacoes'
 import Relatorios from './pages/Relatorios'
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Entradas /></RotaProtegida>} />
         <Route path="importar" element={<RotaProtegida perfisPermitidos={['admin']}><Importar /></RotaProtegida>} />
         <Route path="conciliacao" element={<RotaProtegida perfisPermitidos={['admin']}><Conciliacao /></RotaProtegida>} />
+        <Route path="conciliacao-inteligente" element={<RotaProtegida perfisPermitidos={['admin']}><ConciliacaoInteligente /></RotaProtegida>} />
         <Route path="aplicacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Aplicacoes /></RotaProtegida>} />
         <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><Relatorios /></RotaProtegida>} />
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
@@ -56,14 +58,14 @@ export default function App() {
         <Route path="campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><Campanhas /></RotaProtegida>} />
         <Route path="funcionarios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><Funcionarios /></RotaProtegida>} />
         <Route path="cobrancas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Cobrancas /></RotaProtegida>} />
-        <Route path="fechamento" element={<RotaProtegida perfisPermitidos={['admin']}><Fechamento /></RotaProtegida>} />
-        <Route path="backup" element={<RotaProtegida perfisPermitidos={['admin']}><Backup /></RotaProtegida>} />
         <Route path="categorias" element={<RotaProtegida perfisPermitidos={['admin']}><Categorias /></RotaProtegida>} />
         <Route path="contas" element={<RotaProtegida perfisPermitidos={['admin']}><Contas /></RotaProtegida>} />
         <Route path="usuarios" element={<RotaProtegida perfisPermitidos={['admin']}><Usuarios /></RotaProtegida>} />
         <Route path="classificacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Classificacoes /></RotaProtegida>} />
         <Route path="configuracoes" element={<RotaProtegida perfisPermitidos={['admin']}><Configuracoes /></RotaProtegida>} />
         <Route path="plano-trabalho" element={<RotaProtegida perfisPermitidos={['admin']}><PlanoTrabalho /></RotaProtegida>} />
+        <Route path="fechamento" element={<RotaProtegida perfisPermitidos={['admin']}><Fechamento /></RotaProtegida>} />
+        <Route path="backup" element={<RotaProtegida perfisPermitidos={['admin']}><Backup /></RotaProtegida>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/painel" replace />} />
