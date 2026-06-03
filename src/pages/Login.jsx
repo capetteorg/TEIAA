@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 
+const LOGO_LETRAS = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']]
+
 export default function Login() {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
@@ -19,13 +21,22 @@ export default function Login() {
   return (
     <div style={{minHeight:'100vh',background:'#F8F7F2',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'}}>
       <div style={{background:'#fff',borderRadius:14,border:'0.5px solid #E0DDD5',padding:'2rem',width:'100%',maxWidth:380}}>
+
         {/* Logo */}
-        <div style={{display:'flex',gap:3,alignItems:'center',marginBottom:6}}>
-          {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']].map(([l,c])=>(
-            <span key={l+c} style={{fontSize:22,fontWeight:500,color:c,lineHeight:1}}>{l}</span>
-          ))}
+        <div style={{textAlign:'center',marginBottom:6}}>
+          <img src="/logo.png" alt="CAPETTE"
+            style={{height:60,width:'auto',objectFit:'contain',maxWidth:200,display:'block',margin:'0 auto'}}
+            onError={e => {
+              e.target.style.display = 'none'
+              document.getElementById('login-logo-texto').style.display = 'flex'
+            }} />
+          <div id="login-logo-texto" style={{display:'none',gap:3,alignItems:'center',justifyContent:'center'}}>
+            {LOGO_LETRAS.map(([l,c]) => (
+              <span key={l+c} style={{fontSize:22,fontWeight:500,color:c,lineHeight:1}}>{l}</span>
+            ))}
+          </div>
         </div>
-        <div style={{fontSize:11,color:'#888780',marginBottom:'1.75rem'}}>Sistema financeiro · Controle interno</div>
+        <div style={{fontSize:11,color:'#888780',marginBottom:'1.75rem',textAlign:'center'}}>Sistema financeiro · Controle interno</div>
 
         <form onSubmit={handleSubmit}>
           <div style={{marginBottom:12}}>
