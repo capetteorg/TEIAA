@@ -41,11 +41,12 @@ export default function Conciliacao() {
   async function abrirExtrato(ext) {
     setLoading(true)
     setExtratoSel(ext)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome), evento:eventos(nome), campanha:campanhas(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome)')
       .eq('extrato_id', ext.id)
       .order('data')
+    if (error) console.error('Erro ao buscar movimentações:', error)
     setMovs(data || [])
     setLoading(false)
   }
