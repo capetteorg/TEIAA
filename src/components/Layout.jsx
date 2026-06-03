@@ -8,17 +8,21 @@ function NavItem({ to, icon, label, visivel = true }) {
   if (!visivel) return null
   return (
     <NavLink to={to} style={({isActive})=>({
-      display:'flex',alignItems:'center',gap:9,padding:'8px 1.25rem',
-      fontSize:13,color:isActive?'#2C2C2A':'#5F5E5A',
+      display:'flex',alignItems:'center',gap:9,padding:'7px 1.25rem',
+      fontSize:12.5,color:isActive?'#2C2C2A':'#5F5E5A',
       background:isActive?'#F8F7F2':'transparent',
       fontWeight:isActive?500:'normal',
       borderRight:isActive?'2px solid #6BBF2B':'2px solid transparent',
       textDecoration:'none',transition:'background .15s',
     })}>
-      <i className={`ti ti-${icon}`} style={{fontSize:15}} />
+      <i className={`ti ti-${icon}`} style={{fontSize:14}} />
       {label}
     </NavLink>
   )
+}
+
+function NavSecao({ label }) {
+  return <div style={{fontSize:9.5,color:'#B4B2A9',padding:'10px 1.25rem 3px',textTransform:'uppercase',letterSpacing:'.08em'}}>{label}</div>
 }
 
 export default function Layout() {
@@ -42,7 +46,7 @@ export default function Layout() {
         </div>
 
         <div style={{overflowY:'auto',flex:1}}>
-          <div style={{fontSize:10,color:'#888780',padding:'10px 1.25rem 3px',textTransform:'uppercase',letterSpacing:'.08em'}}>Principal</div>
+          <NavSecao label="Principal" />
           <NavItem to="/painel"        icon="layout-dashboard"  label="Painel" />
           <NavItem to="/despesas"      icon="receipt"           label="Lançar despesa"    visivel={p==='admin'||p==='operacional'} />
           <NavItem to="/entradas"      icon="arrow-bar-to-down" label="Lançar entrada"    visivel={p==='admin'||p==='operacional'} />
@@ -51,7 +55,12 @@ export default function Layout() {
           <NavItem to="/aplicacoes"    icon="chart-line"        label="Aplicações"        visivel={p==='admin'} />
           <NavItem to="/relatorios"    icon="file-text"         label="Relatórios"        visivel={p==='admin'||p==='diretoria'} />
 
-          <div style={{fontSize:10,color:'#888780',padding:'10px 1.25rem 3px',textTransform:'uppercase',letterSpacing:'.08em'}}>Configurações</div>
+          <NavSecao label="Gestão" />
+          <NavItem to="/eventos"       icon="calendar-event"    label="Eventos"           visivel={p==='admin'} />
+          <NavItem to="/campanhas"     icon="target"            label="Campanhas"         visivel={p==='admin'} />
+          <NavItem to="/funcionarios"  icon="id-badge-2"        label="Funcionários"      visivel={p==='admin'||p==='diretoria'} />
+
+          <NavSecao label="Configurações" />
           <NavItem to="/contas"          icon="building-bank"   label="Contas"            visivel={p==='admin'} />
           <NavItem to="/categorias"      icon="tag"             label="Categorias"        visivel={p==='admin'} />
           <NavItem to="/plano-trabalho"  icon="list-details"    label="Plano de trabalho" visivel={p==='admin'} />
