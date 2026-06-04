@@ -4,7 +4,18 @@ import { useAuth } from '../hooks/useAuth'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 
-const CARGOS = ['Presidente', 'Vice-presidente', 'Tesoureiro', 'Secretário', 'Conselho Fiscal', 'Outro cargo']
+const CARGOS = [
+  'Presidente', 'Vice-presidente',
+  '1º Tesoureiro', '2º Tesoureiro',
+  '1º Secretário', '2º Secretário',
+  '1º Membro Conselho Fiscal', '2º Membro Conselho Fiscal', 'Suplente Conselho Fiscal',
+  'Presidente Conselho Deliberativo', 'Vice-Presidente Conselho Deliberativo',
+  '1º Membro Conselho Deliberativo', '2º Membro Conselho Deliberativo', '3º Membro Conselho Deliberativo',
+  'Suplente Conselho Deliberativo', '2º Suplente Conselho Deliberativo', '3º Suplente Conselho Deliberativo',
+  '1º Membro Conselho Diretivo', '2º Membro Conselho Diretivo', '3º Membro Conselho Diretivo',
+  'Diretora Pedagógica', 'Gerente Administrativo', 'Assistente Social',
+  'Outro cargo',
+]
 
 const FORM_INST_VAZIO = {
   nome_completo: '', nome_fantasia: '', cnpj: '', endereco: '', cep: '',
