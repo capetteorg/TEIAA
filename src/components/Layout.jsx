@@ -118,7 +118,8 @@ export default function Layout() {
         <NavSecao label="Configurações" />
         <NavItem to="/contas"                  icon="building-bank"     label="Contas"                  visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/categorias"              icon="tag"               label="Categorias"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/plano-trabalho"          icon="list-details"      label="Planos de Trabalho"      visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/plano-trabalho"          icon="list-details"      label="Plano de trabalho"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/planos-execucao"         icon="clipboard-check"   label="Planos / Execução"       visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/classificacoes"          icon="list-check"        label="Classificações"          visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/usuarios"                icon="users"             label="Usuários"                visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/fechamento"              icon="lock"              label="Fechamento"              visivel={p==='admin'} onClick={fecharMenu} />
