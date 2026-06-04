@@ -4,8 +4,18 @@ import { useAuth } from '../hooks/useAuth'
 
 const LOGO = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']]
 
-function NavItem({ to, icon, label, visivel = true }) {
+function NavItem({ to, icon, label, visivel = true, externo = false }) {
   if (!visivel) return null
+  if (externo) return (
+    <a href={to} target="_blank" rel="noopener noreferrer" style={{
+      display:'flex',alignItems:'center',gap:9,padding:'7px 1.25rem',
+      fontSize:12.5,color:'#5F5E5A',background:'transparent',
+      borderRight:'2px solid transparent',textDecoration:'none',
+    }}>
+      <i className={`ti ti-${icon}`} style={{fontSize:14}} />
+      {label}
+    </a>
+  )
   return (
     <NavLink to={to} style={({isActive})=>({
       display:'flex',alignItems:'center',gap:9,padding:'7px 1.25rem',
@@ -50,24 +60,32 @@ export default function Layout() {
         </div>
 
         <div style={{overflowY:'auto',flex:1}}>
+
           <NavSecao label="Principal" />
           <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel" />
+
+          <NavSecao label="Financeiro" />
           <NavItem to="/despesas"                icon="receipt"           label="Lançar despesa"          visivel={p==='admin'||p==='operacional'} />
           <NavItem to="/entradas"                icon="arrow-bar-to-down" label="Lançar entrada"          visivel={p==='admin'||p==='operacional'} />
           <NavItem to="/importar"                icon="upload"            label="Importar extrato"        visivel={p==='admin'} />
           <NavItem to="/conciliacao"             icon="checks"            label="Conciliação"             visivel={p==='admin'} />
           <NavItem to="/conciliacao-inteligente" icon="wand"              label="Concil. Inteligente"     visivel={p==='admin'} />
           <NavItem to="/aplicacoes"              icon="chart-line"        label="Aplicações"              visivel={p==='admin'} />
+
+          <NavSecao label="Relatórios e Prestação" />
           <NavItem to="/relatorios"              icon="file-text"         label="Relatórios"              visivel={p==='admin'||p==='diretoria'} />
           <NavItem to="/prestacao-contas"        icon="file-certificate"  label="Prestação Emenda/Edital" visivel={p==='admin'} />
-          <NavItem to="/instituicao"              icon="building"          label="Cadastro Instituição"   visivel={p==='admin'} />
-          <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} />
+          <NavItem to="/transparencia"           icon="world"             label="Transparência pública"   visivel={p==='admin'} externo={true} />
 
           <NavSecao label="Gestão" />
           <NavItem to="/eventos"                 icon="calendar-event"    label="Eventos"                 visivel={p==='admin'} />
           <NavItem to="/campanhas"               icon="target"            label="Campanhas"               visivel={p==='admin'} />
           <NavItem to="/funcionarios"            icon="id-badge-2"        label="Funcionários"            visivel={p==='admin'||p==='diretoria'} />
           <NavItem to="/cobrancas"               icon="receipt-2"         label="Cobranças"               visivel={p==='admin'||p==='operacional'} />
+
+          <NavSecao label="Institucional" />
+          <NavItem to="/instituicao"             icon="building"          label="Cadastro Instituição"    visivel={p==='admin'} />
+          <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} />
 
           <NavSecao label="Configurações" />
           <NavItem to="/contas"                  icon="building-bank"     label="Contas"                  visivel={p==='admin'} />
@@ -78,6 +96,7 @@ export default function Layout() {
           <NavItem to="/fechamento"              icon="lock"              label="Fechamento"              visivel={p==='admin'} />
           <NavItem to="/backup"                  icon="database-export"   label="Backup"                  visivel={p==='admin'} />
           <NavItem to="/configuracoes"           icon="settings"          label="Dados de teste"          visivel={p==='admin'} />
+
         </div>
 
         <div style={{padding:'.75rem 1.25rem',borderTop:'0.5px solid #E0DDD5'}}>
