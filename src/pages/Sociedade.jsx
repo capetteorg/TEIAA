@@ -174,8 +174,13 @@ export default function Sociedade() {
             </div>
           )}
 
-          <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '.75rem 1rem', fontSize: 11, color: '#888780', lineHeight: 1.6 }}>
-            <strong>Nota de transparência:</strong> Esta página apresenta um resumo das movimentações financeiras da Casa do Pequeno Trabalhador de Teresópolis — Capette, atualizado mensalmente após a conciliação bancária. CNPJ: 00.000.000/0001-00 · Teresópolis-RJ.
+          <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '.75rem 1rem', fontSize: 11, color: '#888780', lineHeight: 1.6, marginBottom: 10 }}>
+            <strong>Nota de transparência:</strong> Esta página apresenta um resumo das movimentações financeiras da Casa do Pequeno Trabalhador de Teresópolis — CAPETTE, atualizado mensalmente após a conciliação bancária. CNPJ: 29.213.717/0001-01 · Teresópolis-RJ.
+          </div>
+
+          <div style={{ background: '#EAF3DE', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.75rem 1rem', fontSize: 10, color: '#3B6D11', lineHeight: 1.8 }}>
+            <strong style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>Base legal da transparência</strong>
+            As informações são publicadas para fins de transparência institucional, controle social e prestação de contas, observadas a <strong>Lei nº 13.019/2014 — MROSC</strong>, a <strong>Lei Complementar nº 187/2021 — CEBAS</strong>, o <strong>Decreto nº 11.791/2023</strong>, a <strong>Portaria MDS nº 952/2023</strong> e a proteção de dados pessoais.
           </div>
         </>
       )}

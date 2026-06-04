@@ -141,23 +141,27 @@ export default function Login() {
             {/* Divisor */}
             <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.08)', marginBottom: '1rem' }} />
 
-            <div style={{ fontSize: 12, color: '#5F5E5A', lineHeight: 1.7, marginBottom: '1.5rem' }}>
-              Consulte receitas, despesas, relatórios e prestações de contas da CAPETTE.
-              Todas as informações são atualizadas pela equipe interna.
+            <div style={{ fontSize: 12, color: '#5F5E5A', lineHeight: 1.7, marginBottom: '1rem' }}>
+              Consulte receitas, despesas, relatórios e prestações de contas da CAPETTE, em conformidade com a legislação aplicável às Organizações da Sociedade Civil e entidades beneficentes.
             </div>
 
             {/* Destaques */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
               {[
                 { icon: '📊', texto: 'Receitas e despesas por período' },
-                { icon: '📄', texto: 'Relatórios de prestação de contas' },
-                { icon: '🔍', texto: 'Consulta livre, sem cadastro' },
+                { icon: '📄', texto: 'Relatórios e documentos de prestação de contas' },
+                { icon: '🔍', texto: 'Consulta pública, livre e sem cadastro' },
               ].map(item => (
                 <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#3B6D11' }}>
                   <span style={{ fontSize: 14 }}>{item.icon}</span>
                   {item.texto}
                 </div>
               ))}
+            </div>
+
+            {/* Base legal resumida */}
+            <div style={{ fontSize: 10, color: '#888780', lineHeight: 1.6, padding: '8px 10px', background: 'rgba(255,255,255,0.5)', borderRadius: 8, marginBottom: '1rem' }}>
+              Lei nº 13.019/2014 — MROSC · LC nº 187/2021 — CEBAS · Decreto nº 11.791/2023 · Portaria MDS nº 952/2023, quando aplicáveis.
             </div>
           </div>
 
