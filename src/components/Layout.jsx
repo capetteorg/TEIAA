@@ -40,10 +40,7 @@ export default function Layout() {
       <div style={{width:215,background:'#fff',borderRight:'0.5px solid #E0DDD5',display:'flex',flexDirection:'column',flexShrink:0}}>
         <div style={{padding:'.75rem 1.25rem',borderBottom:'0.5px solid #E0DDD5',display:'flex',alignItems:'center',gap:8}}>
           <img src="/logo.png" alt="CAPETTE" style={{height:40,width:'auto',objectFit:'contain',maxWidth:160}}
-            onError={e => {
-              e.target.style.display='none'
-              e.target.nextSibling.style.display='flex'
-            }} />
+            onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
           <div style={{display:'none',flexDirection:'column',gap:2}}>
             <div style={{display:'flex',gap:2,alignItems:'center'}}>
               {LOGO.map(([l,c])=><span key={l+c} style={{fontSize:17,fontWeight:500,color:c,lineHeight:1}}>{l}</span>)}
@@ -54,31 +51,32 @@ export default function Layout() {
 
         <div style={{overflowY:'auto',flex:1}}>
           <NavSecao label="Principal" />
-          <NavItem to="/painel"                   icon="layout-dashboard"   label="Painel" />
-          <NavItem to="/despesas"                 icon="receipt"            label="Lançar despesa"          visivel={p==='admin'||p==='operacional'} />
-          <NavItem to="/entradas"                 icon="arrow-bar-to-down"  label="Lançar entrada"          visivel={p==='admin'||p==='operacional'} />
-          <NavItem to="/importar"                 icon="upload"             label="Importar extrato"        visivel={p==='admin'} />
-          <NavItem to="/conciliacao"              icon="checks"             label="Conciliação"             visivel={p==='admin'} />
-          <NavItem to="/conciliacao-inteligente"  icon="wand"               label="Concil. Inteligente"     visivel={p==='admin'} />
-          <NavItem to="/aplicacoes"               icon="chart-line"         label="Aplicações"              visivel={p==='admin'} />
-          <NavItem to="/relatorios"               icon="file-text"          label="Relatórios"              visivel={p==='admin'||p==='diretoria'} />
-          <NavItem to="/prestacao-contas"         icon="file-certificate"   label="Prestação Emenda/Edital" visivel={p==='admin'} />
+          <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel" />
+          <NavItem to="/despesas"                icon="receipt"           label="Lançar despesa"          visivel={p==='admin'||p==='operacional'} />
+          <NavItem to="/entradas"                icon="arrow-bar-to-down" label="Lançar entrada"          visivel={p==='admin'||p==='operacional'} />
+          <NavItem to="/importar"                icon="upload"            label="Importar extrato"        visivel={p==='admin'} />
+          <NavItem to="/conciliacao"             icon="checks"            label="Conciliação"             visivel={p==='admin'} />
+          <NavItem to="/conciliacao-inteligente" icon="wand"              label="Concil. Inteligente"     visivel={p==='admin'} />
+          <NavItem to="/aplicacoes"              icon="chart-line"        label="Aplicações"              visivel={p==='admin'} />
+          <NavItem to="/relatorios"              icon="file-text"         label="Relatórios"              visivel={p==='admin'||p==='diretoria'} />
+          <NavItem to="/prestacao-contas"        icon="file-certificate"  label="Prestação Emenda/Edital" visivel={p==='admin'} />
+          <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} />
 
           <NavSecao label="Gestão" />
-          <NavItem to="/eventos"                  icon="calendar-event"     label="Eventos"                 visivel={p==='admin'} />
-          <NavItem to="/campanhas"                icon="target"             label="Campanhas"               visivel={p==='admin'} />
-          <NavItem to="/funcionarios"             icon="id-badge-2"         label="Funcionários"            visivel={p==='admin'||p==='diretoria'} />
-          <NavItem to="/cobrancas"                icon="receipt-2"          label="Cobranças"               visivel={p==='admin'||p==='operacional'} />
+          <NavItem to="/eventos"                 icon="calendar-event"    label="Eventos"                 visivel={p==='admin'} />
+          <NavItem to="/campanhas"               icon="target"            label="Campanhas"               visivel={p==='admin'} />
+          <NavItem to="/funcionarios"            icon="id-badge-2"        label="Funcionários"            visivel={p==='admin'||p==='diretoria'} />
+          <NavItem to="/cobrancas"               icon="receipt-2"         label="Cobranças"               visivel={p==='admin'||p==='operacional'} />
 
           <NavSecao label="Configurações" />
-          <NavItem to="/contas"                   icon="building-bank"      label="Contas"                  visivel={p==='admin'} />
-          <NavItem to="/categorias"               icon="tag"                label="Categorias"              visivel={p==='admin'} />
-          <NavItem to="/plano-trabalho"           icon="list-details"       label="Plano de trabalho"       visivel={p==='admin'} />
-          <NavItem to="/classificacoes"           icon="list-check"         label="Classificações"          visivel={p==='admin'} />
-          <NavItem to="/usuarios"                 icon="users"              label="Usuários"                visivel={p==='admin'} />
-          <NavItem to="/fechamento"               icon="lock"               label="Fechamento"              visivel={p==='admin'} />
-          <NavItem to="/backup"                   icon="database-export"    label="Backup"                  visivel={p==='admin'} />
-          <NavItem to="/configuracoes"            icon="settings"           label="Dados de teste"          visivel={p==='admin'} />
+          <NavItem to="/contas"                  icon="building-bank"     label="Contas"                  visivel={p==='admin'} />
+          <NavItem to="/categorias"              icon="tag"               label="Categorias"              visivel={p==='admin'} />
+          <NavItem to="/plano-trabalho"          icon="list-details"      label="Plano de trabalho"       visivel={p==='admin'} />
+          <NavItem to="/classificacoes"          icon="list-check"        label="Classificações"          visivel={p==='admin'} />
+          <NavItem to="/usuarios"                icon="users"             label="Usuários"                visivel={p==='admin'} />
+          <NavItem to="/fechamento"              icon="lock"              label="Fechamento"              visivel={p==='admin'} />
+          <NavItem to="/backup"                  icon="database-export"   label="Backup"                  visivel={p==='admin'} />
+          <NavItem to="/configuracoes"           icon="settings"          label="Dados de teste"          visivel={p==='admin'} />
         </div>
 
         <div style={{padding:'.75rem 1.25rem',borderTop:'0.5px solid #E0DDD5'}}>
