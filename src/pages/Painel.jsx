@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { Bar, Doughnut } from 'react-chartjs-2'
@@ -8,6 +9,12 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 export default function Painel() {
   const { perfil } = useAuth()
   const p = perfil?.perfil
+  const navigate = useNavigate()
+
+  // Diretoria vai para painel próprio
+  useEffect(() => {
+    if (p === 'diretoria') navigate('/painel-diretoria', { replace: true })
+  }, [p])
   const [dados, setDados] = useState({ entradas: 0, saidas: 0, saldo: 0 })
   const [historico, setHistorico] = useState([])
   const [porCategoria, setPorCategoria] = useState({ entradas: [], saidas: [] })

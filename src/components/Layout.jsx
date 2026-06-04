@@ -62,7 +62,8 @@ export default function Layout() {
         <div style={{overflowY:'auto',flex:1}}>
 
           <NavSecao label="Principal" />
-          <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel" />
+          <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel"                  visivel={p==='admin'||p==='operacional'} />
+          <NavItem to="/painel-diretoria"        icon="layout-dashboard"  label="Acompanhamento"          visivel={p==='diretoria'} />
 
           <NavSecao label="Financeiro" />
           <NavItem to="/despesas"                icon="receipt"           label="Lançar despesa"          visivel={p==='admin'||p==='operacional'} />

@@ -26,6 +26,7 @@ import Funcionarios from './pages/Funcionarios'
 import Cobrancas from './pages/Cobrancas'
 import PrestacaoContas from './pages/PrestacaoContas'
 import Backup from './pages/Backup'
+import PainelDiretoria from './pages/PainelDiretoria'
 import Fechamento from './pages/Fechamento'
 
 function RotaProtegida({ children, perfisPermitidos }) {
@@ -48,6 +49,7 @@ export default function App() {
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="painel" element={<Painel />} />
+        <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="despesas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Lancamentos tipo="despesa" /></RotaProtegida>} />
         <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Entradas /></RotaProtegida>} />
         <Route path="importar" element={<RotaProtegida perfisPermitidos={['admin']}><Importar /></RotaProtegida>} />
