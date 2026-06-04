@@ -11,9 +11,10 @@ export default function Painel() {
   const p = perfil?.perfil
   const navigate = useNavigate()
 
-  // Diretoria vai para painel próprio
+  // Redireciona para painéis específicos
   useEffect(() => {
     if (p === 'diretoria') navigate('/painel-diretoria', { replace: true })
+    if (p === 'admin') navigate('/painel-admin', { replace: true })
   }, [p])
   const [dados, setDados] = useState({ entradas: 0, saidas: 0, saldo: 0 })
   const [historico, setHistorico] = useState([])

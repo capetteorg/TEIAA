@@ -27,6 +27,9 @@ import Cobrancas from './pages/Cobrancas'
 import PrestacaoContas from './pages/PrestacaoContas'
 import Backup from './pages/Backup'
 import PainelDiretoria from './pages/PainelDiretoria'
+import PainelAdmin from './pages/PainelAdmin'
+import Parcerias from './pages/Parcerias'
+import ParceriaDetalhe from './pages/ParceriaDetalhe'
 import Fechamento from './pages/Fechamento'
 
 function RotaProtegida({ children, perfisPermitidos }) {
@@ -49,6 +52,10 @@ export default function App() {
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="painel" element={<Painel />} />
+        <Route path="painel-admin" element={<RotaProtegida perfisPermitidos={['admin']}><PainelAdmin /></RotaProtegida>} />
+        <Route path="parcerias" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
+        <Route path="parcerias/:id" element={<RotaProtegida perfisPermitidos={['admin']}><ParceriaDetalhe /></RotaProtegida>} />
+        <Route path="parcerias/nova" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
         <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="despesas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Lancamentos tipo="despesa" /></RotaProtegida>} />
         <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Entradas /></RotaProtegida>} />

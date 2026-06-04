@@ -82,7 +82,8 @@ export default function Layout() {
       {/* Itens do menu */}
       <div style={{overflowY:'auto',flex:1}}>
         <NavSecao label="Principal" />
-        <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel"                  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/painel-admin"            icon="layout-dashboard"  label="Painel"                  visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel"                  visivel={p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/painel-diretoria"        icon="layout-dashboard"  label="Acompanhamento"          visivel={p==='diretoria'} onClick={fecharMenu} />
 
         <NavSecao label="Financeiro" />
@@ -106,6 +107,7 @@ export default function Layout() {
 
         <NavSecao label="Institucional" />
         <NavItem to="/instituicao"             icon="building"          label="Cadastro Instituição"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/parcerias"               icon="file-certificate"  label="Parcerias / Emendas"     visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} onClick={fecharMenu} />
 
         <NavSecao label="Configurações" />
