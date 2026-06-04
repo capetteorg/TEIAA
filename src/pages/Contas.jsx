@@ -35,6 +35,7 @@ export default function Contas() {
   const [msg, setMsg] = useState('')
   const [expandida, setExpandida] = useState(null)
   const [editando, setEditando] = useState(null)
+  const [presidente, setPresidente] = useState(null)
 
   useEffect(() => { carregar(); carregarPresidente() }, [])
 

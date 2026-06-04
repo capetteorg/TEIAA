@@ -49,14 +49,28 @@ export default function Sociedade() {
     setResumo({ entMes, saiMes, entAno, saiAno, saldoGeral })
 
     // Movimentações para as abas
+    // Busca extratos com contas para filtrar por tipo
+    const { data: extratosList } = await supabase
+      .from('extratos')
+      .select('id, conta_id, conta:contas(id, nome, tipo_conta)')
+
+    const extratoMap = {}
+    ;(extratosList || []).forEach(e => { extratoMap[e.id] = e })
+
     const { data: movsCompletos } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, conta:contas(nome,tipo_conta))')
+      .select('*, categoria:categorias(nome,tipo)')
       .gte('data', ano + '-01-01')
       .lte('data', ano + '-12-31')
       .order('data', { ascending: false })
 
-    setMovs(movsCompletos || [])
+    // Enriquecer com dados do extrato/conta
+    const movsEnriquecidos = (movsCompletos || []).map(m => ({
+      ...m,
+      extrato: extratoMap[m.extrato_id] || null,
+    }))
+
+    setMovs(movsEnriquecidos)
     setLoading(false)
   }
 

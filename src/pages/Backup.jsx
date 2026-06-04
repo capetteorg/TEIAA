@@ -180,7 +180,25 @@ export default function Backup() {
       arquivos.push({ nome: 'aplicacoes.csv', conteudo: csvDe(aplicacoes, ['id','conta_id','descricao','valor','data','tipo']) })
       totalRegistros += (aplicacoes||[]).length
 
-      // 15. Fechamentos
+      // 15. Instituição
+      setProgresso('Exportando dados institucionais...')
+      const { data: instData } = await supabase.from('instituicao').select('*')
+      arquivos.push({ nome: 'instituicao.csv', conteudo: csvDe(instData, ['id','nome_completo','nome_fantasia','cnpj','endereco','cep','telefone','email','site','ano_fundacao','inscricao_municipal','inscricao_estadual','conselho_muni_assist','cmdca','cebas','utilidade_publica']) })
+      totalRegistros += (instData||[]).length
+
+      // 16. Diretoria
+      setProgresso('Exportando diretoria...')
+      const { data: diretoriaData } = await supabase.from('diretoria').select('*')
+      arquivos.push({ nome: 'diretoria.csv', conteudo: csvDe(diretoriaData, ['id','nome','cargo','cpf','rg','email','telefone','mandato_inicio','mandato_fim','ativo','observacoes']) })
+      totalRegistros += (diretoriaData||[]).length
+
+      // 17. Documentos
+      setProgresso('Exportando índice de documentos...')
+      const { data: docsData } = await supabase.from('documentos').select('id,titulo,descricao,categoria,arquivo_url,arquivo_nome,tamanho_kb,publico,criado_em')
+      arquivos.push({ nome: 'documentos_indice.csv', conteudo: csvDe(docsData, ['id','titulo','descricao','categoria','arquivo_url','arquivo_nome','tamanho_kb','publico','criado_em']) })
+      totalRegistros += (docsData||[]).length
+
+      // 18. Fechamentos
       setProgresso('Exportando fechamentos...')
       const { data: fechamentos } = await supabase.from('fechamentos').select('*')
       arquivos.push({ nome: 'fechamentos.csv', conteudo: csvDe(fechamentos, ['id','conta_id','competencia','tipo','status','fechado_em','reaberto_em','justificativa_reabertura']) })
@@ -212,6 +230,9 @@ ARQUIVOS INCLUÍDOS:
 - historico_cobrancas.csv
 - aplicacoes.csv
 - fechamentos.csv
+- instituicao.csv
+- diretoria.csv
+- documentos_indice.csv
 - LEIA-ME.txt
 
 INSTITUIÇÃO: Casa do Pequeno Trabalhador de Teresópolis
