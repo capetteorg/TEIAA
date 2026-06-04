@@ -102,6 +102,8 @@ export default function Layout() {
         <NavSecao label="Gestão" />
         <NavItem to="/eventos"                 icon="calendar-event"    label="Eventos"                 visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/campanhas"               icon="target"            label="Campanhas"               visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/projetos"               icon="folder"            label="Projetos"                visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/atendimentos"           icon="clipboard-list"    label="Atendimentos"            visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/equipe"                 icon="users-group"       label="Equipe"                  visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/funcionarios"            icon="id-badge-2"        label="Funcionários"            visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
         <NavItem to="/cobrancas"               icon="receipt-2"         label="Cobranças"               visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
