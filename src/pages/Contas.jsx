@@ -36,7 +36,22 @@ export default function Contas() {
   const [expandida, setExpandida] = useState(null)
   const [editando, setEditando] = useState(null)
 
-  useEffect(() => { carregar() }, [])
+  useEffect(() => { carregar(); carregarPresidente() }, [])
+
+  async function carregarPresidente() {
+    const hoje = new Date().toISOString().slice(0,10)
+    const { data } = await supabase
+      .from('diretoria')
+      .select('nome, cpf, rg, mandato_inicio, mandato_fim')
+      .eq('cargo', 'Presidente')
+      .eq('ativo', true)
+      .gte('mandato_fim', hoje)
+      .limit(1)
+      .single()
+    if (data) {
+      setPresidente(data)
+    }
+  }
 
   async function carregar() {
     const { data } = await supabase.from('contas').select('*').order('nome')
@@ -226,7 +241,23 @@ export default function Contas() {
               <div style={s.grid4}>
                 <div><label style={s.label}>Responsável financeiro</label><input value={form.responsavel_financeiro} onChange={e=>set('responsavel_financeiro',e.target.value)} placeholder="Nome" style={s.input} /></div>
                 <div><label style={s.label}>Responsável técnico</label><input value={form.responsavel_tecnico} onChange={e=>set('responsavel_tecnico',e.target.value)} placeholder="Nome" style={s.input} /></div>
-                <div><label style={s.label}>Representante legal</label><input value={form.representante_legal} onChange={e=>set('representante_legal',e.target.value)} placeholder="Nome" style={s.input} /></div>
+                <div>
+                  <label style={s.label}>Representante legal</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input value={form.representante_legal} onChange={e=>set('representante_legal',e.target.value)} placeholder="Nome" style={{ ...s.input, flex: 1 }} />
+                    {presidente && (
+                      <button type="button" onClick={() => set('representante_legal', presidente.nome)}
+                        style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #6BBF2B', background: '#F2FAE8', color: '#3B6D11', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        ↑ Presidente atual
+                      </button>
+                    )}
+                  </div>
+                  {presidente && form.representante_legal === presidente.nome && (
+                    <div style={{ fontSize: 10, color: '#888780', marginTop: 2 }}>
+                      CPF: {presidente.cpf || '—'} · RG: {presidente.rg || '—'} · Mandato até {presidente.mandato_fim ? new Date(presidente.mandato_fim+'T12:00:00').toLocaleDateString('pt-BR') : '—'}
+                    </div>
+                  )}
+                </div>
                 <div><label style={s.label}>Gestor interno</label><input value={form.gestor_interno} onChange={e=>set('gestor_interno',e.target.value)} placeholder="Nome" style={s.input} /></div>
               </div>
             </>

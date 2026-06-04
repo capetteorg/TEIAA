@@ -60,6 +60,7 @@ export default function Layout() {
           <NavItem to="/aplicacoes"              icon="chart-line"        label="Aplicações"              visivel={p==='admin'} />
           <NavItem to="/relatorios"              icon="file-text"         label="Relatórios"              visivel={p==='admin'||p==='diretoria'} />
           <NavItem to="/prestacao-contas"        icon="file-certificate"  label="Prestação Emenda/Edital" visivel={p==='admin'} />
+          <NavItem to="/instituicao"              icon="building"          label="Cadastro Instituição"   visivel={p==='admin'} />
           <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} />
 
           <NavSecao label="Gestão" />

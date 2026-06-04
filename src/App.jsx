@@ -13,6 +13,7 @@ import Aplicacoes from './pages/Aplicacoes'
 import Relatorios from './pages/Relatorios'
 import Sociedade from './pages/Sociedade'
 import Documentos from './pages/Documentos'
+import Instituicao from './pages/Instituicao'
 import Categorias from './pages/Categorias'
 import Contas from './pages/Contas'
 import Usuarios from './pages/Usuarios'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="aplicacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Aplicacoes /></RotaProtegida>} />
         <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><Relatorios /></RotaProtegida>} />
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
+        <Route path="instituicao" element={<RotaProtegida perfisPermitidos={['admin']}><Instituicao /></RotaProtegida>} />
         <Route path="documentos" element={<RotaProtegida perfisPermitidos={['admin']}><Documentos /></RotaProtegida>} />
         <Route path="eventos" element={<RotaProtegida perfisPermitidos={['admin']}><Eventos /></RotaProtegida>} />
         <Route path="campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><Campanhas /></RotaProtegida>} />
