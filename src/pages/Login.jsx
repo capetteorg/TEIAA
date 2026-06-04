@@ -124,13 +124,7 @@ export default function Login() {
         }}>
           {/* Ícone e título */}
           <div>
-            <div style={{
-              width: 56, height: 56, borderRadius: 14,
-              background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 26, marginBottom: '1rem', boxShadow: '0 2px 8px rgba(107,191,43,0.15)',
-            }}>
-              🌐
-            </div>
+  
             <div style={{ fontSize: 16, fontWeight: 600, color: '#2C2C2A', marginBottom: 4 }}>
               Transparência Pública
             </div>
