@@ -45,6 +45,7 @@ export default function Doacoes() {
   const [editando, setEditando] = useState(null)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [salvando, setSalvando] = useState(false)
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
   const [filtros, setFiltros] = useState({ dataInicio:'', dataFim:'', categoria:'', projeto_id:'', doador:'' })
@@ -164,6 +165,14 @@ export default function Doacoes() {
     th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
   }
+
+  async function excluir(id) {
+        await supabase.from('doacoes_itens').delete().eq('id', id)
+    await supabase.from('doacoes').delete().eq('id', id)
+    setConfirmandoExcluir(null)
+    carregar()
+  }
+
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
@@ -508,6 +517,27 @@ export default function Doacoes() {
           )}
         </div>
       )}
+      {/* Modal confirmação exclusão */}
+      {confirmandoExcluir && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
+            <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
+            <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+              <button onClick={() => excluir(confirmandoExcluir)}
+                style={{ padding:'8px 20px', borderRadius:8, border:'none', background:'#E8212A', color:'#fff', fontWeight:600, cursor:'pointer' }}>
+                Excluir
+              </button>
+              <button onClick={() => setConfirmandoExcluir(null)}
+                style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

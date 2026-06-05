@@ -216,6 +216,28 @@ export default function PlanosExecucao() {
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
   }
 
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+
+  async function excluir(item) {
+    const id = item?.id || item
+    await supabase.from('metas_plano').delete().eq('plano_id', id)
+    await supabase.from('atividades_previstas').delete().eq('plano_id', id)
+    await supabase.from('planos').delete().eq('id', id)
+    setConfirmandoExcluir(null)
+    carregar()
+  }
+
+  async function excluirMeta(id) {
+    await supabase.from('metas_plano').delete().eq('id', id)
+    carregarDetalhe(planoSel)
+  }
+
+  async function excluirAtividade(id) {
+    await supabase.from('atividades_previstas').delete().eq('id', id)
+    carregarDetalhe(planoSel)
+  }
+
+
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
@@ -525,6 +547,7 @@ export default function PlanosExecucao() {
                             <td style={s.td}><span style={s.badge(bg,cor)}>{m.status_meta}</span></td>
                             <td style={s.td}>
                               <button onClick={() => { setFormMeta({...m, quantidade_prevista:m.quantidade_prevista||'', quantidade_realizada:m.quantidade_realizada||''}); setEditandoMeta(m.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                            <button onClick={() => excluirMeta(m.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
                             </td>
                           </tr>
                         )
@@ -593,6 +616,7 @@ export default function PlanosExecucao() {
                         <td style={s.td}><span style={s.badge(a.status==='realizada'?'#EAF3DE':a.status==='cancelada'?'#FCEBEB':'#E6F1FB', a.status==='realizada'?'#3B6D11':a.status==='cancelada'?'#A32D2D':'#185FA5')}>{a.status}</span></td>
                         <td style={s.td}>
                           <button onClick={() => { setFormAtiv({...a, periodo_inicio:a.periodo_inicio||'', periodo_fim:a.periodo_fim||''}); setEditandoAtiv(a.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                            <button onClick={() => excluirAtividade(a.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
                         </td>
                       </tr>
                     ))}
@@ -707,6 +731,27 @@ export default function PlanosExecucao() {
           )}
         </div>
       )}
+      {/* Modal confirmação exclusão */}
+      {confirmandoExcluir && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
+            <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
+            <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+              <button onClick={() => excluir(confirmandoExcluir.id)}
+                style={{ padding:'8px 20px', borderRadius:8, border:'none', background:'#E8212A', color:'#fff', fontWeight:600, cursor:'pointer' }}>
+                Excluir
+              </button>
+              <button onClick={() => setConfirmandoExcluir(null)}
+                style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

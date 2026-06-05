@@ -126,6 +126,15 @@ export default function UsuariosAtendidos() {
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
   }
 
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+
+  async function excluir(id) {
+    await supabase.from('usuarios_atendidos').delete().eq('id', id)
+    setConfirmandoExcluir(null)
+    carregar()
+  }
+
+
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
@@ -402,6 +411,27 @@ export default function UsuariosAtendidos() {
           })()}
         </div>
       )}
+      {/* Modal confirmação exclusão */}
+      {confirmandoExcluir && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
+            <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
+            <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+              <button onClick={() => excluir(confirmandoExcluir)}
+                style={{ padding:'8px 20px', borderRadius:8, border:'none', background:'#E8212A', color:'#fff', fontWeight:600, cursor:'pointer' }}>
+                Excluir
+              </button>
+              <button onClick={() => setConfirmandoExcluir(null)}
+                style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
