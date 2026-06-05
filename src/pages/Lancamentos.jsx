@@ -1,20 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { lancamentos as dbLanc, contas as dbContas, rateios as dbRateios } from '../lib/db'
+import { supabase } from '../lib/supabase'
 import CatSelect from '../components/CatSelect'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
-const contaArea = { e1: 'Educação', e2: 'Assistência Social', e3: 'Saúde' }
+const SUBCATEGORIA_ABATIMENTO_ID = 53
 
 export default function Lancamentos({ tipo = 'despesa' }) {
   const isMobile = useIsMobile()
   const [lista, setLista] = useState([])
   const [contas, setContas] = useState([])
   const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '' })
+  const [subcategoriaId, setSubcategoriaId] = useState('')
+  const [subcategorias, setSubcategorias] = useState([])
   const [rateio, setRateio] = useState({ educ: '', social: '', saude: '' })
   const [contaSel, setContaSel] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [msg, setMsg] = useState('')
+
+  // Abatimento de dívida
+  const [dividasAbertas, setDividasAbertas] = useState([])
+  const [dividaId, setDividaId] = useState('')
+  const [valorAbatimento, setValorAbatimento] = useState('')
 
   // IA — Foto de nota
   const [modoIA, setModoIA] = useState(false)
@@ -25,6 +33,39 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const inputFotoRef = useRef(null)
 
   useEffect(() => { carregarContas(); carregarLista() }, [tipo])
+
+  // Quando categoria muda, carrega subcategorias
+  useEffect(() => {
+    setSubcategoriaId('')
+    if (form.categoria_id) {
+      supabase.from('subcategorias').select('*').eq('categoria_id', parseInt(form.categoria_id)).order('nome')
+        .then(({ data }) => setSubcategorias(data || []))
+    } else {
+      setSubcategorias([])
+    }
+  }, [form.categoria_id])
+
+  // Quando subcategoria é abatimento, carrega dívidas abertas
+  useEffect(() => {
+    if (parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID) {
+      supabase.from('dividas')
+        .select('*, funcionario:funcionarios(nome)')
+        .eq('status', 'aberta')
+        .order('data_origem', { ascending: false })
+        .then(({ data }) => setDividasAbertas(data || []))
+    } else {
+      setDividasAbertas([])
+      setDividaId('')
+      setValorAbatimento('')
+    }
+  }, [subcategoriaId])
+
+  // Sincroniza valor do abatimento com valor do lançamento
+  useEffect(() => {
+    if (parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID && form.valor) {
+      setValorAbatimento(form.valor)
+    }
+  }, [form.valor, subcategoriaId])
 
   async function carregarContas() {
     const { data } = await dbContas.listar()
@@ -43,7 +84,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
     setForm(f => ({ ...f, conta_id }))
   }
 
-  // Processar foto selecionada
   function onFotoChange(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -57,7 +97,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
     reader.readAsDataURL(file)
   }
 
-  // Analisar nota com Claude Vision
   async function analisarNota() {
     if (!fotoBase64) return
     setAnalisando(true)
@@ -72,13 +111,8 @@ export default function Lancamentos({ tipo = 'despesa' }) {
           messages: [{
             role: 'user',
             content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: 'image/jpeg', data: fotoBase64 }
-              },
-              {
-                type: 'text',
-                text: `Analise esta nota fiscal ou cupom fiscal e extraia as informações. Responda APENAS com um JSON válido, sem texto adicional, sem markdown, sem explicações:
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fotoBase64 } },
+              { type: 'text', text: `Analise esta nota fiscal ou cupom fiscal e extraia as informações. Responda APENAS com um JSON válido, sem texto adicional, sem markdown, sem explicações:
 {
   "valor": "valor total em reais, apenas números e ponto decimal, ex: 45.90",
   "data": "data no formato YYYY-MM-DD, ex: 2026-06-05",
@@ -86,21 +120,15 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   "fornecedor": "nome do estabelecimento ou fornecedor",
   "nf": "número da nota ou cupom fiscal, se houver, caso contrário string vazia"
 }
-Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
-              }
+Se não conseguir identificar algum campo com certeza, deixe como string vazia.` }
             ]
           }]
         })
       })
-
       const data = await response.json()
       const texto = data.content?.[0]?.text || ''
-
-      // Tentar parsear o JSON
       const clean = texto.replace(/```json|```/g, '').trim()
       const resultado = JSON.parse(clean)
-
-      // Preencher formulário
       setForm(f => ({
         ...f,
         valor: resultado.valor || f.valor,
@@ -108,7 +136,6 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
         descricao: resultado.descricao || f.descricao,
         nf: resultado.nf || f.nf,
       }))
-
       setMsgIA(`✅ Dados extraídos! Confira e ajuste se necessário.${resultado.fornecedor ? ` Fornecedor: ${resultado.fornecedor}` : ''}`)
       setModoIA(false)
     } catch(e) {
@@ -120,13 +147,27 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
 
   const rateioTotal = (parseFloat(rateio.educ)||0) + (parseFloat(rateio.social)||0) + (parseFloat(rateio.saude)||0)
   const precisaRateio = contaSel?.preponderancia === 'rateio'
+  const isAbatimento = parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID
 
   async function salvar(e) {
     e.preventDefault()
     if (precisaRateio && rateioTotal !== 100) { setMsg('O rateio precisa somar 100%.'); return }
+    if (isAbatimento && !dividaId) { setMsg('Selecione a dívida a ser abatida.'); return }
+    if (isAbatimento && !valorAbatimento) { setMsg('Informe o valor do abatimento.'); return }
+
     setSalvando(true)
-    const { data: lanc, error } = await dbLanc.criar({ ...form, tipo, valor: parseFloat(form.valor), conciliado: false })
+
+    const dadosLanc = {
+      ...form,
+      tipo,
+      valor: parseFloat(form.valor),
+      conciliado: false,
+      subcategoria_id: subcategoriaId ? parseInt(subcategoriaId) : null,
+    }
+
+    const { data: lanc, error } = await dbLanc.criar(dadosLanc)
     if (error) { setMsg('Erro ao salvar: ' + error.message); setSalvando(false); return }
+
     if (precisaRateio && lanc) {
       const itens = [
         { lancamento_id: lanc.id, area: 'Educação',          percentual: parseFloat(rateio.educ)||0 },
@@ -135,13 +176,35 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
       ].filter(i => i.percentual > 0)
       await dbRateios.criar(itens)
     }
-    setMsg('✅ Lançamento salvo!')
+
+    // Se for abatimento de dívida, registra na tabela pagamentos_divida e atualiza saldo
+    if (isAbatimento && dividaId) {
+      const divida = dividasAbertas.find(d => String(d.id) === String(dividaId))
+      const valorAb = parseFloat(valorAbatimento)
+      await supabase.from('pagamentos_divida').insert({
+        divida_id: parseInt(dividaId),
+        valor: valorAb,
+        data_pagamento: form.data,
+        observacoes: `Lançamento financeiro: ${form.descricao}`,
+      })
+      if (divida) {
+        const novoValorPago = Number(divida.valor_pago || 0) + valorAb
+        const novoStatus = novoValorPago >= Number(divida.valor_original) ? 'quitada' : 'aberta'
+        await supabase.from('dividas').update({ valor_pago: novoValorPago, status: novoStatus }).eq('id', divida.id)
+      }
+    }
+
+    setMsg('✅ Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
     setForm(f => ({ ...f, nf: '', valor: '', descricao: '', categoria_id: '' }))
+    setSubcategoriaId('')
+    setSubcategorias([])
+    setDividaId('')
+    setValorAbatimento('')
     setRateio({ educ: '', social: '', saude: '' })
     setFotoBase64(null); setFotoPreview(null); setMsgIA('')
     carregarLista()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(''), 4000)
   }
 
   const v = parseFloat(form.valor) || 0
@@ -161,7 +224,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
         {tipo === 'despesa' ? 'Lançar despesa' : 'Lançar entrada'}
       </div>
 
-      {/* Botão de foto com IA — só para despesas */}
+      {/* Botão de foto com IA */}
       {tipo === 'despesa' && (
         <div style={{ ...s.card, borderColor: modoIA ? '#C0DD97' : '#E0DDD5', marginBottom:10 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: modoIA ? '1rem' : 0 }}>
@@ -174,13 +237,9 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
               {modoIA ? 'Cancelar' : 'Usar IA'}
             </button>
           </div>
-
           {modoIA && (
             <div>
-              {/* Área de upload/câmera */}
-              <input ref={inputFotoRef} type="file" accept="image/*" capture="environment"
-                onChange={onFotoChange} style={{ display:'none' }} />
-
+              <input ref={inputFotoRef} type="file" accept="image/*" capture="environment" onChange={onFotoChange} style={{ display:'none' }} />
               {!fotoPreview ? (
                 <div onClick={() => inputFotoRef.current?.click()}
                   style={{ border:`2px dashed ${VERDE}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F8FFF4' }}>
@@ -206,7 +265,6 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
                   </div>
                 </div>
               )}
-
               {msgIA && (
                 <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, background:msgIA.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgIA.includes('✅')?'#3B6D11':'#A32D2D' }}>
                   {msgIA}
@@ -217,7 +275,6 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
         </div>
       )}
 
-      {/* Formulário */}
       {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       <form onSubmit={salvar}>
@@ -257,10 +314,59 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
               style={s.input} />
           </div>
 
-          <div style={{ marginBottom:14 }}>
+          {/* Categoria */}
+          <div style={{ marginBottom: subcategorias.length > 0 ? 10 : 14 }}>
             <label style={s.label}>Categoria</label>
-            <CatSelect tipo={tipo} value={form.categoria_id} onChange={v=>setForm(f=>({...f,categoria_id:v}))} />
+            <CatSelect tipo={tipo} value={form.categoria_id} onChange={v => setForm(f => ({ ...f, categoria_id: v }))} />
           </div>
+
+          {/* Subcategoria — aparece quando categoria tem subcategorias */}
+          {subcategorias.length > 0 && (
+            <div style={{ marginBottom:14 }}>
+              <label style={s.label}>Subcategoria</label>
+              <select value={subcategoriaId} onChange={e => setSubcategoriaId(e.target.value)} style={s.input}>
+                <option value="">Selecione a subcategoria...</option>
+                {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+              </select>
+            </div>
+          )}
+
+          {/* Bloco de abatimento de dívida */}
+          {isAbatimento && (
+            <div style={{ background:'#FEF2F2', border:'0.5px solid #F7C1C1', borderRadius:10, padding:'12px 14px', marginBottom:14 }}>
+              <div style={{ fontSize:12, fontWeight:600, color:'#A32D2D', marginBottom:10 }}>
+                💳 Vincular ao abatimento de dívida
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:10 }}>
+                <div>
+                  <label style={s.label}>Dívida a ser abatida *</label>
+                  <select value={dividaId} onChange={e => setDividaId(e.target.value)} required style={s.input}>
+                    <option value="">Selecione a dívida...</option>
+                    {dividasAbertas.map(d => {
+                      const saldo = Number(d.valor_original||0) - Number(d.valor_pago||0)
+                      return (
+                        <option key={d.id} value={d.id}>
+                          {d.funcionario?.nome} — {d.descricao} (Saldo: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits:2 })})
+                        </option>
+                      )
+                    })}
+                  </select>
+                  {dividasAbertas.length === 0 && (
+                    <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>Nenhuma dívida aberta encontrada.</div>
+                  )}
+                </div>
+                <div>
+                  <label style={s.label}>Valor do abatimento (R$) *</label>
+                  <input type="number" step="0.01" value={valorAbatimento}
+                    onChange={e => setValorAbatimento(e.target.value)}
+                    style={{ ...s.input, color: VERMELHO, fontWeight:500 }} />
+                  <div style={{ fontSize:10, color:'#888780', marginTop:3 }}>
+                    Pode ser diferente do valor do lançamento (parcial)
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {precisaRateio && (
             <div style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:14 }}>
