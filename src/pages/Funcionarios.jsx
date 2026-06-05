@@ -8,7 +8,15 @@ const TIPOS_VINCULO = [
   { value: 'sem_vinculo', label: 'Sem vínculo', desc: 'Recibo simples ou declaração' },
 ]
 const FUNCOES = ['Administrativo','Assistente Social','Educador(a)','Coordenador(a)','Diretor(a)','Contador(a)','Auxiliar Administrativo','Auxiliar de Serviços Gerais','Psicólogo(a)','Nutricionista','Outro']
+const CONSELHOS = ['CRESS','CRP','CRN','CREFITO','CRC','OAB','CRM','CREA','Outro']
+const CARGAS = ['4h','6h','8h','Meio período','Sem carga horária fixa','Outro']
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
+
+const FORM_VAZIO = {
+  nome: '', funcao: '', tipo_vinculo: 'pj', cpf_cnpj: '', email: '', telefone: '',
+  data_admissao: '', status: 'ativo', observacoes: '',
+  carga_horaria: '', registro_profissional: '', conselho_profissional: '',
+}
 
 export default function Funcionarios() {
   const { perfil } = useAuth()
@@ -17,13 +25,14 @@ export default function Funcionarios() {
   const [dividas, setDividas] = useState([])
   const [pagamentos, setPagamentos] = useState([])
   const [tab, setTab] = useState('funcionarios')
-  const [form, setForm] = useState({ nome: '', funcao: '', tipo_vinculo: 'pj', cpf_cnpj: '', email: '', telefone: '', data_admissao: '', status: 'ativo', observacoes: '' })
+  const [form, setForm] = useState(FORM_VAZIO)
+  const [editando, setEditando] = useState(null)
+  const [mostrarForm, setMostrarForm] = useState(false)
   const [formDivida, setFormDivida] = useState({ funcionario_id: '', descricao: '', valor_original: '', data_origem: '', observacoes: '' })
   const [formPgto, setFormPgto] = useState({ divida_id: '', valor: '', data_pagamento: '', observacoes: '' })
   const [msg, setMsg] = useState('')
   const [msgD, setMsgD] = useState('')
   const [msgP, setMsgP] = useState('')
-  const [funcSel, setFuncSel] = useState(null)
 
   useEffect(() => { carregar() }, [])
 
@@ -38,12 +47,43 @@ export default function Funcionarios() {
 
   async function salvarFuncionario(e) {
     e.preventDefault()
-    const { error } = await supabase.from('funcionarios').insert(form)
+    const dados = {
+      nome: form.nome, funcao: form.funcao, tipo_vinculo: form.tipo_vinculo,
+      cpf_cnpj: form.cpf_cnpj, email: form.email, telefone: form.telefone,
+      data_admissao: form.data_admissao || null, status: form.status,
+      observacoes: form.observacoes,
+      carga_horaria: form.carga_horaria || null,
+      registro_profissional: form.registro_profissional || null,
+      conselho_profissional: form.conselho_profissional || null,
+    }
+    let error
+    if (editando) {
+      ;({ error } = await supabase.from('funcionarios').update(dados).eq('id', editando))
+    } else {
+      ;({ error } = await supabase.from('funcionarios').insert(dados))
+    }
     if (error) { setMsg('Erro: ' + error.message); return }
-    setMsg('Funcionário cadastrado!')
-    setForm({ nome: '', funcao: '', tipo_vinculo: 'pj', cpf_cnpj: '', email: '', telefone: '', data_admissao: '', status: 'ativo', observacoes: '' })
+    setMsg(editando ? '✅ Funcionário atualizado!' : '✅ Funcionário cadastrado!')
+    setForm(FORM_VAZIO)
+    setEditando(null)
+    setMostrarForm(false)
     carregar()
     setTimeout(() => setMsg(''), 3000)
+  }
+
+  function editarFuncionario(f) {
+    setForm({
+      nome: f.nome, funcao: f.funcao||'', tipo_vinculo: f.tipo_vinculo||'pj',
+      cpf_cnpj: f.cpf_cnpj||'', email: f.email||'', telefone: f.telefone||'',
+      data_admissao: f.data_admissao||'', status: f.status||'ativo',
+      observacoes: f.observacoes||'',
+      carga_horaria: f.carga_horaria||'',
+      registro_profissional: f.registro_profissional||'',
+      conselho_profissional: f.conselho_profissional||'',
+    })
+    setEditando(f.id)
+    setMostrarForm(true)
+    setTab('cadastrar')
   }
 
   async function salvarDivida(e) {
@@ -55,7 +95,7 @@ export default function Funcionarios() {
       valor_pago: 0,
     })
     if (error) { setMsgD('Erro: ' + error.message); return }
-    setMsgD('Dívida cadastrada!')
+    setMsgD('✅ Dívida cadastrada!')
     setFormDivida({ funcionario_id: '', descricao: '', valor_original: '', data_origem: '', observacoes: '' })
     carregar()
     setTimeout(() => setMsgD(''), 3000)
@@ -68,9 +108,7 @@ export default function Funcionarios() {
     const valor = parseFloat(formPgto.valor)
     const { error } = await supabase.from('pagamentos_divida').insert({
       divida_id: parseInt(formPgto.divida_id),
-      valor,
-      data_pagamento: formPgto.data_pagamento,
-      observacoes: formPgto.observacoes,
+      valor, data_pagamento: formPgto.data_pagamento, observacoes: formPgto.observacoes,
     })
     if (!error) {
       const novoValorPago = Number(divida.valor_pago || 0) + valor
@@ -78,7 +116,7 @@ export default function Funcionarios() {
       await supabase.from('dividas').update({ valor_pago: novoValorPago, status: novoStatus }).eq('id', divida.id)
     }
     if (error) { setMsgP('Erro: ' + error.message); return }
-    setMsgP('Pagamento registrado!')
+    setMsgP('✅ Pagamento registrado!')
     setFormPgto({ divida_id: '', valor: '', data_pagamento: '', observacoes: '' })
     carregar()
     setTimeout(() => setMsgP(''), 3000)
@@ -88,11 +126,13 @@ export default function Funcionarios() {
   const s = {
     card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
-    input: { width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 },
+    input: { width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box' },
     th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' },
     td: { padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12 },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
     tab: ativo => ({ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: ativo ? VERDE : 'transparent', color: ativo ? '#fff' : '#5F5E5A', cursor: 'pointer' }),
+    btn: (bg, cor='#fff') => ({ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer', whiteSpace: 'nowrap' }),
+    grupo: cols => ({ display: 'grid', gridTemplateColumns: cols, gap: 10, marginBottom: 10 }),
   }
 
   const divAbertas = dividas.filter(d => d.status !== 'quitada')
@@ -119,10 +159,16 @@ export default function Funcionarios() {
         ))}
       </div>
 
+      {msg && (
+        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, marginBottom: '1rem', background: msg.includes('✅')?'#F2FAE8':'#FEF2F2', color: msg.includes('✅')?'#3B6D11':'#A32D2D' }}>
+          {msg}
+        </div>
+      )}
+
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem' }}>
-        {[['funcionarios','Funcionários'],['dividas','Dívidas'],['pagamentos','Pagamentos'],['cadastrar','Cadastrar']].map(([v,l]) => (
-          <button key={v} onClick={() => setTab(v)} style={s.tab(tab===v)}>{l}</button>
+      <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+        {[['funcionarios','Funcionários'],['dividas','Dívidas'],['pagamentos','Pagamentos'],['cadastrar', editando ? 'Editando' : 'Cadastrar']].map(([v,l]) => (
+          <button key={v} onClick={() => { setTab(v); if(v!=='cadastrar'){ setEditando(null); setMostrarForm(false) } }} style={s.tab(tab===v)}>{l}</button>
         ))}
       </div>
 
@@ -134,7 +180,7 @@ export default function Funcionarios() {
             <div style={{ fontSize: 12, color: '#888780', textAlign: 'center', padding: '1rem' }}>Nenhum funcionário cadastrado.</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead><tr>{['Nome','Função','Vínculo','CPF/CNPJ','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Nome','Função','Vínculo','Carga horária','Registro','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
               <tbody>
                 {funcionarios.map(f => {
                   const [bg, cor] = vincCor[f.tipo_vinculo] || ['#F1EFE8','#5F5E5A']
@@ -145,18 +191,18 @@ export default function Funcionarios() {
                       <td style={{ ...s.td, fontWeight: 500 }}>{f.nome}</td>
                       <td style={s.td}>{f.funcao||'—'}</td>
                       <td style={s.td}><span style={s.badge(bg,cor)}>{TIPOS_VINCULO.find(t=>t.value===f.tipo_vinculo)?.label||f.tipo_vinculo}</span></td>
-                      <td style={s.td}>{f.cpf_cnpj||'—'}</td>
+                      <td style={s.td}>{f.carga_horaria||'—'}</td>
+                      <td style={s.td}>
+                        {f.conselho_profissional && f.registro_profissional
+                          ? <span style={s.badge('#E6F1FB','#185FA5')}>{f.conselho_profissional}: {f.registro_profissional}</span>
+                          : <span style={{ color: '#B4B2A9' }}>—</span>}
+                      </td>
                       <td style={s.td}>
                         <span style={s.badge(f.status==='ativo'?'#EAF3DE':'#FCEBEB',f.status==='ativo'?'#3B6D11':'#A32D2D')}>{f.status}</span>
                         {saldoFunc > 0 && <span style={{ ...s.badge('#FAEEDA','#854F0B'), marginLeft: 4 }}>Dívida: {fmt(saldoFunc)}</span>}
                       </td>
                       <td style={s.td}>
-                        {p === 'admin' && (
-                          <button onClick={() => { setFuncSel(f); setTab('dividas') }}
-                            style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, border: '0.5px solid #4A8FD4', background: 'transparent', color: '#4A8FD4', cursor: 'pointer' }}>
-                            Ver dívidas
-                          </button>
-                        )}
+                        <button onClick={() => editarFuncionario(f)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                       </td>
                     </tr>
                   )
@@ -200,7 +246,7 @@ export default function Funcionarios() {
             <div style={s.card}>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Cadastrar dívida</div>
               <form onSubmit={salvarDivida}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div style={s.grupo('1fr 1fr 1fr 1fr')}>
                   <div>
                     <label style={s.label}>Funcionário</label>
                     <select value={formDivida.funcionario_id} onChange={e=>setFormDivida(f=>({...f,funcionario_id:e.target.value}))} required style={s.input}>
@@ -212,7 +258,7 @@ export default function Funcionarios() {
                   <div><label style={s.label}>Valor (R$)</label><input type="number" step="0.01" value={formDivida.valor_original} onChange={e=>setFormDivida(f=>({...f,valor_original:e.target.value}))} required style={s.input} /></div>
                   <div><label style={s.label}>Data de origem</label><input type="date" value={formDivida.data_origem} onChange={e=>setFormDivida(f=>({...f,data_origem:e.target.value}))} style={s.input} /></div>
                 </div>
-                {msgD && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msgD.includes('Erro')?'#FEF2F2':'#F2FAE8', color: msgD.includes('Erro')?'#A32D2D':'#3B6D11' }}>{msgD}</div>}
+                {msgD && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msgD.includes('✅')?'#F2FAE8':'#FEF2F2', color: msgD.includes('✅')?'#3B6D11':'#A32D2D' }}>{msgD}</div>}
                 <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERMELHO, color: '#fff', cursor: 'pointer' }}>Cadastrar dívida</button>
               </form>
             </div>
@@ -249,7 +295,7 @@ export default function Funcionarios() {
             <div style={s.card}>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Registrar pagamento de dívida</div>
               <form onSubmit={salvarPagamento}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div style={s.grupo('1fr 1fr 1fr')}>
                   <div>
                     <label style={s.label}>Dívida</label>
                     <select value={formPgto.divida_id} onChange={e=>setFormPgto(f=>({...f,divida_id:e.target.value}))} required style={s.input}>
@@ -266,7 +312,7 @@ export default function Funcionarios() {
                   <label style={s.label}>Observações</label>
                   <input value={formPgto.observacoes} onChange={e=>setFormPgto(f=>({...f,observacoes:e.target.value}))} placeholder="Ex: Parcela 1 de 3" style={s.input} />
                 </div>
-                {msgP && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msgP.includes('Erro')?'#FEF2F2':'#F2FAE8', color: msgP.includes('Erro')?'#A32D2D':'#3B6D11' }}>{msgP}</div>}
+                {msgP && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msgP.includes('✅')?'#F2FAE8':'#FEF2F2', color: msgP.includes('✅')?'#3B6D11':'#A32D2D' }}>{msgP}</div>}
                 <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>Registrar pagamento</button>
               </form>
             </div>
@@ -274,13 +320,13 @@ export default function Funcionarios() {
         </>
       )}
 
-      {/* Cadastrar */}
+      {/* Cadastrar / Editar */}
       {tab === 'cadastrar' && p === 'admin' && (
         <div style={s.card}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Cadastrar funcionário</div>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>{editando ? 'Editar funcionário' : 'Cadastrar funcionário'}</div>
           <form onSubmit={salvarFuncionario}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
-              <div style={{ gridColumn: 'span 2' }}><label style={s.label}>Nome completo</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} placeholder="Nome do funcionário" required style={s.input} /></div>
+            <div style={s.grupo('2fr 1fr 1fr')}>
+              <div><label style={s.label}>Nome completo *</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} placeholder="Nome do funcionário" required style={s.input} /></div>
               <div>
                 <label style={s.label}>Função</label>
                 <select value={form.funcao} onChange={e=>setForm(f=>({...f,funcao:e.target.value}))} style={s.input}>
@@ -295,14 +341,47 @@ export default function Funcionarios() {
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div style={s.grupo('1fr 1fr 1fr 1fr')}>
               <div><label style={s.label}>{form.tipo_vinculo==='pj'?'CNPJ':'CPF'}</label><input value={form.cpf_cnpj} onChange={e=>setForm(f=>({...f,cpf_cnpj:e.target.value}))} placeholder={form.tipo_vinculo==='pj'?'00.000.000/0001-00':'000.000.000-00'} style={s.input} /></div>
-              <div><label style={s.label}>E-mail</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="email@exemplo.com" style={s.input} /></div>
-              <div><label style={s.label}>Telefone</label><input value={form.telefone} onChange={e=>setForm(f=>({...f,telefone:e.target.value}))} placeholder="(00) 00000-0000" style={s.input} /></div>
+              <div><label style={s.label}>E-mail</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={s.input} /></div>
+              <div><label style={s.label}>Telefone</label><input value={form.telefone} onChange={e=>setForm(f=>({...f,telefone:e.target.value}))} style={s.input} /></div>
               <div><label style={s.label}>Data de admissão</label><input type="date" value={form.data_admissao} onChange={e=>setForm(f=>({...f,data_admissao:e.target.value}))} style={s.input} /></div>
             </div>
-            {msg && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msg.includes('Erro')?'#FEF2F2':'#F2FAE8', color: msg.includes('Erro')?'#A32D2D':'#3B6D11' }}>{msg}</div>}
-            <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>Cadastrar funcionário</button>
+            <div style={s.grupo('1fr 1fr 1fr')}>
+              <div>
+                <label style={s.label}>Carga horária</label>
+                <select value={form.carga_horaria} onChange={e=>setForm(f=>({...f,carga_horaria:e.target.value}))} style={s.input}>
+                  <option value="">Selecione...</option>
+                  {CARGAS.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={s.label}>Conselho profissional</label>
+                <select value={form.conselho_profissional} onChange={e=>setForm(f=>({...f,conselho_profissional:e.target.value}))} style={s.input}>
+                  <option value="">Não possui</option>
+                  {CONSELHOS.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={s.label}>Nº do registro profissional</label>
+                <input value={form.registro_profissional} onChange={e=>setForm(f=>({...f,registro_profissional:e.target.value}))} placeholder="Ex: 12345/RJ" style={s.input} disabled={!form.conselho_profissional} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label style={s.label}>Observações</label>
+              <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>
+                {editando ? '💾 Salvar alterações' : 'Cadastrar funcionário'}
+              </button>
+              {editando && (
+                <button type="button" onClick={() => { setForm(FORM_VAZIO); setEditando(null) }}
+                  style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: '#fff', color: '#5F5E5A', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              )}
+            </div>
           </form>
         </div>
       )}
