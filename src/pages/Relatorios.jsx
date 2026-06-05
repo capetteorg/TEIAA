@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { gerarPDFRelatorio } from '../lib/pdf'
 
+const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
+
 export default function Relatorios() {
   const { perfil } = useAuth()
   const p = perfil?.perfil
@@ -27,7 +29,7 @@ export default function Relatorios() {
       .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, competencia)')
 
     if (periodo === 'mes') {
-      q = q.gte('data', mes+'-01').lte('data', mes+'-31')
+      q = q.gte('data', mes+'-01').lte('data', fimMes(mes))
     } else {
       q = q.gte('data', ano+'-01-01').lte('data', ano+'-12-31')
     }

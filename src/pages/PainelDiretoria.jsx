@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
+const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
+
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
+
+const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 
 export default function PainelDiretoria() {
   const [contas, setContas] = useState([])
@@ -13,8 +17,11 @@ export default function PainelDiretoria() {
   const [resumo, setResumo] = useState({ entradas: 0, saidas: 0 })
   const [loading, setLoading] = useState(true)
   const [ultimoExtrato, setUltimoExtrato] = useState(null)
+  const inicializado = useRef(false)
 
   useEffect(() => {
+    if (inicializado.current) return
+    inicializado.current = true
     supabase.from('contas').select('*').order('nome').then(({ data }) => setContas(data || []))
     // Detecta último extrato
     supabase.from('extratos').select('competencia').order('competencia', { ascending: false }).limit(1)
@@ -51,7 +58,7 @@ export default function PainelDiretoria() {
       .select('*, categoria:categorias(nome,tipo)')
       .in('extrato_id', extratoIds)
       .gte('data', mes + '-01')
-      .lte('data', mes + '-31')
+      .lte('data', fimMes(mes))
       .order('data', { ascending: false })
 
     const lista = (movsData || []).map(m => ({ ...m, extrato: extratoMap[m.extrato_id] || null }))

@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
+
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', ROXO = '#8B2FC9', LARANJA = '#F4821F'
+
+const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 
 export default function PainelAdmin() {
   const navigate = useNavigate()
@@ -62,7 +66,7 @@ export default function PainelAdmin() {
   }
 
   async function carregarResumo() {
-    const { data: movs } = await supabase.from('extrato_movs').select('valor').gte('data', mes + '-01').lte('data', mes + '-31')
+    const { data: movs } = await supabase.from('extrato_movs').select('valor').gte('data', mes + '-01').lte('data', fimMes(mes))
     const lista = movs || []
     const ent = lista.filter(m => Number(m.valor) > 0).reduce((a,m) => a + Number(m.valor), 0)
     const sai = Math.abs(lista.filter(m => Number(m.valor) < 0).reduce((a,m) => a + Number(m.valor), 0))

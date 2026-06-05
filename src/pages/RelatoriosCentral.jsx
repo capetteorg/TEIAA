@@ -24,7 +24,7 @@ export default function RelatoriosCentral() {
   const [planoSel, setPlanoSel] = useState('')
   const [contaSel, setContaSel] = useState('todas')
   const [dataInicio, setDataInicio] = useState(new Date().toISOString().slice(0,7) + '-01')
-  const [dataFim, setDataFim] = useState(new Date().toISOString().slice(0,7) + '-31')
+  const [dataFim, setDataFim] = useState(new Date().toISOString().slice(0,7) + '-' + new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate())
   const [dados, setDados] = useState(null)
   const [loading, setLoading] = useState(false)
   const [instituicao, setInstituicao] = useState(null)
