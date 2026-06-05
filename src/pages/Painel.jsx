@@ -15,6 +15,7 @@ export default function Painel() {
   useEffect(() => {
     if (p === 'diretoria') navigate('/painel-diretoria', { replace: true })
     if (p === 'admin') navigate('/painel-admin', { replace: true })
+    if (p === 'operacional') navigate('/painel-operacional', { replace: true })
   }, [p])
   const [dados, setDados] = useState({ entradas: 0, saidas: 0, saldo: 0 })
   const [historico, setHistorico] = useState([])

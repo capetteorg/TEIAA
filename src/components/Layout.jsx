@@ -83,7 +83,7 @@ export default function Layout() {
       <div style={{overflowY:'auto',flex:1}}>
         <NavSecao label="Principal" />
         <NavItem to="/painel-admin"            icon="layout-dashboard"  label="Painel"                  visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/painel"                  icon="layout-dashboard"  label="Painel"                  visivel={p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/painel-operacional"       icon="layout-dashboard"  label="Painel"                  visivel={p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/painel-diretoria"        icon="layout-dashboard"  label="Acompanhamento"          visivel={p==='diretoria'} onClick={fecharMenu} />
 
         <NavSecao label="Financeiro" />
@@ -103,7 +103,7 @@ export default function Layout() {
         <NavItem to="/planos-execucao"         icon="clipboard-check"   label="Planos / Execução"       visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/atendimentos"            icon="clipboard-list"    label="Atendimentos"            visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/usuarios-atendidos"      icon="users"             label="Usuários Atendidos"      visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/equipe"                  icon="users-group"       label="Equipe"                  visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/equipe"                  icon="users-group"       label="Equipe"                  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/doacoes"                 icon="gift"              label="Doações"                 visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/eventos-campanhas"       icon="calendar-event"    label="Eventos e Campanhas"     visivel={p==='admin'} onClick={fecharMenu} />
 
