@@ -35,12 +35,37 @@ const STATUS_META_COR = {
   'outro': ['#EEEDFE','#534AB7'],
 }
 
+const ORIGENS_RECURSOS_OPCOES = [
+  'Doações de pessoas físicas',
+  'Doações de empresas / patrocínio',
+  'Emendas parlamentares',
+  'Editais e convênios',
+  'Repasses públicos municipais',
+  'Repasses públicos estaduais',
+  'Repasses públicos federais',
+  'Mensalidades e contribuições de associados',
+  'Rendimentos financeiros',
+  'Eventos e campanhas',
+  'Recursos próprios',
+  'Outras fontes',
+]
+
+const ANO_ATUAL = new Date().getFullYear()
+
 const FORM_VAZIO = {
   nome_plano: '', tipo_plano: 'Plano de Trabalho', parceria_id: '', projeto_id: '',
   orgao_ou_parceiro: '', objeto: '', objetivo_geral: '', objetivos_especificos: '',
   publico_alvo: '', faixa_etaria: '', capacidade_prevista: '',
   periodo_inicio: '', periodo_fim: '', valor_total_previsto: '',
   situacao: 'em elaboração', observacoes: '',
+  // Campos CNAS
+  origens_recursos: [],
+  finalidades_estatutarias: '',
+  infraestrutura: '',
+  recursos_financeiros: '',
+  recursos_humanos_cnas: '',
+  forma_participacao_usuarios: '',
+  abrangencia_territorial: 'Município de Teresópolis/RJ',
 }
 
 const META_VAZIO = {
@@ -58,6 +83,9 @@ export default function PlanosExecucao() {
   const [planos, setPlanos] = useState([])
   const [parcerias, setParcerias] = useState([])
   const [projetos, setProjetos] = useState([])
+  const [instituicao, setInstituicao] = useState(null)
+  const [presidente, setPresidente] = useState(null)
+  const [equipe, setEquipe] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editando, setEditando] = useState(null)
   const [mostrarForm, setMostrarForm] = useState(false)
@@ -74,11 +102,16 @@ export default function PlanosExecucao() {
   const [editandoAtiv, setEditandoAtiv] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [msg, setMsg] = useState('')
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
 
   useEffect(() => {
     carregar()
     supabase.from('parcerias').select('id,nome_projeto,tipo').order('nome_projeto').then(({ data }) => setParcerias(data || []))
     supabase.from('projetos').select('id,nome').order('nome').then(({ data }) => setProjetos(data || []))
+    supabase.from('instituicao').select('*').limit(1).single().then(({ data }) => setInstituicao(data))
+    const hoje = new Date().toISOString().slice(0,10)
+    supabase.from('diretoria').select('nome,cpf,rg,mandato_inicio,mandato_fim').eq('cargo','Presidente').eq('ativo',true).gte('mandato_fim',hoje).limit(1).single().then(({ data }) => setPresidente(data))
+    supabase.from('equipe').select('id,nome,funcao,tipo_vinculo').eq('situacao','ativo').order('nome').then(({ data }) => setEquipe(data || []))
   }, [])
 
   async function carregar() {
@@ -108,6 +141,21 @@ export default function PlanosExecucao() {
     setUsuarios(usersRes.data || [])
   }
 
+  function novoPlanoAcao() {
+    setForm({
+      ...FORM_VAZIO,
+      tipo_plano: 'Plano de Ação Institucional',
+      nome_plano: `Plano de Ação Institucional ${ANO_ATUAL}`,
+      periodo_inicio: `${ANO_ATUAL}-01-01`,
+      periodo_fim: `${ANO_ATUAL}-12-31`,
+      finalidades_estatutarias: 'Promoção e defesa dos direitos de crianças, adolescentes e famílias em situação de vulnerabilidade social; prestação de serviços de assistência social, educação e proteção social; fortalecimento de vínculos familiares e comunitários.',
+      abrangencia_territorial: 'Município de Teresópolis/RJ',
+      infraestrutura: instituicao?.endereco ? `Sede própria: ${instituicao.endereco}` : '',
+    })
+    setEditando(null)
+    setMostrarForm(true)
+  }
+
   async function salvarPlano(e) {
     e.preventDefault()
     setSalvando(true)
@@ -118,6 +166,7 @@ export default function PlanosExecucao() {
       valor_total_previsto: form.valor_total_previsto ? parseFloat(form.valor_total_previsto) : null,
       periodo_inicio: form.periodo_inicio || null,
       periodo_fim: form.periodo_fim || null,
+      origens_recursos: form.origens_recursos || [],
     }
     let error
     if (editando) {
@@ -183,15 +232,51 @@ export default function PlanosExecucao() {
       periodo_inicio: p.periodo_inicio||'', periodo_fim: p.periodo_fim||'',
       valor_total_previsto: p.valor_total_previsto||'', situacao: p.situacao||'em elaboração',
       observacoes: p.observacoes||'',
+      origens_recursos: p.origens_recursos || [],
+      finalidades_estatutarias: p.finalidades_estatutarias || '',
+      infraestrutura: p.infraestrutura || '',
+      recursos_financeiros: p.recursos_financeiros || '',
+      recursos_humanos_cnas: p.recursos_humanos_cnas || '',
+      forma_participacao_usuarios: p.forma_participacao_usuarios || '',
+      abrangencia_territorial: p.abrangencia_territorial || 'Município de Teresópolis/RJ',
     })
     setEditando(p.id)
     setMostrarForm(true)
     setAba('lista')
   }
 
+  function toggleOrigem(origem) {
+    setForm(f => ({
+      ...f,
+      origens_recursos: f.origens_recursos.includes(origem)
+        ? f.origens_recursos.filter(o => o !== origem)
+        : [...f.origens_recursos, origem]
+    }))
+  }
+
+  async function excluir(item) {
+    const id = item?.id || item
+    await supabase.from('metas_plano').delete().eq('plano_id', id)
+    await supabase.from('atividades_previstas').delete().eq('plano_id', id)
+    await supabase.from('planos').delete().eq('id', id)
+    setConfirmandoExcluir(null)
+    carregar()
+  }
+
+  async function excluirMeta(id) {
+    await supabase.from('metas_plano').delete().eq('id', id)
+    carregarDetalhe(planoSel)
+  }
+
+  async function excluirAtividade(id) {
+    await supabase.from('atividades_previstas').delete().eq('id', id)
+    carregarDetalhe(planoSel)
+  }
+
   const fmt = v => v ? 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—'
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const pct = (real, prev) => prev > 0 ? Math.round((real/prev)*100) : 0
+  const isPlanoAcao = form.tipo_plano === 'Plano de Ação Institucional'
 
   const SITUACAO_COR = {
     'em elaboração': ['#E6F1FB','#185FA5'],
@@ -214,29 +299,11 @@ export default function PlanosExecucao() {
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    secaoCnas: { fontSize:11, fontWeight:600, color:'#185FA5', borderLeft:`3px solid ${AZUL}`, paddingLeft:8, margin:'16px 0 8px', textTransform:'uppercase', letterSpacing:'.05em' },
+    infoBox: { background:'#F8F7F2', borderRadius:8, padding:'8px 10px', marginBottom:8 },
+    infoLabel: { fontSize:10, color:'#888780', marginBottom:2 },
+    infoVal: { fontSize:12, fontWeight:500 },
   }
-
-  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
-
-  async function excluir(item) {
-    const id = item?.id || item
-    await supabase.from('metas_plano').delete().eq('plano_id', id)
-    await supabase.from('atividades_previstas').delete().eq('plano_id', id)
-    await supabase.from('planos').delete().eq('id', id)
-    setConfirmandoExcluir(null)
-    carregar()
-  }
-
-  async function excluirMeta(id) {
-    await supabase.from('metas_plano').delete().eq('id', id)
-    carregarDetalhe(planoSel)
-  }
-
-  async function excluirAtividade(id) {
-    await supabase.from('atividades_previstas').delete().eq('id', id)
-    carregarDetalhe(planoSel)
-  }
-
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
@@ -246,10 +313,16 @@ export default function PlanosExecucao() {
           <div style={{ fontSize:12, color:'#888780' }}>{planos.length} plano{planos.length!==1?'s':''} cadastrado{planos.length!==1?'s':''}</div>
         </div>
         {aba !== 'detalhe' && (
-          <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-            style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
-            {mostrarForm ? 'Cancelar' : '+ Novo plano'}
-          </button>
+          <div style={{ display:'flex', gap:6 }}>
+            <button onClick={novoPlanoAcao}
+              style={{ ...s.btn(ROXO), fontSize:11 }}>
+              + Plano de Ação Institucional
+            </button>
+            <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
+              style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+              {mostrarForm ? 'Cancelar' : '+ Outro plano'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -259,7 +332,6 @@ export default function PlanosExecucao() {
         </div>
       )}
 
-      {/* Abas principais */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         <button onClick={() => setAba('lista')} style={s.tab(aba==='lista')}>Lista de planos</button>
         {aba === 'detalhe' && planoSel && (
@@ -270,17 +342,16 @@ export default function PlanosExecucao() {
       {/* ===== ABA LISTA ===== */}
       {aba === 'lista' && (
         <>
-          {/* Formulário */}
           {mostrarForm && (
-            <div style={{ ...s.card, borderColor:'#C0DD97' }}>
+            <div style={{ ...s.card, borderColor: isPlanoAcao ? '#C9B3E8' : '#C0DD97' }}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-                {editando ? 'Editar plano' : 'Novo Plano de Trabalho / Plano de Ação'}
+                {editando ? 'Editar plano' : isPlanoAcao ? '📋 Plano de Ação Institucional' : 'Novo Plano de Trabalho'}
               </div>
               <form onSubmit={salvarPlano}>
                 <div style={s.grupo('2fr 1fr')}>
                   <div>
                     <label style={s.label}>Nome do plano *</label>
-                    <input value={form.nome_plano} onChange={e=>setForm(f=>({...f,nome_plano:e.target.value}))} style={s.input} required placeholder="Ex: Plano de Trabalho Emenda X 2026" />
+                    <input value={form.nome_plano} onChange={e=>setForm(f=>({...f,nome_plano:e.target.value}))} style={s.input} required />
                   </div>
                   <div>
                     <label style={s.label}>Tipo *</label>
@@ -311,7 +382,7 @@ export default function PlanosExecucao() {
                 </div>
                 <div style={{ marginBottom:10 }}>
                   <label style={s.label}>Objeto *</label>
-                  <textarea value={form.objeto} onChange={e=>setForm(f=>({...f,objeto:e.target.value}))} rows={2} style={s.textarea} placeholder="O que será executado..." />
+                  <textarea value={form.objeto} onChange={e=>setForm(f=>({...f,objeto:e.target.value}))} rows={2} style={s.textarea} />
                 </div>
                 <div style={s.grupo('1fr 1fr')}>
                   <div>
@@ -334,7 +405,7 @@ export default function PlanosExecucao() {
                   </div>
                   <div>
                     <label style={s.label}>Capacidade prevista</label>
-                    <input value={form.capacidade_prevista} onChange={e=>setForm(f=>({...f,capacidade_prevista:e.target.value}))} style={s.input} placeholder="Ex: 100 crianças" />
+                    <input value={form.capacidade_prevista} onChange={e=>setForm(f=>({...f,capacidade_prevista:e.target.value}))} style={s.input} />
                   </div>
                 </div>
                 <div style={s.grupo('1fr 1fr 1fr 1fr')}>
@@ -357,12 +428,126 @@ export default function PlanosExecucao() {
                     </select>
                   </div>
                 </div>
+
+                {/* ===== CAMPOS CNAS — só para Plano de Ação Institucional ===== */}
+                {isPlanoAcao && (
+                  <>
+                    <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:ROXO, marginBottom:12 }}>
+                        📋 Campos específicos CNAS — Plano de Ação Institucional
+                      </div>
+
+                      {/* Identificação da instituição — somente leitura */}
+                      <div style={s.secaoCnas}>Identificação da instituição</div>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:12 }}>
+                        {[
+                          ['Nome completo', instituicao?.nome_completo || '—'],
+                          ['CNPJ', instituicao?.cnpj || '—'],
+                          ['Endereço', instituicao?.endereco || '—'],
+                          ['Telefone', instituicao?.telefone || '—'],
+                        ].map(([l,v]) => (
+                          <div key={l} style={s.infoBox}>
+                            <div style={s.infoLabel}>{l}</div>
+                            <div style={s.infoVal}>{v}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Representante legal — somente leitura */}
+                      <div style={s.secaoCnas}>Representante legal</div>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:12 }}>
+                        {[
+                          ['Nome', presidente?.nome || '—'],
+                          ['CPF', presidente?.cpf || '—'],
+                          ['RG', presidente?.rg || '—'],
+                          ['Mandato', presidente ? `${fmtData(presidente.mandato_inicio)} a ${fmtData(presidente.mandato_fim)}` : '—'],
+                        ].map(([l,v]) => (
+                          <div key={l} style={s.infoBox}>
+                            <div style={s.infoLabel}>{l}</div>
+                            <div style={s.infoVal}>{v}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Origem dos recursos */}
+                      <div style={s.secaoCnas}>Origem dos recursos</div>
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
+                        {ORIGENS_RECURSOS_OPCOES.map(origem => (
+                          <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
+                            style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer',
+                              border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`,
+                              background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff',
+                              color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
+                            {form.origens_recursos.includes(origem) ? '✓ ' : ''}{origem}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Finalidades estatutárias */}
+                      <div style={s.secaoCnas}>Finalidades estatutárias</div>
+                      <div style={{ marginBottom:12 }}>
+                        <textarea value={form.finalidades_estatutarias} onChange={e=>setForm(f=>({...f,finalidades_estatutarias:e.target.value}))}
+                          rows={3} style={{ ...s.textarea, marginBottom:0 }}
+                          placeholder="Descreva as finalidades estatutárias da organização..." />
+                      </div>
+
+                      {/* Infraestrutura */}
+                      <div style={s.secaoCnas}>Infraestrutura disponível</div>
+                      <div style={{ marginBottom:12 }}>
+                        <textarea value={form.infraestrutura} onChange={e=>setForm(f=>({...f,infraestrutura:e.target.value}))}
+                          rows={2} style={{ ...s.textarea, marginBottom:0 }}
+                          placeholder="Ex: Sede própria, salas de atendimento, refeitório, área de lazer..." />
+                      </div>
+
+                      {/* Abrangência */}
+                      <div style={s.secaoCnas}>Abrangência territorial</div>
+                      <div style={{ marginBottom:12 }}>
+                        <input value={form.abrangencia_territorial} onChange={e=>setForm(f=>({...f,abrangencia_territorial:e.target.value}))}
+                          style={{ ...s.input, marginBottom:0 }} />
+                      </div>
+
+                      {/* Recursos financeiros */}
+                      <div style={s.secaoCnas}>Recursos financeiros previstos</div>
+                      <div style={{ marginBottom:12 }}>
+                        <textarea value={form.recursos_financeiros} onChange={e=>setForm(f=>({...f,recursos_financeiros:e.target.value}))}
+                          rows={2} style={{ ...s.textarea, marginBottom:0 }}
+                          placeholder="Descreva os recursos financeiros previstos para execução do plano..." />
+                      </div>
+
+                      {/* Recursos humanos */}
+                      <div style={s.secaoCnas}>Recursos humanos</div>
+                      <div style={{ marginBottom:4 }}>
+                        <textarea value={form.recursos_humanos_cnas} onChange={e=>setForm(f=>({...f,recursos_humanos_cnas:e.target.value}))}
+                          rows={2} style={{ ...s.textarea, marginBottom:4 }}
+                          placeholder="Descreva a equipe envolvida na execução do plano..." />
+                        {equipe.length > 0 && (
+                          <div style={{ fontSize:11, color:'#888780' }}>
+                            Equipe ativa: {equipe.slice(0,5).map(e => e.nome.split(' ')[0]).join(', ')}{equipe.length > 5 ? ` e mais ${equipe.length-5}` : ''}
+                            {' '}<button type="button" onClick={() => setForm(f => ({...f, recursos_humanos_cnas: equipe.map(e => `${e.nome} — ${e.funcao||'Função não informada'} (${e.tipo_vinculo||''})`).join('\n')}))}
+                              style={{ fontSize:11, background:'none', border:'none', color:AZUL, cursor:'pointer', padding:0 }}>
+                              ↑ Preencher com equipe atual
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Forma de participação dos usuários */}
+                      <div style={{ ...s.secaoCnas, marginTop:14 }}>Forma de participação dos usuários</div>
+                      <div style={{ marginBottom:4 }}>
+                        <textarea value={form.forma_participacao_usuarios} onChange={e=>setForm(f=>({...f,forma_participacao_usuarios:e.target.value}))}
+                          rows={2} style={{ ...s.textarea, marginBottom:0 }}
+                          placeholder="Ex: Participação em reuniões, assembleias, conselhos de usuários..." />
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div style={{ marginBottom:14 }}>
                   <label style={s.label}>Observações</label>
                   <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
+                  <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':isPlanoAcao?ROXO:VERDE)}>
                     {salvando ? 'Salvando...' : editando ? '💾 Salvar' : '+ Criar plano'}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
@@ -371,7 +556,6 @@ export default function PlanosExecucao() {
             </div>
           )}
 
-          {/* Lista de planos */}
           {planos.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
               <div style={{ fontSize:32, marginBottom:8 }}>📋</div>
@@ -381,12 +565,13 @@ export default function PlanosExecucao() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px,1fr))', gap:'1rem' }}>
               {planos.map(p => {
                 const [bg,cor] = SITUACAO_COR[p.situacao]||['#F1EFE8','#888780']
+                const isPai = p.tipo_plano === 'Plano de Ação Institucional'
                 return (
-                  <div key={p.id} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden', cursor:'pointer' }}
+                  <div key={p.id} style={{ background:'#fff', border:`0.5px solid ${isPai?'#C9B3E8':'#E0DDD5'}`, borderRadius:12, overflow:'hidden', cursor:'pointer' }}
                     onClick={() => abrirDetalhe(p)}>
-                    <div style={{ background:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                    <div style={{ background:isPai?`${ROXO}10`:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo_plano}</div>
+                        <div style={{ fontSize:10, color: isPai?ROXO:'#888780', marginBottom:2, fontWeight: isPai?600:400 }}>{p.tipo_plano}</div>
                         <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome_plano}</div>
                       </div>
                       <span style={s.badge(bg,cor)}>{p.situacao}</span>
@@ -410,8 +595,16 @@ export default function PlanosExecucao() {
                           {p.objeto}
                         </div>
                       )}
+                      {isPai && p.origens_recursos?.length > 0 && (
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:3, marginBottom:8 }}>
+                          {p.origens_recursos.slice(0,3).map(o => (
+                            <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>
+                          ))}
+                          {p.origens_recursos.length > 3 && <span style={s.badge('#F0EAFA',ROXO)}>+{p.origens_recursos.length-3}</span>}
+                        </div>
+                      )}
                       <div style={{ display:'flex', gap:6 }}>
-                        <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn(VERDE), flex:1, fontSize:11 }}>Ver plano completo →</button>
+                        <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn(isPai?ROXO:VERDE), flex:1, fontSize:11 }}>Ver plano completo →</button>
                         <button onClick={e=>{e.stopPropagation();editarPlano(p)}} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
                         <button onClick={e=>{e.stopPropagation();setConfirmandoExcluir({id:p.id,tipo:'plano'})}} style={{ ...s.btn('#FEF2F2','#E8212A'), fontSize:11 }}>Excluir</button>
                       </div>
@@ -432,7 +625,6 @@ export default function PlanosExecucao() {
             <button onClick={() => editarPlano(planoSel)} style={s.btn(AZUL)}>Editar plano</button>
           </div>
 
-          {/* Cabeçalho do plano */}
           <div style={{ ...s.card, background:'linear-gradient(135deg, #EAF3DE, #F8F7F2)', marginBottom:'1rem' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:12 }}>
               <div>
@@ -468,99 +660,102 @@ export default function PlanosExecucao() {
 
           {/* Abas do detalhe */}
           <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
-            {[['metas','Metas'],['atividades','Atividades previstas'],['execucao','Execução realizada'],['usuarios','Usuários'],].map(([id,label]) => (
+            {[
+              ['metas','Metas'],
+              ['atividades','Atividades previstas'],
+              ['execucao','Execução realizada'],
+              ['usuarios','Usuários'],
+              ...(planoSel.tipo_plano === 'Plano de Ação Institucional' ? [['cnas','📋 CNAS']] : []),
+            ].map(([id,label]) => (
               <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabSec(abaDetalhe===id)}>{label}</button>
             ))}
           </div>
 
           {/* Metas */}
           {abaDetalhe === 'metas' && (
-            <div>
-              <div style={s.card}>
-                <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Metas do plano</div>
-                <form onSubmit={salvarMeta} style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
-                  <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoMeta ? 'Editar meta' : 'Adicionar meta'}</div>
-                  <div style={s.grupo('2fr 1fr')}>
-                    <div>
-                      <label style={s.label}>Descrição da meta *</label>
-                      <input value={formMeta.descricao_meta} onChange={e=>setFormMeta(f=>({...f,descricao_meta:e.target.value}))} style={s.input} required placeholder="Ex: Atender crianças de 02 a 05 anos" />
-                    </div>
-                    <div>
-                      <label style={s.label}>Indicador</label>
-                      <input value={formMeta.indicador} onChange={e=>setFormMeta(f=>({...f,indicador:e.target.value}))} style={s.input} placeholder="Ex: Nº de crianças atendidas" />
-                    </div>
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Metas do plano</div>
+              <form onSubmit={salvarMeta} style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
+                <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoMeta ? 'Editar meta' : 'Adicionar meta'}</div>
+                <div style={s.grupo('2fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Descrição da meta *</label>
+                    <input value={formMeta.descricao_meta} onChange={e=>setFormMeta(f=>({...f,descricao_meta:e.target.value}))} style={s.input} required />
                   </div>
-                  <div style={s.grupo('1fr 1fr 1fr 1fr')}>
-                    <div>
-                      <label style={s.label}>Qtd prevista</label>
-                      <input type="number" value={formMeta.quantidade_prevista} onChange={e=>setFormMeta(f=>({...f,quantidade_prevista:e.target.value}))} style={s.input} />
-                    </div>
-                    <div>
-                      <label style={s.label}>Unidade</label>
-                      <select value={formMeta.unidade_medida} onChange={e=>setFormMeta(f=>({...f,unidade_medida:e.target.value}))} style={s.input}>
-                        {UNIDADES_META.map(u => <option key={u} value={u}>{u}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={s.label}>Qtd realizada</label>
-                      <input type="number" value={formMeta.quantidade_realizada} onChange={e=>setFormMeta(f=>({...f,quantidade_realizada:e.target.value}))} style={s.input} />
-                    </div>
-                    <div>
-                      <label style={s.label}>Status</label>
-                      <select value={formMeta.status_meta} onChange={e=>setFormMeta(f=>({...f,status_meta:e.target.value}))} style={s.input}>
-                        {STATUS_META.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                      </select>
-                    </div>
+                  <div>
+                    <label style={s.label}>Indicador</label>
+                    <input value={formMeta.indicador} onChange={e=>setFormMeta(f=>({...f,indicador:e.target.value}))} style={s.input} />
                   </div>
-                  <div style={{ marginBottom:8 }}>
-                    <label style={s.label}>Justificativa / Observação</label>
-                    <input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} />
+                </div>
+                <div style={s.grupo('1fr 1fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Qtd prevista</label>
+                    <input type="number" value={formMeta.quantidade_prevista} onChange={e=>setFormMeta(f=>({...f,quantidade_prevista:e.target.value}))} style={s.input} />
                   </div>
-                  <div style={{ display:'flex', gap:6 }}>
-                    <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? '💾 Salvar' : '+ Adicionar meta'}</button>
-                    {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
+                  <div>
+                    <label style={s.label}>Unidade</label>
+                    <select value={formMeta.unidade_medida} onChange={e=>setFormMeta(f=>({...f,unidade_medida:e.target.value}))} style={s.input}>
+                      {UNIDADES_META.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
                   </div>
-                </form>
-
-                {metas.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhuma meta cadastrada.</div>
-                ) : (
-                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                    <thead><tr>{['Meta','Indicador','Previsto','Realizado','% Exec.','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                    <tbody>
-                      {metas.map(m => {
-                        const [bg,cor] = STATUS_META_COR[m.status_meta]||['#F1EFE8','#888780']
-                        const p = pct(Number(m.quantidade_realizada||0), Number(m.quantidade_prevista||0))
-                        return (
-                          <tr key={m.id}>
-                            <td style={{ ...s.td, fontWeight:500, maxWidth:200 }}>{m.descricao_meta}</td>
-                            <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.indicador||'—'}</td>
-                            <td style={s.td}>{m.quantidade_prevista||'—'} {m.unidade_medida}</td>
-                            <td style={{ ...s.td, color:VERDE, fontWeight:500 }}>{m.quantidade_realizada||'—'}</td>
-                            <td style={s.td}>
-                              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                                <div style={{ width:50, height:5, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
-                                  <div style={{ height:'100%', width:Math.min(p,100)+'%', background:p>=100?VERDE:p>=50?LARANJA:VERMELHO, borderRadius:99 }} />
-                                </div>
-                                <span>{p}%</span>
+                  <div>
+                    <label style={s.label}>Qtd realizada</label>
+                    <input type="number" value={formMeta.quantidade_realizada} onChange={e=>setFormMeta(f=>({...f,quantidade_realizada:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Status</label>
+                    <select value={formMeta.status_meta} onChange={e=>setFormMeta(f=>({...f,status_meta:e.target.value}))} style={s.input}>
+                      {STATUS_META.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom:8 }}>
+                  <label style={s.label}>Justificativa / Observação</label>
+                  <input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} />
+                </div>
+                <div style={{ display:'flex', gap:6 }}>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? '💾 Salvar' : '+ Adicionar meta'}</button>
+                  {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
+                </div>
+              </form>
+              {metas.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhuma meta cadastrada.</div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead><tr>{['Meta','Indicador','Previsto','Realizado','% Exec.','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {metas.map(m => {
+                      const [bg,cor] = STATUS_META_COR[m.status_meta]||['#F1EFE8','#888780']
+                      const p = pct(Number(m.quantidade_realizada||0), Number(m.quantidade_prevista||0))
+                      return (
+                        <tr key={m.id}>
+                          <td style={{ ...s.td, fontWeight:500, maxWidth:200 }}>{m.descricao_meta}</td>
+                          <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.indicador||'—'}</td>
+                          <td style={s.td}>{m.quantidade_prevista||'—'} {m.unidade_medida}</td>
+                          <td style={{ ...s.td, color:VERDE, fontWeight:500 }}>{m.quantidade_realizada||'—'}</td>
+                          <td style={s.td}>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                              <div style={{ width:50, height:5, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                                <div style={{ height:'100%', width:Math.min(p,100)+'%', background:p>=100?VERDE:p>=50?LARANJA:VERMELHO, borderRadius:99 }} />
                               </div>
-                            </td>
-                            <td style={s.td}><span style={s.badge(bg,cor)}>{m.status_meta}</span></td>
-                            <td style={s.td}>
-                              <button onClick={() => { setFormMeta({...m, quantidade_prevista:m.quantidade_prevista||'', quantidade_realizada:m.quantidade_realizada||''}); setEditandoMeta(m.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                              <span>{p}%</span>
+                            </div>
+                          </td>
+                          <td style={s.td}><span style={s.badge(bg,cor)}>{m.status_meta}</span></td>
+                          <td style={s.td}>
+                            <button onClick={() => { setFormMeta({...m, quantidade_prevista:m.quantidade_prevista||'', quantidade_realizada:m.quantidade_realizada||''}); setEditandoMeta(m.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                             <button onClick={() => excluirMeta(m.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
-          {/* Atividades previstas */}
+          {/* Atividades */}
           {abaDetalhe === 'atividades' && (
             <div style={s.card}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Atividades previstas</div>
@@ -601,7 +796,6 @@ export default function PlanosExecucao() {
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
-
               {atividades.length === 0 ? (
                 <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhuma atividade prevista cadastrada.</div>
               ) : (
@@ -617,7 +811,7 @@ export default function PlanosExecucao() {
                         <td style={s.td}><span style={s.badge(a.status==='realizada'?'#EAF3DE':a.status==='cancelada'?'#FCEBEB':'#E6F1FB', a.status==='realizada'?'#3B6D11':a.status==='cancelada'?'#A32D2D':'#185FA5')}>{a.status}</span></td>
                         <td style={s.td}>
                           <button onClick={() => { setFormAtiv({...a, periodo_inicio:a.periodo_inicio||'', periodo_fim:a.periodo_fim||''}); setEditandoAtiv(a.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                            <button onClick={() => excluirAtividade(a.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
+                          <button onClick={() => excluirAtividade(a.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
                         </td>
                       </tr>
                     ))}
@@ -636,9 +830,7 @@ export default function PlanosExecucao() {
                 </div>
               </div>
               <div style={s.card}>
-                <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>
-                  Atendimentos e atividades realizadas ({atendimentos.length})
-                </div>
+                <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Atendimentos e atividades realizadas ({atendimentos.length})</div>
                 {atendimentos.length === 0 ? (
                   <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhum atendimento registrado para este projeto.</div>
                 ) : (
@@ -663,8 +855,6 @@ export default function PlanosExecucao() {
                   </div>
                 )}
               </div>
-
-              {/* Comparativo metas x execução */}
               {metas.length > 0 && (
                 <div style={s.card}>
                   <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Comparativo metas previstas x realizadas</div>
@@ -701,12 +891,8 @@ export default function PlanosExecucao() {
           {/* Usuários */}
           {abaDetalhe === 'usuarios' && (
             <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}>
-                Usuários / Público atendido — {planoSel.projeto?.nome||'projeto vinculado'}
-              </div>
-              <div style={{ fontSize:12, color:'#888780', marginBottom:'.85rem' }}>
-                {usuarios.length} usuário{usuarios.length!==1?'s':''} ativo{usuarios.length!==1?'s':''}
-              </div>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}>Usuários / Público atendido — {planoSel.projeto?.nome||'projeto vinculado'}</div>
+              <div style={{ fontSize:12, color:'#888780', marginBottom:'.85rem' }}>{usuarios.length} usuário{usuarios.length!==1?'s':''} ativo{usuarios.length!==1?'s':''}</div>
               {usuarios.length === 0 ? (
                 <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhum usuário ativo vinculado a este projeto.</div>
               ) : (
@@ -730,9 +916,124 @@ export default function PlanosExecucao() {
               )}
             </div>
           )}
+
+          {/* Aba CNAS */}
+          {abaDetalhe === 'cnas' && planoSel.tipo_plano === 'Plano de Ação Institucional' && (
+            <div>
+              <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:ROXO, marginBottom:14 }}>📋 Ficha CNAS — Plano de Ação Institucional</div>
+
+                <div style={s.secaoCnas}>Identificação da instituição</div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:8, marginBottom:14 }}>
+                  {[
+                    ['Nome completo', instituicao?.nome_completo || planoSel.nome_plano],
+                    ['CNPJ', instituicao?.cnpj || '—'],
+                    ['Endereço', instituicao?.endereco || '—'],
+                    ['Telefone/E-mail', [instituicao?.telefone, instituicao?.email].filter(Boolean).join(' · ') || '—'],
+                  ].map(([l,v]) => (
+                    <div key={l} style={s.infoBox}>
+                      <div style={s.infoLabel}>{l}</div>
+                      <div style={s.infoVal}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={s.secaoCnas}>Representante legal</div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:8, marginBottom:14 }}>
+                  {[
+                    ['Nome', presidente?.nome || '—'],
+                    ['CPF', presidente?.cpf || '—'],
+                    ['RG', presidente?.rg || '—'],
+                    ['Mandato', presidente ? `${fmtData(presidente.mandato_inicio)} a ${fmtData(presidente.mandato_fim)}` : '—'],
+                  ].map(([l,v]) => (
+                    <div key={l} style={s.infoBox}>
+                      <div style={s.infoLabel}>{l}</div>
+                      <div style={s.infoVal}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={s.secaoCnas}>Período de vigência</div>
+                <div style={{ ...s.infoBox, marginBottom:14 }}>
+                  <div style={s.infoVal}>{planoSel.periodo_inicio ? `${fmtData(planoSel.periodo_inicio)} a ${fmtData(planoSel.periodo_fim)}` : '—'}</div>
+                </div>
+
+                <div style={s.secaoCnas}>Origem dos recursos</div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
+                  {planoSel.origens_recursos?.length > 0
+                    ? planoSel.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)
+                    : <span style={{ fontSize:12, color:'#888780' }}>Não informado</span>}
+                </div>
+
+                <div style={s.secaoCnas}>Finalidades estatutárias</div>
+                <div style={{ ...s.infoBox, marginBottom:14 }}>
+                  <div style={{ fontSize:12, lineHeight:1.7 }}>{planoSel.finalidades_estatutarias || '—'}</div>
+                </div>
+
+                <div style={s.secaoCnas}>Infraestrutura disponível</div>
+                <div style={{ ...s.infoBox, marginBottom:14 }}>
+                  <div style={{ fontSize:12, lineHeight:1.7 }}>{planoSel.infraestrutura || '—'}</div>
+                </div>
+
+                <div style={s.secaoCnas}>Abrangência territorial</div>
+                <div style={{ ...s.infoBox, marginBottom:14 }}>
+                  <div style={s.infoVal}>{planoSel.abrangencia_territorial || 'Município de Teresópolis/RJ'}</div>
+                </div>
+
+                <div style={s.secaoCnas}>Recursos financeiros previstos</div>
+                <div style={{ ...s.infoBox, marginBottom:14 }}>
+                  <div style={{ fontSize:12, lineHeight:1.7 }}>{planoSel.recursos_financeiros || '—'}</div>
+                </div>
+
+                <div style={s.secaoCnas}>Recursos humanos</div>
+                <div style={{ ...s.infoBox, marginBottom:14 }}>
+                  <div style={{ fontSize:12, lineHeight:1.7, whiteSpace:'pre-line' }}>{planoSel.recursos_humanos_cnas || '—'}</div>
+                </div>
+
+                <div style={s.secaoCnas}>Forma de participação dos usuários</div>
+                <div style={{ ...s.infoBox, marginBottom:4 }}>
+                  <div style={{ fontSize:12, lineHeight:1.7 }}>{planoSel.forma_participacao_usuarios || '—'}</div>
+                </div>
+
+                <div style={{ marginTop:14, display:'flex', gap:8 }}>
+                  <button onClick={() => editarPlano(planoSel)} style={s.btn(ROXO)}>✏️ Editar campos CNAS</button>
+                </div>
+              </div>
+
+              {/* Metas resumidas */}
+              {metas.length > 0 && (
+                <div style={s.card}>
+                  <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Metas do plano ({metas.length})</div>
+                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                    <thead><tr>{['Meta','Previsto','Realizado','% Exec.'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {metas.map(m => {
+                        const p = pct(Number(m.quantidade_realizada||0), Number(m.quantidade_prevista||0))
+                        return (
+                          <tr key={m.id}>
+                            <td style={{ ...s.td, fontWeight:500 }}>{m.descricao_meta}</td>
+                            <td style={s.td}>{m.quantidade_prevista||'—'} {m.unidade_medida}</td>
+                            <td style={{ ...s.td, color:VERDE }}>{m.quantidade_realizada||'—'}</td>
+                            <td style={s.td}>
+                              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                <div style={{ width:50, height:5, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                                  <div style={{ height:'100%', width:Math.min(p,100)+'%', background:p>=100?VERDE:LARANJA, borderRadius:99 }} />
+                                </div>
+                                <span>{p}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
-      {/* Modal confirmação exclusão */}
+
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
@@ -752,7 +1053,6 @@ export default function PlanosExecucao() {
           </div>
         </div>
       )}
-
     </div>
   )
 }
