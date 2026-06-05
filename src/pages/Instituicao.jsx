@@ -17,15 +17,42 @@ const CARGOS = [
   'Outro cargo',
 ]
 
+const NATUREZAS = [
+  'Associação sem fins lucrativos',
+  'Fundação privada',
+  'Organização religiosa',
+  'Cooperativa social',
+  'Outro',
+]
+
+const AREAS_ATUACAO = [
+  'Assistência Social',
+  'Educação',
+  'Saúde',
+  'Cultura',
+  'Esporte e lazer',
+  'Meio ambiente',
+  'Direitos humanos',
+  'Habitação',
+  'Segurança alimentar',
+  'Outro',
+]
+
 const FORM_INST_VAZIO = {
-  nome_completo: '', nome_fantasia: '', cnpj: '', endereco: '', cep: '',
-  telefone: '', email: '', site: '', ano_fundacao: '',
+  nome_completo: '', nome_fantasia: '', cnpj: '', endereco: '', bairro: '',
+  municipio: 'Teresópolis', uf: 'RJ', cep: '',
+  telefone: '', email: '', site: '', instagram: '', ano_fundacao: '',
   inscricao_municipal: '', inscricao_estadual: 'Isento',
   conselho_muni_assist: '', cmdca: '', cebas: '', utilidade_publica: '',
+  natureza_juridica: 'Associação sem fins lucrativos',
+  area_atuacao: 'Assistência Social',
+  historico_resumido: '',
+  num_inscricao_conselho: '',
 }
 
 const FORM_DIR_VAZIO = {
   nome: '', cargo: 'Presidente', cpf: '', rg: '',
+  nacionalidade: 'Brasileira', estado_civil: '', endereco: '',
   email: '', telefone: '', mandato_inicio: '', mandato_fim: '',
   observacoes: '',
 }
@@ -49,8 +76,10 @@ export default function Instituicao() {
   async function carregar() {
     setLoading(true)
     const { data: instData } = await supabase.from('instituicao').select('*').limit(1).single()
-    if (instData) { setInst(instData); setFormInst(instData) }
-
+    if (instData) {
+      setInst(instData)
+      setFormInst({ ...FORM_INST_VAZIO, ...instData })
+    }
     const { data: dirData } = await supabase
       .from('diretoria').select('*').order('mandato_inicio', { ascending: false })
     setDiretoria(dirData || [])
@@ -80,7 +109,6 @@ export default function Instituicao() {
       let ataUrl = formDir.ata_url || null
       let ataNome = formDir.ata_nome || null
 
-      // Upload da ata se selecionada
       if (ata) {
         const nomeArq = `atas/${Date.now()}-${ata.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
         const { error: upErr } = await supabase.storage.from('documentos').upload(nomeArq, ata, { upsert: false })
@@ -128,6 +156,8 @@ export default function Instituicao() {
   function editarDiretor(d) {
     setFormDir({
       nome: d.nome, cargo: d.cargo, cpf: d.cpf||'', rg: d.rg||'',
+      nacionalidade: d.nacionalidade||'Brasileira', estado_civil: d.estado_civil||'',
+      endereco: d.endereco||'',
       email: d.email||'', telefone: d.telefone||'',
       mandato_inicio: d.mandato_inicio||'', mandato_fim: d.mandato_fim||'',
       observacoes: d.observacoes||'', ata_url: d.ata_url||'', ata_nome: d.ata_nome||'',
@@ -137,7 +167,6 @@ export default function Instituicao() {
     setAba('diretoria')
   }
 
-  // Presidente atual: cargo Presidente, ativo e mandato_fim >= hoje
   const hoje = new Date().toISOString().slice(0,10)
   const presidenteAtual = diretoria.find(d =>
     d.cargo === 'Presidente' && d.ativo &&
@@ -153,7 +182,9 @@ export default function Instituicao() {
     card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 12, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box' },
+    textarea: { width: '100%', fontSize: 12, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box', resize: 'vertical' },
     grupo: { display: 'grid', gap: 10, marginBottom: 10 },
+    secao: { fontSize: 11, fontWeight: 600, color: '#5F5E5A', borderLeft: `3px solid ${VERDE}`, paddingLeft: 8, margin: '14px 0 8px' },
     tab: ativo => ({
       padding: '7px 16px', fontSize: 12, borderRadius: 8,
       border: '0.5px solid ' + (ativo ? VERDE : '#D3D1C7'),
@@ -171,7 +202,6 @@ export default function Instituicao() {
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Cadastro da Instituição</div>
 
-      {/* Presidente atual em destaque */}
       {presidenteAtual && (
         <div style={{ background: '#EAF3DE', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 20 }}>👤</div>
@@ -199,7 +229,7 @@ export default function Instituicao() {
       )}
 
       {/* Abas */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <button onClick={() => setAba('instituicao')} style={s.tab(aba==='instituicao')}>Dados da Instituição</button>
         <button onClick={() => setAba('diretoria')} style={s.tab(aba==='diretoria')}>
           Diretoria {diretoríaAtiva.length > 0 ? `(${diretoríaAtiva.length} ativos)` : ''}
@@ -212,6 +242,7 @@ export default function Instituicao() {
       {/* ABA: Dados da Instituição */}
       {aba === 'instituicao' && (
         <form onSubmit={salvarInstituicao}>
+
           <div style={s.card}>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Identificação</div>
             <div style={{ ...s.grupo, gridTemplateColumns: '2fr 1fr' }}>
@@ -238,24 +269,56 @@ export default function Instituicao() {
                 <input value={formInst.inscricao_estadual} onChange={e=>setFormInst(f=>({...f,inscricao_estadual:e.target.value}))} placeholder="Isento" style={s.input} />
               </div>
             </div>
+            <div style={{ ...s.grupo, gridTemplateColumns: '1fr 1fr' }}>
+              <div>
+                <label style={s.label}>Natureza jurídica</label>
+                <select value={formInst.natureza_juridica} onChange={e=>setFormInst(f=>({...f,natureza_juridica:e.target.value}))} style={s.input}>
+                  {NATUREZAS.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={s.label}>Área de atuação principal</label>
+                <select value={formInst.area_atuacao} onChange={e=>setFormInst(f=>({...f,area_atuacao:e.target.value}))} style={s.input}>
+                  {AREAS_ATUACAO.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label style={s.label}>Histórico / Missão resumida</label>
+              <textarea value={formInst.historico_resumido} onChange={e=>setFormInst(f=>({...f,historico_resumido:e.target.value}))} rows={3} style={s.textarea} placeholder="Breve histórico da instituição, missão e finalidades estatutárias..." />
+            </div>
           </div>
 
           <div style={s.card}>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Contato e endereço</div>
             <div style={{ ...s.grupo, gridTemplateColumns: '3fr 1fr' }}>
               <div>
-                <label style={s.label}>Endereço completo</label>
-                <input value={formInst.endereco} onChange={e=>setFormInst(f=>({...f,endereco:e.target.value}))} placeholder="Rua, número, bairro, cidade — UF" style={s.input} />
+                <label style={s.label}>Endereço (rua e número)</label>
+                <input value={formInst.endereco} onChange={e=>setFormInst(f=>({...f,endereco:e.target.value}))} placeholder="Rua Juruena, 73" style={s.input} />
               </div>
               <div>
                 <label style={s.label}>CEP</label>
                 <input value={formInst.cep} onChange={e=>setFormInst(f=>({...f,cep:e.target.value}))} placeholder="00000-000" style={s.input} />
               </div>
             </div>
+            <div style={{ ...s.grupo, gridTemplateColumns: '2fr 2fr 1fr' }}>
+              <div>
+                <label style={s.label}>Bairro</label>
+                <input value={formInst.bairro} onChange={e=>setFormInst(f=>({...f,bairro:e.target.value}))} placeholder="Ex: Agriões" style={s.input} />
+              </div>
+              <div>
+                <label style={s.label}>Município</label>
+                <input value={formInst.municipio} onChange={e=>setFormInst(f=>({...f,municipio:e.target.value}))} style={s.input} />
+              </div>
+              <div>
+                <label style={s.label}>UF</label>
+                <input value={formInst.uf} onChange={e=>setFormInst(f=>({...f,uf:e.target.value}))} style={s.input} />
+              </div>
+            </div>
             <div style={{ ...s.grupo, gridTemplateColumns: '1fr 1fr 1fr' }}>
               <div>
-                <label style={s.label}>Telefone</label>
-                <input value={formInst.telefone} onChange={e=>setFormInst(f=>({...f,telefone:e.target.value}))} placeholder="(21) 0000-0000" style={s.input} />
+                <label style={s.label}>Telefone / WhatsApp</label>
+                <input value={formInst.telefone} onChange={e=>setFormInst(f=>({...f,telefone:e.target.value}))} placeholder="(21) 00000-0000" style={s.input} />
               </div>
               <div>
                 <label style={s.label}>E-mail</label>
@@ -265,6 +328,10 @@ export default function Instituicao() {
                 <label style={s.label}>Site</label>
                 <input value={formInst.site} onChange={e=>setFormInst(f=>({...f,site:e.target.value}))} placeholder="www.capette.org.br" style={s.input} />
               </div>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label style={s.label}>Instagram / Redes sociais</label>
+              <input value={formInst.instagram} onChange={e=>setFormInst(f=>({...f,instagram:e.target.value}))} placeholder="@capette · facebook.com/capette · etc." style={s.input} />
             </div>
           </div>
 
@@ -280,6 +347,10 @@ export default function Instituicao() {
                 <input value={formInst.conselho_muni_assist} onChange={e=>setFormInst(f=>({...f,conselho_muni_assist:e.target.value}))} placeholder="Nº e data" style={s.input} />
               </div>
               <div>
+                <label style={s.label}>Nº de inscrição no conselho</label>
+                <input value={formInst.num_inscricao_conselho} onChange={e=>setFormInst(f=>({...f,num_inscricao_conselho:e.target.value}))} placeholder="Nº do registro" style={s.input} />
+              </div>
+              <div>
                 <label style={s.label}>CMDCA</label>
                 <input value={formInst.cmdca} onChange={e=>setFormInst(f=>({...f,cmdca:e.target.value}))} placeholder="Nº e data, se houver" style={s.input} />
               </div>
@@ -287,7 +358,7 @@ export default function Instituicao() {
                 <label style={s.label}>CEBAS</label>
                 <input value={formInst.cebas} onChange={e=>setFormInst(f=>({...f,cebas:e.target.value}))} placeholder="Nº e validade, se houver" style={s.input} />
               </div>
-              <div style={{ gridColumn: '1 / -1' }}>
+              <div>
                 <label style={s.label}>Utilidade pública</label>
                 <input value={formInst.utilidade_publica} onChange={e=>setFormInst(f=>({...f,utilidade_publica:e.target.value}))} placeholder="Lei municipal/estadual/federal, se houver" style={s.input} />
               </div>
@@ -305,12 +376,11 @@ export default function Instituicao() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
             <button onClick={() => { setMostrarFormDir(!mostrarFormDir); setEditandoDir(null); setFormDir(FORM_DIR_VAZIO) }}
-              style={s.btn(mostrarFormDir ? '#F1EFE8' : VERDE)}>
+              style={s.btn(mostrarFormDir ? '#F1EFE8' : VERDE, mostrarFormDir ? '#5F5E5A' : '#fff')}>
               {mostrarFormDir ? 'Cancelar' : '+ Adicionar membro'}
             </button>
           </div>
 
-          {/* Formulário de diretoria */}
           {mostrarFormDir && (
             <div style={{ ...s.card, borderColor: '#C0DD97', marginBottom: '1.25rem' }}>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>
@@ -339,12 +409,29 @@ export default function Instituicao() {
                     <input value={formDir.rg} onChange={e=>setFormDir(f=>({...f,rg:e.target.value}))} placeholder="0000000-0" style={s.input} />
                   </div>
                   <div>
+                    <label style={s.label}>Nacionalidade</label>
+                    <input value={formDir.nacionalidade} onChange={e=>setFormDir(f=>({...f,nacionalidade:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Estado civil</label>
+                    <select value={formDir.estado_civil} onChange={e=>setFormDir(f=>({...f,estado_civil:e.target.value}))} style={s.input}>
+                      <option value="">Selecione...</option>
+                      {['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','União estável'].map(ec => <option key={ec} value={ec}>{ec}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ ...s.grupo, gridTemplateColumns: '1fr 1fr 1fr' }}>
+                  <div>
                     <label style={s.label}>E-mail</label>
                     <input value={formDir.email} onChange={e=>setFormDir(f=>({...f,email:e.target.value}))} style={s.input} />
                   </div>
                   <div>
                     <label style={s.label}>Telefone</label>
                     <input value={formDir.telefone} onChange={e=>setFormDir(f=>({...f,telefone:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Endereço</label>
+                    <input value={formDir.endereco} onChange={e=>setFormDir(f=>({...f,endereco:e.target.value}))} placeholder="Rua, nº, bairro, cidade" style={s.input} />
                   </div>
                 </div>
                 <div style={{ ...s.grupo, gridTemplateColumns: '1fr 1fr 2fr' }}>
@@ -378,7 +465,6 @@ export default function Instituicao() {
             </div>
           )}
 
-          {/* Lista diretoria ativa */}
           <div style={s.card}>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Diretoria atual</div>
             {diretoríaAtiva.length === 0 ? (
@@ -388,7 +474,7 @@ export default function Instituicao() {
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead><tr>
-                  {['Cargo','Nome','CPF','RG','Mandato','Ata',''].map(h=><th key={h} style={s.th}>{h}</th>)}
+                  {['Cargo','Nome','CPF','RG','Estado civil','Mandato','Ata',''].map(h=><th key={h} style={s.th}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {diretoríaAtiva
@@ -396,13 +482,14 @@ export default function Instituicao() {
                     .map(d => (
                     <tr key={d.id} style={{ background: d.cargo === 'Presidente' ? '#F2FAE8' : '#fff' }}>
                       <td style={s.td}>
-                        <span style={s.badge(d.cargo==='Presidente'?'#EAF3DE':d.cargo==='Tesoureiro'?'#FAEEDA':'#E6F1FB', d.cargo==='Presidente'?'#3B6D11':d.cargo==='Tesoureiro'?'#854F0B':'#185FA5')}>
+                        <span style={s.badge(d.cargo==='Presidente'?'#EAF3DE':d.cargo.includes('Tesoureiro')?'#FAEEDA':'#E6F1FB', d.cargo==='Presidente'?'#3B6D11':d.cargo.includes('Tesoureiro')?'#854F0B':'#185FA5')}>
                           {d.cargo}
                         </span>
                       </td>
                       <td style={{ ...s.td, fontWeight: 500 }}>{d.nome}</td>
                       <td style={{ ...s.td, fontFamily: 'monospace', fontSize: 11 }}>{d.cpf || '—'}</td>
                       <td style={{ ...s.td, fontSize: 11 }}>{d.rg || '—'}</td>
+                      <td style={{ ...s.td, fontSize: 11 }}>{d.estado_civil || '—'}</td>
                       <td style={{ ...s.td, fontSize: 11, whiteSpace: 'nowrap' }}>
                         {fmtData(d.mandato_inicio)} a {fmtData(d.mandato_fim)}
                       </td>
