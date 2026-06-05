@@ -17,6 +17,9 @@ export default function Painel() {
     if (p === 'admin') navigate('/painel-admin', { replace: true })
     if (p === 'operacional') navigate('/painel-operacional', { replace: true })
   }, [p])
+
+  // Não renderiza nada enquanto redireciona
+  if (!p || p === 'admin' || p === 'diretoria' || p === 'operacional') return null
   const [dados, setDados] = useState({ entradas: 0, saidas: 0, saldo: 0 })
   const [historico, setHistorico] = useState([])
   const [porCategoria, setPorCategoria] = useState({ entradas: [], saidas: [] })
@@ -27,7 +30,7 @@ export default function Painel() {
 
   // Na primeira carga, busca o último extrato e define o mês inicial
   useEffect(() => {
-    if (p === 'admin' || p === 'diretoria' || p === 'operacional') return
+    if (!p || p === 'admin' || p === 'diretoria' || p === 'operacional') return
     async function inicializar() {
       const mesAtual = new Date().toISOString().slice(0, 7)
       const { data } = await supabase
@@ -47,11 +50,11 @@ export default function Painel() {
       inicializado.current = true
     }
     inicializar()
-  }, [])
+  }, [p])
 
   // Só carrega dados quando o mês estiver definido
   useEffect(() => {
-    if (!mes || p === 'admin' || p === 'diretoria' || p === 'operacional') return
+    if (!mes || !p || p === 'admin' || p === 'diretoria' || p === 'operacional') return
     carregar()
   }, [mes])
 
