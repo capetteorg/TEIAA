@@ -29,6 +29,7 @@ import UsuariosAtendidos from './pages/UsuariosAtendidos'
 import Doacoes from './pages/Doacoes'
 import PlanoTrabalho from './pages/PlanoTrabalho'
 import PlanosExecucao from './pages/PlanosExecucao'
+import RelatorioExecucao from './pages/RelatorioExecucao'
 import Cobrancas from './pages/Cobrancas'
 import PrestacaoContas from './pages/PrestacaoContas'
 import Backup from './pages/Backup'
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><Campanhas /></RotaProtegida>} />
         <Route path="projetos" element={<RotaProtegida perfisPermitidos={['admin']}><Projetos /></RotaProtegida>} />
         <Route path="plano-trabalho" element={<RotaProtegida perfisPermitidos={['admin']}><PlanoTrabalho /></RotaProtegida>} />
+        <Route path="relatorio-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><RelatorioExecucao /></RotaProtegida>} />
         <Route path="planos-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
         <Route path="doacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Doacoes /></RotaProtegida>} />
         <Route path="usuarios-atendidos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><UsuariosAtendidos /></RotaProtegida>} />
@@ -90,6 +92,7 @@ export default function App() {
         <Route path="classificacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Classificacoes /></RotaProtegida>} />
         <Route path="configuracoes" element={<RotaProtegida perfisPermitidos={['admin']}><Configuracoes /></RotaProtegida>} />
         <Route path="plano-trabalho" element={<RotaProtegida perfisPermitidos={['admin']}><PlanoTrabalho /></RotaProtegida>} />
+        <Route path="relatorio-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><RelatorioExecucao /></RotaProtegida>} />
         <Route path="planos-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
         <Route path="fechamento" element={<RotaProtegida perfisPermitidos={['admin']}><Fechamento /></RotaProtegida>} />
         <Route path="backup" element={<RotaProtegida perfisPermitidos={['admin']}><Backup /></RotaProtegida>} />

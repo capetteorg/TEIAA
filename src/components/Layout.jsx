@@ -96,6 +96,7 @@ export default function Layout() {
 
         <NavSecao label="Relatórios e Prestação" />
         <NavItem to="/relatorios"              icon="file-text"         label="Relatórios"              visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+        <NavItem to="/relatorio-execucao"       icon="report"            label="Relatório Execução"      visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/prestacao-contas"        icon="file-certificate"  label="Prestação Emenda/Edital" visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/transparencia"           icon="world"             label="Transparência pública"   visivel={p==='admin'} externo={true} onClick={fecharMenu} />
 
