@@ -200,6 +200,14 @@ export default function Projetos() {
             </div>
             <div style={{ marginBottom:14 }}>
               <label style={s.label}>Observações</label>
+              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', marginBottom:4 }}>
+                <input type="checkbox" id="exibir_transp" checked={form.exibir_transparencia !== false}
+                  onChange={e=>setForm(f=>({...f,exibir_transparencia:e.target.checked}))}
+                  style={{ width:14, height:14, cursor:'pointer' }} />
+                <label htmlFor="exibir_transp" style={{ fontSize:12, color:'#5F5E5A', cursor:'pointer' }}>
+                  Exibir na página de Transparência Pública
+                </label>
+              </div>
               <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
             </div>
             <div style={{ display:'flex', gap:8 }}>

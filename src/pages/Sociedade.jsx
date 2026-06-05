@@ -31,7 +31,7 @@ export default function Sociedade() {
       supabase.from('instituicao').select('*').limit(1),
       supabase.from('diretoria').select('*').eq('ativo', true).order('cargo'),
       supabase.from('parcerias').select('*').in('situacao', ['aprovado','em execução']).order('nome_projeto'),
-      supabase.from('projetos').select('*').eq('situacao', 'ativo').order('nome'),
+      supabase.from('projetos').select('*').eq('situacao', 'ativo').eq('exibir_transparencia', true).order('nome'),
       supabase.from('usuarios_atendidos').select('id', { count:'exact' }).eq('situacao','ativo'),
       supabase.from('documentos').select('*').eq('publico', true).order('criado_em', { ascending:false }),
     ])
