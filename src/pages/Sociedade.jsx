@@ -29,7 +29,7 @@ export default function Sociedade() {
   async function carregarEstaticos() {
     const [inst, dir, parc, proj, users, docs] = await Promise.all([
       supabase.from('instituicao').select('*').limit(1).single(),
-      supabase.from('diretoria').select('*').eq('mandato_ativo', true).order('cargo'),
+      supabase.from('diretoria').select('*').eq('ativo', true).order('cargo'),
       supabase.from('parcerias').select('*').in('situacao', ['aprovado','em execução']).order('nome_projeto'),
       supabase.from('projetos').select('*').eq('situacao', 'ativo').order('nome'),
       supabase.from('usuarios_atendidos').select('id', { count:'exact' }).eq('situacao','ativo'),
