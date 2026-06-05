@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
 export default function PainelOperacional() {
+  const isMobile = useIsMobile()
   const navigate = useNavigate()
   const [resumo, setResumo] = useState({ atendimentos: 0, usuarios: 0, equipeAtiva: 0, cobrancas: 0 })
   const [atendimentosRecentes, setAtendimentosRecentes] = useState([])
@@ -128,7 +130,7 @@ export default function PainelOperacional() {
               Nenhuma pessoa na equipe cadastrada.
             </div>
           ) : (
-            <div style={{ maxHeight:280, overflowY:'auto' }}>
+            <div style={{ maxHeight:280, overflowY:'auto',overflowX:'auto' }}>
               {equipeAtiva.map((e,i) => (
                 <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'7px 0', borderBottom:'0.5px solid #F1EFE8' }}>
                   <div>

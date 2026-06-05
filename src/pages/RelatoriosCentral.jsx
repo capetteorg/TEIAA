@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { gerarPDFRelatorio } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
@@ -14,6 +15,7 @@ const ABAS = [
 ]
 
 export default function RelatoriosCentral() {
+  const isMobile = useIsMobile()
   const [aba, setAba] = useState('financeiro')
   const [projetos, setProjetos] = useState([])
   const [planos, setPlanos] = useState([])

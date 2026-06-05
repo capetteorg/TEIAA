@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
@@ -36,6 +37,7 @@ const FORM_VAZIO = {
 const ITEM_VAZIO = { item: '', quantidade: '', unidade: 'Unidade', valor_estimado: '', observacao: '' }
 
 export default function Doacoes() {
+  const isMobile = useIsMobile()
   const [doacoes, setDoacoes] = useState([])
   const [projetos, setProjetos] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
@@ -365,7 +367,7 @@ export default function Doacoes() {
                 Nenhuma doação registrada. Clique em "+ Registrar doação" para começar.
               </div>
             ) : (
-              <div style={{ maxHeight:520, overflowY:'auto' }}>
+              <div style={{ maxHeight:520, overflowY:'auto',overflowX:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                   <thead style={{ position:'sticky', top:0 }}>
                     <tr>{['Data','Doador','Categoria','Projeto','Destino','Valor est.',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>

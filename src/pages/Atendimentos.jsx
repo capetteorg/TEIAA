@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
@@ -42,6 +43,7 @@ const FORM_VAZIO = {
 }
 
 export default function Atendimentos() {
+  const isMobile = useIsMobile()
   const { user } = useAuth()
   const [atendimentos, setAtendimentos] = useState([])
   const [projetos, setProjetos] = useState([])
@@ -242,7 +244,7 @@ export default function Atendimentos() {
               </div>
               <div>
                 <label style={s.label}>Equipe participante</label>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:4, maxHeight:80, overflowY:'auto' }}>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:4, maxHeight:80, overflowY:'auto',overflowX:'auto' }}>
                   {equipe.map(e => (
                     <button key={e.id} type="button" onClick={() => toggleEquipe(String(e.id))}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.equipe_ids.includes(String(e.id))?VERDE:'#D3D1C7'}`, background:form.equipe_ids.includes(String(e.id))?'#EAF3DE':'#fff', color:form.equipe_ids.includes(String(e.id))?'#3B6D11':'#5F5E5A' }}>
@@ -353,7 +355,7 @@ export default function Atendimentos() {
             Nenhum registro encontrado. Clique em "+ Registrar atendimento" para começar.
           </div>
         ) : (
-          <div style={{ maxHeight:560, overflowY:'auto' }}>
+          <div style={{ maxHeight:560, overflowY:'auto',overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead style={{ position:'sticky', top:0 }}>
                 <tr>{['Data','Projeto','Tipo','Tema','Profissional','Participantes','Situação',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>

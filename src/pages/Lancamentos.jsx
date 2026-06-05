@@ -74,7 +74,7 @@ export default function Lancamentos({ tipo = 'despesa' }) {
         <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Nova {tipo}</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile?'1fr 1fr':'1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
             {tipo === 'despesa' && (
               <div><label style={{ fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 }}>Nº nota fiscal</label>
                 <input value={form.nf} onChange={e => setForm(f => ({ ...f, nf: e.target.value }))} placeholder="001234" style={{ width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 }} /></div>
