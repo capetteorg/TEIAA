@@ -29,14 +29,23 @@ export default function Sociedade() {
   async function carregarEstaticos() {
     const [inst, dir, parc, proj, users, docs] = await Promise.all([
       supabase.from('instituicao').select('*').limit(1),
-      supabase.from('diretoria').select('*').eq('ativo', true).order('cargo'),
+      supabase.from('diretoria').select('*').eq('ativo', true),
       supabase.from('parcerias').select('*').in('situacao', ['aprovado','em execução']).order('nome_projeto'),
       supabase.from('projetos').select('*').eq('situacao', 'ativo').eq('exibir_transparencia', true).order('nome'),
       supabase.from('usuarios_atendidos').select('id', { count:'exact' }).eq('situacao','ativo'),
       supabase.from('documentos').select('*').eq('publico', true).order('criado_em', { ascending:false }),
     ])
     setInstituicao(inst.data?.[0] || null)
-    setDiretoria(dir.data || [])
+    const dirData = dir.data || []
+    dirData.sort((a,b) => {
+      const ia = ORDEM_CARGOS.indexOf(a.cargo)
+      const ib = ORDEM_CARGOS.indexOf(b.cargo)
+      if (ia === -1 && ib === -1) return a.cargo.localeCompare(b.cargo)
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
+    setDiretoria(dirData)
     setParcerias(parc.data || [])
     setProjetos(proj.data || [])
     setTotalUsuarios(users.count || 0)
@@ -67,6 +76,32 @@ export default function Sociedade() {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const anos = []
   for (let y = new Date().getFullYear(); y >= 2023; y--) anos.push(String(y))
+
+
+  const ORDEM_CARGOS = [
+    'Presidente',
+    'Vice-presidente',
+    '1º Tesoureiro',
+    '2º Tesoureiro',
+    '1º Secretário',
+    '2º Secretário',
+    'Diretora Pedagógica',
+    'Gerente Administrativo',
+    'Assistente Social',
+    'Presidente Conselho Deliberativo',
+    'Vice-Presidente Conselho Deliberativo',
+    '1º Membro Conselho Deliberativo',
+    '2º Membro Conselho Deliberativo',
+    '3º Membro Conselho Deliberativo',
+    'Suplente Conselho Deliberativo',
+    '2º Suplente Conselho Deliberativo',
+    '1º Membro Conselho Fiscal',
+    '2º Membro Conselho Fiscal',
+    'Suplente Conselho Fiscal',
+    '1º Membro Conselho Diretivo',
+    '2º Membro Conselho Diretivo',
+    '3º Membro Conselho Diretivo',
+  ]
 
   const TIPO_LABEL = { emenda:'Emenda Parlamentar', edital:'Edital', fomento:'Termo de Fomento', colaboracao:'Termo de Colaboração', convenio:'Convênio', parceria:'Parceria', outro:'Outro' }
   const SIT_COR = { 'aprovado':['#EAF3DE','#3B6D11'], 'em execução':['#FAEEDA','#854F0B'] }
