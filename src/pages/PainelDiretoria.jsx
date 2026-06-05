@@ -5,7 +5,6 @@ const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+m
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
-const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 
 export default function PainelDiretoria() {
   const [contas, setContas] = useState([])

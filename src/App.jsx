@@ -44,15 +44,21 @@ import Fechamento from './pages/Fechamento'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
-  if (loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:14,color:'#888'}}>Carregando...</div>
+  if (loading) return null
   if (!user) return <Navigate to="/login" replace />
-  if (perfisPermitidos && !perfisPermitidos.includes(perfil?.perfil)) return <Navigate to="/painel" replace />
+  if (perfisPermitidos && !perfisPermitidos.includes(perfil?.perfil)) {
+    const p = perfil?.perfil
+    if (p === 'admin') return <Navigate to="/painel-admin" replace />
+    if (p === 'diretoria') return <Navigate to="/painel-diretoria" replace />
+    if (p === 'operacional') return <Navigate to="/painel-operacional" replace />
+    return <Navigate to="/login" replace />
+  }
   return children
 }
 
 export default function App() {
   const { user, loading } = useAuth()
-  if (loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:14,color:'#888'}}>Carregando...</div>
+  if (loading) return null
 
   return (
     <Routes>
