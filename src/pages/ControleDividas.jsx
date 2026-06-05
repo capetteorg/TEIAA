@@ -16,10 +16,11 @@ const FORM_PGTO_VAZIO = {
   divida_id: '', valor: '', data_pagamento: '', observacoes: '',
 }
 
-export default function Funcionarios() {
+export default function ControleDividas() {
   const { perfil } = useAuth()
   const p = perfil?.perfil
   const [credores, setCredores] = useState([])
+  const [equipe, setEquipe] = useState([])
   const [dividas, setDividas] = useState([])
   const [pagamentos, setPagamentos] = useState([])
   const [tab, setTab] = useState('resumo')
@@ -27,6 +28,8 @@ export default function Funcionarios() {
   const [editandoCredor, setEditandoCredor] = useState(null)
   const [mostrarFormCredor, setMostrarFormCredor] = useState(false)
   const [formDivida, setFormDivida] = useState(FORM_DIVIDA_VAZIO)
+  const [origemCreedor, setOrigemCreedor] = useState('equipe') // 'equipe' | 'externo'
+  const [equipeSelId, setEquipeSelId] = useState('')
   const [formPgto, setFormPgto] = useState(FORM_PGTO_VAZIO)
   const [msg, setMsg] = useState('')
   const [msgD, setMsgD] = useState('')
@@ -42,9 +45,46 @@ export default function Funcionarios() {
     const { data: pg } = await supabase.from('pagamentos_divida')
       .select('*, divida:dividas(descricao, funcionario:funcionarios(nome))')
       .order('data_pagamento', { ascending: false })
+    const { data: eq } = await supabase.from('equipe')
+      .select('id, nome, funcao, cpf')
+      .eq('situacao', 'ativo')
+      .order('nome')
     setCredores(c || [])
     setDividas(d || [])
     setPagamentos(pg || [])
+    setEquipe(eq || [])
+  }
+
+  // Ao selecionar membro da equipe, garante que ele existe em funcionarios
+  async function handleEquipeSel(equipeId) {
+    setEquipeSelId(equipeId)
+    if (!equipeId) { setFormDivida(f => ({ ...f, funcionario_id: '' })); return }
+
+    const membro = equipe.find(e => String(e.id) === String(equipeId))
+    if (!membro) return
+
+    // Verifica se já existe em funcionarios pelo nome
+    const { data: existe } = await supabase
+      .from('funcionarios')
+      .select('id')
+      .ilike('nome', membro.nome.trim())
+      .limit(1)
+
+    if (existe && existe.length > 0) {
+      setFormDivida(f => ({ ...f, funcionario_id: String(existe[0].id) }))
+    } else {
+      // Cria automaticamente
+      const { data: novo } = await supabase.from('funcionarios').insert({
+        nome: membro.nome,
+        funcao: membro.funcao || null,
+        cpf_cnpj: membro.cpf || null,
+        status: 'ativo',
+      }).select().single()
+      if (novo) {
+        await carregar()
+        setFormDivida(f => ({ ...f, funcionario_id: String(novo.id) }))
+      }
+    }
   }
 
   async function salvarCredor(e) {
@@ -97,6 +137,8 @@ export default function Funcionarios() {
     if (error) { setMsgD('Erro: ' + error.message); return }
     setMsgD('✅ Dívida cadastrada!')
     setFormDivida(FORM_DIVIDA_VAZIO)
+    setEquipeSelId('')
+    setOrigemCreedor('equipe')
     carregar()
     setTimeout(() => setMsgD(''), 3000)
   }
@@ -143,6 +185,7 @@ export default function Funcionarios() {
     btn: (bg, cor='#fff') => ({ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer', whiteSpace: 'nowrap' }),
     grupo: cols => ({ display: 'grid', gridTemplateColumns: cols, gap: 10, marginBottom: 10 }),
     secao: { fontSize: 11, fontWeight: 600, color: '#5F5E5A', borderLeft: `3px solid ${VERMELHO}`, paddingLeft: 8, margin: '14px 0 8px' },
+    origemBtn: ativo => ({ padding: '5px 12px', fontSize: 11, borderRadius: 8, border: `0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background: ativo ? '#E6F1FB' : 'transparent', color: ativo ? '#185FA5' : '#5F5E5A', cursor: 'pointer' }),
   }
 
   return (
@@ -173,12 +216,7 @@ export default function Funcionarios() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        {[
-          ['resumo', 'Resumo'],
-          ['dividas', 'Dívidas'],
-          ['abatimentos', 'Abatimentos'],
-          ['credores', 'Credores'],
-        ].map(([v, l]) => (
+        {[['resumo','Resumo'],['dividas','Dívidas'],['abatimentos','Abatimentos'],['credores','Credores']].map(([v,l]) => (
           <button key={v} onClick={() => setTab(v)} style={s.tab(tab === v)}>{l}</button>
         ))}
       </div>
@@ -194,50 +232,48 @@ export default function Funcionarios() {
               <div style={{ fontSize: 13 }}>Nenhuma dívida em aberto.</div>
             </div>
           ) : (
-            <div>
-              {credores.map(c => {
-                const divsCreor = divAbertas.filter(d => d.funcionario_id === c.id)
-                if (divsCreor.length === 0) return null
-                const saldoCreor = divsCreor.reduce((a, d) => a + (Number(d.valor_original||0) - Number(d.valor_pago||0)), 0)
-                const pct = divsCreor.reduce((a,d) => a + Number(d.valor_pago||0), 0) /
-                            divsCreor.reduce((a,d) => a + Number(d.valor_original||0), 0) * 100
-                return (
-                  <div key={c.id} style={s.card}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nome}</div>
-                        <div style={{ fontSize: 11, color: '#888780' }}>{c.funcao||'—'}</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 11, color: '#888780' }}>Saldo devedor</div>
-                        <div style={{ fontSize: 16, fontWeight: 600, color: VERMELHO }}>{fmt(saldoCreor)}</div>
-                      </div>
+            credores.map(c => {
+              const divsCredor = divAbertas.filter(d => d.funcionario_id === c.id)
+              if (divsCredor.length === 0) return null
+              const saldoCredor = divsCredor.reduce((a,d) => a + (Number(d.valor_original||0) - Number(d.valor_pago||0)), 0)
+              const pct = divsCredor.reduce((a,d) => a + Number(d.valor_pago||0), 0) /
+                          divsCredor.reduce((a,d) => a + Number(d.valor_original||0), 0) * 100
+              return (
+                <div key={c.id} style={s.card}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nome}</div>
+                      <div style={{ fontSize: 11, color: '#888780' }}>{c.funcao||'—'}</div>
                     </div>
-                    <div style={{ height: 6, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
-                      <div style={{ height: '100%', width: Math.min(pct, 100) + '%', background: pct >= 100 ? VERDE : AZUL, borderRadius: 99 }} />
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 11, color: '#888780' }}>Saldo devedor</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: VERMELHO }}>{fmt(saldoCredor)}</div>
                     </div>
-                    <div style={{ fontSize: 11, color: '#888780', marginBottom: 10 }}>{Math.round(pct)}% abatido</div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-                      <thead><tr>{['Descrição','Origem','Original','Pago','Saldo'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {divsCreor.map(d => {
-                          const saldo = Number(d.valor_original||0) - Number(d.valor_pago||0)
-                          return (
-                            <tr key={d.id}>
-                              <td style={s.td}>{d.descricao}</td>
-                              <td style={s.td}>{fmtData(d.data_origem)}</td>
-                              <td style={{ ...s.td, color: '#888780' }}>{fmt(d.valor_original)}</td>
-                              <td style={{ ...s.td, color: VERDE }}>{fmt(d.valor_pago)}</td>
-                              <td style={{ ...s.td, fontWeight: 600, color: saldo > 0 ? VERMELHO : VERDE }}>{fmt(saldo)}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
                   </div>
-                )
-              })}
-            </div>
+                  <div style={{ height: 6, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ height: '100%', width: Math.min(pct,100)+'%', background: pct >= 100 ? VERDE : AZUL, borderRadius: 99 }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: '#888780', marginBottom: 10 }}>{Math.round(pct)}% abatido</div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                    <thead><tr>{['Descrição','Origem','Original','Pago','Saldo'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {divsCredor.map(d => {
+                        const saldo = Number(d.valor_original||0) - Number(d.valor_pago||0)
+                        return (
+                          <tr key={d.id}>
+                            <td style={s.td}>{d.descricao}</td>
+                            <td style={s.td}>{fmtData(d.data_origem)}</td>
+                            <td style={{ ...s.td, color: '#888780' }}>{fmt(d.valor_original)}</td>
+                            <td style={{ ...s.td, color: VERDE }}>{fmt(d.valor_pago)}</td>
+                            <td style={{ ...s.td, fontWeight: 600, color: saldo > 0 ? VERMELHO : VERDE }}>{fmt(saldo)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            })
           )}
         </div>
       )}
@@ -279,14 +315,48 @@ export default function Funcionarios() {
           {p === 'admin' && (
             <div style={s.card}>
               <div style={s.secao}>Cadastrar nova dívida</div>
+
+              {/* Seletor de origem do credor */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: '#5F5E5A', marginBottom: 6 }}>Credor é:</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button type="button" onClick={() => { setOrigemCreedor('equipe'); setEquipeSelId(''); setFormDivida(f => ({ ...f, funcionario_id: '' })) }}
+                    style={s.origemBtn(origemCreedor === 'equipe')}>
+                    👥 Da equipe CAPETTE
+                  </button>
+                  <button type="button" onClick={() => { setOrigemCreedor('externo'); setEquipeSelId(''); setFormDivida(f => ({ ...f, funcionario_id: '' })) }}
+                    style={s.origemBtn(origemCreedor === 'externo')}>
+                    🏢 Credor externo (contador, prestador...)
+                  </button>
+                </div>
+              </div>
+
               <form onSubmit={salvarDivida}>
                 <div style={s.grupo('1fr 2fr')}>
                   <div>
                     <label style={s.label}>Credor *</label>
-                    <select value={formDivida.funcionario_id} onChange={e => setFormDivida(f => ({ ...f, funcionario_id: e.target.value }))} required style={s.input}>
-                      <option value="">Selecione...</option>
-                      {credores.map(c => <option key={c.id} value={c.id}>{c.nome} {c.funcao ? `— ${c.funcao}` : ''}</option>)}
-                    </select>
+                    {origemCreedor === 'equipe' ? (
+                      <select value={equipeSelId} onChange={e => handleEquipeSel(e.target.value)} required style={s.input}>
+                        <option value="">Selecione da equipe...</option>
+                        {equipe.map(e => <option key={e.id} value={e.id}>{e.nome} {e.funcao ? `— ${e.funcao}` : ''}</option>)}
+                      </select>
+                    ) : (
+                      <select value={formDivida.funcionario_id} onChange={e => setFormDivida(f => ({ ...f, funcionario_id: e.target.value }))} required style={s.input}>
+                        <option value="">Selecione o credor...</option>
+                        {credores.map(c => <option key={c.id} value={c.id}>{c.nome} {c.funcao ? `— ${c.funcao}` : ''}</option>)}
+                      </select>
+                    )}
+                    {origemCreedor === 'externo' && (
+                      <div style={{ fontSize: 11, color: '#888780', marginTop: 4 }}>
+                        Não encontrou? <button type="button" onClick={() => { setTab('credores'); setMostrarFormCredor(true) }}
+                          style={{ fontSize: 11, background: 'none', border: 'none', color: AZUL, cursor: 'pointer', padding: 0 }}>
+                          Cadastre o credor primeiro →
+                        </button>
+                      </div>
+                    )}
+                    {origemCreedor === 'equipe' && equipeSelId && formDivida.funcionario_id && (
+                      <div style={{ fontSize: 11, color: '#3B6D11', marginTop: 4 }}>✅ Credor vinculado ao registro</div>
+                    )}
                   </div>
                   <div>
                     <label style={s.label}>Descrição *</label>
@@ -383,24 +453,24 @@ export default function Funcionarios() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
             <button onClick={() => { setMostrarFormCredor(!mostrarFormCredor); setEditandoCredor(null); setFormCredor(FORM_CREDOR_VAZIO) }}
               style={s.btn(mostrarFormCredor ? '#F1EFE8' : AZUL, mostrarFormCredor ? '#5F5E5A' : '#fff')}>
-              {mostrarFormCredor ? 'Cancelar' : '+ Cadastrar credor'}
+              {mostrarFormCredor ? 'Cancelar' : '+ Cadastrar credor externo'}
             </button>
           </div>
 
           {mostrarFormCredor && (
             <div style={{ ...s.card, borderColor: '#B3D1F0', marginBottom: '1rem' }}>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>
-                {editandoCredor ? 'Editar credor' : 'Novo credor'}
+                {editandoCredor ? 'Editar credor' : 'Novo credor externo'}
               </div>
               <form onSubmit={salvarCredor}>
                 <div style={s.grupo('2fr 1fr')}>
                   <div>
                     <label style={s.label}>Nome completo *</label>
-                    <input value={formCredor.nome} onChange={e => setFormCredor(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Paulo Henrique Teixeira, Maria Silva..." required style={s.input} />
+                    <input value={formCredor.nome} onChange={e => setFormCredor(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Paulo Henrique Teixeira, Escritório Contábil..." required style={s.input} />
                   </div>
                   <div>
                     <label style={s.label}>Função / Tipo</label>
-                    <input value={formCredor.funcao} onChange={e => setFormCredor(f => ({ ...f, funcao: e.target.value }))} placeholder="Ex: Contador, Funcionário CLT, Prestador..." style={s.input} />
+                    <input value={formCredor.funcao} onChange={e => setFormCredor(f => ({ ...f, funcao: e.target.value }))} placeholder="Ex: Contador, Prestador de serviço..." style={s.input} />
                   </div>
                 </div>
                 <div style={s.grupo('1fr 1fr 1fr')}>
@@ -434,7 +504,7 @@ export default function Funcionarios() {
                 <tbody>
                   {credores.map(c => {
                     const divsC = divAbertas.filter(d => d.funcionario_id === c.id)
-                    const saldo = divsC.reduce((a, d) => a + (Number(d.valor_original||0) - Number(d.valor_pago||0)), 0)
+                    const saldo = divsC.reduce((a,d) => a + (Number(d.valor_original||0) - Number(d.valor_pago||0)), 0)
                     return (
                       <tr key={c.id}>
                         <td style={{ ...s.td, fontWeight: 500 }}>{c.nome}</td>
