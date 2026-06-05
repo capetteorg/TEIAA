@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import ConciliacaoInteligente from './ConciliacaoInteligente'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
 
@@ -16,6 +17,7 @@ export default function Conciliacao() {
   const [campanhas, setCampanhas] = useState([])
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
+  const [abaConcil, setAbaConcil] = useState('manual')
   const [msg, setMsg] = useState('')
   const [descExpandida, setDescExpandida] = useState(null)
   const [complementarAberto, setComplementarAberto] = useState(null)
@@ -163,6 +165,19 @@ export default function Conciliacao() {
   // ===== LISTA DE EXTRATOS =====
   if (!extratoSel) return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
+      {/* Abas de conciliação */}
+      <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
+        <button onClick={() => setAbaConcil('manual')}
+          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='manual'?VERDE:'#D3D1C7'}`, background:abaConcil==='manual'?VERDE:'#fff', color:abaConcil==='manual'?'#fff':'#5F5E5A', cursor:'pointer' }}>
+          Conciliação manual
+        </button>
+        <button onClick={() => setAbaConcil('inteligente')}
+          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='inteligente'?'#8B2FC9':'#D3D1C7'}`, background:abaConcil==='inteligente'?'#8B2FC9':'#fff', color:abaConcil==='inteligente'?'#fff':'#5F5E5A', cursor:'pointer' }}>
+          ✨ Conciliação inteligente
+        </button>
+      </div>
+      {abaConcil === 'inteligente' && <ConciliacaoInteligente />}
+      {abaConcil === 'manual' && <span style={{display:'none'}} />}
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Conciliação bancária</div>
       {extratos.length === 0 ? (
         <div style={{ ...s.card, textAlign: 'center', padding: '3rem', color: '#888780' }}>
@@ -213,6 +228,19 @@ export default function Conciliacao() {
   // ===== TELA DE CONCILIAÇÃO =====
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
+      {/* Abas de conciliação */}
+      <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
+        <button onClick={() => setAbaConcil('manual')}
+          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='manual'?VERDE:'#D3D1C7'}`, background:abaConcil==='manual'?VERDE:'#fff', color:abaConcil==='manual'?'#fff':'#5F5E5A', cursor:'pointer' }}>
+          Conciliação manual
+        </button>
+        <button onClick={() => setAbaConcil('inteligente')}
+          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='inteligente'?'#8B2FC9':'#D3D1C7'}`, background:abaConcil==='inteligente'?'#8B2FC9':'#fff', color:abaConcil==='inteligente'?'#fff':'#5F5E5A', cursor:'pointer' }}>
+          ✨ Conciliação inteligente
+        </button>
+      </div>
+      {abaConcil === 'inteligente' && <ConciliacaoInteligente />}
+      {abaConcil === 'manual' && <span style={{display:'none'}} />}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <button onClick={() => { setExtratoSel(null); setMovs([]) }}
           style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
