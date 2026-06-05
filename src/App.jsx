@@ -63,6 +63,7 @@ export default function App() {
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="painel" element={<Painel />} />
         <Route path="painel-admin" element={<RotaProtegida perfisPermitidos={['admin']}><PainelAdmin /></RotaProtegida>} />
+        <Route path="painel-operacional" element={<RotaProtegida perfisPermitidos={['operacional']}><PainelOperacional /></RotaProtegida>} />
         <Route path="parcerias" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
         <Route path="parcerias/:id" element={<RotaProtegida perfisPermitidos={['admin']}><ParceriaDetalhe /></RotaProtegida>} />
         <Route path="parcerias/nova" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
