@@ -20,7 +20,7 @@ import Classificacoes from './pages/Classificacoes'
 import Configuracoes from './pages/Configuracoes'
 import Eventos from './pages/Eventos'
 import Campanhas from './pages/Campanhas'
-import Funcionarios from './pages/Funcionarios'
+import ControleDividas from './pages/ControleDividas'
 import Equipe from './pages/Equipe'
 import Projetos from './pages/Projetos'
 import Atendimentos from './pages/Atendimentos'
@@ -93,7 +93,7 @@ export default function App() {
         <Route path="usuarios-atendidos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><UsuariosAtendidos /></RotaProtegida>} />
         <Route path="atendimentos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Atendimentos /></RotaProtegida>} />
         <Route path="equipe" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Equipe /></RotaProtegida>} />
-        <Route path="funcionarios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><Funcionarios /></RotaProtegida>} />
+        <Route path="controle-dividas" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><ControleDividas /></RotaProtegida>} />
         <Route path="cobrancas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Cobrancas /></RotaProtegida>} />
         <Route path="categorias" element={<RotaProtegida perfisPermitidos={['admin']}><Categorias /></RotaProtegida>} />
         <Route path="contas" element={<RotaProtegida perfisPermitidos={['admin']}><Contas /></RotaProtegida>} />

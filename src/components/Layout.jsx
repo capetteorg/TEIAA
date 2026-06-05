@@ -108,7 +108,7 @@ export default function Layout() {
         <NavItem to="/instituicao"             icon="building"          label="Instituição"             visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/parcerias"               icon="file-certificate"  label="Parcerias / Emendas"     visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/funcionarios"            icon="alert-circle"      label="Controle de Dívidas"     visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+        <NavItem to="/controle-dividas"        icon="alert-circle"      label="Controle de Dívidas"     visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
         <NavItem to="/cobrancas"               icon="receipt-2"         label="Cobranças"               visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
 
         <NavSecao label="Configurações" />
