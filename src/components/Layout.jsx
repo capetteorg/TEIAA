@@ -47,7 +47,6 @@ export default function Layout() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Fecha menu ao navegar no mobile
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   async function handleLogout() {
@@ -62,7 +61,6 @@ export default function Layout() {
       width: 220, background:'#fff', borderRight:'0.5px solid #E0DDD5',
       display:'flex', flexDirection:'column', flexShrink:0, height:'100%',
     }}>
-      {/* Cabeçalho */}
       <div style={{padding:'.85rem 1.25rem',borderBottom:'0.5px solid #E0DDD5',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           <img src="/logo.png" alt="CAPETTE" style={{height:38,width:'auto',objectFit:'contain',maxWidth:150}}
@@ -79,11 +77,10 @@ export default function Layout() {
         )}
       </div>
 
-      {/* Itens do menu */}
       <div style={{overflowY:'auto',flex:1}}>
         <NavSecao label="Principal" />
         <NavItem to="/painel-admin"            icon="layout-dashboard"  label="Painel"                  visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/painel-operacional"       icon="layout-dashboard"  label="Painel"                  visivel={p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/painel-operacional"      icon="layout-dashboard"  label="Painel"                  visivel={p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/painel-diretoria"        icon="layout-dashboard"  label="Acompanhamento"          visivel={p==='diretoria'} onClick={fecharMenu} />
 
         <NavSecao label="Financeiro" />
@@ -111,7 +108,7 @@ export default function Layout() {
         <NavItem to="/instituicao"             icon="building"          label="Instituição"             visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/parcerias"               icon="file-certificate"  label="Parcerias / Emendas"     visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/documentos"              icon="files"             label="Documentos"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/funcionarios"            icon="id-badge-2"        label="Funcionários"            visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+        <NavItem to="/funcionarios"            icon="alert-circle"      label="Controle de Dívidas"     visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
         <NavItem to="/cobrancas"               icon="receipt-2"         label="Cobranças"               visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
 
         <NavSecao label="Configurações" />
@@ -124,7 +121,6 @@ export default function Layout() {
         <NavItem to="/configuracoes"           icon="settings"          label="Dados de teste"          visivel={p==='admin'} onClick={fecharMenu} />
       </div>
 
-      {/* Rodapé do menu */}
       <div style={{padding:'.75rem 1.25rem',borderTop:'0.5px solid #E0DDD5'}}>
         <div style={{fontSize:11,color:'#888780',marginBottom:4}}>{perfil?.nome || 'Usuário'}</div>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -140,25 +136,19 @@ export default function Layout() {
   return (
     <div style={{display:'flex',height:'100vh',background:'#F8F7F2',overflow:'hidden'}}>
 
-      {/* Desktop: sidebar fixo */}
       {!isMobile && sidebar}
 
-      {/* Mobile: overlay + sidebar deslizante */}
       {isMobile && menuAberto && (
         <>
-          {/* Fundo escuro */}
           <div onClick={() => setMenuAberto(false)}
             style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:99}} />
-          {/* Sidebar */}
           <div style={{position:'fixed',left:0,top:0,bottom:0,zIndex:100,width:260,overflowY:'auto',boxShadow:'4px 0 20px rgba(0,0,0,0.15)'}}>
             {sidebar}
           </div>
         </>
       )}
 
-      {/* Conteúdo principal */}
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-        {/* Barra superior mobile */}
         {isMobile && (
           <div style={{background:'#fff',borderBottom:'0.5px solid #E0DDD5',padding:'.6rem 1rem',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
             <button onClick={() => setMenuAberto(true)}
