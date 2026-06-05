@@ -413,6 +413,7 @@ export default function PlanosExecucao() {
                       <div style={{ display:'flex', gap:6 }}>
                         <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn(VERDE), flex:1, fontSize:11 }}>Ver plano completo →</button>
                         <button onClick={e=>{e.stopPropagation();editarPlano(p)}} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
+                        <button onClick={e=>{e.stopPropagation();setConfirmandoExcluir({id:p.id,tipo:'plano'})}} style={{ ...s.btn('#FEF2F2','#E8212A'), fontSize:11 }}>Excluir</button>
                       </div>
                     </div>
                   </div>
