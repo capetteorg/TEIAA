@@ -10,7 +10,6 @@ import Conciliacao from './pages/Conciliacao'
 import ConciliacaoInteligente from './pages/ConciliacaoInteligente'
 import Entradas from './pages/Entradas'
 import Aplicacoes from './pages/Aplicacoes'
-import Relatorios from './pages/Relatorios'
 import Sociedade from './pages/Sociedade'
 import Documentos from './pages/Documentos'
 import Instituicao from './pages/Instituicao'
@@ -27,7 +26,6 @@ import Projetos from './pages/Projetos'
 import Atendimentos from './pages/Atendimentos'
 import UsuariosAtendidos from './pages/UsuariosAtendidos'
 import Doacoes from './pages/Doacoes'
-import PlanoTrabalho from './pages/PlanoTrabalho'
 import PlanosExecucao from './pages/PlanosExecucao'
 import PainelOperacional from './pages/PainelOperacional'
 import RelatorioExecucao from './pages/RelatorioExecucao'
@@ -102,8 +100,6 @@ export default function App() {
         <Route path="usuarios" element={<RotaProtegida perfisPermitidos={['admin']}><Usuarios /></RotaProtegida>} />
         <Route path="classificacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Classificacoes /></RotaProtegida>} />
         <Route path="configuracoes" element={<RotaProtegida perfisPermitidos={['admin']}><Configuracoes /></RotaProtegida>} />
-        <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
-        <Route path="relatorio-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><RelatorioExecucao /></RotaProtegida>} />
         <Route path="fechamento" element={<RotaProtegida perfisPermitidos={['admin']}><Fechamento /></RotaProtegida>} />
         <Route path="backup" element={<RotaProtegida perfisPermitidos={['admin']}><Backup /></RotaProtegida>} />
       </Route>
