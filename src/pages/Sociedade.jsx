@@ -28,14 +28,14 @@ export default function Sociedade() {
 
   async function carregarEstaticos() {
     const [inst, dir, parc, proj, users, docs] = await Promise.all([
-      supabase.from('instituicao').select('*').limit(1).single(),
+      supabase.from('instituicao').select('*').limit(1),
       supabase.from('diretoria').select('*').eq('ativo', true).order('cargo'),
       supabase.from('parcerias').select('*').in('situacao', ['aprovado','em execução']).order('nome_projeto'),
       supabase.from('projetos').select('*').eq('situacao', 'ativo').order('nome'),
       supabase.from('usuarios_atendidos').select('id', { count:'exact' }).eq('situacao','ativo'),
       supabase.from('documentos').select('*').eq('publico', true).order('criado_em', { ascending:false }),
     ])
-    setInstituicao(inst.data)
+    setInstituicao(inst.data?.[0] || null)
     setDiretoria(dir.data || [])
     setParcerias(parc.data || [])
     setProjetos(proj.data || [])
@@ -45,8 +45,11 @@ export default function Sociedade() {
 
   async function carregarFinanceiro() {
     setLoading(true)
+    const [anoMes, mmMes] = mes.split('-')
+    const ultimoDia = new Date(parseInt(anoMes), parseInt(mmMes), 0).getDate()
+    const fimMes = `${mes}-${String(ultimoDia).padStart(2,'0')}`
     const [movMes, movAno, todas] = await Promise.all([
-      supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', mes+'-31'),
+      supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes),
       supabase.from('extrato_movs').select('*, categoria:categorias(nome,tipo)').gte('data', ano+'-01-01').lte('data', ano+'-12-31').order('data', { ascending:false }),
       supabase.from('extrato_movs').select('valor'),
     ])
