@@ -118,7 +118,7 @@ export default function RelatorioExecucao() {
     // Faixa etária dos usuários
     const hoje = new Date()
     const faixas = { '0-5': 0, '6-11': 0, '12-17': 0, '18-29': 0, '30-59': 0, '60+': 0 }
-    users_com_nasc = usuarios.filter(u => u.data_nascimento)
+    const users_com_nasc = usuarios.filter(u => u.data_nascimento)
     users_com_nasc.forEach(u => {
       const nasc = new Date(u.data_nascimento+'T12:00:00')
       let idade = hoje.getFullYear() - nasc.getFullYear()
