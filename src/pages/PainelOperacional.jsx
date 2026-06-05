@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -11,8 +11,13 @@ export default function PainelOperacional() {
   const [resumo, setResumo] = useState({ atendimentos:0, usuarios:0, equipeAtiva:0, cobrancas:0 })
   const [atendimentosRecentes, setAtendimentosRecentes] = useState([])
   const [loading, setLoading] = useState(true)
+  const carregado = useRef(false)
 
-  useEffect(() => { carregar() }, [])
+  useEffect(() => {
+    if (carregado.current) return
+    carregado.current = true
+    carregar()
+  }, [])
 
   async function carregar() {
     setLoading(true)
@@ -41,6 +46,7 @@ export default function PainelOperacional() {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const mesAtual = new Date().toLocaleDateString('pt-BR', { month:'long', year:'numeric' })
 
+  // ACOES definido abaixo no return
   const ACOES = [
     { label:'Registrar atendimento', icon:'📋', cor:AZUL, link:'/atendimentos', desc:'Registre atividades e atendimentos' },
     { label:'Lançar despesa', icon:'💸', cor:VERMELHO, link:'/despesas', desc:'Com foto de nota fiscal' },
