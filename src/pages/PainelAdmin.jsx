@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -12,12 +12,17 @@ export default function PainelAdmin() {
   const [ultimoExtrato, setUltimoExtrato] = useState(null)
   const [mes, setMes] = useState('')
   const [loading, setLoading] = useState(true)
+  const carregado = useRef(false)
   const [instituicao, setInstituicao] = useState(null)
   const [presidente, setPresidente] = useState(null)
   const [totalFuncionarios, setTotalFuncionarios] = useState(0)
   const [totalCobrancas, setTotalCobrancas] = useState(0)
 
-  useEffect(() => { inicializar() }, [])
+  useEffect(() => {
+    if (carregado.current) return
+    carregado.current = true
+    inicializar()
+  }, [])
   useEffect(() => { if (mes) carregarResumo() }, [mes])
 
   async function inicializar() {
