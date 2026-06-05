@@ -27,6 +27,7 @@ export default function Painel() {
 
   // Na primeira carga, busca o último extrato e define o mês inicial
   useEffect(() => {
+    if (p === 'admin' || p === 'diretoria' || p === 'operacional') return
     async function inicializar() {
       const mesAtual = new Date().toISOString().slice(0, 7)
       const { data } = await supabase
@@ -50,13 +51,15 @@ export default function Painel() {
 
   // Só carrega dados quando o mês estiver definido
   useEffect(() => {
-    if (mes) carregar()
+    if (!mes || p === 'admin' || p === 'diretoria' || p === 'operacional') return
+    carregar()
   }, [mes])
 
   async function carregar() {
     setLoading(true)
     const inicio = mes + '-01'
-    const fim = mes + '-31'
+    const ultimoDia = new Date(parseInt(mes.split('-')[0]), parseInt(mes.split('-')[1]), 0).getDate()
+    const fim = mes + '-' + String(ultimoDia).padStart(2,'0')
 
     const { data: movs } = await supabase
       .from('extrato_movs')
