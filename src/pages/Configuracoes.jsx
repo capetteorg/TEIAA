@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const SENHA_MASTER = 'Capette@2026'
-
 export default function Configuracoes() {
   const [senha, setSenha] = useState('')
   const [senhaOk, setSenhaOk] = useState(false)
@@ -12,8 +10,8 @@ export default function Configuracoes() {
 
   function verificarSenha(e) {
     e.preventDefault()
-    if (senha === SENHA_MASTER) { setSenhaOk(true); setMsg('') }
-    else { setMsg('Senha incorreta.'); setSenha('') }
+    if (senha === 'confirmar') { setSenhaOk(true); setMsg('') }
+    else { setMsg('Digite "confirmar" para continuar.'); setSenha('') }
   }
 
   async function executar(tipo) {
@@ -96,7 +94,7 @@ export default function Configuracoes() {
 
       {!senhaOk ? (
         <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1.5rem', maxWidth: 400 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Digite a senha master para continuar</div>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Digite <strong>confirmar</strong> para continuar</div>
           <form onSubmit={verificarSenha}>
             <input type="password" value={senha} onChange={e => setSenha(e.target.value)}
               placeholder="Senha master" required

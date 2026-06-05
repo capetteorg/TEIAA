@@ -32,7 +32,7 @@ export default function ParceriaDetalhe() {
       if (extratos?.length) {
         const ids = extratos.map(e => e.id)
         const { data: movsData } = await supabase.from('extrato_movs')
-          .select('*, categoria:categorias(nome), plano:plano_trabalho(nome)')
+          .select('*, categoria:categorias(nome), plano:planos(nome_plano)')
           .in('extrato_id', ids).order('data', { ascending: false })
         setMovs(movsData || [])
         const lista = movsData || []
@@ -41,7 +41,7 @@ export default function ParceriaDetalhe() {
         setResumoFin({ entradas: ent, saidas: sai })
       }
       // Planos de trabalho da conta
-      const { data: planosData } = await supabase.from('plano_trabalho').select('*').eq('conta_id', parc.conta_id)
+      const { data: planosData } = await supabase.from('planos').select('*, metas:metas_plano(*), atividades:atividades_previstas(*)').eq('parceria_id', parc.id)
       setPlanos(planosData || [])
     }
     // Documentos
@@ -214,7 +214,7 @@ export default function ParceriaDetalhe() {
                   const pct = plan.valor_previsto > 0 ? Math.round(exec/plan.valor_previsto*100) : 0
                   return (
                     <tr key={plan.id}>
-                      <td style={{ ...s.td, fontWeight:500 }}>{plan.nome}</td>
+                      <td style={{ ...s.td, fontWeight:500 }}>{plan.nome_plano}</td>
                       <td style={{ ...s.td, color:'#888780' }}>{plan.descricao||'—'}</td>
                       <td style={s.td}>{fmt(plan.valor_previsto)}</td>
                       <td style={{ ...s.td, color:VERMELHO }}>{fmt(exec)}</td>

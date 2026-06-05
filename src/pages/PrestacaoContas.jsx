@@ -52,7 +52,7 @@ export default function PrestacaoContas() {
 
     // Busca movimentações
     let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome, valor_previsto)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano, valor_total_previsto)')
       .in('extrato_id', extratoIds)
       .order('data')
 
@@ -92,7 +92,7 @@ export default function PrestacaoContas() {
     saidas.forEach(m => {
       if (m.plano_trabalho_id && m.plano) {
         const key = m.plano_trabalho_id
-        if (!porPlano[key]) porPlano[key] = { nome: m.plano.nome, valor_previsto: Number(m.plano.valor_previsto || 0), executado: 0 }
+        if (!porPlano[key]) porPlano[key] = { nome: m.plano.nome_plano, valor_previsto: Number(m.plano.valor_total_previsto || 0), executado: 0 }
         porPlano[key].executado += Math.abs(Number(m.valor))
       }
     })
@@ -299,13 +299,13 @@ export default function PrestacaoContas() {
                 <thead><tr>{['Item do plano','Valor previsto','Executado','Saldo','% executado','Situação'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {Object.values(dados.porPlano).map((p, i) => {
-                    const saldo = p.valor_previsto - p.executado
-                    const pct = p.valor_previsto > 0 ? Math.round(p.executado / p.valor_previsto * 100) : 0
+                    const saldo = p.valor_total_previsto - p.executado
+                    const pct = p.valor_total_previsto > 0 ? Math.round(p.executado / p.valor_total_previsto * 100) : 0
                     const sit = pct === 0 ? 'Não iniciado' : pct >= 100 ? 'Executado integralmente' : 'Em execução'
                     return (
                       <tr key={i}>
                         <td style={{ ...s.td, fontWeight: 500 }}>{p.nome}</td>
-                        <td style={s.td}>{fmt(p.valor_previsto)}</td>
+                        <td style={s.td}>{fmt(p.valor_total_previsto)}</td>
                         <td style={{ ...s.td, color: VERMELHO }}>{fmt(p.executado)}</td>
                         <td style={{ ...s.td, color: saldo >= 0 ? VERDE : VERMELHO }}>{fmt(saldo)}</td>
                         <td style={s.td}>{pct}%</td>

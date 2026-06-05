@@ -12,7 +12,7 @@ export default function Conciliacao() {
   const [movs, setMovs] = useState([])
   const [categorias, setCategorias] = useState([])
   const [subcategorias, setSubcategorias] = useState([])
-  const [planosTrabalho, setPlanosTrabalho] = useState([])
+  const [planos, setPlanos] = useState([])
   const [eventos, setEventos] = useState([])
   const [campanhas, setCampanhas] = useState([])
   const [filtro, setFiltro] = useState('todos')
@@ -27,7 +27,7 @@ export default function Conciliacao() {
     carregarExtratos()
     supabase.from('categorias').select('*').order('nome').then(({ data }) => setCategorias(data || []))
     supabase.from('subcategorias').select('*').order('nome').then(({ data }) => setSubcategorias(data || []))
-    supabase.from('plano_trabalho').select('*, conta:contas(nome)').order('nome').then(({ data }) => setPlanosTrabalho(data || []))
+    supabase.from('planos').select('*, conta:contas(nome)').order('nome_plano').then(({ data }) => setPlanos(data || []))
     supabase.from('eventos').select('id, nome').order('nome').then(({ data }) => setEventos(data || []))
     supabase.from('campanhas').select('id, nome').order('nome').then(({ data }) => setCampanhas(data || []))
   }, [])
@@ -45,7 +45,7 @@ export default function Conciliacao() {
     setExtratoSel(ext)
     const { data, error } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:plano_trabalho(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano)')
       .eq('extrato_id', ext.id)
       .order('data')
     if (error) console.error('Erro ao buscar movimentações:', error)
@@ -73,7 +73,7 @@ export default function Conciliacao() {
   async function salvarPlanoTrabalho(movId, planoId) {
     await supabase.from('extrato_movs').update({ plano_trabalho_id: planoId ? parseInt(planoId) : null }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id === movId
-      ? { ...m, plano_trabalho_id: planoId, plano: planosTrabalho.find(p => String(p.id) === String(planoId)) }
+      ? { ...m, plano_trabalho_id: planoId, plano: planos.find(p => String(p.id) === String(planoId)) }
       : m))
   }
 
@@ -129,7 +129,7 @@ export default function Conciliacao() {
   }
 
   const subcatsDa = (catId) => subcategorias.filter(s => String(s.categoria_id) === String(catId))
-  const planosDaConta = (contaId) => planosTrabalho.filter(p => String(p.conta_id) === String(contaId))
+  const planosDaConta = (contaId) => planos.filter(p => String(p.conta_id) === String(contaId))
 
   const movsFiltradas = movs.filter(m => {
     if (filtro === 'pendentes') return !m.conciliado
