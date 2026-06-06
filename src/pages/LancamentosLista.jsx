@@ -34,7 +34,10 @@ export default function LancamentosLista() {
       .select('*, conta:contas(nome), categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), projeto:projetos(nome), fornecedor:fornecedores(nome)')
       .order('data', { ascending: false })
 
-    if (filtroTipo !== 'todos') q = q.eq('tipo', filtroTipo)
+    if (filtroTipo !== 'todos') {
+      if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
+      else q = q.eq('tipo', filtroTipo)
+    }
     if (filtroPeriodo) q = q.gte('data', filtroPeriodo + '-01').lte('data', filtroPeriodo + '-31')
     if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
     if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
