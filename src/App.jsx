@@ -18,8 +18,6 @@ import Contas from './pages/Contas'
 import Usuarios from './pages/Usuarios'
 import Classificacoes from './pages/Classificacoes'
 import Configuracoes from './pages/Configuracoes'
-import Eventos from './pages/Eventos'
-import Campanhas from './pages/Campanhas'
 import ControleDividas from './pages/ControleDividas'
 import Equipe from './pages/Equipe'
 import Projetos from './pages/Projetos'
@@ -28,7 +26,6 @@ import UsuariosAtendidos from './pages/UsuariosAtendidos'
 import Doacoes from './pages/Doacoes'
 import PlanosExecucao from './pages/PlanosExecucao'
 import PainelOperacional from './pages/PainelOperacional'
-import RelatorioExecucao from './pages/RelatorioExecucao'
 import RelatoriosCentral from './pages/RelatoriosCentral'
 import EventosCampanhas from './pages/EventosCampanhas'
 import Cobrancas from './pages/Cobrancas'
@@ -82,13 +79,10 @@ export default function App() {
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
         <Route path="instituicao" element={<RotaProtegida perfisPermitidos={['admin']}><Instituicao /></RotaProtegida>} />
         <Route path="documentos" element={<RotaProtegida perfisPermitidos={['admin']}><Documentos /></RotaProtegida>} />
-        <Route path="eventos" element={<RotaProtegida perfisPermitidos={['admin']}><Eventos /></RotaProtegida>} />
-        <Route path="campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><Campanhas /></RotaProtegida>} />
         <Route path="projetos" element={<RotaProtegida perfisPermitidos={['admin']}><Projetos /></RotaProtegida>} />
-        <Route path="plano-trabalho" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
-        <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
-        <Route path="relatorio-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><RelatorioExecucao /></RotaProtegida>} />
         <Route path="planos-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
+        <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
+        <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><RelatoriosCentral /></RotaProtegida>} />
         <Route path="doacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Doacoes /></RotaProtegida>} />
         <Route path="usuarios-atendidos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><UsuariosAtendidos /></RotaProtegida>} />
         <Route path="atendimentos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Atendimentos /></RotaProtegida>} />

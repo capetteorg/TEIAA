@@ -137,6 +137,7 @@ export default function Layout() {
         <NavSecao label="Configurações" />
         <NavItem to="/contas"             icon="building-bank"     label="Contas bancárias" visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/categorias"         icon="tag"               label="Categorias"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/classificacoes"     icon="list-tree"         label="Classificações"   visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/usuarios"           icon="user-cog"          label="Usuários do sistema" visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/fechamento"         icon="lock"              label="Fechamento"       visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/backup"             icon="database-export"   label="Backup"           visivel={p==='admin'} onClick={fecharMenu} />
