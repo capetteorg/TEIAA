@@ -120,13 +120,34 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   function onPdfChange(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    setMsgIA('Convertendo PDF...')
     const reader = new FileReader()
-    reader.onload = ev => {
-      const base64 = ev.target.result.split(',')[1]
-      setPdfBase64(base64)
-      setMsgIA('')
+    reader.onload = async ev => {
+      try {
+        // Carrega pdfjs dinamicamente
+        const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js')
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+        
+        const typedArray = new Uint8Array(ev.target.result)
+        const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise
+        const page = await pdf.getPage(1)
+        const viewport = page.getViewport({ scale: 2 })
+        const canvas = document.createElement('canvas')
+        canvas.width = viewport.width
+        canvas.height = viewport.height
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
+        const base64 = dataUrl.split(',')[1]
+        setFotoBase64(base64)
+        setFotoPreview(dataUrl)
+        setPdfBase64(base64)
+        setMsgIA('')
+      } catch(err) {
+        setMsgIA('❌ Erro ao converter PDF. Tente uma imagem ou texto.')
+        console.error(err)
+      }
     }
-    reader.readAsDataURL(file)
+    reader.readAsArrayBuffer(file)
   }
 
   const PROMPT_NF = `Analise este documento fiscal e extraia as informações. Responda APENAS com JSON válido, sem texto adicional:
@@ -151,9 +172,9 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fotoBase64 } },
           { type: 'text', text: PROMPT_NF }
         ]
-      } else if (modoEntrada === 'pdf' && pdfBase64) {
+      } else if (modoEntrada === 'pdf' && (pdfBase64 || fotoBase64)) {
         content = [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: pdfBase64 || fotoBase64 } },
           { type: 'text', text: PROMPT_NF }
         ]
       } else if (modoEntrada === 'texto' && textoNota) {
@@ -375,19 +396,17 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       style={{ border:`2px dashed ${AZUL}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F0F7FF' }}>
                       <div style={{ fontSize:40, marginBottom:8 }}>📄</div>
                       <div style={{ fontSize:13, fontWeight:500, color:AZUL }}>Clique para selecionar o PDF da nota fiscal</div>
-                      <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>Arquivo .pdf</div>
+                      <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>Arquivo .pdf — primeira página será lida pela IA</div>
                     </div>
                   ) : (
                     <div>
-                      <div style={{ background:'#F0F7FF', borderRadius:8, padding:'10px 14px', marginBottom:10, fontSize:12, color:AZUL }}>
-                        ✅ PDF carregado — pronto para analisar
-                      </div>
+                      {fotoPreview && <img src={fotoPreview} alt="PDF convertido" style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E0DDD5', marginBottom:10 }} />}
                       <div style={{ display:'flex', gap:8 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':AZUL, color:'#fff', cursor:'pointer' }}>
                           {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
                         </button>
-                        <button type="button" onClick={() => { setPdfBase64(null); inputPdfRef.current?.click() }}
+                        <button type="button" onClick={() => { setPdfBase64(null); setFotoPreview(null); setFotoBase64(null); inputPdfRef.current?.click() }}
                           style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
                           Trocar PDF
                         </button>
