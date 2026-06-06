@@ -6,7 +6,7 @@ export default function Classificacoes() {
   const [lista, setLista] = useState([])
   const [categorias, setCategorias] = useState([])
   const [subcategorias, setSubcategorias] = useState([])
-  const [form, setForm] = useState({ tipo_doc: '', direcao: 'entrada', classificacao: '', categoria: '' })
+  const [form, setForm] = useState({ tipo_doc: '', direcao: 'entrada', categoria_id: '', categoria: '', subcategoria: '' })
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
@@ -17,17 +17,25 @@ export default function Classificacoes() {
 
   async function salvar(e) {
     e.preventDefault()
-    const { error } = await dbClass.criar(form)
+    const dados = {
+      tipo_doc: form.tipo_doc,
+      direcao: form.direcao,
+      classificacao: form.subcategoria || form.categoria || '',
+      categoria: form.subcategoria || form.categoria || '',
+    }
+    const { error } = await dbClass.criar(dados)
     if (error) { setMsg('Erro: ' + error.message); return }
     setMsg('✅ Regra criada!')
     dbClass.listar().then(({ data }) => setLista(data || []))
-    setForm({ tipo_doc: '', direcao: 'entrada', classificacao: '', categoria: '' })
+    setForm({ tipo_doc: '', direcao: 'entrada', categoria_id: '', categoria: '', subcategoria: '' })
     setTimeout(() => setMsg(''), 3000)
   }
 
   const catsFiltradas = categorias.filter(c =>
     form.direcao === 'entrada' ? c.tipo === 'entrada' : c.tipo === 'despesa'
   )
+
+  const subsFiltradas = subcategorias.filter(s => String(s.categoria_id) === String(form.categoria_id))
 
   const s = {
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
@@ -40,8 +48,7 @@ export default function Classificacoes() {
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ fontSize:15, fontWeight:500, marginBottom:'1.25rem' }}>Classificações automáticas</div>
       <div style={{ background:'#F8F7F2', borderLeft:'3px solid #8B2FC9', borderRadius:'0 8px 8px 0', padding:'.55rem .9rem', fontSize:12, color:'#5F5E5A', marginBottom:'1.25rem' }}>
-        Visível apenas para o administrador. Regras aplicadas automaticamente ao importar o extrato do Sicredi.
-        Quando o tipo do documento bater com uma regra, o lançamento é classificado automaticamente.
+        Regras aplicadas automaticamente ao importar o extrato. Quando o tipo do documento bater com uma regra, o lançamento é classificado automaticamente.
       </div>
 
       <div style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
@@ -50,14 +57,13 @@ export default function Classificacoes() {
           <div style={{ fontSize:12, color:'#888780', textAlign:'center', padding:'1rem' }}>Nenhuma regra cadastrada ainda.</div>
         ) : (
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-            <thead><tr>{['Tipo doc. (banco)','Direção','Classificação exibida','Categoria',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Tipo doc. (banco)','Direção','Categoria / Subcategoria',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
             <tbody>
               {lista.map(r => (
                 <tr key={r.id}>
                   <td style={s.td}><span style={{ fontSize:10, background:'#F1EFE8', color:'#5F5E5A', padding:'2px 6px', borderRadius:4, fontFamily:'monospace' }}>{r.tipo_doc}</span></td>
                   <td style={s.td}><span style={{ fontSize:10, padding:'2px 7px', borderRadius:99, fontWeight:500, background:r.direcao==='entrada'?'#EAF3DE':'#FCEBEB', color:r.direcao==='entrada'?'#3B6D11':'#A32D2D' }}>{r.direcao==='entrada'?'Entrada':'Saída'}</span></td>
-                  <td style={s.td}>{r.classificacao}</td>
-                  <td style={s.td}>{r.categoria || '—'}</td>
+                  <td style={s.td}>{r.categoria || r.classificacao || '—'}</td>
                   <td style={s.td}>
                     <button onClick={() => { if(confirm('Excluir esta regra?')) dbClass.excluir(r.id).then(() => dbClass.listar().then(({data}) => setLista(data||[]))) }}
                       style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #E8212A', background:'transparent', color:'#E8212A', cursor:'pointer' }}>✕</button>
@@ -80,41 +86,32 @@ export default function Classificacoes() {
             </div>
             <div>
               <label style={s.label}>Direção</label>
-              <select value={form.direcao} onChange={e=>setForm(f=>({...f,direcao:e.target.value,categoria:''}))} style={s.input}>
+              <select value={form.direcao} onChange={e=>setForm(f=>({...f,direcao:e.target.value,categoria_id:'',categoria:'',subcategoria:''}))} style={s.input}>
                 <option value="entrada">Entrada</option>
                 <option value="saida">Saída</option>
               </select>
             </div>
             <div>
-              <label style={s.label}>Classificação exibida</label>
-              <input value={form.classificacao} onChange={e=>setForm(f=>({...f,classificacao:e.target.value}))}
-                placeholder="Ex: Contribuição de associados" required style={s.input} />
+              <label style={s.label}>Categoria</label>
+              <select value={form.categoria_id} onChange={e=>{
+                const cat = catsFiltradas.find(c => String(c.id) === e.target.value)
+                setForm(f=>({...f, categoria_id:e.target.value, categoria:cat?.nome||'', subcategoria:''}))
+              }} style={s.input}>
+                <option value="">Selecione...</option>
+                {catsFiltradas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
             </div>
             <div>
-              <label style={s.label}>Categoria / Subcategoria</label>
-              <select value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))} style={s.input}>
-                <option value="">Sem categoria</option>
-                {catsFiltradas.map(cat => {
-                  const subs = subcategorias.filter(s => s.categoria_id === cat.id)
-                  return (
-                    <optgroup key={cat.id} label={cat.nome}>
-                      <option value={cat.nome}>{cat.nome} (geral)</option>
-                      {subs.map(sub => (
-                        <option key={sub.id} value={sub.nome}>↳ {sub.nome}</option>
-                      ))}
-                    </optgroup>
-                  )
-                })}
+              <label style={s.label}>Subcategoria</label>
+              <select value={form.subcategoria} onChange={e=>setForm(f=>({...f,subcategoria:e.target.value}))}
+                style={s.input} disabled={!form.categoria_id}>
+                <option value="">Nenhuma (usar categoria)</option>
+                {subsFiltradas.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
               </select>
-              {catsFiltradas.length === 0 && (
-                <div style={{ fontSize:10, color:'#888780', marginTop:3 }}>
-                  Nenhuma categoria de {form.direcao === 'entrada' ? 'entrada' : 'despesa'} cadastrada.
-                </div>
-              )}
             </div>
           </div>
           {msg && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:10, background:msg.includes('Erro')?'#FEF2F2':'#F2FAE8', color:msg.includes('Erro')?'#A32D2D':'#3B6D11' }}>{msg}</div>}
-          <button type="submit" style={{ padding:'7px 16px', fontSize:12, borderRadius:8, border:'none', background:'#6BBF2B', color:'#fff', cursor:'pointer' }}>
+          <button type="submit" disabled={!form.categoria_id} style={{ padding:'7px 16px', fontSize:12, borderRadius:8, border:'none', background:form.categoria_id?'#6BBF2B':'#D3D1C7', color:'#fff', cursor:form.categoria_id?'pointer':'not-allowed' }}>
             Adicionar regra
           </button>
         </form>
