@@ -28,7 +28,7 @@ export default function Conciliacao() {
     carregarExtratos()
     supabase.from('categorias').select('*').order('nome').then(({ data }) => setCategorias(data || []))
     supabase.from('subcategorias').select('*').order('nome').then(({ data }) => setSubcategorias(data || []))
-    supabase.from('planos').select('*, conta:contas(nome)').order('nome_plano').then(({ data }) => setPlanos(data || []))
+    supabase.from('plano_trabalho').select('id,nome,conta_id').order('nome').then(({ data }) => setPlanos(data || []))
     supabase.from('eventos').select('id,nome').order('nome').then(({ data }) => setEventos(data || []))
     supabase.from('campanhas').select('id,nome').order('nome').then(({ data }) => setCampanhas(data || []))
     supabase.from('fornecedores').select('id,nome,cpf_cnpj').eq('ativo',true).order('nome').then(({ data }) => setFornecedores(data || []))
