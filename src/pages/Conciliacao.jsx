@@ -47,7 +47,7 @@ export default function Conciliacao() {
     setExtratoSel(ext)
     const { data, error } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .eq('extrato_id', ext.id)
       .order('data')
     if (error) console.error('Erro ao buscar movimentações:', error)
