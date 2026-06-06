@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 
 export default function LancamentosLista() {
   const { perfil, user } = useAuth()
@@ -18,24 +18,19 @@ export default function LancamentosLista() {
   const [filtroProjeto, setFiltroProjeto] = useState('')
   const [categorias, setCategorias] = useState([])
   const [projetos, setProjetos] = useState([])
+  const [contas, setContas] = useState([])
+  const [fornecedores, setFornecedores] = useState([])
   const [editando, setEditando] = useState(null)
   const [formEdit, setFormEdit] = useState({})
   const [salvando, setSalvando] = useState(false)
-  const [contas, setContas] = useState([])
-  const [categorias, setCategorias] = useState([])
-  const [projetos, setProjetos] = useState([])
-  const [fornecedores, setFornecedores] = useState([])
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+  const [msg, setMsg] = useState('')
 
   useEffect(() => {
     supabase.from('contas').select('id,nome,preponderancia').order('nome').then(({ data }) => setContas(data || []))
     supabase.from('categorias').select('id,nome,tipo').order('nome').then(({ data }) => setCategorias(data || []))
     supabase.from('projetos').select('id,nome').order('nome').then(({ data }) => setProjetos(data || []))
-    supabase.from('fornecedores').select('id,nome').eq('ativo',true).order('nome').then(({ data }) => setFornecedores(data || []))
-  }, [])
-
-  useEffect(() => {
-    supabase.from('categorias').select('id,nome,tipo').order('nome').then(({ data }) => setCategorias(data || []))
-    supabase.from('projetos').select('id,nome').order('nome').then(({ data }) => setProjetos(data || []))
+    supabase.from('fornecedores').select('id,nome').eq('ativo', true).order('nome').then(({ data }) => setFornecedores(data || []))
   }, [])
 
   useEffect(() => { carregar() }, [filtroTipo, filtroPeriodo, filtroCategoria, filtroProjeto])
@@ -45,25 +40,18 @@ export default function LancamentosLista() {
     let q = supabase.from('lancamentos')
       .select('*, conta:contas(nome), categoria:categorias(nome,tipo), projeto:projetos(nome), fornecedor:fornecedores(nome)')
       .order('data', { ascending: false })
-
     if (p === 'operacional') q = q.eq('criado_por', user.id)
     if (filtroTipo !== 'todos') {
       if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
       else q = q.eq('tipo', filtroTipo)
     }
-    if (filtroPeriodo) {
-      q = q.gte('data', filtroPeriodo + '-01').lte('data', filtroPeriodo + '-31')
-    }
+    if (filtroPeriodo) q = q.gte('data', filtroPeriodo+'-01').lte('data', filtroPeriodo+'-31')
     if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
     if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
-
     const { data } = await q
     setLista(data || [])
     setLoading(false)
   }
-
-  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
-  const [msg, setMsg] = useState('')
 
   async function salvarEdicao() {
     setSalvando(true)
@@ -119,7 +107,7 @@ export default function LancamentosLista() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:15, fontWeight:500 }}>Lançamentos</div>
-          <div style={{ fontSize:12, color:'#888780' }}>{lista.length} lançamento{lista.length!==1?'s':''} no período</div>
+          <div style={{ fontSize:12, color:'#888780' }}>{lista.length} lançamento{lista.length!==1?'s':''}</div>
         </div>
         <div style={{ display:'flex', gap:6 }}>
           <button onClick={() => navigate('/despesas')} style={s.btn(VERMELHO)}>+ Despesa</button>
@@ -135,7 +123,7 @@ export default function LancamentosLista() {
           { label:'Entradas', val:fmt(totalEntradas), cor:VERDE },
           { label:'Despesas', val:fmt(totalDespesas), cor:VERMELHO },
           { label:'Resultado', val:fmt(totalEntradas - totalDespesas), cor: totalEntradas >= totalDespesas ? AZUL : VERMELHO },
-          { label:'Total lançamentos', val:lista.length, cor:'#5F5E5A' },
+          { label:'Total', val:lista.length, cor:'#5F5E5A' },
         ].map(m => (
           <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
@@ -158,7 +146,7 @@ export default function LancamentosLista() {
         </select>
         <select value={filtroProjeto} onChange={e=>setFiltroProjeto(e.target.value)} style={s.input}>
           <option value="">Todos os projetos</option>
-          {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+          {projetos.map(proj => <option key={proj.id} value={proj.id}>{proj.nome}</option>)}
         </select>
         <button onClick={carregar} style={s.btn(AZUL)}>↻ Atualizar</button>
       </div>
@@ -169,46 +157,61 @@ export default function LancamentosLista() {
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
         ) : lista.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-            Nenhum lançamento encontrado no período.
+            Nenhum lançamento encontrado.
           </div>
         ) : (
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead>
-                <tr>{['Data','Tipo','Descrição','Fornecedor','Categoria','Subcategoria','Projeto','Conta','Valor',''].map(h=>(
+                <tr>{['Data','Tipo','Descrição','Fornecedor','Categoria','Projeto','Conta','Valor',''].map(h=>(
                   <th key={h} style={s.th}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
-                {lista.map((l,i) => {
+                {lista.map((l, i) => {
                   const contaAtual = contas.find(c => String(c.id) === String(l.conta_id))
                   return (
-                  <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
-                    <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
-                    <td style={s.td}>
-                      <span style={s.badge(l.tipo==='entrada'?'#EAF3DE':'#FEF2F2', l.tipo==='entrada'?'#3B6D11':VERMELHO)}>
-                        {l.tipo==='entrada'?'Entrada':'Despesa'}
-                      </span>
-                    </td>
-                    <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
-                    <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.fornecedor?.nome || l.fornecedor || '—'}</td>
-                    <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.categoria?.nome || '—'}</td>
-                    <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.subcategoria?.nome || '—'}</td>
-                    <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.projeto?.nome || '—'}</td>
-                    <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.conta?.nome || '—'}</td>
-                    <td style={{ ...s.td, fontWeight:500, color:l.tipo==='entrada'?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>
-                      {l.tipo==='entrada'?'+':'-'}{fmt(l.valor)}
-                    </td>
-                    <td style={s.td}>
-                      <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={() => { setEditando(l.id); setFormEdit({ data:l.data, descricao:l.descricao, valor:l.valor, conta_id:l.conta_id, categoria_id:l.categoria_id, fornecedor_id:l.fornecedor_id, projeto_id:l.projeto_id, nf:l.nf||'', dispensa_nf:l.dispensa_nf||false, _contaPrep: contaAtual?.preponderancia }) }}
-                          style={s.btn('#E6F1FB',AZUL)}>Editar</button>
-                        {p === 'admin' && (
-                          <button onClick={() => setConfirmandoExcluir(l)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                    <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
+                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
+                      <td style={s.td}>
+                        <span style={s.badge(l.tipo==='entrada'?'#EAF3DE':'#FEF2F2', l.tipo==='entrada'?'#3B6D11':VERMELHO)}>
+                          {l.tipo==='entrada'?'Entrada':'Despesa'}
+                        </span>
+                      </td>
+                      <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.fornecedor?.nome || '—'}</td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.categoria?.nome || '—'}</td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.projeto?.nome || '—'}</td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.conta?.nome || '—'}</td>
+                      <td style={{ ...s.td, fontWeight:500, color:l.tipo==='entrada'?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>
+                        {l.tipo==='entrada'?'+':'-'}{fmt(l.valor)}
+                      </td>
+                      <td style={s.td}>
+                        <div style={{ display:'flex', gap:4 }}>
+                          <button onClick={() => {
+                            setEditando(l.id)
+                            setFormEdit({
+                              data: l.data,
+                              descricao: l.descricao,
+                              valor: l.valor,
+                              conta_id: l.conta_id,
+                              categoria_id: l.categoria_id,
+                              fornecedor_id: l.fornecedor_id,
+                              projeto_id: l.projeto_id,
+                              nf: l.nf || '',
+                              dispensa_nf: l.dispensa_nf || false,
+                              prep_educacao: l.prep_educacao || '',
+                              prep_social: l.prep_social || '',
+                              prep_saude: l.prep_saude || '',
+                              _contaPrep: contaAtual?.preponderancia,
+                            })
+                          }} style={s.btn('#E6F1FB', AZUL)}>Editar</button>
+                          {p === 'admin' && (
+                            <button onClick={() => setConfirmandoExcluir(l)} style={s.btn('#FEF2F2', VERMELHO)}>Excluir</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   )
                 })}
               </tbody>
@@ -247,7 +250,7 @@ export default function LancamentosLista() {
                 <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Conta</label>
                 <select value={formEdit.conta_id||''} onChange={e => {
                   const c = contas.find(c => String(c.id) === e.target.value)
-                  setFormEdit(f=>({...f, conta_id:e.target.value, _contaPrep: c?.preponderancia }))
+                  setFormEdit(f => ({...f, conta_id:e.target.value, _contaPrep:c?.preponderancia}))
                 }} style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
                   <option value="">Sem conta</option>
                   {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
@@ -269,7 +272,7 @@ export default function LancamentosLista() {
                 <select value={formEdit.fornecedor_id||''} onChange={e=>setFormEdit(f=>({...f,fornecedor_id:e.target.value}))}
                   style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
                   <option value="">Sem fornecedor</option>
-                  {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                  {fornecedores.map(forn => <option key={forn.id} value={forn.id}>{forn.nome}</option>)}
                 </select>
               </div>
               <div>
@@ -277,7 +280,7 @@ export default function LancamentosLista() {
                 <select value={formEdit.projeto_id||''} onChange={e=>setFormEdit(f=>({...f,projeto_id:e.target.value}))}
                   style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
                   <option value="">Sem projeto</option>
-                  {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  {projetos.map(proj => <option key={proj.id} value={proj.id}>{proj.nome}</option>)}
                 </select>
               </div>
             </div>
@@ -288,12 +291,12 @@ export default function LancamentosLista() {
                 disabled={formEdit.dispensa_nf} placeholder="001234"
                 style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', opacity:formEdit.dispensa_nf?0.5:1 }} />
               <label style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#888780', marginTop:4, cursor:'pointer' }}>
-                <input type="checkbox" checked={formEdit.dispensa_nf||false} onChange={e=>setFormEdit(f=>({...f,dispensa_nf:e.target.checked,nf:e.target.checked?'':f.nf}))} />
+                <input type="checkbox" checked={formEdit.dispensa_nf||false}
+                  onChange={e=>setFormEdit(f=>({...f,dispensa_nf:e.target.checked,nf:e.target.checked?'':f.nf}))} />
                 Dispensa nota fiscal
               </label>
             </div>
 
-            {/* Rateio preponderância */}
             {formEdit._contaPrep === 'rateio' && (
               <div style={{ background:'#FAEEDA', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
                 <div style={{ fontSize:12, fontWeight:500, color:'#854F0B', marginBottom:8 }}>Preponderância (deve somar 100%)</div>
