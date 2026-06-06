@@ -69,8 +69,8 @@ export default function Classificacoes() {
                   <td style={s.td}><span style={{ fontSize:10, padding:'2px 7px', borderRadius:99, fontWeight:500, background:r.direcao==='entrada'?'#EAF3DE':'#FCEBEB', color:r.direcao==='entrada'?'#3B6D11':'#A32D2D' }}>{r.direcao==='entrada'?'Entrada':'Saída'}</span></td>
                   <td style={s.td}>
                     <div>{r.categoria || r.classificacao || '—'}</div>
-                    {r.subcategoria_id && subcategorias.find(s => String(s.id) === String(r.subcategoria_id)) && (
-                      <div style={{ fontSize:11, color:'#888780' }}>↳ {subcategorias.find(s => String(s.id) === String(r.subcategoria_id)).nome}</div>
+                    {r.subcategoria_id && subcategorias.find(sub => String(sub.id) === String(r.subcategoria_id)) && (
+                      <div style={{ fontSize:11, color:'#888780' }}>↳ {subcategorias.find(sub => String(sub.id) === String(r.subcategoria_id)).nome}</div>
                     )}
                   </td>
                   <td style={s.td}>
