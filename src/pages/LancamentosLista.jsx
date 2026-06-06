@@ -22,9 +22,15 @@ export default function LancamentosLista() {
   const [formEdit, setFormEdit] = useState({})
   const [salvando, setSalvando] = useState(false)
   const [contas, setContas] = useState([])
+  const [categorias, setCategorias] = useState([])
+  const [projetos, setProjetos] = useState([])
+  const [fornecedores, setFornecedores] = useState([])
 
   useEffect(() => {
-    supabase.from('contas').select('id,nome').order('nome').then(({ data }) => setContas(data || []))
+    supabase.from('contas').select('id,nome,preponderancia').order('nome').then(({ data }) => setContas(data || []))
+    supabase.from('categorias').select('id,nome,tipo').order('nome').then(({ data }) => setCategorias(data || []))
+    supabase.from('projetos').select('id,nome').order('nome').then(({ data }) => setProjetos(data || []))
+    supabase.from('fornecedores').select('id,nome').eq('ativo',true).order('nome').then(({ data }) => setFornecedores(data || []))
   }, [])
 
   useEffect(() => {
@@ -66,6 +72,14 @@ export default function LancamentosLista() {
       descricao: formEdit.descricao,
       valor: parseFloat(formEdit.valor),
       conta_id: formEdit.conta_id ? parseInt(formEdit.conta_id) : null,
+      categoria_id: formEdit.categoria_id ? parseInt(formEdit.categoria_id) : null,
+      fornecedor_id: formEdit.fornecedor_id ? parseInt(formEdit.fornecedor_id) : null,
+      projeto_id: formEdit.projeto_id ? parseInt(formEdit.projeto_id) : null,
+      nf: formEdit.nf || null,
+      dispensa_nf: formEdit.dispensa_nf || false,
+      prep_educacao: formEdit.prep_educacao ? parseFloat(formEdit.prep_educacao) : null,
+      prep_social: formEdit.prep_social ? parseFloat(formEdit.prep_social) : null,
+      prep_saude: formEdit.prep_saude ? parseFloat(formEdit.prep_saude) : null,
     }).eq('id', editando)
     if (!error) {
       setEditando(null)
@@ -185,7 +199,8 @@ export default function LancamentosLista() {
                     </td>
                     <td style={s.td}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={() => { setEditando(l.id); setFormEdit({ data:l.data, descricao:l.descricao, valor:l.valor, conta_id:l.conta_id }) }}
+    const contaAtual = contas.find(c => String(c.id) === String(l.conta_id))
+                        <button onClick={() => { setEditando(l.id); setFormEdit({ data:l.data, descricao:l.descricao, valor:l.valor, conta_id:l.conta_id, categoria_id:l.categoria_id, fornecedor_id:l.fornecedor_id, projeto_id:l.projeto_id, nf:l.nf||'', dispensa_nf:l.dispensa_nf||false, _contaPrep: contaAtual?.preponderancia }) }}
                           style={s.btn('#E6F1FB',AZUL)}>Editar</button>
                         {p === 'admin' && (
                           <button onClick={() => setConfirmandoExcluir(l)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
@@ -202,9 +217,10 @@ export default function LancamentosLista() {
 
       {/* Modal editar */}
       {editando && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:480, width:'90%' }}>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:580, width:'100%', maxHeight:'90vh', overflowY:'auto' }}>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:'1rem' }}>Editar lançamento</div>
+
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
               <div>
                 <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Data</label>
@@ -217,19 +233,81 @@ export default function LancamentosLista() {
                   style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }} />
               </div>
             </div>
+
             <div style={{ marginBottom:10 }}>
               <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Descrição</label>
               <input value={formEdit.descricao||''} onChange={e=>setFormEdit(f=>({...f,descricao:e.target.value}))}
                 style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }} />
             </div>
-            <div style={{ marginBottom:'1.25rem' }}>
-              <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Conta</label>
-              <select value={formEdit.conta_id||''} onChange={e=>setFormEdit(f=>({...f,conta_id:e.target.value}))}
-                style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
-                <option value="">Sem conta</option>
-                {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-              </select>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div>
+                <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Conta</label>
+                <select value={formEdit.conta_id||''} onChange={e => {
+                  const c = contas.find(c => String(c.id) === e.target.value)
+                  setFormEdit(f=>({...f, conta_id:e.target.value, _contaPrep: c?.preponderancia }))
+                }} style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
+                  <option value="">Sem conta</option>
+                  {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Categoria</label>
+                <select value={formEdit.categoria_id||''} onChange={e=>setFormEdit(f=>({...f,categoria_id:e.target.value}))}
+                  style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
+                  <option value="">Sem categoria</option>
+                  {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
             </div>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div>
+                <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Fornecedor</label>
+                <select value={formEdit.fornecedor_id||''} onChange={e=>setFormEdit(f=>({...f,fornecedor_id:e.target.value}))}
+                  style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
+                  <option value="">Sem fornecedor</option>
+                  {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Projeto</label>
+                <select value={formEdit.projeto_id||''} onChange={e=>setFormEdit(f=>({...f,projeto_id:e.target.value}))}
+                  style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
+                  <option value="">Sem projeto</option>
+                  {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginBottom:10 }}>
+              <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Nº Nota fiscal</label>
+              <input value={formEdit.nf||''} onChange={e=>setFormEdit(f=>({...f,nf:e.target.value}))}
+                disabled={formEdit.dispensa_nf} placeholder="001234"
+                style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', opacity:formEdit.dispensa_nf?0.5:1 }} />
+              <label style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#888780', marginTop:4, cursor:'pointer' }}>
+                <input type="checkbox" checked={formEdit.dispensa_nf||false} onChange={e=>setFormEdit(f=>({...f,dispensa_nf:e.target.checked,nf:e.target.checked?'':f.nf}))} />
+                Dispensa nota fiscal
+              </label>
+            </div>
+
+            {/* Rateio preponderância */}
+            {formEdit._contaPrep === 'rateio' && (
+              <div style={{ background:'#FAEEDA', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
+                <div style={{ fontSize:12, fontWeight:500, color:'#854F0B', marginBottom:8 }}>Preponderância (deve somar 100%)</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+                  {[['prep_educacao','Educação'],['prep_social','Social'],['prep_saude','Saúde']].map(([campo,label]) => (
+                    <div key={campo}>
+                      <label style={{ fontSize:11, color:'#5F5E5A', display:'block', marginBottom:2 }}>{label} %</label>
+                      <input type="number" min="0" max="100" value={formEdit[campo]||''} placeholder="0"
+                        onChange={e=>setFormEdit(f=>({...f,[campo]:e.target.value}))}
+                        style={{ width:'100%', fontSize:12, padding:'5px 7px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={salvarEdicao} disabled={salvando}
                 style={{ padding:'8px 20px', borderRadius:8, border:'none', background:AZUL, color:'#fff', fontWeight:600, cursor:'pointer' }}>
