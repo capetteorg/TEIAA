@@ -7,7 +7,6 @@ import Painel from './pages/Painel'
 import Lancamentos from './pages/Lancamentos'
 import Importar from './pages/Importar'
 import Conciliacao from './pages/Conciliacao'
-import ConciliacaoInteligente from './pages/ConciliacaoInteligente'
 import Entradas from './pages/Entradas'
 import Aplicacoes from './pages/Aplicacoes'
 import Sociedade from './pages/Sociedade'
@@ -65,19 +64,17 @@ export default function App() {
       <Route path="/transparencia" element={<Sociedade />} />
 
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
-        <Route index element={<Navigate to="/painel" replace />} />
+        <Route index element={<Navigate to="/painel-admin" replace />} />
         <Route path="painel" element={<Painel />} />
         <Route path="painel-admin" element={<RotaProtegida perfisPermitidos={['admin']}><PainelAdmin /></RotaProtegida>} />
         <Route path="painel-operacional" element={<RotaProtegida perfisPermitidos={['operacional']}><PainelOperacional /></RotaProtegida>} />
         <Route path="parcerias" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
         <Route path="parcerias/:id" element={<RotaProtegida perfisPermitidos={['admin']}><ParceriaDetalhe /></RotaProtegida>} />
-        <Route path="parcerias/nova" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
         <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="despesas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Lancamentos tipo="despesa" /></RotaProtegida>} />
         <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Entradas /></RotaProtegida>} />
         <Route path="importar" element={<RotaProtegida perfisPermitidos={['admin']}><Importar /></RotaProtegida>} />
         <Route path="conciliacao" element={<RotaProtegida perfisPermitidos={['admin']}><Conciliacao /></RotaProtegida>} />
-        <Route path="conciliacao-inteligente" element={<RotaProtegida perfisPermitidos={['admin']}><ConciliacaoInteligente /></RotaProtegida>} />
         <Route path="aplicacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Aplicacoes /></RotaProtegida>} />
         <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><RelatoriosCentral /></RotaProtegida>} />
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />

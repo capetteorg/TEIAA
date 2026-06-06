@@ -24,10 +24,6 @@ export default function Fornecedores() {
   const [msg, setMsg] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
-  const [historico, setHistorico] = useState(null) // fornecedor selecionado
-  const [historicoLanc, setHistoricoLanc] = useState([])
-  const [historicoPeriodo, setHistoricoPeriodo] = useState('')
-  const [historicoLoading, setHistoricoLoading] = useState(false)
 
   useEffect(() => { carregar() }, [])
 
@@ -43,30 +39,6 @@ export default function Fornecedores() {
       .or(form.cpf_cnpj ? `cpf_cnpj.eq.${form.cpf_cnpj}` : `nome.ilike.%${form.nome}%`)
     const dups = (data || []).filter(d => d.id !== editando)
     setDuplicatas(dups)
-  }
-
-  async function abrirHistorico(forn) {
-    setHistorico(forn)
-    setHistoricoLoading(true)
-    const { data } = await supabase.from('lancamentos')
-      .select('*, conta:contas(nome), categoria:categorias(nome)')
-      .eq('fornecedor_id', forn.id)
-      .order('data', { ascending: false })
-    setHistoricoLanc(data || [])
-    setHistoricoLoading(false)
-  }
-
-  async function filtrarHistorico(periodo) {
-    setHistoricoPeriodo(periodo)
-    setHistoricoLoading(true)
-    let q = supabase.from('lancamentos')
-      .select('*, conta:contas(nome), categoria:categorias(nome)')
-      .eq('fornecedor_id', historico.id)
-      .order('data', { ascending: false })
-    if (periodo) q = q.gte('data', periodo+'-01').lte('data', periodo+'-31')
-    const { data } = await q
-    setHistoricoLanc(data || [])
-    setHistoricoLoading(false)
   }
 
   async function salvar(e) {
@@ -293,7 +265,7 @@ export default function Fornecedores() {
                     </td>
                     <td style={s.td}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={() => navigate(`/fornecedores/${f.id}/historico`)} style={s.btn('#EAF3DE',VERDE)}>Histórico</button>
+                        <button onClick={() => navigate(`/historico-fornecedor?id=${f.id}`)} style={s.btn('#EAF3DE',VERDE)}>Histórico</button>
                         <button onClick={() => editar(f)} style={s.btn('#E6F1FB',AZUL)}>Editar</button>
                         <button onClick={() => setConfirmandoExcluir(f)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
                       </div>
@@ -302,86 +274,6 @@ export default function Fornecedores() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Modal histórico */}
-      {historico && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
-          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', width:'100%', maxWidth:760, maxHeight:'90vh', overflowY:'auto' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'1rem' }}>
-              <div>
-                <div style={{ fontSize:15, fontWeight:600 }}>{historico.nome}</div>
-                <div style={{ fontSize:12, color:'#888780' }}>
-                  {historico.cpf_cnpj && <span style={{ fontFamily:'monospace', marginRight:8 }}>{historico.cpf_cnpj}</span>}
-                  {historico.telefone && <span style={{ marginRight:8 }}>{historico.telefone}</span>}
-                  {historico.email && <span>{historico.email}</span>}
-                </div>
-              </div>
-              <button onClick={() => { setHistorico(null); setHistoricoLanc([]); setHistoricoPeriodo('') }}
-                style={{ padding:'5px 12px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', cursor:'pointer' }}>✕ Fechar</button>
-            </div>
-
-            {/* Filtro período */}
-            <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:'1rem' }}>
-              <input type="month" value={historicoPeriodo} onChange={e => filtrarHistorico(e.target.value)}
-                style={{ fontSize:12, padding:'6px 9px', border:'0.5px solid #D3D1C7', borderRadius:8 }} />
-              {historicoPeriodo && <button onClick={() => filtrarHistorico('')} style={{ fontSize:11, padding:'5px 10px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', cursor:'pointer' }}>Limpar filtro</button>}
-            </div>
-
-            {/* Métricas */}
-            {!historicoLoading && (
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, marginBottom:'1rem' }}>
-                {[
-                  { label:'Total gasto', val:'R$ ' + historicoLanc.filter(l=>l.tipo==='despesa').reduce((a,l)=>a+Number(l.valor||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2}), cor:VERMELHO },
-                  { label:'Total recebido', val:'R$ ' + historicoLanc.filter(l=>l.tipo==='entrada').reduce((a,l)=>a+Number(l.valor||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2}), cor:VERDE },
-                  { label:'Lançamentos', val:historicoLanc.length, cor:AZUL },
-                ].map(m => (
-                  <div key={m.label} style={{ background:'#FAFAF8', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
-                    <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-                    <div style={{ fontSize:15, fontWeight:600, color:m.cor }}>{m.val}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Tabela */}
-            {historicoLoading ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
-            ) : historicoLanc.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-                Nenhum lançamento encontrado para este fornecedor.
-              </div>
-            ) : (
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                <thead>
-                  <tr>{['Data','Tipo','Descrição','Categoria','Conta','Valor'].map(h=>(
-                    <th key={h} style={{ textAlign:'left', padding:'6px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' }}>{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {historicoLanc.map((l,i) => (
-                    <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
-                      <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, whiteSpace:'nowrap' }}>
-                        {new Date(l.data+'T12:00:00').toLocaleDateString('pt-BR')}
-                      </td>
-                      <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12 }}>
-                        <span style={{ display:'inline-block', padding:'2px 7px', borderRadius:99, fontSize:10, fontWeight:500, background:l.tipo==='entrada'?'#EAF3DE':'#FEF2F2', color:l.tipo==='entrada'?'#3B6D11':VERMELHO }}>
-                          {l.tipo==='entrada'?'Entrada':'Despesa'}
-                        </span>
-                      </td>
-                      <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
-                      <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>{l.categoria?.nome||'—'}</td>
-                      <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>{l.conta?.nome||'—'}</td>
-                      <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, fontWeight:500, color:l.tipo==='entrada'?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>
-                        {l.tipo==='entrada'?'+':'-'}R$ {Number(l.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
           </div>
         </div>
       )}

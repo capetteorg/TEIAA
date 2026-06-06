@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useSearchParams } from 'react-router-dom'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 
 export default function FornecedorHistorico() {
+  const [searchParams] = useSearchParams()
+  const idFromUrl = searchParams.get('id')
   const [fornecedores, setFornecedores] = useState([])
-  const [fornecedorId, setFornecedorId] = useState('')
+  const [fornecedorId, setFornecedorId] = useState(idFromUrl || '')
   const [fornecedor, setFornecedor] = useState(null)
   const [lancamentos, setLancamentos] = useState([])
   const [loading, setLoading] = useState(false)
