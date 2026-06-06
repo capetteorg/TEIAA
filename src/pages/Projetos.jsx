@@ -30,18 +30,10 @@ const SITUACAO_COR = {
 }
 
 const ORIGENS_RECURSOS_OPCOES = [
-  'Doações de pessoas físicas',
-  'Doações de empresas / patrocínio',
-  'Emendas parlamentares',
-  'Editais e convênios',
-  'Repasses públicos municipais',
-  'Repasses públicos estaduais',
-  'Repasses públicos federais',
-  'Mensalidades e contribuições de associados',
-  'Rendimentos financeiros',
-  'Eventos e campanhas',
-  'Recursos próprios',
-  'Outras fontes',
+  'Doações de pessoas físicas','Doações de empresas / patrocínio','Emendas parlamentares',
+  'Editais e convênios','Repasses públicos municipais','Repasses públicos estaduais',
+  'Repasses públicos federais','Mensalidades e contribuições de associados',
+  'Rendimentos financeiros','Eventos e campanhas','Recursos próprios','Outras fontes',
 ]
 
 const FORM_VAZIO = {
@@ -59,6 +51,12 @@ const FORM_VAZIO = {
   metas_previstas:'', resultados_esperados:'',
   atividades_previstas:'', refeicoes_previstas:'', recursos_humanos:'',
   participacao_usuarios:'', monitoramento_avaliacao:'', temas_trabalhados:'',
+}
+
+const FORM_EQUIPE_VAZIO = {
+  equipe_id:'', funcao_no_projeto:'', tipo_vinculo:'',
+  carga_horaria:'', data_inicio:'', data_fim:'',
+  exclusivo:false, atividades_desempenhadas:'', observacoes:'',
 }
 
 const ABAS_FORM = [
@@ -82,6 +80,12 @@ export default function Projetos() {
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [projetoDetalhe, setProjetoDetalhe] = useState(null)
   const [abaDetalhe, setAbaDetalhe] = useState('geral')
+  // Equipe do projeto
+  const [projetoEquipe, setProjetoEquipe] = useState([])
+  const [formEquipe, setFormEquipe] = useState(FORM_EQUIPE_VAZIO)
+  const [editandoEquipe, setEditandoEquipe] = useState(null)
+  const [salvandoEquipe, setSalvandoEquipe] = useState(false)
+  const [msgEquipe, setMsgEquipe] = useState('')
 
   useEffect(() => {
     carregar()
@@ -92,6 +96,14 @@ export default function Projetos() {
   async function carregar() {
     const { data } = await supabase.from('projetos').select('*').order('nome')
     setProjetos(data || [])
+  }
+
+  async function carregarEquipeProjeto(projetoId) {
+    const { data } = await supabase.from('projeto_equipe')
+      .select('*, membro:equipe(nome, funcao, tipo_vinculo, orgao_origem)')
+      .eq('projeto_id', projetoId)
+      .order('id')
+    setProjetoEquipe(data || [])
   }
 
   async function salvar(e) {
@@ -113,10 +125,7 @@ export default function Projetos() {
     if (error) setMsg('Erro: ' + error.message)
     else {
       setMsg('✅ Projeto salvo!')
-      setForm(FORM_VAZIO)
-      setEditando(null)
-      setMostrarForm(false)
-      setAbaForm('geral')
+      setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); setAbaForm('geral')
       carregar()
     }
     setSalvando(false)
@@ -130,6 +139,49 @@ export default function Projetos() {
     setAbaForm('geral')
     setProjetoDetalhe(null)
     window.scrollTo(0,0)
+  }
+
+  async function abrirDetalhe(p) {
+    setProjetoDetalhe(p)
+    setAbaDetalhe('geral')
+    await carregarEquipeProjeto(p.id)
+  }
+
+  async function salvarEquipe(e) {
+    e.preventDefault()
+    setSalvandoEquipe(true)
+    const dados = {
+      projeto_id: projetoDetalhe.id,
+      equipe_id: parseInt(formEquipe.equipe_id),
+      funcao_no_projeto: formEquipe.funcao_no_projeto || null,
+      tipo_vinculo: formEquipe.tipo_vinculo || null,
+      carga_horaria: formEquipe.carga_horaria || null,
+      data_inicio: formEquipe.data_inicio || null,
+      data_fim: formEquipe.data_fim || null,
+      exclusivo: formEquipe.exclusivo,
+      atividades_desempenhadas: formEquipe.atividades_desempenhadas || null,
+      observacoes: formEquipe.observacoes || null,
+    }
+    let error
+    if (editandoEquipe) {
+      ;({ error } = await supabase.from('projeto_equipe').update(dados).eq('id', editandoEquipe))
+    } else {
+      ;({ error } = await supabase.from('projeto_equipe').insert(dados))
+    }
+    if (error) setMsgEquipe('Erro: ' + error.message)
+    else {
+      setMsgEquipe('✅ Membro vinculado!')
+      setFormEquipe(FORM_EQUIPE_VAZIO)
+      setEditandoEquipe(null)
+      carregarEquipeProjeto(projetoDetalhe.id)
+    }
+    setSalvandoEquipe(false)
+    setTimeout(() => setMsgEquipe(''), 3000)
+  }
+
+  async function removerEquipe(id) {
+    await supabase.from('projeto_equipe').delete().eq('id', id)
+    carregarEquipeProjeto(projetoDetalhe.id)
   }
 
   function toggleOrigem(origem) {
@@ -147,6 +199,7 @@ export default function Projetos() {
   }
 
   async function excluir(id) {
+    await supabase.from('projeto_equipe').delete().eq('projeto_id', id)
     await supabase.from('projetos').delete().eq('id', id)
     setConfirmandoExcluir(null)
     carregar()
@@ -171,6 +224,8 @@ export default function Projetos() {
     infoBox: { background:'#F8F7F2', borderRadius:8, padding:'8px 10px', marginBottom:8 },
     infoLabel: { fontSize:10, color:'#888780', marginBottom:2 },
     infoVal: { fontSize:12, lineHeight:1.6, whiteSpace:'pre-line' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
   }
 
   // ===== TELA DETALHE =====
@@ -213,7 +268,7 @@ export default function Projetos() {
 
         {/* Abas detalhe */}
         <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
-          {[['geral','Dados gerais'],['socioassistencial','Socioassistencial'],['cnas','📋 CNAS']].map(([id,label]) => (
+          {[['geral','Dados gerais'],['equipe','👥 Equipe'],['socioassistencial','Socioassistencial'],['cnas','📋 CNAS']].map(([id,label]) => (
             <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabDet(abaDetalhe===id)}>{label}</button>
           ))}
         </div>
@@ -221,70 +276,151 @@ export default function Projetos() {
         {/* Aba Geral */}
         {abaDetalhe === 'geral' && (
           <div style={s.card}>
-            {p.objeto && <>
-              <div style={s.secao(AZUL)}>Objeto</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.objeto}</div></div>
-            </>}
-            {p.objetivo_geral && <>
-              <div style={s.secao(AZUL)}>Objetivo geral</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.objetivo_geral}</div></div>
-            </>}
-            {p.objetivos_especificos && <>
-              <div style={s.secao(AZUL)}>Objetivos específicos</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.objetivos_especificos}</div></div>
-            </>}
-            {p.metas_previstas && <>
-              <div style={s.secao(AZUL)}>Metas previstas</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.metas_previstas}</div></div>
-            </>}
-            {p.resultados_esperados && <>
-              <div style={s.secao(AZUL)}>Resultados esperados</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.resultados_esperados}</div></div>
-            </>}
-            {p.descricao && <>
-              <div style={s.secao(AZUL)}>Descrição</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.descricao}</div></div>
-            </>}
-            {p.observacoes && <>
-              <div style={s.secao('#888780')}>Observações</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.observacoes}</div></div>
-            </>}
+            {p.objeto && <><div style={s.secao(AZUL)}>Objeto</div><div style={s.infoBox}><div style={s.infoVal}>{p.objeto}</div></div></>}
+            {p.objetivo_geral && <><div style={s.secao(AZUL)}>Objetivo geral</div><div style={s.infoBox}><div style={s.infoVal}>{p.objetivo_geral}</div></div></>}
+            {p.objetivos_especificos && <><div style={s.secao(AZUL)}>Objetivos específicos</div><div style={s.infoBox}><div style={s.infoVal}>{p.objetivos_especificos}</div></div></>}
+            {p.metas_previstas && <><div style={s.secao(AZUL)}>Metas previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.metas_previstas}</div></div></>}
+            {p.resultados_esperados && <><div style={s.secao(AZUL)}>Resultados esperados</div><div style={s.infoBox}><div style={s.infoVal}>{p.resultados_esperados}</div></div></>}
+            {p.descricao && <><div style={s.secao(AZUL)}>Descrição</div><div style={s.infoBox}><div style={s.infoVal}>{p.descricao}</div></div></>}
+            {p.observacoes && <><div style={s.secao('#888780')}>Observações</div><div style={s.infoBox}><div style={s.infoVal}>{p.observacoes}</div></div></>}
+          </div>
+        )}
+
+        {/* Aba Equipe */}
+        {abaDetalhe === 'equipe' && (
+          <div>
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Equipe vinculada ao projeto ({projetoEquipe.length})</div>
+
+              {/* Formulário de vínculo */}
+              <div style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
+                <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>
+                  {editandoEquipe ? 'Editar vínculo' : 'Vincular membro da equipe'}
+                </div>
+                <form onSubmit={salvarEquipe}>
+                  <div style={s.grupo('2fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Membro da equipe *</label>
+                      <select value={formEquipe.equipe_id} onChange={e=>setFormEquipe(f=>({...f,equipe_id:e.target.value}))} required style={s.input}>
+                        <option value="">Selecione...</option>
+                        {equipe.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={s.label}>Função no projeto</label>
+                      <input value={formEquipe.funcao_no_projeto} onChange={e=>setFormEquipe(f=>({...f,funcao_no_projeto:e.target.value}))} style={s.input} placeholder="Ex: Facilitador, Coordenador..." />
+                    </div>
+                  </div>
+                  <div style={s.grupo('1fr 1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Tipo de vínculo</label>
+                      <input value={formEquipe.tipo_vinculo} onChange={e=>setFormEquipe(f=>({...f,tipo_vinculo:e.target.value}))} style={s.input} placeholder="CLT, voluntário, cedido..." />
+                    </div>
+                    <div>
+                      <label style={s.label}>Carga horária</label>
+                      <input value={formEquipe.carga_horaria} onChange={e=>setFormEquipe(f=>({...f,carga_horaria:e.target.value}))} style={s.input} placeholder="Ex: 40h/semana, 20h/mês..." />
+                    </div>
+                    <div style={{ display:'flex', alignItems:'flex-end', paddingBottom:2 }}>
+                      <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer' }}>
+                        <input type="checkbox" checked={formEquipe.exclusivo} onChange={e=>setFormEquipe(f=>({...f,exclusivo:e.target.checked}))} />
+                        Exclusivo deste projeto
+                      </label>
+                    </div>
+                  </div>
+                  <div style={s.grupo('1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Data de início</label>
+                      <input type="date" value={formEquipe.data_inicio} onChange={e=>setFormEquipe(f=>({...f,data_inicio:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Data de término</label>
+                      <input type="date" value={formEquipe.data_fim} onChange={e=>setFormEquipe(f=>({...f,data_fim:e.target.value}))} style={s.input} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom:8 }}>
+                    <label style={s.label}>Atividades desempenhadas</label>
+                    <textarea value={formEquipe.atividades_desempenhadas} onChange={e=>setFormEquipe(f=>({...f,atividades_desempenhadas:e.target.value}))} rows={2} style={s.textarea} />
+                  </div>
+                  <div style={{ marginBottom:8 }}>
+                    <label style={s.label}>Observações</label>
+                    <input value={formEquipe.observacoes} onChange={e=>setFormEquipe(f=>({...f,observacoes:e.target.value}))} style={s.input} />
+                  </div>
+                  {msgEquipe && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:msgEquipe.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgEquipe.includes('✅')?'#3B6D11':'#A32D2D' }}>{msgEquipe}</div>}
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button type="submit" disabled={salvandoEquipe} style={s.btn(salvandoEquipe?'#D3D1C7':VERDE)}>
+                      {salvandoEquipe ? 'Salvando...' : editandoEquipe ? '💾 Salvar' : '+ Vincular'}
+                    </button>
+                    {editandoEquipe && <button type="button" onClick={() => { setFormEquipe(FORM_EQUIPE_VAZIO); setEditandoEquipe(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
+                  </div>
+                </form>
+              </div>
+
+              {/* Tabela de equipe vinculada */}
+              {projetoEquipe.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhum membro vinculado a este projeto.</div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead>
+                    <tr>{['Nome','Função no projeto','Vínculo','Carga horária','Período','Exclusivo',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {projetoEquipe.map(pe => (
+                      <tr key={pe.id}>
+                        <td style={{ ...s.td, fontWeight:500 }}>
+                          <div>{pe.membro?.nome}</div>
+                          <div style={{ fontSize:10, color:'#888780' }}>{pe.membro?.funcao}</div>
+                        </td>
+                        <td style={s.td}>{pe.funcao_no_projeto || pe.membro?.funcao || '—'}</td>
+                        <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{pe.tipo_vinculo || pe.membro?.tipo_vinculo || '—'}</td>
+                        <td style={{ ...s.td, fontSize:11 }}>{pe.carga_horaria || '—'}</td>
+                        <td style={{ ...s.td, fontSize:11, whiteSpace:'nowrap' }}>
+                          {pe.data_inicio ? `${fmtData(pe.data_inicio)}${pe.data_fim ? ` a ${fmtData(pe.data_fim)}` : ''}` : '—'}
+                        </td>
+                        <td style={{ ...s.td, textAlign:'center' }}>
+                          {pe.exclusivo ? <span style={s.badge('#EAF3DE','#3B6D11')}>Sim</span> : <span style={{ color:'#B4B2A9', fontSize:11 }}>Não</span>}
+                        </td>
+                        <td style={s.td}>
+                          <div style={{ display:'flex', gap:4 }}>
+                            <button onClick={() => { setFormEquipe({ equipe_id:String(pe.equipe_id), funcao_no_projeto:pe.funcao_no_projeto||'', tipo_vinculo:pe.tipo_vinculo||'', carga_horaria:pe.carga_horaria||'', data_inicio:pe.data_inicio||'', data_fim:pe.data_fim||'', exclusivo:pe.exclusivo||false, atividades_desempenhadas:pe.atividades_desempenhadas||'', observacoes:pe.observacoes||'' }); setEditandoEquipe(pe.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                            <button onClick={() => removerEquipe(pe.id)} style={s.btn('#FEF2F2',VERMELHO)}>Remover</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Resumo da equipe do projeto — formato CNAS */}
+            {projetoEquipe.length > 0 && (
+              <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem' }}>
+                <div style={{ fontSize:12, fontWeight:600, color:ROXO, marginBottom:10 }}>📋 Resumo para CNAS</div>
+                <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:'pre-line' }}>
+                  {projetoEquipe.map(pe =>
+                    `${pe.membro?.nome} — ${pe.funcao_no_projeto || pe.membro?.funcao}${pe.tipo_vinculo ? ` (${pe.tipo_vinculo})` : ''}${pe.carga_horaria ? ` · ${pe.carga_horaria}` : ''}`
+                  ).join('\n')}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Aba Socioassistencial */}
         {abaDetalhe === 'socioassistencial' && (
           <div style={s.card}>
-            {p.justificativa_social && <>
-              <div style={s.secao(LARANJA)}>Justificativa social</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.justificativa_social}</div></div>
-            </>}
-            {p.finalidades_estatutarias && <>
-              <div style={s.secao(LARANJA)}>Finalidades estatutárias relacionadas</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.finalidades_estatutarias}</div></div>
-            </>}
-            {p.infraestrutura && <>
-              <div style={s.secao(LARANJA)}>Infraestrutura disponível</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.infraestrutura}</div></div>
-            </>}
+            {p.justificativa_social && <><div style={s.secao(LARANJA)}>Justificativa social</div><div style={s.infoBox}><div style={s.infoVal}>{p.justificativa_social}</div></div></>}
+            {p.finalidades_estatutarias && <><div style={s.secao(LARANJA)}>Finalidades estatutárias relacionadas</div><div style={s.infoBox}><div style={s.infoVal}>{p.finalidades_estatutarias}</div></div></>}
+            {p.infraestrutura && <><div style={s.secao(LARANJA)}>Infraestrutura disponível</div><div style={s.infoBox}><div style={s.infoVal}>{p.infraestrutura}</div></div></>}
             {p.origens_recursos?.length > 0 && <>
               <div style={s.secao(LARANJA)}>Origem dos recursos</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
                 {p.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
               </div>
             </>}
-            {p.parcerias_envolvidas && <>
-              <div style={s.secao(LARANJA)}>Parcerias envolvidas</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.parcerias_envolvidas}</div></div>
-            </>}
-            {p.participacao_usuarios && <>
-              <div style={s.secao(LARANJA)}>Participação dos usuários e famílias</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div>
-            </>}
-            {p.monitoramento_avaliacao && <>
-              <div style={s.secao(LARANJA)}>Monitoramento e avaliação</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div>
-            </>}
+            {p.parcerias_envolvidas && <><div style={s.secao(LARANJA)}>Parcerias envolvidas</div><div style={s.infoBox}><div style={s.infoVal}>{p.parcerias_envolvidas}</div></div></>}
+            {p.participacao_usuarios && <><div style={s.secao(LARANJA)}>Participação dos usuários e famílias</div><div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div></>}
+            {p.monitoramento_avaliacao && <><div style={s.secao(LARANJA)}>Monitoramento e avaliação</div><div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div></>}
           </div>
         )}
 
@@ -292,46 +428,23 @@ export default function Projetos() {
         {abaDetalhe === 'cnas' && (
           <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem' }}>
             <div style={{ fontSize:13, fontWeight:600, color:ROXO, marginBottom:14 }}>📋 Ficha CNAS — {p.nome}</div>
-            {[
-              ['Público-alvo', p.publico_alvo],
-              ['Faixa etária', p.faixa_etaria],
-              ['Capacidade de atendimento', p.capacidade_prevista],
-              ['Abrangência territorial', p.abrangencia],
-              ['Funcionamento', p.funcionamento],
-              ['Período', p.periodo_inicio ? `${fmtData(p.periodo_inicio)} a ${fmtData(p.periodo_fim)}` : null],
-            ].filter(([,v]) => v).map(([l,v]) => (
-              <div key={l}>
-                <div style={s.secao(ROXO)}>{l}</div>
-                <div style={s.infoBox}><div style={s.infoVal}>{v}</div></div>
-              </div>
+            {[['Público-alvo',p.publico_alvo],['Faixa etária',p.faixa_etaria],['Capacidade de atendimento',p.capacidade_prevista],['Abrangência territorial',p.abrangencia],['Funcionamento',p.funcionamento],['Período',p.periodo_inicio?`${fmtData(p.periodo_inicio)} a ${fmtData(p.periodo_fim)}`:null]].filter(([,v])=>v).map(([l,v])=>(
+              <div key={l}><div style={s.secao(ROXO)}>{l}</div><div style={s.infoBox}><div style={s.infoVal}>{v}</div></div></div>
             ))}
-            {p.atividades_previstas && <>
-              <div style={s.secao(ROXO)}>Atividades previstas</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.atividades_previstas}</div></div>
-            </>}
-            {p.temas_trabalhados && <>
-              <div style={s.secao(ROXO)}>Temas trabalhados</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.temas_trabalhados}</div></div>
-            </>}
-            {p.refeicoes_previstas && <>
-              <div style={s.secao(ROXO)}>Refeições previstas</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.refeicoes_previstas}</div></div>
-            </>}
-            {p.recursos_humanos && <>
+            {p.atividades_previstas && <><div style={s.secao(ROXO)}>Atividades previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.atividades_previstas}</div></div></>}
+            {p.temas_trabalhados && <><div style={s.secao(ROXO)}>Temas trabalhados</div><div style={s.infoBox}><div style={s.infoVal}>{p.temas_trabalhados}</div></div></>}
+            {p.refeicoes_previstas && <><div style={s.secao(ROXO)}>Refeições previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.refeicoes_previstas}</div></div></>}
+            {projetoEquipe.length > 0 && <>
               <div style={s.secao(ROXO)}>Recursos humanos envolvidos</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.recursos_humanos}</div></div>
+              <div style={s.infoBox}>
+                <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:'pre-line' }}>
+                  {projetoEquipe.map(pe => `${pe.membro?.nome} — ${pe.funcao_no_projeto||pe.membro?.funcao}${pe.tipo_vinculo?` (${pe.tipo_vinculo})`:''}${pe.carga_horaria?` · ${pe.carga_horaria}`:''}`).join('\n')}
+                </div>
+              </div>
             </>}
-            {p.participacao_usuarios && <>
-              <div style={s.secao(ROXO)}>Participação dos usuários e famílias</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div>
-            </>}
-            {p.monitoramento_avaliacao && <>
-              <div style={s.secao(ROXO)}>Monitoramento e avaliação</div>
-              <div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div>
-            </>}
-            <div style={{ marginTop:14 }}>
-              <button onClick={() => editar(p)} style={s.btn(ROXO)}>✏️ Editar campos CNAS</button>
-            </div>
+            {p.participacao_usuarios && <><div style={s.secao(ROXO)}>Participação dos usuários e famílias</div><div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div></>}
+            {p.monitoramento_avaliacao && <><div style={s.secao(ROXO)}>Monitoramento e avaliação</div><div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div></>}
+            <div style={{ marginTop:14 }}><button onClick={() => editar(p)} style={s.btn(ROXO)}>✏️ Editar campos CNAS</button></div>
           </div>
         )}
       </div>
@@ -347,268 +460,123 @@ export default function Projetos() {
           <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {projetos.length} total</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setAbaForm('geral') }}
-          style={s.btn(mostrarForm ? '#F1EFE8' : VERDE, mostrarForm ? '#5F5E5A' : '#fff')}>
+          style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Novo projeto'}
         </button>
       </div>
 
       {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
-      {/* Formulário */}
       {mostrarForm && (
         <div style={{ ...s.card, borderColor:'#C0DD97' }}>
-          <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-            {editando ? 'Editar projeto' : 'Novo projeto / serviço / ação'}
-          </div>
-
-          {/* Abas do formulário */}
+          <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>{editando ? 'Editar projeto' : 'Novo projeto / serviço / ação'}</div>
           <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
-            {ABAS_FORM.map(a => (
-              <button key={a.id} type="button" onClick={() => setAbaForm(a.id)} style={s.tabForm(abaForm===a.id)}>{a.label}</button>
-            ))}
+            {ABAS_FORM.map(a => <button key={a.id} type="button" onClick={() => setAbaForm(a.id)} style={s.tabForm(abaForm===a.id)}>{a.label}</button>)}
           </div>
-
           <form onSubmit={salvar}>
-            {/* ABA DADOS GERAIS */}
-            {abaForm === 'geral' && (
-              <>
-                <div style={s.grupo('2fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Nome do projeto *</label>
-                    <input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={s.input} required />
-                  </div>
-                  <div>
-                    <label style={s.label}>Tipo *</label>
-                    <select value={form.tipo} onChange={e=>setForm(f=>({...f,tipo:e.target.value}))} style={s.input} required>
-                      {TIPOS_PROJETO.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div style={s.grupo('1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Órgão / parceiro / fonte</label>
-                    <input value={form.orgao_parceiro} onChange={e=>setForm(f=>({...f,orgao_parceiro:e.target.value}))} style={s.input} placeholder="Ex: SMASDH, CMDCA, Edital X..." />
-                  </div>
-                  <div>
-                    <label style={s.label}>Situação</label>
-                    <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>
-                      {SITUACOES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Objeto</label>
-                  <textarea value={form.objeto} onChange={e=>setForm(f=>({...f,objeto:e.target.value}))} rows={2} style={s.textarea} placeholder="O que será executado neste projeto..." />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Objetivo geral</label>
-                  <textarea value={form.objetivo_geral} onChange={e=>setForm(f=>({...f,objetivo_geral:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Objetivos específicos</label>
-                  <textarea value={form.objetivos_especificos} onChange={e=>setForm(f=>({...f,objetivos_especificos:e.target.value}))} rows={3} style={s.textarea} />
-                </div>
-                <div style={s.grupo('1fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Público-alvo</label>
-                    <input value={form.publico_alvo} onChange={e=>setForm(f=>({...f,publico_alvo:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Faixa etária</label>
-                    <input value={form.faixa_etaria} onChange={e=>setForm(f=>({...f,faixa_etaria:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Capacidade prevista</label>
-                    <input value={form.capacidade_prevista} onChange={e=>setForm(f=>({...f,capacidade_prevista:e.target.value}))} style={s.input} />
-                  </div>
-                </div>
-                <div style={s.grupo('1fr 1fr 2fr')}>
-                  <div>
-                    <label style={s.label}>Período início</label>
-                    <input type="date" value={form.periodo_inicio} onChange={e=>setForm(f=>({...f,periodo_inicio:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Período fim</label>
-                    <input type="date" value={form.periodo_fim} onChange={e=>setForm(f=>({...f,periodo_fim:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Abrangência territorial</label>
-                    <input value={form.abrangencia} onChange={e=>setForm(f=>({...f,abrangencia:e.target.value}))} style={s.input} />
-                  </div>
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Funcionamento</label>
-                  <input value={form.funcionamento} onChange={e=>setForm(f=>({...f,funcionamento:e.target.value}))} style={s.input} placeholder="Ex: Período integral, encontros semanais..." />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Metas previstas</label>
-                  <textarea value={form.metas_previstas} onChange={e=>setForm(f=>({...f,metas_previstas:e.target.value}))} rows={2} style={s.textarea} placeholder="Descreva as metas quantitativas e qualitativas..." />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Resultados esperados</label>
-                  <textarea value={form.resultados_esperados} onChange={e=>setForm(f=>({...f,resultados_esperados:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Observações gerais</label>
-                  <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
-                </div>
-              </>
-            )}
-
-            {/* ABA SOCIOASSISTENCIAL */}
-            {abaForm === 'socioassistencial' && (
-              <>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Justificativa social</label>
-                  <textarea value={form.justificativa_social} onChange={e=>setForm(f=>({...f,justificativa_social:e.target.value}))} rows={3} style={s.textarea} placeholder="Por que este projeto é necessário para o território..." />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Finalidades estatutárias relacionadas</label>
-                  <textarea value={form.finalidades_estatutarias} onChange={e=>setForm(f=>({...f,finalidades_estatutarias:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Infraestrutura disponível</label>
-                  <textarea value={form.infraestrutura} onChange={e=>setForm(f=>({...f,infraestrutura:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:14 }}>
-                  <label style={s.label}>Origem dos recursos</label>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:4 }}>
-                    {ORIGENS_RECURSOS_OPCOES.map(origem => (
-                      <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
-                        style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer',
-                          border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`,
-                          background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff',
-                          color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
-                        {form.origens_recursos.includes(origem) ? '✓ ' : ''}{origem}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Parcerias envolvidas</label>
-                  <textarea value={form.parcerias_envolvidas} onChange={e=>setForm(f=>({...f,parcerias_envolvidas:e.target.value}))} rows={2} style={s.textarea} placeholder="Ex: CREAS, Secretaria dos Direitos da Mulher, CMDCA..." />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Participação dos usuários e famílias</label>
-                  <textarea value={form.participacao_usuarios} onChange={e=>setForm(f=>({...f,participacao_usuarios:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Monitoramento e avaliação</label>
-                  <textarea value={form.monitoramento_avaliacao} onChange={e=>setForm(f=>({...f,monitoramento_avaliacao:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-              </>
-            )}
-
-            {/* ABA CNAS */}
-            {abaForm === 'cnas' && (
-              <>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Atividades previstas</label>
-                  <textarea value={form.atividades_previstas} onChange={e=>setForm(f=>({...f,atividades_previstas:e.target.value}))} rows={3} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Temas trabalhados</label>
-                  <textarea value={form.temas_trabalhados} onChange={e=>setForm(f=>({...f,temas_trabalhados:e.target.value}))} rows={2} style={s.textarea} />
-                </div>
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Refeições previstas</label>
-                  <input value={form.refeicoes_previstas} onChange={e=>setForm(f=>({...f,refeicoes_previstas:e.target.value}))} style={s.input} placeholder="Ex: desjejum, almoço, lanche e jantar" />
-                </div>
-                <div style={{ marginBottom:4 }}>
-                  <label style={s.label}>Recursos humanos envolvidos</label>
-                  <textarea value={form.recursos_humanos} onChange={e=>setForm(f=>({...f,recursos_humanos:e.target.value}))} rows={3} style={{ ...s.textarea, marginBottom:4 }} />
-                  {equipe.length > 0 && (
-                    <button type="button" onClick={preencherEquipe}
-                      style={{ fontSize:11, background:'none', border:'none', color:AZUL, cursor:'pointer', padding:0 }}>
-                      ↑ Preencher com equipe ativa atual
+            {abaForm === 'geral' && (<>
+              <div style={s.grupo('2fr 1fr')}>
+                <div><label style={s.label}>Nome do projeto *</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={s.input} required /></div>
+                <div><label style={s.label}>Tipo *</label><select value={form.tipo} onChange={e=>setForm(f=>({...f,tipo:e.target.value}))} style={s.input} required>{TIPOS_PROJETO.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+              </div>
+              <div style={s.grupo('1fr 1fr')}>
+                <div><label style={s.label}>Órgão / parceiro / fonte</label><input value={form.orgao_parceiro} onChange={e=>setForm(f=>({...f,orgao_parceiro:e.target.value}))} style={s.input} /></div>
+                <div><label style={s.label}>Situação</label><select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>{SITUACOES.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}</select></div>
+              </div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Objeto</label><textarea value={form.objeto} onChange={e=>setForm(f=>({...f,objeto:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Objetivo geral</label><textarea value={form.objetivo_geral} onChange={e=>setForm(f=>({...f,objetivo_geral:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Objetivos específicos</label><textarea value={form.objetivos_especificos} onChange={e=>setForm(f=>({...f,objetivos_especificos:e.target.value}))} rows={3} style={s.textarea} /></div>
+              <div style={s.grupo('1fr 1fr 1fr')}>
+                <div><label style={s.label}>Público-alvo</label><input value={form.publico_alvo} onChange={e=>setForm(f=>({...f,publico_alvo:e.target.value}))} style={s.input} /></div>
+                <div><label style={s.label}>Faixa etária</label><input value={form.faixa_etaria} onChange={e=>setForm(f=>({...f,faixa_etaria:e.target.value}))} style={s.input} /></div>
+                <div><label style={s.label}>Capacidade prevista</label><input value={form.capacidade_prevista} onChange={e=>setForm(f=>({...f,capacidade_prevista:e.target.value}))} style={s.input} /></div>
+              </div>
+              <div style={s.grupo('1fr 1fr 2fr')}>
+                <div><label style={s.label}>Período início</label><input type="date" value={form.periodo_inicio} onChange={e=>setForm(f=>({...f,periodo_inicio:e.target.value}))} style={s.input} /></div>
+                <div><label style={s.label}>Período fim</label><input type="date" value={form.periodo_fim} onChange={e=>setForm(f=>({...f,periodo_fim:e.target.value}))} style={s.input} /></div>
+                <div><label style={s.label}>Abrangência territorial</label><input value={form.abrangencia} onChange={e=>setForm(f=>({...f,abrangencia:e.target.value}))} style={s.input} /></div>
+              </div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Funcionamento</label><input value={form.funcionamento} onChange={e=>setForm(f=>({...f,funcionamento:e.target.value}))} style={s.input} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Metas previstas</label><textarea value={form.metas_previstas} onChange={e=>setForm(f=>({...f,metas_previstas:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Resultados esperados</label><textarea value={form.resultados_esperados} onChange={e=>setForm(f=>({...f,resultados_esperados:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Observações gerais</label><input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} /></div>
+            </>)}
+            {abaForm === 'socioassistencial' && (<>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Justificativa social</label><textarea value={form.justificativa_social} onChange={e=>setForm(f=>({...f,justificativa_social:e.target.value}))} rows={3} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Finalidades estatutárias relacionadas</label><textarea value={form.finalidades_estatutarias} onChange={e=>setForm(f=>({...f,finalidades_estatutarias:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Infraestrutura disponível</label><textarea value={form.infraestrutura} onChange={e=>setForm(f=>({...f,infraestrutura:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:14 }}>
+                <label style={s.label}>Origem dos recursos</label>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:4 }}>
+                  {ORIGENS_RECURSOS_OPCOES.map(origem => (
+                    <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
+                      style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff', color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
+                      {form.origens_recursos.includes(origem)?'✓ ':''}{origem}
                     </button>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* ABA CONFIGURAÇÕES */}
-            {abaForm === 'config' && (
-              <>
-                <div style={s.grupo('1fr 1fr')}>
-                  <div style={{ display:'flex', alignItems:'flex-end', paddingBottom:2 }}>
-                    <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer' }}>
-                      <input type="checkbox" checked={form.vinculado_instrumento} onChange={e=>setForm(f=>({...f,vinculado_instrumento:e.target.checked}))} />
-                      Vinculado a instrumento (emenda, edital, parceria...)
-                    </label>
-                  </div>
-                </div>
-                {form.vinculado_instrumento && (
-                  <div style={s.grupo('1fr 1fr')}>
-                    <div>
-                      <label style={s.label}>Instrumento de vinculação</label>
-                      <input value={form.instrumento_vinc} onChange={e=>setForm(f=>({...f,instrumento_vinc:e.target.value}))} style={s.input} />
-                    </div>
-                    <div>
-                      <label style={s.label}>Parceria cadastrada</label>
-                      <select value={form.parceria_id} onChange={e=>setForm(f=>({...f,parceria_id:e.target.value}))} style={s.input}>
-                        <option value="">Nenhuma</option>
-                        {parcerias.map(p => <option key={p.id} value={p.id}>{p.nome_projeto}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                )}
-                <div style={{ display:'flex', gap:16, marginBottom:14, flexWrap:'wrap' }}>
-                  {[
-                    { campo:'aceita_equipe', label:'Aceita equipe vinculada' },
-                    { campo:'aceita_atendimentos', label:'Aceita atendimentos/atividades' },
-                    { campo:'aceita_financeiro', label:'Aceita receitas/despesas' },
-                    { campo:'exibir_transparencia', label:'Exibir na transparência pública' },
-                  ].map(item => (
-                    <label key={item.campo} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer' }}>
-                      <input type="checkbox" checked={!!form[item.campo]} onChange={e=>setForm(f=>({...f,[item.campo]:e.target.checked}))} />
-                      {item.label}
-                    </label>
                   ))}
                 </div>
-              </>
-            )}
-
+              </div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Parcerias envolvidas</label><textarea value={form.parcerias_envolvidas} onChange={e=>setForm(f=>({...f,parcerias_envolvidas:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Participação dos usuários e famílias</label><textarea value={form.participacao_usuarios} onChange={e=>setForm(f=>({...f,participacao_usuarios:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Monitoramento e avaliação</label><textarea value={form.monitoramento_avaliacao} onChange={e=>setForm(f=>({...f,monitoramento_avaliacao:e.target.value}))} rows={2} style={s.textarea} /></div>
+            </>)}
+            {abaForm === 'cnas' && (<>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Atividades previstas</label><textarea value={form.atividades_previstas} onChange={e=>setForm(f=>({...f,atividades_previstas:e.target.value}))} rows={3} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Temas trabalhados</label><textarea value={form.temas_trabalhados} onChange={e=>setForm(f=>({...f,temas_trabalhados:e.target.value}))} rows={2} style={s.textarea} /></div>
+              <div style={{ marginBottom:10 }}><label style={s.label}>Refeições previstas</label><input value={form.refeicoes_previstas} onChange={e=>setForm(f=>({...f,refeicoes_previstas:e.target.value}))} style={s.input} /></div>
+              <div style={{ marginBottom:4 }}>
+                <label style={s.label}>Recursos humanos envolvidos</label>
+                <textarea value={form.recursos_humanos} onChange={e=>setForm(f=>({...f,recursos_humanos:e.target.value}))} rows={3} style={{ ...s.textarea, marginBottom:4 }} />
+                {equipe.length > 0 && <button type="button" onClick={preencherEquipe} style={{ fontSize:11, background:'none', border:'none', color:AZUL, cursor:'pointer', padding:0 }}>↑ Preencher com equipe ativa atual</button>}
+              </div>
+            </>)}
+            {abaForm === 'config' && (<>
+              <div style={{ marginBottom:10 }}>
+                <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer' }}>
+                  <input type="checkbox" checked={form.vinculado_instrumento} onChange={e=>setForm(f=>({...f,vinculado_instrumento:e.target.checked}))} />
+                  Vinculado a instrumento (emenda, edital, parceria...)
+                </label>
+              </div>
+              {form.vinculado_instrumento && (
+                <div style={s.grupo('1fr 1fr')}>
+                  <div><label style={s.label}>Instrumento de vinculação</label><input value={form.instrumento_vinc} onChange={e=>setForm(f=>({...f,instrumento_vinc:e.target.value}))} style={s.input} /></div>
+                  <div><label style={s.label}>Parceria cadastrada</label><select value={form.parceria_id} onChange={e=>setForm(f=>({...f,parceria_id:e.target.value}))} style={s.input}><option value="">Nenhuma</option>{parcerias.map(p=><option key={p.id} value={p.id}>{p.nome_projeto}</option>)}</select></div>
+                </div>
+              )}
+              <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                {[{campo:'aceita_equipe',label:'Aceita equipe vinculada'},{campo:'aceita_atendimentos',label:'Aceita atendimentos/atividades'},{campo:'aceita_financeiro',label:'Aceita receitas/despesas'},{campo:'exibir_transparencia',label:'Exibir na transparência pública'}].map(item => (
+                  <label key={item.campo} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer' }}>
+                    <input type="checkbox" checked={!!form[item.campo]} onChange={e=>setForm(f=>({...f,[item.campo]:e.target.checked}))} />{item.label}
+                  </label>
+                ))}
+              </div>
+            </>)}
             <div style={{ display:'flex', gap:8, marginTop:14 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
-                {salvando ? 'Salvando...' : editando ? '💾 Salvar alterações' : '+ Cadastrar projeto'}
-              </button>
-              <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
-                Cancelar
-              </button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':editando?'💾 Salvar alterações':'+ Cadastrar projeto'}</button>
+              <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Filtros */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         <button onClick={() => setFiltro('todos')} style={s.tab(filtro==='todos')}>Todos ({projetos.length})</button>
-        {SITUACOES.map(sit => {
-          const count = projetos.filter(p => p.situacao === sit).length
-          if (count === 0) return null
-          return <button key={sit} onClick={() => setFiltro(sit)} style={s.tab(filtro===sit)}>{sit.charAt(0).toUpperCase()+sit.slice(1)} ({count})</button>
-        })}
+        {SITUACOES.map(sit => { const count = projetos.filter(p=>p.situacao===sit).length; if (!count) return null; return <button key={sit} onClick={() => setFiltro(sit)} style={s.tab(filtro===sit)}>{sit.charAt(0).toUpperCase()+sit.slice(1)} ({count})</button> })}
       </div>
 
-      {/* Lista */}
       {lista.length === 0 ? (
-        <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-          <div style={{ fontSize:32, marginBottom:8 }}>📋</div>
-          <div style={{ fontSize:13 }}>Nenhum projeto cadastrado.</div>
-        </div>
+        <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}><div style={{ fontSize:32, marginBottom:8 }}>📋</div><div style={{ fontSize:13 }}>Nenhum projeto cadastrado.</div></div>
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:'1rem' }}>
           {lista.map(p => {
-            const [bg, cor] = SITUACAO_COR[p.situacao] || ['#F1EFE8','#888780']
+            const [bg,cor] = SITUACAO_COR[p.situacao]||['#F1EFE8','#888780']
             const temCnas = p.atividades_previstas || p.recursos_humanos || p.participacao_usuarios
-            const temCompleto = p.objeto && p.objetivo_geral && temCnas
             return (
-              <div key={p.id} style={{ background:'#fff', border:`0.5px solid ${temCompleto?'#C0DD97':'#E0DDD5'}`, borderRadius:12, overflow:'hidden' }}>
+              <div key={p.id} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden' }}>
                 <div style={{ background:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo}</div>
-                    <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome}</div>
+                    <div style={{ fontSize:13, fontWeight:600 }}>{p.nome}</div>
                     {p.orgao_parceiro && <div style={{ fontSize:10, color:'#888780', marginTop:2 }}>{p.orgao_parceiro}</div>}
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
@@ -617,39 +585,14 @@ export default function Projetos() {
                   </div>
                 </div>
                 <div style={{ padding:'12px 14px' }}>
-                  {p.objeto && (
-                    <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:8, lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-                      {p.objeto}
-                    </div>
-                  )}
+                  {p.objeto && <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:8, lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.objeto}</div>}
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:10 }}>
-                    {p.publico_alvo && (
-                      <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px' }}>
-                        <div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Público-alvo</div>
-                        <div style={{ fontSize:11 }}>{p.publico_alvo}</div>
-                      </div>
-                    )}
-                    {p.capacidade_prevista && (
-                      <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px' }}>
-                        <div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Capacidade</div>
-                        <div style={{ fontSize:11 }}>{p.capacidade_prevista}</div>
-                      </div>
-                    )}
-                    {p.periodo_inicio && (
-                      <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px', gridColumn:'span 2' }}>
-                        <div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Período</div>
-                        <div style={{ fontSize:11 }}>{fmtData(p.periodo_inicio)} a {fmtData(p.periodo_fim)}</div>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:10 }}>
-                    {p.aceita_equipe && <span style={s.badge('#EAF3DE','#3B6D11')}>👥 Equipe</span>}
-                    {p.aceita_atendimentos && <span style={s.badge('#E6F1FB','#185FA5')}>📋 Atend.</span>}
-                    {p.aceita_financeiro && <span style={s.badge('#FAEEDA','#854F0B')}>💰 Fin.</span>}
-                    {p.vinculado_instrumento && <span style={s.badge('#EEEDFE','#534AB7')}>🔗</span>}
+                    {p.publico_alvo && <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px' }}><div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Público-alvo</div><div style={{ fontSize:11 }}>{p.publico_alvo}</div></div>}
+                    {p.capacidade_prevista && <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px' }}><div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Capacidade</div><div style={{ fontSize:11 }}>{p.capacidade_prevista}</div></div>}
+                    {p.periodo_inicio && <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px', gridColumn:'span 2' }}><div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Período</div><div style={{ fontSize:11 }}>{fmtData(p.periodo_inicio)} a {fmtData(p.periodo_fim)}</div></div>}
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={() => { setProjetoDetalhe(p); setAbaDetalhe('geral') }} style={{ ...s.btn(VERDE), flex:1, fontSize:11 }}>Ver ficha →</button>
+                    <button onClick={() => abrirDetalhe(p)} style={{ ...s.btn(VERDE), flex:1, fontSize:11 }}>Ver ficha →</button>
                     <button onClick={() => editar(p)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
                     <button onClick={() => setConfirmandoExcluir(p.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:11 }}>Excluir</button>
                   </div>
