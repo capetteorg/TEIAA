@@ -90,7 +90,6 @@ export default function App() {
         <Route path="projetos" element={<RotaProtegida perfisPermitidos={['admin']}><Projetos /></RotaProtegida>} />
         <Route path="planos-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
         <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
-        <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><RelatoriosCentral /></RotaProtegida>} />
         <Route path="doacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Doacoes /></RotaProtegida>} />
         <Route path="usuarios-atendidos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><UsuariosAtendidos /></RotaProtegida>} />
         <Route path="atendimentos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Atendimentos /></RotaProtegida>} />

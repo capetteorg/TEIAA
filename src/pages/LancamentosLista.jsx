@@ -160,7 +160,7 @@ export default function LancamentosLista() {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead>
-                <tr>{['Data','Tipo','Descrição','Fornecedor','Categoria','Projeto','Conta','Valor',''].map(h=>(
+                <tr>{['Data','Tipo','Descrição','Fornecedor','Categoria','Projeto','Conta','Valor','Status',''].map(h=>(
                   <th key={h} style={s.th}>{h}</th>
                 ))}</tr>
               </thead>
@@ -182,6 +182,14 @@ export default function LancamentosLista() {
                       <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.conta?.nome || '—'}</td>
                       <td style={{ ...s.td, fontWeight:500, color:l.tipo==='entrada'?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>
                         {l.tipo==='entrada'?'+':'-'}{fmt(l.valor)}
+                      </td>
+                      <td style={s.td}>
+                        <span style={s.badge(
+                          l.conciliado ? '#EAF3DE' : l.status_lanc === 'lancado' ? '#E6F1FB' : '#F1EFE8',
+                          l.conciliado ? '#3B6D11' : l.status_lanc === 'lancado' ? '#185FA5' : '#888780'
+                        )}>
+                          {l.conciliado ? '✓ Conciliado' : l.status_lanc === 'lancado' ? 'Lançado' : 'Pendente'}
+                        </span>
                       </td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:4 }}>

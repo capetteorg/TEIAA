@@ -48,6 +48,7 @@ export default function Layout() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [badgeCobrancas, setBadgeCobrancas] = useState(0)
   const [badgeDividas, setBadgeDividas] = useState(0)
+  const [badgePendencias, setBadgePendencias] = useState(0)
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -65,6 +66,10 @@ export default function Layout() {
     if (p === 'admin' || p === 'diretoria') {
       supabase.from('dividas').select('id', { count:'exact' }).eq('status', 'aberta')
         .then(({ count }) => setBadgeDividas(count || 0))
+    }
+    if (p === 'admin') {
+      supabase.from('pendencias').select('id', { count:'exact' }).eq('resolvida', false)
+        .then(({ count }) => setBadgePendencias(count || 0))
     }
   }, [p])
 
@@ -104,7 +109,7 @@ export default function Layout() {
         {/* Financeiro */}
         <NavSecao label="Financeiro" />
         <NavItem to="/lancamentos"        icon="list-details"      label="Lançamentos"      visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/pendencias"          icon="alert-triangle"    label="Pendências"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/pendencias"          icon="alert-triangle"    label="Pendências"       visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
         <NavItem to="/despesas"           icon="receipt"           label="Lançar despesa"   visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/entradas"           icon="arrow-bar-to-down" label="Lançar entrada"   visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/importar"           icon="upload"            label="Importar extrato" visivel={p==='admin'} onClick={fecharMenu} />
@@ -129,7 +134,7 @@ export default function Layout() {
         <NavSecao label="Relatórios" />
         <NavItem to="/relatorios"         icon="report-analytics"  label="Central de Relatórios" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
         <NavItem to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"   visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/transparencia"      icon="world"             label="Transparência Pública" visivel={p==='admin'} externo={true} onClick={fecharMenu} />
+        <NavItem to="/transparencia"      icon="world"             label="Transparência Pública" visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Institucional */}
         <NavSecao label="Institucional" />
