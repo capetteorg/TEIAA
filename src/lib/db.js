@@ -48,7 +48,7 @@ export const rateios = {
 
 // ---- CLASSIFICAÇÕES AUTOMÁTICAS ----
 export const classificacoes = {
-  listar: () => supabase.from('classificacoes').select('*').order('tipo_doc'),
+  listar: () => supabase.from('classificacoes').select('*, subcategoria:subcategorias(nome)').order('tipo_doc'),
   criar: (dados) => supabase.from('classificacoes').insert(dados).select().single(),
   atualizar: (id, dados) => supabase.from('classificacoes').update(dados).eq('id', id),
   excluir: (id) => supabase.from('classificacoes').delete().eq('id', id),
@@ -63,25 +63,8 @@ export const aplicacoes = {
 }
 
 // ---- PARSER EXTRATO SICREDI ----
+// Regras de classificação são carregadas do banco — não hardcoded aqui
 export function parsearExtratoSicredi(rows) {
-  const REGRAS_CLASSIFICACAO = [
-    { doc: 'COB000001', dir: 'entrada', classif: 'Contribuição de associados' },
-    { doc: 'COB000001', dir: 'saida',   classif: 'Taxa de cobrança' },
-    { doc: 'PIXCOBRAN', dir: 'entrada', classif: 'Contribuição de associados' },
-    { doc: 'SOBRCC',    dir: 'entrada', classif: 'Distribuição de sobras' },
-    { doc: 'TED',       dir: 'entrada', classif: 'Repasse / Convênio' },
-    { doc: '175707',    dir: 'entrada', classif: 'Repasse / Convênio' },
-    { doc: 'PIX_CRED',  dir: 'entrada', classif: 'Recebimento PIX' },
-    { doc: 'PIX_DEB',   dir: 'saida',   classif: 'Pagamento PIX' },
-  ]
-
-  function classificar(doc, dir) {
-    if (!doc) return 'Outros'
-    const d = String(doc).toUpperCase().trim()
-    const r = REGRAS_CLASSIFICACAO.find(r => d.startsWith(r.doc.toUpperCase()) && r.dir === dir)
-    return r ? r.classif : 'Outros'
-  }
-
   let movs = [], saldoFinal = 0, periodo = '', associado = '', conta = ''
 
   for (let i = 0; i < rows.length; i++) {
@@ -104,7 +87,6 @@ export function parsearExtratoSicredi(rows) {
       movs.push({
         data: c0, dataISO, desc: c1, doc: doc || '—',
         valor, saldo, tipo: dir, valorAbs: Math.abs(valor),
-        classif: classificar(doc, dir),
       })
     }
   }

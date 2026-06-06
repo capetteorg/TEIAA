@@ -67,7 +67,14 @@ export default function Classificacoes() {
                 <tr key={r.id}>
                   <td style={s.td}><span style={{ fontSize:10, background:'#F1EFE8', color:'#5F5E5A', padding:'2px 6px', borderRadius:4, fontFamily:'monospace' }}>{r.tipo_doc}</span></td>
                   <td style={s.td}><span style={{ fontSize:10, padding:'2px 7px', borderRadius:99, fontWeight:500, background:r.direcao==='entrada'?'#EAF3DE':'#FCEBEB', color:r.direcao==='entrada'?'#3B6D11':'#A32D2D' }}>{r.direcao==='entrada'?'Entrada':'Saída'}</span></td>
-                  <td style={s.td}>{r.categoria || r.classificacao || '—'}</td>
+                  <td style={s.td}>
+                    <div>{r.categoria || r.classificacao || '—'}</div>
+                    {r.subcategoria_id && (
+                      <div style={{ fontSize:11, color:'#888780' }}>
+                        ↳ {subcategorias.find(s => s.id === r.subcategoria_id)?.nome || ''}
+                      </div>
+                    )}
+                  </td>
                   <td style={s.td}>
                     <button onClick={() => { if(confirm('Excluir esta regra?')) dbClass.excluir(r.id).then(() => dbClass.listar().then(({data}) => setLista(data||[]))) }}
                       style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #E8212A', background:'transparent', color:'#E8212A', cursor:'pointer' }}>✕</button>
