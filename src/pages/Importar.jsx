@@ -80,6 +80,27 @@ export default function Importar() {
 
   async function salvar() {
     setSalvando(true)
+
+    // Calcular data_inicio e data_fim a partir das movimentações
+    const datas = movs.map(m => m.dataISO).filter(Boolean).sort()
+    const data_inicio = datas[0] || null
+    const data_fim = datas[datas.length - 1] || null
+
+    // Verificar duplicata: mesma conta + mesmo período
+    if (data_inicio && data_fim) {
+      const { data: existente } = await supabase.from('extratos')
+        .select('id,competencia,arquivo_nome')
+        .eq('conta_id', parseInt(contaSel))
+        .eq('competencia', competencia)
+        .limit(1)
+      if (existente?.length > 0) {
+        const ok = window.confirm(
+          `Já existe um extrato importado para esta conta no período ${competencia}.\n\nArquivo anterior: ${existente[0].arquivo_nome}\n\nDeseja importar mesmo assim?`
+        )
+        if (!ok) { setSalvando(false); return }
+      }
+    }
+
     const { data: ext, error } = await supabase.from('extratos').insert({
       conta_id: parseInt(contaSel),
       competencia,
@@ -87,6 +108,9 @@ export default function Importar() {
       saldo_final: extrato.saldoFinal,
       total_movs: movs.length,
       importado_por: user.id,
+      importado_em: new Date().toISOString(),
+      data_inicio,
+      data_fim,
     }).select().single()
 
     if (error) { setMsg('Erro: ' + error.message); setSalvando(false); return }

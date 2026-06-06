@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import ConciliacaoInteligente from './ConciliacaoInteligente'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 
 const TIPOS_RECEITA = ['Repasse da emenda', 'Rendimento de aplicação', 'Estorno', 'Devolução recebida', 'Outra entrada']
 
@@ -15,6 +15,7 @@ export default function Conciliacao() {
   const [planos, setPlanos] = useState([])
   const [eventos, setEventos] = useState([])
   const [campanhas, setCampanhas] = useState([])
+  const [fornecedores, setFornecedores] = useState([])
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
   const [abaConcil, setAbaConcil] = useState('manual')
@@ -28,14 +29,15 @@ export default function Conciliacao() {
     supabase.from('categorias').select('*').order('nome').then(({ data }) => setCategorias(data || []))
     supabase.from('subcategorias').select('*').order('nome').then(({ data }) => setSubcategorias(data || []))
     supabase.from('planos').select('*, conta:contas(nome)').order('nome_plano').then(({ data }) => setPlanos(data || []))
-    supabase.from('eventos').select('id, nome').order('nome').then(({ data }) => setEventos(data || []))
-    supabase.from('campanhas').select('id, nome').order('nome').then(({ data }) => setCampanhas(data || []))
+    supabase.from('eventos').select('id,nome').order('nome').then(({ data }) => setEventos(data || []))
+    supabase.from('campanhas').select('id,nome').order('nome').then(({ data }) => setCampanhas(data || []))
+    supabase.from('fornecedores').select('id,nome,cpf_cnpj').eq('ativo',true).order('nome').then(({ data }) => setFornecedores(data || []))
   }, [])
 
   async function carregarExtratos() {
     const { data } = await supabase
       .from('extratos')
-      .select('*, conta:contas(id, nome, banco, preponderancia, tipo_conta)')
+      .select('*, conta:contas(id,nome,banco,preponderancia,tipo_conta)')
       .order('importado_em', { ascending: false })
     setExtratos(data || [])
   }
@@ -81,9 +83,9 @@ export default function Conciliacao() {
     const dados = { ...formCompl }
     if (dados.evento_id) dados.evento_id = parseInt(dados.evento_id)
     if (dados.campanha_id) dados.campanha_id = parseInt(dados.campanha_id)
+    if (dados.fornecedor_id) dados.fornecedor_id = parseInt(dados.fornecedor_id)
     if (dados.percentual_rateio) dados.percentual_rateio = parseFloat(dados.percentual_rateio)
     if (!dados.data_documento) delete dados.data_documento
-
     await supabase.from('extrato_movs').update(dados).eq('id', movId)
     setMovs(prev => prev.map(m => m.id === movId ? { ...m, ...dados } : m))
     setComplementarAberto(null)
@@ -95,6 +97,7 @@ export default function Conciliacao() {
   function abrirComplementar(m) {
     setComplementarAberto(m.id)
     setFormCompl({
+      fornecedor_id: m.fornecedor_id || '',
       fornecedor: m.fornecedor || '',
       cpf_cnpj: m.cpf_cnpj || '',
       num_nota: m.num_nota || '',
@@ -147,7 +150,10 @@ export default function Conciliacao() {
     return (v >= 0 ? '+' : '-') + 'R$ ' + abs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
   }
 
-  const temDadosCompl = (m) => m.fornecedor || m.num_nota || m.local_comprovante || m.evento_id || m.campanha_id
+  const fmtDataHora = d => d ? new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—'
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+
+  const temDadosCompl = (m) => m.fornecedor || m.fornecedor_id || m.num_nota || m.local_comprovante || m.evento_id || m.campanha_id
 
   const s = {
     card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
@@ -165,7 +171,6 @@ export default function Conciliacao() {
   // ===== LISTA DE EXTRATOS =====
   if (!extratoSel) return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      {/* Abas de conciliação */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
         <button onClick={() => setAbaConcil('manual')}
           style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='manual'?VERDE:'#D3D1C7'}`, background:abaConcil==='manual'?VERDE:'#fff', color:abaConcil==='manual'?'#fff':'#5F5E5A', cursor:'pointer' }}>
@@ -176,45 +181,57 @@ export default function Conciliacao() {
           ✨ Conciliação inteligente
         </button>
       </div>
+
       {abaConcil === 'inteligente' && <ConciliacaoInteligente />}
-      {abaConcil === 'manual' && <span style={{display:'none'}} />}
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Conciliação bancária</div>
-      {extratos.length === 0 ? (
-        <div style={{ ...s.card, textAlign: 'center', padding: '3rem', color: '#888780' }}>
-          <div style={{ fontSize: 13 }}>Nenhum extrato importado ainda.</div>
-          <div style={{ fontSize: 12, marginTop: 4 }}>Vá em <strong>Importar extrato</strong> para começar.</div>
-        </div>
-      ) : (
-        <div style={s.card}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Extratos importados — clique para abrir e conciliar</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr>
-              {['Competência','Conta','Tipo','Movimentações','Saldo final','Importado em',''].map(h => (
-                <th key={h} style={s.th}>{h}</th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {extratos.map(e => (
-                <tr key={e.id} style={{ cursor: 'pointer' }} onClick={() => abrirExtrato(e)}>
-                  <td style={s.td}><strong>{e.competencia}</strong></td>
-                  <td style={s.td}>{e.conta?.nome || '—'}</td>
-                  <td style={s.td}>
-                    <span style={s.badge(
-                      e.conta?.tipo_conta === 'principal' ? '#EAF3DE' : '#E6F1FB',
-                      e.conta?.tipo_conta === 'principal' ? '#3B6D11' : '#185FA5'
-                    )}>
-                      {e.conta?.tipo_conta === 'principal' ? 'Principal' : e.conta?.tipo_conta || '—'}
-                    </span>
-                  </td>
-                  <td style={s.td}>{e.total_movs} movs</td>
-                  <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>R$ {Number(e.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                  <td style={{ ...s.td, color: '#888780' }}>{new Date(e.importado_em).toLocaleDateString('pt-BR')}</td>
-                  <td style={s.td}><button onClick={ev => { ev.stopPropagation(); abrirExtrato(e) }} style={s.btn(VERDE)}>Abrir →</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+
+      {abaConcil === 'manual' && (
+        <>
+          <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Conciliação bancária</div>
+          {extratos.length === 0 ? (
+            <div style={{ ...s.card, textAlign: 'center', padding: '3rem', color: '#888780' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
+              <div style={{ fontSize: 13 }}>Nenhum extrato importado ainda.</div>
+              <div style={{ fontSize: 12, marginTop: 4 }}>Vá em <strong>Importar extrato</strong> para começar.</div>
+            </div>
+          ) : (
+            <div style={s.card}>
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>
+                Extratos importados ({extratos.length}) — clique para abrir e conciliar
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead><tr>
+                  {['Competência','Período','Conta','Movimentações','Saldo final','Importado em','Arquivo',''].map(h => (
+                    <th key={h} style={s.th}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {extratos.map(e => (
+                    <tr key={e.id} style={{ cursor: 'pointer' }} onClick={() => abrirExtrato(e)}>
+                      <td style={s.td}><strong>{e.competencia}</strong></td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>
+                        {e.data_inicio && e.data_fim
+                          ? `${fmtData(e.data_inicio)} a ${fmtData(e.data_fim)}`
+                          : '—'}
+                      </td>
+                      <td style={s.td}>{e.conta?.nome || '—'}</td>
+                      <td style={s.td}>
+                        <span style={s.badge('#E6F1FB','#185FA5')}>{e.total_movs} movs</span>
+                      </td>
+                      <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>
+                        R$ {Number(e.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td style={{ ...s.td, color: '#888780', fontSize:11 }}>{fmtDataHora(e.importado_em)}</td>
+                      <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
+                      <td style={s.td}>
+                        <button onClick={ev => { ev.stopPropagation(); abrirExtrato(e) }} style={s.btn(VERDE)}>Abrir →</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -228,7 +245,6 @@ export default function Conciliacao() {
   // ===== TELA DE CONCILIAÇÃO =====
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      {/* Abas de conciliação */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
         <button onClick={() => setAbaConcil('manual')}
           style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='manual'?VERDE:'#D3D1C7'}`, background:abaConcil==='manual'?VERDE:'#fff', color:abaConcil==='manual'?'#fff':'#5F5E5A', cursor:'pointer' }}>
@@ -240,17 +256,26 @@ export default function Conciliacao() {
         </button>
       </div>
       {abaConcil === 'inteligente' && <ConciliacaoInteligente />}
-      {abaConcil === 'manual' && <span style={{display:'none'}} />}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem', flexWrap: 'wrap' }}>
         <button onClick={() => { setExtratoSel(null); setMovs([]) }}
           style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
           ← Voltar
         </button>
-        <div style={{ fontSize: 15, fontWeight: 500 }}>
-          Conciliação — {extratoSel.competencia} · {extratoSel.conta?.nome}
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 500 }}>
+            {extratoSel.competencia} · {extratoSel.conta?.nome}
+          </div>
+          <div style={{ fontSize:11, color:'#888780' }}>
+            {extratoSel.data_inicio && extratoSel.data_fim
+              ? `Período: ${fmtData(extratoSel.data_inicio)} a ${fmtData(extratoSel.data_fim)}`
+              : ''}
+            {extratoSel.importado_em ? ` · Importado em ${fmtDataHora(extratoSel.importado_em)}` : ''}
+            {extratoSel.arquivo_nome ? ` · ${extratoSel.arquivo_nome}` : ''}
+          </div>
         </div>
         {isRateio && <span style={s.badge('#FAEEDA', '#854F0B')}>Conta Principal — informar preponderância</span>}
-        {isEmenda && <span style={s.badge('#E6F1FB', '#185FA5')}>Emenda/Edital — informar plano de trabalho e dados complementares</span>}
+        {isEmenda && <span style={s.badge('#E6F1FB', '#185FA5')}>Emenda/Edital — informar plano e dados complementares</span>}
         {totalPendentes === 0 && movs.length > 0 && <span style={s.badge('#EAF3DE', '#3B6D11')}>✓ Tudo conciliado</span>}
       </div>
 
@@ -263,7 +288,7 @@ export default function Conciliacao() {
       {/* Métricas */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: '1.25rem' }}>
         {[
-          { label: 'Total', val: movs.length, cor: '#4A8FD4' },
+          { label: 'Total', val: movs.length, cor: AZUL },
           { label: 'Conciliados', val: totalConciliados, cor: VERDE },
           { label: 'Pendentes', val: totalPendentes, cor: totalPendentes > 0 ? '#BA7517' : VERDE },
           { label: 'Sem categoria', val: totalSemCategoria, cor: totalSemCategoria > 0 ? VERMELHO : VERDE },
@@ -277,7 +302,7 @@ export default function Conciliacao() {
         ))}
       </div>
 
-      {/* Barra de progresso */}
+      {/* Progresso */}
       {movs.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#888780', marginBottom: 4 }}>
@@ -290,10 +315,9 @@ export default function Conciliacao() {
         </div>
       )}
 
-      {/* Alertas */}
       {isEmenda && planosDisponiveis.length === 0 && (
         <div style={{ background: '#FEF2F2', borderLeft: '3px solid #E8212A', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#A32D2D', marginBottom: '1rem' }}>
-          <strong>Nenhum plano de trabalho cadastrado para esta conta.</strong> Vá em Configurações → Plano de Trabalho para cadastrar.
+          <strong>Nenhum plano de trabalho cadastrado para esta conta.</strong>
         </div>
       )}
 
@@ -304,11 +328,9 @@ export default function Conciliacao() {
               <button key={v} onClick={() => setFiltro(v)} style={s.tab(filtro === v)}>{l}</button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {totalPendentes > 0 && (
-              <button onClick={conciliarTodos} style={s.btn(VERDE)}>✓ Conciliar todos ({totalPendentes})</button>
-            )}
-          </div>
+          {totalPendentes > 0 && (
+            <button onClick={conciliarTodos} style={s.btn(VERDE)}>✓ Conciliar todos ({totalPendentes})</button>
+          )}
         </div>
 
         {loading ? (
@@ -349,7 +371,6 @@ export default function Conciliacao() {
                       <tr style={{ background: m.conciliado ? '#F2FAE8' : '#fff' }}>
                         <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{new Date(m.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
 
-                        {/* Descrição expandível */}
                         <td style={{ ...s.td, maxWidth: 160 }}>
                           <div onClick={() => setDescExpandida(descExpandida === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
                             {descExpandida === m.id ? (
@@ -360,7 +381,7 @@ export default function Conciliacao() {
                             ) : (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{m.descricao}</span>
-                                {m.descricao?.length > 20 && <span style={{ fontSize: 10, color: '#4A8FD4', flexShrink: 0 }}>▼</span>}
+                                {m.descricao?.length > 20 && <span style={{ fontSize: 10, color: AZUL, flexShrink: 0 }}>▼</span>}
                               </div>
                             )}
                           </div>
@@ -383,14 +404,11 @@ export default function Conciliacao() {
                           {subcats.length > 0 ? (
                             <select value={m.subcategoria_id || ''} onChange={e => salvarSubcategoria(m.id, e.target.value)} style={s.select}>
                               <option value="">Selecione...</option>
-                              {subcats.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                              {subcats.map(sc => <option key={sc.id} value={sc.id}>{sc.nome}</option>)}
                             </select>
-                          ) : (
-                            <span style={{ fontSize: 11, color: '#B4B2A9' }}>{m.categoria_id ? '—' : '—'}</span>
-                          )}
+                          ) : <span style={{ fontSize: 11, color: '#B4B2A9' }}>—</span>}
                         </td>
 
-                        {/* Preponderância */}
                         {isRateio && (
                           <>
                             <td style={s.td}><input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
@@ -399,7 +417,6 @@ export default function Conciliacao() {
                           </>
                         )}
 
-                        {/* Plano de trabalho */}
                         {isEmenda && (
                           <td style={{ ...s.td, minWidth: 150 }}>
                             <select value={m.plano_trabalho_id || ''} onChange={e => salvarPlanoTrabalho(m.id, e.target.value)} style={{ ...s.select, borderColor: isEmenda && m.valor < 0 && !m.plano_trabalho_id ? VERMELHO : '#D3D1C7' }}>
@@ -409,7 +426,6 @@ export default function Conciliacao() {
                           </td>
                         )}
 
-                        {/* Dados complementares */}
                         <td style={s.td}>
                           <button onClick={() => isAberto ? setComplementarAberto(null) : abrirComplementar(m)}
                             style={{ ...s.btn(temCompl ? '#EAF3DE' : '#F1EFE8', temCompl ? '#3B6D11' : '#5F5E5A'), fontSize: 10 }}>
@@ -435,17 +451,26 @@ export default function Conciliacao() {
                         </td>
                       </tr>
 
-                      {/* Painel de dados complementares */}
                       {isAberto && (
                         <tr>
                           <td colSpan={13} style={{ padding: 0, borderBottom: '0.5px solid #E0DDD5' }}>
-                            <div style={{ background: '#F8F7F2', padding: '12px 16px', borderLeft: '3px solid #4A8FD4' }}>
-                              <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 10, color: '#4A8FD4' }}>
+                            <div style={{ background: '#F8F7F2', padding: '12px 16px', borderLeft: `3px solid ${AZUL}` }}>
+                              <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 10, color: AZUL }}>
                                 Dados complementares — {m.descricao?.slice(0,50)}
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
                                 <div>
-                                  <label style={s.label}>Fornecedor / Pagador</label>
+                                  <label style={s.label}>Fornecedor cadastrado</label>
+                                  <select value={formCompl.fornecedor_id||''} onChange={e => {
+                                    const f = fornecedores.find(f => String(f.id) === e.target.value)
+                                    setFormCompl(fc => ({ ...fc, fornecedor_id: e.target.value, fornecedor: f?.nome||fc.fornecedor, cpf_cnpj: f?.cpf_cnpj||fc.cpf_cnpj }))
+                                  }} style={s.inputCompl}>
+                                    <option value="">Selecione ou preencha abaixo</option>
+                                    {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label style={s.label}>Fornecedor / Pagador (texto)</label>
                                   <input value={formCompl.fornecedor||''} onChange={e=>setFormCompl(f=>({...f,fornecedor:e.target.value}))} placeholder="Nome" style={s.inputCompl} />
                                 </div>
                                 <div>
@@ -456,18 +481,18 @@ export default function Conciliacao() {
                                   <label style={s.label}>Nº Nota / Recibo</label>
                                   <input value={formCompl.num_nota||''} onChange={e=>setFormCompl(f=>({...f,num_nota:e.target.value}))} placeholder="NF 123" style={s.inputCompl} />
                                 </div>
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
                                 <div>
                                   <label style={s.label}>Data do documento</label>
                                   <input type="date" value={formCompl.data_documento||''} onChange={e=>setFormCompl(f=>({...f,data_documento:e.target.value}))} style={s.inputCompl} />
                                 </div>
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8, marginBottom: 8 }}>
                                 <div>
                                   <label style={s.label}>Local do comprovante</label>
-                                  <input value={formCompl.local_comprovante||''} onChange={e=>setFormCompl(f=>({...f,local_comprovante:e.target.value}))} placeholder="Ex: Drive > Emendas 2026 > NF 123.pdf" style={s.inputCompl} />
+                                  <input value={formCompl.local_comprovante||''} onChange={e=>setFormCompl(f=>({...f,local_comprovante:e.target.value}))} placeholder="Ex: Drive > Emendas 2026" style={s.inputCompl} />
                                 </div>
                                 <div>
-                                  <label style={s.label}>Link externo (opcional)</label>
+                                  <label style={s.label}>Link externo</label>
                                   <input value={formCompl.link_externo||''} onChange={e=>setFormCompl(f=>({...f,link_externo:e.target.value}))} placeholder="https://..." style={s.inputCompl} />
                                 </div>
                               </div>
@@ -502,7 +527,7 @@ export default function Conciliacao() {
                                   </label>
                                   <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
                                     <input type="checkbox" checked={formCompl.despesa_rateada||false} onChange={e=>setFormCompl(f=>({...f,despesa_rateada:e.target.checked}))} />
-                                    Despesa rateada
+                                    Rateada
                                   </label>
                                 </div>
                               </div>
@@ -522,11 +547,11 @@ export default function Conciliacao() {
                                   </div>
                                   <div>
                                     <label style={s.label}>Fonte do restante</label>
-                                    <input value={formCompl.fonte_restante||''} onChange={e=>setFormCompl(f=>({...f,fonte_restante:e.target.value}))} placeholder="Ex: Recursos próprios" style={s.inputCompl} />
+                                    <input value={formCompl.fonte_restante||''} onChange={e=>setFormCompl(f=>({...f,fonte_restante:e.target.value}))} placeholder="Recursos próprios" style={s.inputCompl} />
                                   </div>
                                   <div>
                                     <label style={s.label}>Justificativa do rateio</label>
-                                    <input value={formCompl.justificativa_rateio||''} onChange={e=>setFormCompl(f=>({...f,justificativa_rateio:e.target.value}))} placeholder="Motivo do rateio" style={s.inputCompl} />
+                                    <input value={formCompl.justificativa_rateio||''} onChange={e=>setFormCompl(f=>({...f,justificativa_rateio:e.target.value}))} placeholder="Motivo" style={s.inputCompl} />
                                   </div>
                                 </div>
                               )}
@@ -537,7 +562,7 @@ export default function Conciliacao() {
                               </div>
 
                               <div style={{ display: 'flex', gap: 8 }}>
-                                <button onClick={() => salvarComplementar(m.id)} style={s.btn('#4A8FD4')}>Salvar dados complementares</button>
+                                <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>Salvar dados complementares</button>
                                 <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                               </div>
                             </div>
