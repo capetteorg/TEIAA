@@ -86,6 +86,7 @@ export default function Projetos() {
   const [editandoEquipe, setEditandoEquipe] = useState(null)
   const [salvandoEquipe, setSalvandoEquipe] = useState(false)
   const [msgEquipe, setMsgEquipe] = useState('')
+  const [filtrarEquipeProjeto, setFiltrarEquipeProjeto] = useState(true)
   // Financeiro do projeto
   const [orcamento, setOrcamento] = useState([])
   const [lancamentosProjeto, setLancamentosProjeto] = useState([])
@@ -97,7 +98,7 @@ export default function Projetos() {
   useEffect(() => {
     carregar()
     supabase.from('parcerias').select('id,nome_projeto,tipo').order('nome_projeto').then(({ data }) => setParcerias(data || []))
-    supabase.from('equipe').select('id,nome,funcao,tipo_vinculo,orgao_origem').eq('situacao','ativo').order('funcao,nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('equipe').select('id,nome,funcao,tipo_vinculo,orgao_origem,projetos').eq('situacao','ativo').order('funcao,nome').then(({ data }) => setEquipe(data || []))
   }, [])
 
   async function carregar() {
@@ -355,8 +356,45 @@ export default function Projetos() {
                       <label style={s.label}>Membro da equipe *</label>
                       <select value={formEquipe.equipe_id} onChange={e=>setFormEquipe(f=>({...f,equipe_id:e.target.value}))} required style={s.input}>
                         <option value="">Selecione...</option>
-                        {equipe.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
+                        {(() => {
+                          const jaVinculados = projetoEquipe.map(pe => pe.equipe_id)
+                          const nomeProjeto = projetoDetalhe?.nome
+                          const doProj = equipe.filter(e => !jaVinculados.includes(e.id) && Array.isArray(e.projetos) && e.projetos.includes(nomeProjeto))
+                          const outros = equipe.filter(e => !jaVinculados.includes(e.id) && !(Array.isArray(e.projetos) && e.projetos.includes(nomeProjeto)))
+                          return (
+                            <>
+                              {filtrarEquipeProjeto && doProj.length > 0 && (
+                                <optgroup label={`Marcados para ${nomeProjeto} (${doProj.length})`}>
+                                  {doProj.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
+                                </optgroup>
+                              )}
+                              {(!filtrarEquipeProjeto || doProj.length === 0) && equipe.filter(e => !jaVinculados.includes(e.id)).map(e => (
+                                <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>
+                              ))}
+                              {filtrarEquipeProjeto && doProj.length > 0 && outros.length > 0 && (
+                                <optgroup label={`Demais da equipe (${outros.length})`}>
+                                  {outros.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
+                                </optgroup>
+                              )}
+                            </>
+                          )
+                        })()}
                       </select>
+                      {(() => {
+                        const nomeProjeto = projetoDetalhe?.nome
+                        const doProj = equipe.filter(e => Array.isArray(e.projetos) && e.projetos.includes(nomeProjeto))
+                        if (doProj.length > 0) return (
+                          <div style={{ fontSize:11, color:'#888780', marginTop:3 }}>
+                            <span style={{ color:'#3B6D11' }}>✓ {doProj.length} marcado{doProj.length>1?'s':''} para este projeto no cadastro</span>
+                            {' · '}
+                            <button type="button" onClick={() => setFiltrarEquipeProjeto(f=>!f)}
+                              style={{ fontSize:11, background:'none', border:'none', color:AZUL, cursor:'pointer', padding:0 }}>
+                              {filtrarEquipeProjeto ? 'ver todos separados' : 'agrupar por projeto'}
+                            </button>
+                          </div>
+                        )
+                        return <div style={{ fontSize:11, color:'#888780', marginTop:3 }}>Nenhum membro marcado especificamente para este projeto no cadastro de equipe.</div>
+                      })()}
                     </div>
                     <div>
                       <label style={s.label}>Função no projeto</label>
