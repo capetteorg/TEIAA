@@ -65,9 +65,6 @@ export default function LancamentosLista() {
       projeto_id: formEdit.projeto_id ? parseInt(formEdit.projeto_id) : null,
       nf: formEdit.nf || null,
       dispensa_nf: formEdit.dispensa_nf || false,
-      prep_educacao: formEdit.prep_educacao ? parseFloat(formEdit.prep_educacao) : null,
-      prep_social: formEdit.prep_social ? parseFloat(formEdit.prep_social) : null,
-      prep_saude: formEdit.prep_saude ? parseFloat(formEdit.prep_saude) : null,
     }).eq('id', editando)
     if (!error) {
       setEditando(null)
