@@ -112,6 +112,7 @@ export default function Layout() {
         <NavItem to="/controle-dividas"   icon="alert-triangle"    label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
         <NavItem to="/cobrancas"          icon="receipt-2"         label="Cobranças"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
         <NavItem to="/fornecedores"       icon="building-store"    label="Fornecedores"     visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/historico-fornecedor" icon="chart-bar"        label="Hist. fornecedor" visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Programas e Projetos */}
         <NavSecao label="Programas e Projetos" />
