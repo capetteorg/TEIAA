@@ -29,20 +29,16 @@ const STATUS_COR = {
 }
 
 function parsearBoletosSimredi(rows) {
-  // Encontra a linha do cabeçalho da tabela
   let headerIdx = -1
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
     if (row && row.some && row.some(c => String(c||'').includes('Pagador'))) {
-      headerIdx = i
-      break
+      headerIdx = i; break
     }
   }
   if (headerIdx === -1) return []
-
   const headers = rows[headerIdx].map(h => String(h||'').trim().toLowerCase())
   const boletos = []
-
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const row = rows[i]
     if (!row || !row[0]) continue
@@ -50,41 +46,29 @@ function parsearBoletosSimredi(rows) {
       const idx = headers.findIndex(h => h.includes(nome.toLowerCase()))
       return idx >= 0 ? String(row[idx]||'').trim() : ''
     }
-
     const pagador = get('pagador')
     const vencimento = get('vencimento')
     const valor = get('valor (r$)') || get('valor')
     if (!pagador || !vencimento) continue
-
-    // Converte data DD/MM/AAAA para YYYY-MM-DD
     let dataVenc = null
     if (vencimento.includes('/')) {
       const [d, m, a] = vencimento.split('/')
       dataVenc = `${a}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
-    } else {
-      dataVenc = vencimento
-    }
-
+    } else { dataVenc = vencimento }
     let dataLiq = null
     const liquidacao = get('liquidação')
     if (liquidacao && liquidacao.includes('/')) {
       const [d, m, a] = liquidacao.split('/')
       dataLiq = `${a}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
     }
-
     boletos.push({
-      carteira: get('cart'),
-      num_doc: get('nº doc'),
-      nosso_num: get('nosso nº'),
-      txid: get('txid'),
-      pagador,
-      data_vencimento: dataVenc,
+      carteira: get('cart'), num_doc: get('nº doc'), nosso_num: get('nosso nº'),
+      txid: get('txid'), pagador, data_vencimento: dataVenc,
       data_liquidacao: dataLiq || null,
       valor: parseFloat(String(valor).replace(',','.')) || 0,
       valor_liquidacao: parseFloat(String(get('liquidação (r$)')||'0').replace(',','.')) || 0,
       situacao_boleto: get('situação do boleto') || 'VENCIDO',
-      motivo: get('motivo'),
-      status: 'pendente',
+      motivo: get('motivo'), status: 'pendente',
     })
   }
   return boletos
@@ -104,7 +88,7 @@ export default function Cobrancas() {
   const [formEdit, setFormEdit] = useState({})
   const [msg, setMsg] = useState('')
   const [preview, setPreview] = useState([])
-  const [lote, setLote] = useState('')
+  const [arquivoNome, setArquivoNome] = useState('')
   const [salvando, setSalvando] = useState(false)
 
   useEffect(() => { carregar() }, [])
@@ -112,9 +96,7 @@ export default function Cobrancas() {
   async function carregar() {
     setLoading(true)
     let q = supabase.from('cobrancas').select('*').order('data_vencimento')
-    if (!isAdmin) {
-      q = q.not('status', 'in', '("pago confirmado no extrato","cancelado","incobrável")')
-    }
+    if (!isAdmin) q = q.not('status', 'in', '("pago confirmado no extrato","cancelado","incobrável")')
     const { data } = await q
     setCobrancas(data || [])
     setLoading(false)
@@ -123,6 +105,7 @@ export default function Cobrancas() {
   async function importarXLS(e) {
     const file = e.target.files[0]
     if (!file) return
+    setArquivoNome(file.name)
     const reader = new FileReader()
     reader.onload = (ev) => {
       try {
@@ -135,13 +118,9 @@ export default function Cobrancas() {
           setMsg('Nenhum boleto encontrado. Verifique se é o arquivo correto do Sicredi.')
           return
         }
-        const dataHoje = new Date().toISOString().slice(0,10).replace(/-/g,'')
-        setLote(`SICREDI-${dataHoje}`)
         setPreview(boletos)
         setTab('importar')
-      } catch(err) {
-        setMsg('Erro ao ler arquivo: ' + err.message)
-      }
+      } catch(err) { setMsg('Erro ao ler arquivo: ' + err.message) }
     }
     reader.readAsArrayBuffer(file)
     e.target.value = ''
@@ -149,20 +128,28 @@ export default function Cobrancas() {
 
   async function confirmarImportacao() {
     setSalvando(true)
-    // Verifica duplicatas pelo txid ou num_doc + pagador + vencimento
+    // Cria o lote
+    const { data: lote, error: errLote } = await supabase.from('lotes_cobranca').insert({
+      nome: `Importação ${new Date().toLocaleDateString('pt-BR')}`,
+      arquivo_nome: arquivoNome,
+      total_boletos: preview.length,
+      importado_por: user.id,
+    }).select().single()
+
+    if (errLote) { setMsg('Erro ao criar lote: ' + errLote.message); setSalvando(false); return }
+
     let novos = 0, duplicatas = 0
     for (const b of preview) {
-      // Checa se já existe
       const { data: existe } = await supabase.from('cobrancas')
-        .select('id')
-        .eq('pagador', b.pagador)
-        .eq('data_vencimento', b.data_vencimento)
-        .eq('valor', b.valor)
-        .limit(1)
+        .select('id').eq('pagador', b.pagador).eq('data_vencimento', b.data_vencimento).eq('valor', b.valor).limit(1)
       if (existe && existe.length > 0) { duplicatas++; continue }
-      await supabase.from('cobrancas').insert({ ...b, lote_importacao: lote })
+      await supabase.from('cobrancas').insert({ ...b, lote_id: lote.id, lote_importacao: lote.nome })
       novos++
     }
+
+    // Atualiza total real no lote
+    await supabase.from('lotes_cobranca').update({ total_boletos: novos }).eq('id', lote.id)
+
     setSalvando(false)
     setPreview([])
     setTab('lista')
@@ -182,20 +169,14 @@ export default function Cobrancas() {
       atualizado_em: new Date().toISOString(),
     }).eq('id', editando)
     if (!error) {
-      // Registra histórico
       const c = cobrancas.find(x => x.id === editando)
       if (c && c.status !== formEdit.status) {
         await supabase.from('historico_cobrancas').insert({
-          cobranca_id: editando,
-          status_anterior: c.status,
-          status_novo: formEdit.status,
-          observacao: formEdit.ultima_obs,
-          usuario_id: user.id,
+          cobranca_id: editando, status_anterior: c.status,
+          status_novo: formEdit.status, observacao: formEdit.ultima_obs, usuario_id: user.id,
         })
       }
-      setEditando(null)
-      setFormEdit({})
-      carregar()
+      setEditando(null); setFormEdit({}); carregar()
     }
   }
 
@@ -211,14 +192,11 @@ export default function Cobrancas() {
   }
 
   const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-
-  // Filtragem
   const hoje = new Date().toISOString().slice(0,10)
   let lista = cobrancas
   if (filtroStatus !== 'todos') lista = lista.filter(c => c.status === filtroStatus)
   if (filtroPeriodo) lista = lista.filter(c => c.data_vencimento?.slice(0,7) === filtroPeriodo)
 
-  // Métricas
   const totalAberto = cobrancas.filter(c => !c.pago_confirmado).reduce((a,c) => a + Number(c.valor||0), 0)
   const totalInformado = cobrancas.filter(c => c.pago_informado && !c.pago_confirmado).reduce((a,c) => a + Number(c.valor||0), 0)
   const totalConfirmado = cobrancas.filter(c => c.pago_confirmado).reduce((a,c) => a + Number(c.valor||0), 0)
@@ -252,7 +230,6 @@ export default function Cobrancas() {
         </div>
       )}
 
-      {/* Métricas */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: '1.25rem' }}>
         {[
           { label: 'Total boletos', val: cobrancas.length, cor: '#4A8FD4' },
@@ -269,17 +246,15 @@ export default function Cobrancas() {
         ))}
       </div>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <button onClick={() => setTab('lista')} style={s.tab(tab==='lista')}>Lista</button>
         <button onClick={() => setTab('promessas')} style={s.tab(tab==='promessas')}>
           Promessas {promessasVencidas > 0 ? `(${promessasVencidas} vencidas)` : ''}
         </button>
-        {isAdmin && <button onClick={() => setTab('pago_informado')} style={s.tab(tab==='pago_informado')}>Pago informado — aguardando extrato</button>}
-        {tab === 'importar' && <button onClick={() => setTab('importar')} style={s.tab(true)}>Prévia importação ({preview.length})</button>}
+        {isAdmin && <button onClick={() => setTab('pago_informado')} style={s.tab(tab==='pago_informado')}>Pago informado</button>}
+        {tab === 'importar' && <button style={s.tab(true)}>Prévia ({preview.length})</button>}
       </div>
 
-      {/* Preview de importação */}
       {tab === 'importar' && preview.length > 0 && (
         <div style={s.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.85rem' }}>
@@ -310,7 +285,6 @@ export default function Cobrancas() {
         </div>
       )}
 
-      {/* Lista principal */}
       {tab === 'lista' && (
         <div style={s.card}>
           <div style={{ display: 'flex', gap: 8, marginBottom: '.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -322,12 +296,11 @@ export default function Cobrancas() {
             <span style={{ fontSize: 12, color: '#888780' }}>{lista.length} registros</span>
             <button onClick={() => gerarPDFCobrancas(lista, { periodo: filtroPeriodo, status: filtroStatus })} style={{ ...s.btn('#F4821F'), marginLeft: 'auto' }}>Exportar PDF</button>
           </div>
-
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#888780', fontSize: 12 }}>Carregando...</div>
           ) : lista.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#888780', fontSize: 12 }}>
-              {cobrancas.length === 0 ? 'Nenhum boleto importado ainda. Clique em "Importar XLS Sicredi" para começar.' : 'Nenhum boleto com esse filtro.'}
+              {cobrancas.length === 0 ? 'Nenhum boleto importado ainda.' : 'Nenhum boleto com esse filtro.'}
             </div>
           ) : (
             <div style={{ maxHeight: 520, overflowY: 'auto' }}>
@@ -398,7 +371,6 @@ export default function Cobrancas() {
         </div>
       )}
 
-      {/* Promessas */}
       {tab === 'promessas' && (
         <div style={s.card}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Promessas de pagamento</div>
@@ -408,8 +380,7 @@ export default function Cobrancas() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead><tr>{['Pagador','Vencimento','Valor','Data prometida','Status','Obs'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
               <tbody>
-                {cobrancas
-                  .filter(c => c.data_promessa && !c.pago_confirmado)
+                {cobrancas.filter(c => c.data_promessa && !c.pago_confirmado)
                   .sort((a,b) => a.data_promessa > b.data_promessa ? 1 : -1)
                   .map(c => {
                     const vencida = c.data_promessa < hoje
@@ -434,11 +405,10 @@ export default function Cobrancas() {
         </div>
       )}
 
-      {/* Pago informado aguardando extrato */}
       {tab === 'pago_informado' && isAdmin && (
         <div style={s.card}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.5rem' }}>Pago informado — aguardando confirmação no extrato</div>
-          <div style={{ fontSize: 12, color: '#888780', marginBottom: '.85rem' }}>Esses boletos foram informados como pagos pelo Operacional. Confirme apenas quando aparecer no extrato bancário.</div>
+          <div style={{ fontSize: 12, color: '#888780', marginBottom: '.85rem' }}>Confirme apenas quando aparecer no extrato bancário.</div>
           {cobrancas.filter(c => c.pago_informado && !c.pago_confirmado).length === 0 ? (
             <div style={{ fontSize: 12, color: '#888780', textAlign: 'center', padding: '1rem' }}>Nenhum boleto aguardando confirmação.</div>
           ) : (
@@ -451,9 +421,7 @@ export default function Cobrancas() {
                     <td style={s.td}>{c.data_vencimento ? new Date(c.data_vencimento+'T12:00:00').toLocaleDateString('pt-BR') : '—'}</td>
                     <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>{fmt(c.valor)}</td>
                     <td style={{ ...s.td, color: '#888780' }}>{c.ultima_obs||'—'}</td>
-                    <td style={s.td}>
-                      <button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}>✓ Confirmar no extrato</button>
-                    </td>
+                    <td style={s.td}><button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}>✓ Confirmar no extrato</button></td>
                   </tr>
                 ))}
               </tbody>
