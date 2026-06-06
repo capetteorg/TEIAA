@@ -11,7 +11,8 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const isMobile = useIsMobile()
   const [lista, setLista] = useState([])
   const [contas, setContas] = useState([])
-  const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '' })
+  const [projetos, setProjetos] = useState([])
+  const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '', projeto_id: '' })
   const [subcategoriaId, setSubcategoriaId] = useState('')
   const [subcategorias, setSubcategorias] = useState([])
   const [rateio, setRateio] = useState({ educ: '', social: '', saude: '' })
@@ -34,7 +35,11 @@ export default function Lancamentos({ tipo = 'despesa' }) {
 
   useEffect(() => { carregarContas(); carregarLista() }, [tipo])
 
-  // Quando categoria muda, carrega subcategorias
+  useEffect(() => {
+    supabase.from('projetos').select('id,nome,situacao').in('situacao',['ativo','em planejamento']).order('nome')
+      .then(({ data }) => setProjetos(data || []))
+  }, [])
+
   useEffect(() => {
     setSubcategoriaId('')
     if (form.categoria_id) {
@@ -45,7 +50,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
     }
   }, [form.categoria_id])
 
-  // Quando subcategoria é abatimento, carrega dívidas abertas
   useEffect(() => {
     if (parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID) {
       supabase.from('dividas')
@@ -60,7 +64,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
     }
   }, [subcategoriaId])
 
-  // Sincroniza valor do abatimento com valor do lançamento
   useEffect(() => {
     if (parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID && form.valor) {
       setValorAbatimento(form.valor)
@@ -163,6 +166,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
       valor: parseFloat(form.valor),
       conciliado: false,
       subcategoria_id: subcategoriaId ? parseInt(subcategoriaId) : null,
+      projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
     }
 
     const { data: lanc, error } = await dbLanc.criar(dadosLanc)
@@ -177,7 +181,6 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
       await dbRateios.criar(itens)
     }
 
-    // Se for abatimento de dívida, registra na tabela pagamentos_divida e atualiza saldo
     if (isAbatimento && dividaId) {
       const divida = dividasAbertas.find(d => String(d.id) === String(dividaId))
       const valorAb = parseFloat(valorAbatimento)
@@ -195,7 +198,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
     }
 
     setMsg('✅ Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
-    setForm(f => ({ ...f, nf: '', valor: '', descricao: '', categoria_id: '' }))
+    setForm(f => ({ ...f, nf: '', valor: '', descricao: '', categoria_id: '', projeto_id: '' }))
     setSubcategoriaId('')
     setSubcategorias([])
     setDividaId('')
@@ -314,13 +317,29 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
               style={s.input} />
           </div>
 
+          {/* Projeto */}
+          {projetos.length > 0 && (
+            <div style={{ marginBottom:10 }}>
+              <label style={s.label}>Projeto / Serviço vinculado</label>
+              <select value={form.projeto_id} onChange={e=>setForm(f=>({...f,projeto_id:e.target.value}))} style={s.input}>
+                <option value="">Nenhum (lançamento geral)</option>
+                {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+              {form.projeto_id && (
+                <div style={{ fontSize:11, color:'#3B6D11', marginTop:3 }}>
+                  ✅ Este lançamento aparecerá no financeiro do projeto selecionado
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Categoria */}
           <div style={{ marginBottom: subcategorias.length > 0 ? 10 : 14 }}>
             <label style={s.label}>Categoria</label>
             <CatSelect tipo={tipo} value={form.categoria_id} onChange={v => setForm(f => ({ ...f, categoria_id: v }))} />
           </div>
 
-          {/* Subcategoria — aparece quando categoria tem subcategorias */}
+          {/* Subcategoria */}
           {subcategorias.length > 0 && (
             <div style={{ marginBottom:14 }}>
               <label style={s.label}>Subcategoria</label>
@@ -331,7 +350,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
             </div>
           )}
 
-          {/* Bloco de abatimento de dívida */}
+          {/* Bloco abatimento de dívida */}
           {isAbatimento && (
             <div style={{ background:'#FEF2F2', border:'0.5px solid #F7C1C1', borderRadius:10, padding:'12px 14px', marginBottom:14 }}>
               <div style={{ fontSize:12, fontWeight:600, color:'#A32D2D', marginBottom:10 }}>
@@ -368,6 +387,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
             </div>
           )}
 
+          {/* Rateio */}
           {precisaRateio && (
             <div style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:14 }}>
               <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>
@@ -399,7 +419,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead><tr>
-                {['Data','Descrição','Conta','Valor'].map(h=>(
+                {['Data','Descrição','Projeto','Conta','Valor'].map(h=>(
                   <th key={h} style={{ textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' }}>{h}</th>
                 ))}
               </tr></thead>
@@ -407,7 +427,10 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
                 {lista.slice(0,10).map((l,i) => (
                   <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                     <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>
+                      {l.projeto_id ? (projetos.find(p=>p.id===l.projeto_id)?.nome || '—') : <span style={{ color:'#D3D1C7' }}>—</span>}
+                    </td>
                     <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>{l.conta?.nome||'—'}</td>
                     <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', color:tipo==='despesa'?VERMELHO:VERDE, fontWeight:500, textAlign:'right' }}>{fmtVal(l.valor)}</td>
                   </tr>
