@@ -13,7 +13,7 @@ export default function LancamentosLista() {
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(false)
   const [filtroTipo, setFiltroTipo] = useState('todos')
-  const [filtroPeriodo, setFiltroPeriodo] = useState(new Date().toISOString().slice(0,7))
+  const [filtroPeriodo, setFiltroPeriodo] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [filtroProjeto, setFiltroProjeto] = useState('')
   const [categorias, setCategorias] = useState([])
@@ -38,7 +38,9 @@ export default function LancamentosLista() {
       if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
       else q = q.eq('tipo', filtroTipo)
     }
-    if (filtroPeriodo) q = q.gte('data', filtroPeriodo + '-01').lte('data', filtroPeriodo + '-31')
+    if (filtroPeriodo) {
+      q = q.gte('data', filtroPeriodo + '-01').lte('data', filtroPeriodo + '-31')
+    }
     if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
     if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
 
