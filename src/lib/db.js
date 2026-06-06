@@ -48,7 +48,7 @@ export const rateios = {
 
 // ---- CLASSIFICAÇÕES AUTOMÁTICAS ----
 export const classificacoes = {
-  listar: () => supabase.from('classificacoes').select('*, subcategoria:subcategorias(nome)').order('tipo_doc'),
+  listar: () => supabase.from('classificacoes').select('*').order('tipo_doc'),
   criar: (dados) => supabase.from('classificacoes').insert(dados).select().single(),
   atualizar: (id, dados) => supabase.from('classificacoes').update(dados).eq('id', id),
   excluir: (id) => supabase.from('classificacoes').delete().eq('id', id),
