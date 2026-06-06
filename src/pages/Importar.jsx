@@ -81,12 +81,17 @@ export default function Importar() {
   async function salvar() {
     setSalvando(true)
 
-    // Calcular data_inicio e data_fim a partir das movimentações
+    // Buscar regras de classificação com categoria_id
+    const { data: regras } = await supabase.from('classificacoes').select('tipo_doc,direcao,categoria_id,subcategoria_id,categoria,classificacao')
+    const mapaRegras = {}
+    ;(regras || []).forEach(r => { mapaRegras[`${r.tipo_doc}_${r.direcao}`] = r })
+
+    // Calcular data_inicio e data_fim
     const datas = movs.map(m => m.dataISO).filter(Boolean).sort()
     const data_inicio = datas[0] || null
     const data_fim = datas[datas.length - 1] || null
 
-    // Verificar duplicata: mesma conta + mesmo período
+    // Verificar duplicata
     if (data_inicio && data_fim) {
       const { data: existente } = await supabase.from('extratos')
         .select('id,competencia,arquivo_nome')
@@ -115,16 +120,22 @@ export default function Importar() {
 
     if (error) { setMsg('Erro: ' + error.message); setSalvando(false); return }
 
-    const itens = movs.map(m => ({
-      extrato_id: ext.id,
-      data: m.dataISO,
-      descricao: m.desc,
-      doc: m.doc,
-      valor: m.tipo === 'entrada' ? m.valorAbs : -m.valorAbs,
-      tipo: m.tipo,
-      classif_auto: m.classif,
-      conciliado: false,
-    }))
+    const itens = movs.map(m => {
+      const direcao = m.tipo === 'entrada' ? 'entrada' : 'saida'
+      const regra = mapaRegras[`${m.doc}_${direcao}`]
+      return {
+        extrato_id: ext.id,
+        data: m.dataISO,
+        descricao: m.desc,
+        doc: m.doc,
+        valor: m.tipo === 'entrada' ? m.valorAbs : -m.valorAbs,
+        tipo: m.tipo,
+        classif_auto: regra?.classificacao || m.classif || null,
+        categoria_id: regra?.categoria_id || null,
+        subcategoria_id: regra?.subcategoria_id || null,
+        conciliado: false,
+      }
+    })
 
     const { error: err2 } = await supabase.from('extrato_movs').insert(itens)
     if (err2) { setMsg('Erro: ' + err2.message); setSalvando(false); return }

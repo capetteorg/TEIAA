@@ -17,11 +17,15 @@ export default function Classificacoes() {
 
   async function salvar(e) {
     e.preventDefault()
+    const cat = catsFiltradas.find(c => c.nome === form.categoria)
+    const sub = subsFiltradas.find(s => s.nome === form.subcategoria)
     const dados = {
       tipo_doc: form.tipo_doc,
       direcao: form.direcao,
       classificacao: form.subcategoria || form.categoria || '',
       categoria: form.subcategoria || form.categoria || '',
+      categoria_id: cat?.id || null,
+      subcategoria_id: sub?.id || null,
     }
     const { error } = await dbClass.criar(dados)
     if (error) { setMsg('Erro: ' + error.message); return }
