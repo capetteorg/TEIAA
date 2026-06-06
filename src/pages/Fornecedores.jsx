@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
@@ -13,6 +14,7 @@ const FORM_VAZIO = {
 
 export default function Fornecedores() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [lista, setLista] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editando, setEditando] = useState(null)
@@ -291,7 +293,7 @@ export default function Fornecedores() {
                     </td>
                     <td style={s.td}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={() => abrirHistorico(f)} style={s.btn('#EAF3DE',VERDE)}>Histórico</button>
+                        <button onClick={() => navigate(`/fornecedores/${f.id}/historico`)} style={s.btn('#EAF3DE',VERDE)}>Histórico</button>
                         <button onClick={() => editar(f)} style={s.btn('#E6F1FB',AZUL)}>Editar</button>
                         <button onClick={() => setConfirmandoExcluir(f)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
                       </div>

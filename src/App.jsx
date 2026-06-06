@@ -37,6 +37,7 @@ import Parcerias from './pages/Parcerias'
 import ParceriaDetalhe from './pages/ParceriaDetalhe'
 import Fechamento from './pages/Fechamento'
 import Fornecedores from './pages/Fornecedores'
+import FornecedorHistorico from './pages/FornecedorHistorico'
 import LancamentosLista from './pages/LancamentosLista'
 
 function RotaProtegida({ children, perfisPermitidos }) {
@@ -83,6 +84,7 @@ export default function App() {
         <Route path="documentos" element={<RotaProtegida perfisPermitidos={['admin']}><Documentos /></RotaProtegida>} />
         <Route path="lancamentos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><LancamentosLista /></RotaProtegida>} />
         <Route path="fornecedores" element={<RotaProtegida perfisPermitidos={['admin']}><Fornecedores /></RotaProtegida>} />
+        <Route path="fornecedores/:id/historico" element={<RotaProtegida perfisPermitidos={['admin']}><FornecedorHistorico /></RotaProtegida>} />
         <Route path="projetos" element={<RotaProtegida perfisPermitidos={['admin']}><Projetos /></RotaProtegida>} />
         <Route path="planos-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
         <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
