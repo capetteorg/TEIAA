@@ -90,8 +90,19 @@ export default function Cobrancas() {
   const [preview, setPreview] = useState([])
   const [arquivoNome, setArquivoNome] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [ultimoLote, setUltimoLote] = useState(null)
+  const [resumoImportacao, setResumoImportacao] = useState(null)
 
-  useEffect(() => { carregar() }, [])
+  useEffect(() => { carregar(); carregarUltimoLote() }, [])
+
+  async function carregarUltimoLote() {
+    const { data } = await supabase.from('lotes_cobranca')
+      .select('*, importado_por:usuarios(nome)')
+      .order('criado_em', { ascending: false })
+      .limit(1)
+      .single()
+    setUltimoLote(data || null)
+  }
 
   async function carregar() {
     setLoading(true)
@@ -128,7 +139,6 @@ export default function Cobrancas() {
 
   async function confirmarImportacao() {
     setSalvando(true)
-    // Cria o lote
     const { data: lote, error: errLote } = await supabase.from('lotes_cobranca').insert({
       nome: `Importação ${new Date().toLocaleDateString('pt-BR')}`,
       arquivo_nome: arquivoNome,
@@ -138,7 +148,7 @@ export default function Cobrancas() {
 
     if (errLote) { setMsg('Erro ao criar lote: ' + errLote.message); setSalvando(false); return }
 
-    let novos = 0, duplicatas = 0
+    let novos = 0, atualizados = 0, duplicatas = 0
     for (const b of preview) {
       const { data: existe } = await supabase.from('cobrancas')
         .select('id').eq('pagador', b.pagador).eq('data_vencimento', b.data_vencimento).eq('valor', b.valor).limit(1)
@@ -147,14 +157,23 @@ export default function Cobrancas() {
       novos++
     }
 
-    // Atualiza total real no lote
     await supabase.from('lotes_cobranca').update({ total_boletos: novos }).eq('id', lote.id)
 
+    const resumo = {
+      total: preview.length,
+      novos,
+      atualizados,
+      duplicatas,
+      arquivo: arquivoNome,
+      data: new Date().toLocaleString('pt-BR'),
+    }
+    setResumoImportacao(resumo)
     setSalvando(false)
     setPreview([])
     setTab('lista')
     setMsg(`✅ ${novos} boletos importados. ${duplicatas > 0 ? duplicatas + ' duplicatas ignoradas.' : ''}`)
     carregar()
+    carregarUltimoLote()
     setTimeout(() => setMsg(''), 5000)
   }
 
@@ -215,7 +234,16 @@ export default function Cobrancas() {
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-        <div style={{ fontSize: 15, fontWeight: 500 }}>Cobranças / Boletos Vencidos</div>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 500 }}>Cobranças / Boletos Vencidos</div>
+          {ultimoLote && (
+            <div style={{ fontSize: 11, color: '#888780', marginTop: 2 }}>
+              Última atualização: {new Date(ultimoLote.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+              {ultimoLote.arquivo_nome && ` · ${ultimoLote.arquivo_nome}`}
+              {ultimoLote.total_boletos !== undefined && ` · ${ultimoLote.total_boletos} boletos`}
+            </div>
+          )}
+        </div>
         {isAdmin && (
           <label style={{ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: '#4A8FD4', color: '#fff', cursor: 'pointer' }}>
             Importar XLS Sicredi
@@ -227,6 +255,31 @@ export default function Cobrancas() {
       {msg && (
         <div style={{ background: msg.includes('✅') ? '#F2FAE8' : '#FEF2F2', border: `0.5px solid ${msg.includes('✅')?'#C0DD97':'#F7C1C1'}`, borderRadius: 10, padding: '.6rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: msg.includes('✅') ? '#3B6D11' : '#A32D2D' }}>
           {msg}
+        </div>
+      )}
+
+      {/* Resumo da última importação */}
+      {resumoImportacao && (
+        <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+            <div style={{ fontSize:13, fontWeight:500, color:'#3B6D11' }}>✅ Importação concluída</div>
+            <button onClick={() => setResumoImportacao(null)} style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #3B6D11', background:'transparent', color:'#3B6D11', cursor:'pointer' }}>Fechar</button>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:8 }}>
+            {[
+              { label:'Total no arquivo', val:resumoImportacao.total },
+              { label:'Novos importados', val:resumoImportacao.novos, cor:'#3B6D11' },
+              { label:'Duplicatas ignoradas', val:resumoImportacao.duplicatas, cor:resumoImportacao.duplicatas>0?'#854F0B':'#3B6D11' },
+            ].map(m => (
+              <div key={m.label} style={{ background:'#fff', borderRadius:8, padding:'.6rem .75rem' }}>
+                <div style={{ fontSize:10, color:'#888780' }}>{m.label}</div>
+                <div style={{ fontSize:16, fontWeight:600, color:m.cor||'#3B6D11' }}>{m.val}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize:11, color:'#5F5E5A', marginTop:8 }}>
+            Arquivo: {resumoImportacao.arquivo} · {resumoImportacao.data}
+          </div>
         </div>
       )}
 
