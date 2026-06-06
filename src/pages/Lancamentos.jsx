@@ -12,7 +12,7 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const [lista, setLista] = useState([])
   const [contas, setContas] = useState([])
   const [projetos, setProjetos] = useState([])
-  const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '', projeto_id: '' })
+  const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '', projeto_id: '', dispensa_nf: false })
   const [subcategoriaId, setSubcategoriaId] = useState('')
   const [subcategorias, setSubcategorias] = useState([])
   const [rateio, setRateio] = useState({ educ: '', social: '', saude: '' })
@@ -462,7 +462,12 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
             {tipo === 'despesa' && (
               <div>
                 <label style={s.label}>Nº nota fiscal</label>
-                <input value={form.nf} onChange={e=>setForm(f=>({...f,nf:e.target.value}))} placeholder="001234" style={s.input} />
+                <input value={form.nf} onChange={e=>setForm(f=>({...f,nf:e.target.value}))} placeholder="001234"
+                  disabled={form.dispensa_nf} style={{ ...s.input, opacity:form.dispensa_nf?0.5:1 }} />
+                <label style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#888780', marginTop:4, cursor:'pointer' }}>
+                  <input type="checkbox" checked={form.dispensa_nf||false} onChange={e=>setForm(f=>({...f,dispensa_nf:e.target.checked,nf:e.target.checked?'':f.nf}))} />
+                  Dispensa nota fiscal
+                </label>
               </div>
             )}
             <div>
