@@ -103,6 +103,7 @@ export default function Layout() {
 
         {/* Financeiro */}
         <NavSecao label="Financeiro" />
+        <NavItem to="/lancamentos"        icon="list-details"      label="Lançamentos"      visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/despesas"           icon="receipt"           label="Lançar despesa"   visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/entradas"           icon="arrow-bar-to-down" label="Lançar entrada"   visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/importar"           icon="upload"            label="Importar extrato" visivel={p==='admin'} onClick={fecharMenu} />
