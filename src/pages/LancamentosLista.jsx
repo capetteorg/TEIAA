@@ -18,8 +18,14 @@ export default function LancamentosLista() {
   const [filtroProjeto, setFiltroProjeto] = useState('')
   const [categorias, setCategorias] = useState([])
   const [projetos, setProjetos] = useState([])
-  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
-  const [msg, setMsg] = useState('')
+  const [editando, setEditando] = useState(null)
+  const [formEdit, setFormEdit] = useState({})
+  const [salvando, setSalvando] = useState(false)
+  const [contas, setContas] = useState([])
+
+  useEffect(() => {
+    supabase.from('contas').select('id,nome').order('nome').then(({ data }) => setContas(data || []))
+  }, [])
 
   useEffect(() => {
     supabase.from('categorias').select('id,nome,tipo').order('nome').then(({ data }) => setCategorias(data || []))
@@ -47,6 +53,27 @@ export default function LancamentosLista() {
     const { data } = await q
     setLista(data || [])
     setLoading(false)
+  }
+
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+  const [msg, setMsg] = useState('')
+
+  async function salvarEdicao() {
+    setSalvando(true)
+    const { error } = await supabase.from('lancamentos').update({
+      data: formEdit.data,
+      descricao: formEdit.descricao,
+      valor: parseFloat(formEdit.valor),
+      conta_id: formEdit.conta_id ? parseInt(formEdit.conta_id) : null,
+    }).eq('id', editando)
+    if (!error) {
+      setEditando(null)
+      setFormEdit({})
+      setMsg('✅ Lançamento atualizado.')
+      carregar()
+      setTimeout(() => setMsg(''), 3000)
+    }
+    setSalvando(false)
   }
 
   async function excluir(id) {
@@ -156,9 +183,13 @@ export default function LancamentosLista() {
                       {l.tipo==='entrada'?'+':'-'}{fmt(l.valor)}
                     </td>
                     <td style={s.td}>
-                      {p === 'admin' && (
-                        <button onClick={() => setConfirmandoExcluir(l)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
-                      )}
+                      <div style={{ display:'flex', gap:4 }}>
+                        <button onClick={() => { setEditando(l.id); setFormEdit({ data:l.data, descricao:l.descricao, valor:l.valor, conta_id:l.conta_id }) }}
+                          style={s.btn('#E6F1FB',AZUL)}>Editar</button>
+                        {p === 'admin' && (
+                          <button onClick={() => setConfirmandoExcluir(l)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -167,6 +198,50 @@ export default function LancamentosLista() {
           </div>
         )}
       </div>
+
+      {/* Modal editar */}
+      {editando && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:480, width:'90%' }}>
+            <div style={{ fontSize:14, fontWeight:600, marginBottom:'1rem' }}>Editar lançamento</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div>
+                <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Data</label>
+                <input type="date" value={formEdit.data||''} onChange={e=>setFormEdit(f=>({...f,data:e.target.value}))}
+                  style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Valor (R$)</label>
+                <input type="number" step="0.01" value={formEdit.valor||''} onChange={e=>setFormEdit(f=>({...f,valor:e.target.value}))}
+                  style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }} />
+              </div>
+            </div>
+            <div style={{ marginBottom:10 }}>
+              <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Descrição</label>
+              <input value={formEdit.descricao||''} onChange={e=>setFormEdit(f=>({...f,descricao:e.target.value}))}
+                style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }} />
+            </div>
+            <div style={{ marginBottom:'1.25rem' }}>
+              <label style={{ fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 }}>Conta</label>
+              <select value={formEdit.conta_id||''} onChange={e=>setFormEdit(f=>({...f,conta_id:e.target.value}))}
+                style={{ width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' }}>
+                <option value="">Sem conta</option>
+                {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={salvarEdicao} disabled={salvando}
+                style={{ padding:'8px 20px', borderRadius:8, border:'none', background:AZUL, color:'#fff', fontWeight:600, cursor:'pointer' }}>
+                {salvando ? 'Salvando...' : '💾 Salvar'}
+              </button>
+              <button onClick={() => { setEditando(null); setFormEdit({}) }}
+                style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal excluir */}
       {confirmandoExcluir && (
