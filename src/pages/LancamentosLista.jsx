@@ -180,7 +180,9 @@ export default function LancamentosLista() {
                 ))}</tr>
               </thead>
               <tbody>
-                {lista.map((l,i) => (
+                {lista.map((l,i) => {
+                  const contaAtual = contas.find(c => String(c.id) === String(l.conta_id))
+                  return (
                   <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                     <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
                     <td style={s.td}>
@@ -199,7 +201,6 @@ export default function LancamentosLista() {
                     </td>
                     <td style={s.td}>
                       <div style={{ display:'flex', gap:4 }}>
-    const contaAtual = contas.find(c => String(c.id) === String(l.conta_id))
                         <button onClick={() => { setEditando(l.id); setFormEdit({ data:l.data, descricao:l.descricao, valor:l.valor, conta_id:l.conta_id, categoria_id:l.categoria_id, fornecedor_id:l.fornecedor_id, projeto_id:l.projeto_id, nf:l.nf||'', dispensa_nf:l.dispensa_nf||false, _contaPrep: contaAtual?.preponderancia }) }}
                           style={s.btn('#E6F1FB',AZUL)}>Editar</button>
                         {p === 'admin' && (
@@ -208,7 +209,8 @@ export default function LancamentosLista() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
