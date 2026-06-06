@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
 export default function LancamentosLista() {
-  const { perfil } = useAuth()
+  const { perfil, user } = useAuth()
   const p = perfil?.perfil
   const navigate = useNavigate()
 
@@ -40,6 +40,7 @@ export default function LancamentosLista() {
       .select('*, conta:contas(nome), categoria:categorias(nome,tipo), projeto:projetos(nome), fornecedor:fornecedores(nome)')
       .order('data', { ascending: false })
 
+    if (p === 'operacional') q = q.eq('criado_por', user.id)
     if (filtroTipo !== 'todos') {
       if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
       else q = q.eq('tipo', filtroTipo)

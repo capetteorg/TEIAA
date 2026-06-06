@@ -35,11 +35,15 @@ export default function Lancamentos({ tipo = 'despesa' }) {
 
   // IA — Foto de nota
   const [modoIA, setModoIA] = useState(false)
+  const [modoEntrada, setModoEntrada] = useState('foto') // 'foto', 'pdf', 'texto'
   const [fotoBase64, setFotoBase64] = useState(null)
   const [fotoPreview, setFotoPreview] = useState(null)
+  const [pdfBase64, setPdfBase64] = useState(null)
+  const [textoNota, setTextoNota] = useState('')
   const [analisando, setAnalisando] = useState(false)
   const [msgIA, setMsgIA] = useState('')
   const inputFotoRef = useRef(null)
+  const inputPdfRef = useRef(null)
 
   useEffect(() => { carregarContas(); carregarLista() }, [tipo])
 
@@ -113,38 +117,69 @@ export default function Lancamentos({ tipo = 'despesa' }) {
     reader.readAsDataURL(file)
   }
 
+  function onPdfChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const base64 = ev.target.result.split(',')[1]
+      setPdfBase64(base64)
+      setMsgIA('')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const PROMPT_NF = `Analise este documento fiscal e extraia as informações. Responda APENAS com JSON válido, sem texto adicional:
+{
+  "valor": "valor total em reais, apenas números e ponto decimal, ex: 45.90",
+  "data": "data no formato YYYY-MM-DD",
+  "descricao": "descrição resumida do que foi comprado, máximo 80 caracteres",
+  "fornecedor": "nome do estabelecimento ou fornecedor",
+  "cnpj_cpf": "CNPJ ou CPF do fornecedor, apenas números",
+  "nf": "número da nota ou cupom fiscal, se houver"
+}
+Se não conseguir identificar algum campo, deixe como string vazia.`
+
   async function analisarNota() {
-    if (!fotoBase64) return
     setAnalisando(true)
-    setMsgIA('Analisando nota fiscal...')
+    setMsgIA('Analisando documento...')
     try {
+      let content = []
+
+      if (modoEntrada === 'foto' && fotoBase64) {
+        content = [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fotoBase64 } },
+          { type: 'text', text: PROMPT_NF }
+        ]
+      } else if (modoEntrada === 'pdf' && pdfBase64) {
+        content = [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
+          { type: 'text', text: PROMPT_NF }
+        ]
+      } else if (modoEntrada === 'texto' && textoNota) {
+        content = [
+          { type: 'text', text: `${PROMPT_NF}\n\nTexto da nota fiscal:\n${textoNota}` }
+        ]
+      } else {
+        setMsgIA('❌ Nenhum documento fornecido.')
+        setAnalisando(false)
+        return
+      }
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fotoBase64 } },
-              { type: 'text', text: `Analise esta nota fiscal ou cupom fiscal e extraia as informações. Responda APENAS com um JSON válido, sem texto adicional, sem markdown, sem explicações:
-{
-  "valor": "valor total em reais, apenas números e ponto decimal, ex: 45.90",
-  "data": "data no formato YYYY-MM-DD, ex: 2026-06-05",
-  "descricao": "descrição resumida do que foi comprado, máximo 80 caracteres",
-  "fornecedor": "nome do estabelecimento ou fornecedor",
-  "nf": "número da nota ou cupom fiscal, se houver, caso contrário string vazia"
-}
-Se não conseguir identificar algum campo com certeza, deixe como string vazia.` }
-            ]
-          }]
+          messages: [{ role: 'user', content }]
         })
       })
       const data = await response.json()
       const texto = data.content?.[0]?.text || ''
       const clean = texto.replace(/```json|```/g, '').trim()
       const resultado = JSON.parse(clean)
+
       setForm(f => ({
         ...f,
         valor: resultado.valor || f.valor,
@@ -152,6 +187,14 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
         descricao: resultado.descricao || f.descricao,
         nf: resultado.nf || f.nf,
       }))
+
+      // Tentar vincular fornecedor pelo CNPJ
+      if (resultado.cnpj_cpf) {
+        const cnpjLimpo = resultado.cnpj_cpf.replace(/\D/g, '')
+        const forn = fornecedores.find(f => (f.cpf_cnpj||'').replace(/\D/g,'') === cnpjLimpo)
+        if (forn) setFornecedorId(String(forn.id))
+      }
+
       setMsgIA(`✅ Dados extraídos! Confira e ajuste se necessário.${resultado.fornecedor ? ` Fornecedor: ${resultado.fornecedor}` : ''}`)
       setModoIA(false)
     } catch(e) {
@@ -266,49 +309,110 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
         {tipo === 'despesa' ? 'Lançar despesa' : 'Lançar entrada'}
       </div>
 
-      {/* Botão de foto com IA */}
+      {/* Bloco IA */}
       {tipo === 'despesa' && (
         <div style={{ ...s.card, borderColor: modoIA ? '#C0DD97' : '#E0DDD5', marginBottom:10 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: modoIA ? '1rem' : 0 }}>
             <div>
-              <div style={{ fontSize:13, fontWeight:500 }}>📷 Fotografar nota fiscal</div>
-              <div style={{ fontSize:11, color:'#888780' }}>A IA extrai valor, data e descrição automaticamente</div>
+              <div style={{ fontSize:13, fontWeight:500 }}>📄 Adicionar documento fiscal</div>
+              <div style={{ fontSize:11, color:'#888780' }}>A IA extrai valor, data, fornecedor e descrição automaticamente</div>
             </div>
-            <button type="button" onClick={() => { setModoIA(!modoIA); setFotoPreview(null); setFotoBase64(null); setMsgIA('') }}
+            <button type="button" onClick={() => { setModoIA(!modoIA); setFotoPreview(null); setFotoBase64(null); setPdfBase64(null); setTextoNota(''); setMsgIA('') }}
               style={{ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${modoIA?VERMELHO:VERDE}`, background:modoIA?'#FEF2F2':'#EAF3DE', color:modoIA?VERMELHO:VERDE, cursor:'pointer' }}>
               {modoIA ? 'Cancelar' : 'Usar IA'}
             </button>
           </div>
           {modoIA && (
             <div>
-              <input ref={inputFotoRef} type="file" accept="image/*" capture="environment" onChange={onFotoChange} style={{ display:'none' }} />
-              {!fotoPreview ? (
-                <div onClick={() => inputFotoRef.current?.click()}
-                  style={{ border:`2px dashed ${VERDE}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F8FFF4' }}>
-                  <div style={{ fontSize:40, marginBottom:8 }}>📷</div>
-                  <div style={{ fontSize:13, fontWeight:500, color:VERDE }}>
-                    {isMobile ? 'Toque para fotografar ou escolher imagem' : 'Clique para selecionar a foto da nota'}
-                  </div>
-                  <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>JPG, PNG ou foto da câmera</div>
-                </div>
-              ) : (
+              {/* Seletor de modo */}
+              <div style={{ display:'flex', gap:6, marginBottom:'1rem' }}>
+                {[['foto','📷 Foto/Imagem'],['pdf','📄 PDF'],['texto','📝 Texto']].map(([m,l]) => (
+                  <button key={m} type="button" onClick={() => { setModoEntrada(m); setFotoBase64(null); setFotoPreview(null); setPdfBase64(null); setTextoNota(''); setMsgIA('') }}
+                    style={{ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${modoEntrada===m?VERDE:'#D3D1C7'}`, background:modoEntrada===m?VERDE:'#fff', color:modoEntrada===m?'#fff':'#5F5E5A', cursor:'pointer' }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+
+              {/* Foto/Imagem */}
+              {modoEntrada === 'foto' && (
                 <div>
-                  <img src={fotoPreview} alt="Nota fiscal"
-                    style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E0DDD5', marginBottom:10 }} />
-                  <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-                    <button type="button" onClick={analisarNota} disabled={analisando}
-                      style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':VERDE, color:'#fff', cursor:'pointer' }}>
-                      {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
-                    </button>
-                    <button type="button" onClick={() => inputFotoRef.current?.click()}
-                      style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
-                      Trocar foto
-                    </button>
-                  </div>
+                  <input ref={inputFotoRef} type="file" accept="image/*" capture="environment" onChange={onFotoChange} style={{ display:'none' }} />
+                  {!fotoPreview ? (
+                    <div onClick={() => inputFotoRef.current?.click()}
+                      style={{ border:`2px dashed ${VERDE}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F8FFF4' }}>
+                      <div style={{ fontSize:40, marginBottom:8 }}>📷</div>
+                      <div style={{ fontSize:13, fontWeight:500, color:VERDE }}>
+                        {isMobile ? 'Toque para fotografar ou escolher imagem' : 'Clique para selecionar a foto da nota'}
+                      </div>
+                      <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>JPG, PNG ou foto da câmera</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <img src={fotoPreview} alt="Nota fiscal"
+                        style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E0DDD5', marginBottom:10 }} />
+                      <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+                        <button type="button" onClick={analisarNota} disabled={analisando}
+                          style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':VERDE, color:'#fff', cursor:'pointer' }}>
+                          {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
+                        </button>
+                        <button type="button" onClick={() => inputFotoRef.current?.click()}
+                          style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                          Trocar foto
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* PDF */}
+              {modoEntrada === 'pdf' && (
+                <div>
+                  <input ref={inputPdfRef} type="file" accept="application/pdf" onChange={onPdfChange} style={{ display:'none' }} />
+                  {!pdfBase64 ? (
+                    <div onClick={() => inputPdfRef.current?.click()}
+                      style={{ border:`2px dashed ${AZUL}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F0F7FF' }}>
+                      <div style={{ fontSize:40, marginBottom:8 }}>📄</div>
+                      <div style={{ fontSize:13, fontWeight:500, color:AZUL }}>Clique para selecionar o PDF da nota fiscal</div>
+                      <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>Arquivo .pdf</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ background:'#F0F7FF', borderRadius:8, padding:'10px 14px', marginBottom:10, fontSize:12, color:AZUL }}>
+                        ✅ PDF carregado — pronto para analisar
+                      </div>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <button type="button" onClick={analisarNota} disabled={analisando}
+                          style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':AZUL, color:'#fff', cursor:'pointer' }}>
+                          {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
+                        </button>
+                        <button type="button" onClick={() => { setPdfBase64(null); inputPdfRef.current?.click() }}
+                          style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                          Trocar PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Texto */}
+              {modoEntrada === 'texto' && (
+                <div>
+                  <textarea value={textoNota} onChange={e=>setTextoNota(e.target.value)}
+                    placeholder="Cole aqui o texto da nota fiscal, recibo ou comprovante..."
+                    rows={6}
+                    style={{ width:'100%', fontSize:12, padding:'8px 10px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', resize:'vertical', marginBottom:10 }} />
+                  <button type="button" onClick={analisarNota} disabled={analisando||!textoNota}
+                    style={{ width:'100%', padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando||!textoNota?'#D3D1C7':LARANJA, color:'#fff', cursor:'pointer' }}>
+                    {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
+                  </button>
+                </div>
+              )}
+
               {msgIA && (
-                <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, background:msgIA.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgIA.includes('✅')?'#3B6D11':'#A32D2D' }}>
+                <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginTop:10, background:msgIA.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgIA.includes('✅')?'#3B6D11':'#A32D2D' }}>
                   {msgIA}
                 </div>
               )}
