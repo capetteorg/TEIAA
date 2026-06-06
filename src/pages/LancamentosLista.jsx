@@ -31,7 +31,7 @@ export default function LancamentosLista() {
   async function carregar() {
     setLoading(true)
     let q = supabase.from('lancamentos')
-      .select('*, conta:contas(nome), categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), projeto:projetos(nome), fornecedor:fornecedores(nome)')
+      .select('*, conta:contas(nome), categoria:categorias(nome,tipo), projeto:projetos(nome), fornecedor:fornecedores(nome)')
       .order('data', { ascending: false })
 
     if (filtroTipo !== 'todos') {
