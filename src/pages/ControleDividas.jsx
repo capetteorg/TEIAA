@@ -450,14 +450,16 @@ export default function ControleDividas() {
       {/* ===== CREDORES ===== */}
       {tab === 'credores' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-            <button onClick={() => { setMostrarFormCredor(!mostrarFormCredor); setEditandoCredor(null); setFormCredor(FORM_CREDOR_VAZIO) }}
-              style={s.btn(mostrarFormCredor ? '#F1EFE8' : AZUL, mostrarFormCredor ? '#5F5E5A' : '#fff')}>
-              {mostrarFormCredor ? 'Cancelar' : '+ Cadastrar credor externo'}
-            </button>
-          </div>
+          {p === 'admin' && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+              <button onClick={() => { setMostrarFormCredor(!mostrarFormCredor); setEditandoCredor(null); setFormCredor(FORM_CREDOR_VAZIO) }}
+                style={s.btn(mostrarFormCredor ? '#F1EFE8' : AZUL, mostrarFormCredor ? '#5F5E5A' : '#fff')}>
+                {mostrarFormCredor ? 'Cancelar' : '+ Cadastrar credor externo'}
+              </button>
+            </div>
+          )}
 
-          {mostrarFormCredor && (
+          {p === 'admin' && mostrarFormCredor && (
             <div style={{ ...s.card, borderColor: '#B3D1F0', marginBottom: '1rem' }}>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>
                 {editandoCredor ? 'Editar credor' : 'Novo credor externo'}
@@ -519,7 +521,7 @@ export default function ControleDividas() {
                           {saldo > 0 ? fmt(saldo) : '✅ Quitado'}
                         </td>
                         <td style={s.td}>
-                          <button onClick={() => editarCredor(c)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                          {p === 'admin' && <button onClick={() => editarCredor(c)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}
                         </td>
                       </tr>
                     )
