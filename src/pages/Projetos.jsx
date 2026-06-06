@@ -86,6 +86,13 @@ export default function Projetos() {
   const [editandoEquipe, setEditandoEquipe] = useState(null)
   const [salvandoEquipe, setSalvandoEquipe] = useState(false)
   const [msgEquipe, setMsgEquipe] = useState('')
+  // Financeiro do projeto
+  const [orcamento, setOrcamento] = useState([])
+  const [lancamentosProjeto, setLancamentosProjeto] = useState([])
+  const [formOrc, setFormOrc] = useState({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 })
+  const [editandoOrc, setEditandoOrc] = useState(null)
+  const [salvandoOrc, setSalvandoOrc] = useState(false)
+  const [msgOrc, setMsgOrc] = useState('')
 
   useEffect(() => {
     carregar()
@@ -145,6 +152,51 @@ export default function Projetos() {
     setProjetoDetalhe(p)
     setAbaDetalhe('geral')
     await carregarEquipeProjeto(p.id)
+    await carregarFinanceiro(p.id)
+  }
+
+  async function carregarFinanceiro(projetoId) {
+    const [orcRes, lancRes] = await Promise.all([
+      supabase.from('projeto_orcamento').select('*').eq('projeto_id', projetoId).order('categoria'),
+      supabase.from('lancamentos').select('*, conta:contas(nome)').eq('projeto_id', projetoId).order('data', { ascending: false }),
+    ])
+    setOrcamento(orcRes.data || [])
+    setLancamentosProjeto(lancRes.data || [])
+  }
+
+  async function salvarOrcamento(e) {
+    e.preventDefault()
+    setSalvandoOrc(true)
+    const dados = {
+      projeto_id: projetoDetalhe.id,
+      ano: formOrc.ano || 2026,
+      categoria: formOrc.categoria,
+      subcategoria: formOrc.subcategoria || null,
+      fonte_recurso: formOrc.fonte_recurso || null,
+      valor_previsto: parseFloat(formOrc.valor_previsto) || 0,
+      valor_recebido: parseFloat(formOrc.valor_recebido) || 0,
+      observacoes: formOrc.observacoes || null,
+    }
+    let error
+    if (editandoOrc) {
+      ;({ error } = await supabase.from('projeto_orcamento').update(dados).eq('id', editandoOrc))
+    } else {
+      ;({ error } = await supabase.from('projeto_orcamento').insert(dados))
+    }
+    if (error) setMsgOrc('Erro: ' + error.message)
+    else {
+      setMsgOrc('✅ Salvo!')
+      setFormOrc({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 })
+      setEditandoOrc(null)
+      carregarFinanceiro(projetoDetalhe.id)
+    }
+    setSalvandoOrc(false)
+    setTimeout(() => setMsgOrc(''), 3000)
+  }
+
+  async function excluirOrcamento(id) {
+    await supabase.from('projeto_orcamento').delete().eq('id', id)
+    carregarFinanceiro(projetoDetalhe.id)
   }
 
   async function salvarEquipe(e) {
@@ -268,7 +320,7 @@ export default function Projetos() {
 
         {/* Abas detalhe */}
         <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
-          {[['geral','Dados gerais'],['equipe','👥 Equipe'],['socioassistencial','Socioassistencial'],['cnas','📋 CNAS']].map(([id,label]) => (
+          {[['geral','Dados gerais'],['equipe','👥 Equipe'],['financeiro','💰 Financeiro'],['socioassistencial','Socioassistencial'],['cnas','📋 CNAS']].map(([id,label]) => (
             <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabDet(abaDetalhe===id)}>{label}</button>
           ))}
         </div>
@@ -403,6 +455,139 @@ export default function Projetos() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Aba Financeiro */}
+        {abaDetalhe === 'financeiro' && (
+          <div>
+            {/* Métricas rápidas */}
+            {(() => {
+              const totalPrevisto = orcamento.reduce((a,o) => a + Number(o.valor_previsto||0), 0)
+              const totalRecebido = orcamento.reduce((a,o) => a + Number(o.valor_recebido||0), 0)
+              const totalExecutado = lancamentosProjeto.filter(l=>l.tipo==='despesa').reduce((a,l) => a + Number(l.valor||0), 0)
+              const totalEntradas = lancamentosProjeto.filter(l=>l.tipo==='entrada').reduce((a,l) => a + Number(l.valor||0), 0)
+              const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2})
+              return (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:10, marginBottom:10 }}>
+                  {[
+                    ['Previsto', fmt(totalPrevisto), '#888780'],
+                    ['Recebido', fmt(totalRecebido), AZUL],
+                    ['Executado', fmt(totalExecutado), VERMELHO],
+                    ['Entradas reais', fmt(totalEntradas), VERDE],
+                    ['Saldo', fmt(totalEntradas - totalExecutado), totalEntradas >= totalExecutado ? VERDE : VERMELHO],
+                  ].map(([l,v,cor]) => (
+                    <div key={l} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:10, padding:'.85rem 1rem' }}>
+                      <div style={{ height:3, borderRadius:99, background:cor, marginBottom:'.7rem' }} />
+                      <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{l}</div>
+                      <div style={{ fontSize:14, fontWeight:600, color:cor }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
+
+            {/* Orçamento previsto */}
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Orçamento previsto ({orcamento.length} itens)</div>
+              <div style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
+                <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoOrc ? 'Editar item' : 'Adicionar item ao orçamento'}</div>
+                <form onSubmit={salvarOrcamento}>
+                  <div style={s.grupo('2fr 1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Categoria *</label>
+                      <input value={formOrc.categoria} onChange={e=>setFormOrc(f=>({...f,categoria:e.target.value}))} required style={s.input} placeholder="Ex: Recursos humanos, Alimentação..." />
+                    </div>
+                    <div>
+                      <label style={s.label}>Subcategoria</label>
+                      <input value={formOrc.subcategoria} onChange={e=>setFormOrc(f=>({...f,subcategoria:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Ano</label>
+                      <input type="number" value={formOrc.ano} onChange={e=>setFormOrc(f=>({...f,ano:parseInt(e.target.value)}))} style={s.input} />
+                    </div>
+                  </div>
+                  <div style={s.grupo('2fr 1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Fonte do recurso</label>
+                      <input value={formOrc.fonte_recurso} onChange={e=>setFormOrc(f=>({...f,fonte_recurso:e.target.value}))} style={s.input} placeholder="Ex: Recurso próprio, Emenda, SMASDH..." />
+                    </div>
+                    <div>
+                      <label style={s.label}>Valor previsto (R$) *</label>
+                      <input type="number" step="0.01" value={formOrc.valor_previsto} onChange={e=>setFormOrc(f=>({...f,valor_previsto:e.target.value}))} required style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Valor recebido (R$)</label>
+                      <input type="number" step="0.01" value={formOrc.valor_recebido} onChange={e=>setFormOrc(f=>({...f,valor_recebido:e.target.value}))} style={s.input} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom:8 }}>
+                    <label style={s.label}>Observações</label>
+                    <input value={formOrc.observacoes} onChange={e=>setFormOrc(f=>({...f,observacoes:e.target.value}))} style={s.input} />
+                  </div>
+                  {msgOrc && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:msgOrc.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgOrc.includes('✅')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button type="submit" disabled={salvandoOrc} style={s.btn(salvandoOrc?'#D3D1C7':VERDE)}>{salvandoOrc?'Salvando...':editandoOrc?'💾 Salvar':'+ Adicionar'}</button>
+                    {editandoOrc && <button type="button" onClick={() => { setFormOrc({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
+                  </div>
+                </form>
+              </div>
+
+              {orcamento.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhum item de orçamento cadastrado.</div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead><tr>{['Categoria','Subcategoria','Fonte','Previsto','Recebido','Ano',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {orcamento.map(o => (
+                      <tr key={o.id}>
+                        <td style={{ ...s.td, fontWeight:500 }}>{o.categoria}</td>
+                        <td style={{ ...s.td, color:'#888780' }}>{o.subcategoria||'—'}</td>
+                        <td style={{ ...s.td, fontSize:11 }}>{o.fonte_recurso||'—'}</td>
+                        <td style={{ ...s.td, color:AZUL, fontWeight:500 }}>R$ {Number(o.valor_previsto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                        <td style={{ ...s.td, color:VERDE }}>R$ {Number(o.valor_recebido||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                        <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{o.ano}</td>
+                        <td style={s.td}>
+                          <div style={{ display:'flex', gap:4 }}>
+                            <button onClick={() => { setFormOrc({ categoria:o.categoria, subcategoria:o.subcategoria||'', fonte_recurso:o.fonte_recurso||'', valor_previsto:o.valor_previsto||'', valor_recebido:o.valor_recebido||'', observacoes:o.observacoes||'', ano:o.ano||2026 }); setEditandoOrc(o.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                            <button onClick={() => excluirOrcamento(o.id)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Lançamentos reais vinculados */}
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Lançamentos vinculados a este projeto ({lancamentosProjeto.length})</div>
+              {lancamentosProjeto.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>
+                  Nenhum lançamento vinculado. Ao lançar despesas ou entradas, selecione este projeto para que apareçam aqui.
+                </div>
+              ) : (
+                <div style={{ overflowX:'auto' }}>
+                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                    <thead><tr>{['Data','Descrição','Tipo','Conta','Valor'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {lancamentosProjeto.map((l,i) => (
+                        <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
+                          <td style={{ ...s.td, whiteSpace:'nowrap' }}>{l.data ? new Date(l.data+'T12:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+                          <td style={{ ...s.td, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                          <td style={s.td}><span style={s.badge(l.tipo==='despesa'?'#FCEBEB':'#EAF3DE', l.tipo==='despesa'?'#A32D2D':'#3B6D11')}>{l.tipo}</span></td>
+                          <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{l.conta?.nome||'—'}</td>
+                          <td style={{ ...s.td, fontWeight:500, color:l.tipo==='despesa'?VERMELHO:VERDE, textAlign:'right' }}>
+                            R$ {Number(l.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
