@@ -103,6 +103,9 @@ export default function PlanosExecucao() {
   const [salvando, setSalvando] = useState(false)
   const [msg, setMsg] = useState('')
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+  const [projetosVinculados, setProjetosVinculados] = useState([])
+  const [projetoParaVincular, setProjetoParaVincular] = useState('')
+  const [msgProjetos, setMsgProjetos] = useState('')
 
   useEffect(() => {
     carregar()
@@ -123,9 +126,41 @@ export default function PlanosExecucao() {
 
   async function abrirDetalhe(p) {
     setPlanoSel(p)
-    setAbaDetalhe('metas')
+    setAbaDetalhe('projetos')
     setAba('detalhe')
     await carregarDetalhe(p)
+    await carregarProjetosVinculados(p.id)
+  }
+
+  async function carregarProjetosVinculados(planoId) {
+    const { data } = await supabase.from('plano_projetos')
+      .select('*, projeto:projetos(id,nome,tipo,situacao,publico_alvo,faixa_etaria,capacidade_prevista,objeto,objetivo_geral,atividades_previstas,recursos_humanos,participacao_usuarios,monitoramento_avaliacao,origens_recursos)')
+      .eq('plano_id', planoId)
+      .order('ordem')
+    setProjetosVinculados(data || [])
+  }
+
+  async function vincularProjeto() {
+    if (!projetoParaVincular) return
+    const jaVinculado = projetosVinculados.find(pv => String(pv.projeto_id) === String(projetoParaVincular))
+    if (jaVinculado) { setMsgProjetos('Este projeto já está vinculado ao plano.'); return }
+    const { error } = await supabase.from('plano_projetos').insert({
+      plano_id: planoSel.id,
+      projeto_id: parseInt(projetoParaVincular),
+      ordem: projetosVinculados.length + 1,
+    })
+    if (error) setMsgProjetos('Erro: ' + error.message)
+    else {
+      setMsgProjetos('✅ Projeto vinculado!')
+      setProjetoParaVincular('')
+      carregarProjetosVinculados(planoSel.id)
+    }
+    setTimeout(() => setMsgProjetos(''), 3000)
+  }
+
+  async function desvincularProjeto(id) {
+    await supabase.from('plano_projetos').delete().eq('id', id)
+    carregarProjetosVinculados(planoSel.id)
   }
 
   async function carregarDetalhe(p) {
@@ -661,6 +696,7 @@ export default function PlanosExecucao() {
           {/* Abas do detalhe */}
           <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
             {[
+              ['projetos','📁 Projetos'],
               ['metas','Metas'],
               ['atividades','Atividades previstas'],
               ['execucao','Execução realizada'],
@@ -670,6 +706,98 @@ export default function PlanosExecucao() {
               <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabSec(abaDetalhe===id)}>{label}</button>
             ))}
           </div>
+
+          {/* Projetos vinculados */}
+          {abaDetalhe === 'projetos' && (
+            <div>
+              {/* Vincular projeto */}
+              <div style={s.card}>
+                <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
+                  Projetos / Serviços vinculados a este plano ({projetosVinculados.length})
+                </div>
+                <div style={{ display:'flex', gap:8, marginBottom: msgProjetos ? 8 : '1rem', flexWrap:'wrap' }}>
+                  <select value={projetoParaVincular} onChange={e => setProjetoParaVincular(e.target.value)}
+                    style={{ ...s.input, flex:1, minWidth:200 }}>
+                    <option value="">Selecione um projeto para vincular...</option>
+                    {projetos.filter(p => !projetosVinculados.find(pv => pv.projeto_id === p.id)).map(p => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                  </select>
+                  <button onClick={vincularProjeto} style={s.btn(VERDE)}>+ Vincular projeto</button>
+                </div>
+                {msgProjetos && (
+                  <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:'1rem', background:msgProjetos.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgProjetos.includes('✅')?'#3B6D11':'#A32D2D' }}>
+                    {msgProjetos}
+                  </div>
+                )}
+
+                {projetosVinculados.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>
+                    Nenhum projeto vinculado. Selecione os projetos que fazem parte deste plano.
+                  </div>
+                ) : (
+                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                    {projetosVinculados.map((pv, idx) => {
+                      const p = pv.projeto
+                      const SITUACAO_COR_P = { 'ativo':['#EAF3DE','#3B6D11'], 'em planejamento':['#E6F1FB','#185FA5'], 'suspenso':['#FAEEDA','#854F0B'], 'encerrado':['#F1EFE8','#5F5E5A'] }
+                      const [bg,cor] = SITUACAO_COR_P[p?.situacao] || ['#F1EFE8','#888780']
+                      return (
+                        <div key={pv.id} style={{ border:'0.5px solid #E0DDD5', borderRadius:10, overflow:'hidden' }}>
+                          {/* Cabeçalho do projeto */}
+                          <div style={{ background:`${VERDE}08`, borderBottom:'0.5px solid #E0DDD5', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <span style={{ fontSize:12, fontWeight:600, color:'#888780' }}>{idx+1}.</span>
+                              <div>
+                                <div style={{ fontSize:12, color:'#888780', marginBottom:1 }}>{p?.tipo}</div>
+                                <div style={{ fontSize:13, fontWeight:600 }}>{p?.nome}</div>
+                              </div>
+                            </div>
+                            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                              <span style={s.badge(bg,cor)}>{p?.situacao}</span>
+                              <button onClick={() => desvincularProjeto(pv.id)}
+                                style={{ fontSize:11, padding:'3px 10px', borderRadius:6, border:'none', background:'#FEF2F2', color:VERMELHO, cursor:'pointer' }}>
+                                Desvincular
+                              </button>
+                            </div>
+                          </div>
+                          {/* Dados do projeto */}
+                          <div style={{ padding:'10px 14px' }}>
+                            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:6, marginBottom: p?.objeto ? 8 : 0 }}>
+                              {[
+                                ['Público-alvo', p?.publico_alvo],
+                                ['Faixa etária', p?.faixa_etaria],
+                                ['Capacidade', p?.capacidade_prevista],
+                              ].filter(([,v]) => v).map(([l,v]) => (
+                                <div key={l} style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px' }}>
+                                  <div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>{l}</div>
+                                  <div style={{ fontSize:11 }}>{v}</div>
+                                </div>
+                              ))}
+                            </div>
+                            {p?.objeto && (
+                              <div style={{ fontSize:11, color:'#5F5E5A', lineHeight:1.5, marginBottom: p?.atividades_previstas ? 8 : 0, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                                {p.objeto}
+                              </div>
+                            )}
+                            {p?.atividades_previstas && (
+                              <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>
+                                <strong style={{ color:'#5F5E5A' }}>Atividades:</strong> {p.atividades_previstas.substring(0,150)}{p.atividades_previstas.length>150?'...':''}
+                              </div>
+                            )}
+                            {p?.origens_recursos?.length > 0 && (
+                              <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginTop:4 }}>
+                                {p.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Metas */}
           {abaDetalhe === 'metas' && (
