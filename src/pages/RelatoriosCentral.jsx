@@ -6,12 +6,14 @@ import { gerarPDFRelatorio } from '../lib/pdf'
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
 const ABAS = [
-  { id: 'financeiro',  label: 'Financeiro',         icon: 'chart-bar' },
-  { id: 'execucao',    label: 'Execução do Objeto',  icon: 'report' },
-  { id: 'equipe',      label: 'Equipe',              icon: 'users-group' },
-  { id: 'usuarios',    label: 'Usuários Atendidos',  icon: 'users' },
-  { id: 'atendimentos',label: 'Atendimentos',        icon: 'clipboard-list' },
-  { id: 'doacoes',     label: 'Doações',             icon: 'gift' },
+  { id: 'financeiro',    label: 'Financeiro',          icon: 'chart-bar' },
+  { id: 'execucao',      label: 'Execução do Objeto',   icon: 'report' },
+  { id: 'plano_acao',    label: 'Plano de Ação',        icon: 'clipboard-check' },
+  { id: 'relat_anual',   label: 'Relatório Anual',      icon: 'file-analytics' },
+  { id: 'equipe',        label: 'Equipe',               icon: 'users-group' },
+  { id: 'usuarios',      label: 'Usuários Atendidos',   icon: 'users' },
+  { id: 'atendimentos',  label: 'Atendimentos',         icon: 'clipboard-list' },
+  { id: 'doacoes',       label: 'Doações',              icon: 'gift' },
 ]
 
 export default function RelatoriosCentral() {
@@ -31,7 +33,7 @@ export default function RelatoriosCentral() {
 
   useEffect(() => {
     supabase.from('projetos').select('id,nome').order('nome').then(({ data }) => setProjetos(data || []))
-    supabase.from('planos').select('id,nome_plano,projeto_id').order('nome_plano').then(({ data }) => setPlanos(data || []))
+    supabase.from('planos').select('id,nome_plano,projeto_id,tipo_plano').order('nome_plano').then(({ data }) => setPlanos(data || []))
     supabase.from('contas').select('id,nome,banco').order('nome').then(({ data }) => setContas(data || []))
     supabase.from('instituicao').select('*').limit(1).single().then(({ data }) => setInstituicao(data))
   }, [])
@@ -42,9 +44,10 @@ export default function RelatoriosCentral() {
     try {
       const pId = projetoSel ? parseInt(projetoSel) : null
       const plId = planoSel ? parseInt(planoSel) : null
-
       if (aba === 'financeiro') await gerarFinanceiro(pId)
       else if (aba === 'execucao') await gerarExecucao(pId, plId)
+      else if (aba === 'plano_acao') await gerarPlanoAcao(plId)
+      else if (aba === 'relat_anual') await gerarRelatAnual(plId)
       else if (aba === 'equipe') await gerarEquipe(pId)
       else if (aba === 'usuarios') await gerarUsuarios(pId)
       else if (aba === 'atendimentos') await gerarAtendimentos(pId)
@@ -60,12 +63,10 @@ export default function RelatoriosCentral() {
     const { data: movs } = await q
     let lista = movs || []
     if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
-
     const entradas = lista.filter(m => Number(m.valor) > 0)
     const saidas = lista.filter(m => Number(m.valor) < 0)
     const totalEnt = entradas.reduce((a,m) => a+Number(m.valor), 0)
     const totalSai = Math.abs(saidas.reduce((a,m) => a+Number(m.valor), 0))
-
     const grupoSai = {}
     saidas.forEach(m => {
       const cat = m.categoria?.nome || 'Sem categoria'
@@ -73,14 +74,12 @@ export default function RelatoriosCentral() {
       grupoSai[cat].total += Math.abs(Number(m.valor))
       grupoSai[cat].qtd++
     })
-
     setDados({ tipo: 'financeiro', entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, grupoSai, lista })
   }
 
   async function gerarExecucao(pId, plId) {
     const plano = planos.find(p => p.id === plId)
     const projeto = projetos.find(p => p.id === (pId || plano?.projeto_id))
-
     let metas = [], ativsPrev = []
     if (plId) {
       const [m, a] = await Promise.all([
@@ -90,9 +89,8 @@ export default function RelatoriosCentral() {
       metas = m.data || []
       ativsPrev = a.data || []
     }
-
     const projetoId = pId || plano?.projeto_id
-    let atendimentos = [], usuarios = [], equipe = []
+    let atendimentos = [], usuarios = []
     if (projetoId) {
       let qA = supabase.from('atendimentos').select('*, profissional:equipe(nome,funcao)').eq('projeto_id', projetoId).order('data_atend')
       if (dataInicio) qA = qA.gte('data_atend', dataInicio)
@@ -101,11 +99,9 @@ export default function RelatoriosCentral() {
       atendimentos = a.data || []
       usuarios = u.data || []
     }
-
     const totalPart = atendimentos.reduce((a,m) => a+(Number(m.qtd_participantes)||0), 0)
     const porTipo = {}
     atendimentos.forEach(a => { porTipo[a.tipo_atend] = (porTipo[a.tipo_atend]||0)+1 })
-
     const hoje = new Date()
     const faixas = { '0-5':0,'6-11':0,'12-17':0,'18-29':0,'30-59':0,'60+':0 }
     usuarios.filter(u=>u.data_nascimento).forEach(u => {
@@ -119,16 +115,85 @@ export default function RelatoriosCentral() {
       else if (idade<=59) faixas['30-59']++
       else faixas['60+']++
     })
-
     setDados({ tipo:'execucao', plano, projeto, metas, ativsPrev, atendimentos, usuarios, totalPart, porTipo, faixas })
+  }
+
+  async function gerarPlanoAcao(plId) {
+    if (!plId) { alert('Selecione um plano de ação.'); return }
+    const { data: plano } = await supabase.from('planos').select('*').eq('id', plId).single()
+    const { data: pvRows } = await supabase.from('plano_projetos')
+      .select('*, projeto:projetos(*)')
+      .eq('plano_id', plId).order('ordem')
+    const projetosVinc = pvRows || []
+
+    // Para cada projeto, busca equipe vinculada e orçamento
+    const projetosCompletos = await Promise.all(projetosVinc.map(async pv => {
+      const [eqRes, orcRes, metasRes] = await Promise.all([
+        supabase.from('projeto_equipe').select('*, membro:equipe(nome,funcao,tipo_vinculo,orgao_origem)').eq('projeto_id', pv.projeto_id).order('id'),
+        supabase.from('projeto_orcamento').select('*').eq('projeto_id', pv.projeto_id).order('categoria'),
+        supabase.from('metas_plano').select('*').eq('plano_id', plId).order('id'),
+      ])
+      return { ...pv, equipe: eqRes.data||[], orcamento: orcRes.data||[], metas: metasRes.data||[] }
+    }))
+
+    const { data: presidente } = await supabase.from('diretoria')
+      .select('nome,cpf,rg,mandato_inicio,mandato_fim').eq('cargo','Presidente').eq('ativo',true)
+      .gte('mandato_fim', new Date().toISOString().slice(0,10)).limit(1).single()
+
+    setDados({ tipo:'plano_acao', plano, projetosCompletos, presidente, instituicao })
+  }
+
+  async function gerarRelatAnual(plId) {
+    if (!plId) { alert('Selecione um plano de ação.'); return }
+    const { data: plano } = await supabase.from('planos').select('*').eq('id', plId).single()
+    const { data: pvRows } = await supabase.from('plano_projetos')
+      .select('*, projeto:projetos(*)')
+      .eq('plano_id', plId).order('ordem')
+    const projetosVinc = pvRows || []
+
+    const anoInicio = plano.periodo_inicio?.slice(0,10) || dataInicio
+    const anoFim = plano.periodo_fim?.slice(0,10) || dataFim
+
+    const projetosCompletos = await Promise.all(projetosVinc.map(async pv => {
+      const projetoId = pv.projeto_id
+      const [eqRes, orcRes, metasRes, atendRes, usersRes, lancRes] = await Promise.all([
+        supabase.from('projeto_equipe').select('*, membro:equipe(nome,funcao,tipo_vinculo)').eq('projeto_id', projetoId),
+        supabase.from('projeto_orcamento').select('*').eq('projeto_id', projetoId),
+        supabase.from('metas_plano').select('*').eq('plano_id', plId),
+        supabase.from('atendimentos').select('*').eq('projeto_id', projetoId).gte('data_atend', anoInicio).lte('data_atend', anoFim),
+        supabase.from('usuarios_atendidos').select('*').eq('projeto_id', projetoId).eq('situacao','ativo'),
+        supabase.from('lancamentos').select('*, categoria:categorias(nome)').eq('projeto_id', projetoId).gte('data', anoInicio).lte('data', anoFim),
+      ])
+      const lancs = lancRes.data || []
+      const totalEntradas = lancs.filter(l=>l.tipo==='entrada').reduce((a,l)=>a+Number(l.valor||0),0)
+      const totalDespesas = lancs.filter(l=>l.tipo==='despesa').reduce((a,l)=>a+Number(l.valor||0),0)
+      const totalPrevisto = (orcRes.data||[]).reduce((a,o)=>a+Number(o.valor_previsto||0),0)
+      const totalPart = (atendRes.data||[]).reduce((a,at)=>a+(Number(at.qtd_participantes)||0),0)
+      const catDespesas = {}
+      lancs.filter(l=>l.tipo==='despesa').forEach(l => {
+        const c = l.categoria?.nome || 'Sem categoria'
+        catDespesas[c] = (catDespesas[c]||0) + Number(l.valor||0)
+      })
+      return {
+        ...pv,
+        equipe: eqRes.data||[], orcamento: orcRes.data||[], metas: metasRes.data||[],
+        atendimentos: atendRes.data||[], usuarios: usersRes.data||[], lancamentos: lancs,
+        totalEntradas, totalDespesas, totalPrevisto, totalPart, catDespesas,
+        saldo: totalEntradas - totalDespesas,
+      }
+    }))
+
+    // Totais globais
+    const totalEntGeral = projetosCompletos.reduce((a,p)=>a+p.totalEntradas,0)
+    const totalDespGeral = projetosCompletos.reduce((a,p)=>a+p.totalDespesas,0)
+    const totalAtendGeral = projetosCompletos.reduce((a,p)=>a+p.atendimentos.length,0)
+    const totalUsersGeral = projetosCompletos.reduce((a,p)=>a+p.usuarios.length,0)
+
+    setDados({ tipo:'relat_anual', plano, projetosCompletos, totalEntGeral, totalDespGeral, totalAtendGeral, totalUsersGeral, instituicao })
   }
 
   async function gerarEquipe(pId) {
     let q = supabase.from('equipe').select('*').order('nome')
-    if (pId) {
-      const proj = projetos.find(p => p.id === pId)
-      if (proj) q = q.contains('projetos', [proj.nome])
-    }
     const { data } = await q
     const lista = data || []
     const porTipo = {}
@@ -145,7 +210,6 @@ export default function RelatoriosCentral() {
     const lista = data || []
     const ativos = lista.filter(u=>u.situacao==='ativo').length
     const desligados = lista.filter(u=>u.situacao!=='ativo').length
-
     const hoje = new Date()
     const faixas = { '0-5':0,'6-11':0,'12-17':0,'18-29':0,'30-59':0,'60+':0 }
     lista.filter(u=>u.data_nascimento).forEach(u => {
@@ -159,14 +223,12 @@ export default function RelatoriosCentral() {
       else if (idade<=59) faixas['30-59']++
       else faixas['60+']++
     })
-
     const porProjeto = {}
     lista.forEach(u => {
       const pNome = u.projeto?.nome || 'Sem projeto'
       if (!porProjeto[pNome]) porProjeto[pNome] = 0
       porProjeto[pNome]++
     })
-
     setDados({ tipo:'usuarios', lista, ativos, desligados, faixas, porProjeto })
   }
 
@@ -207,7 +269,6 @@ export default function RelatoriosCentral() {
 
   function exportarPDF() {
     if (!dados) return
-    // Chama PDF específico baseado no tipo
     if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim)
     else alert('PDF para este relatório em breve!')
   }
@@ -225,7 +286,9 @@ export default function RelatoriosCentral() {
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'7px 16px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', fontWeight:500 }),
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background:ativo?AZUL:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
-    metric: (cor) => ({ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5', minWidth:120 }),
+    metric: () => ({ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5', minWidth:120 }),
+    secao: cor => ({ fontSize:11, fontWeight:600, color:cor||ROXO, borderLeft:`3px solid ${cor||ROXO}`, paddingLeft:8, margin:'14px 0 8px', textTransform:'uppercase', letterSpacing:'.05em' }),
+    infoBox: { background:'#F8F7F2', borderRadius:8, padding:'8px 10px', marginBottom:6 },
   }
 
   return (
@@ -245,31 +308,35 @@ export default function RelatoriosCentral() {
       {/* Filtros */}
       <div style={s.card}>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:10, marginBottom:10 }}>
-          <div>
-            <label style={s.label}>Data início</label>
-            <input type="date" value={dataInicio} onChange={e=>setDataInicio(e.target.value)} style={s.input} />
-          </div>
-          <div>
-            <label style={s.label}>Data fim</label>
-            <input type="date" value={dataFim} onChange={e=>setDataFim(e.target.value)} style={s.input} />
-          </div>
-          <div>
-            <label style={s.label}>Projeto</label>
-            <select value={projetoSel} onChange={e=>setProjetoSel(e.target.value)} style={s.input}>
-              <option value="">Todos os projetos</option>
-              {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
-          </div>
-          {(aba==='execucao') && (
+          {(aba !== 'plano_acao' && aba !== 'relat_anual') && (<>
             <div>
-              <label style={s.label}>Plano de trabalho</label>
+              <label style={s.label}>Data início</label>
+              <input type="date" value={dataInicio} onChange={e=>setDataInicio(e.target.value)} style={s.input} />
+            </div>
+            <div>
+              <label style={s.label}>Data fim</label>
+              <input type="date" value={dataFim} onChange={e=>setDataFim(e.target.value)} style={s.input} />
+            </div>
+          </>)}
+          {(aba !== 'plano_acao' && aba !== 'relat_anual') && (
+            <div>
+              <label style={s.label}>Projeto</label>
+              <select value={projetoSel} onChange={e=>setProjetoSel(e.target.value)} style={s.input}>
+                <option value="">Todos os projetos</option>
+                {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+          )}
+          {(aba==='execucao'||aba==='plano_acao'||aba==='relat_anual') && (
+            <div>
+              <label style={s.label}>Plano de {aba==='execucao'?'trabalho':'ação'} *</label>
               <select value={planoSel} onChange={e=>setPlanoSel(e.target.value)} style={s.input}>
                 <option value="">Selecione...</option>
                 {planos.map(p => <option key={p.id} value={p.id}>{p.nome_plano}</option>)}
               </select>
             </div>
           )}
-          {(aba==='financeiro') && (
+          {aba==='financeiro' && (
             <div>
               <label style={s.label}>Conta bancária</label>
               <select value={contaSel} onChange={e=>setContaSel(e.target.value)} style={s.input}>
@@ -286,6 +353,264 @@ export default function RelatoriosCentral() {
           {dados && <button onClick={exportarPDF} style={s.btn(VERDE)}>📄 Exportar PDF</button>}
         </div>
       </div>
+
+      {/* ===== PLANO DE AÇÃO ===== */}
+      {dados?.tipo === 'plano_acao' && (() => {
+        const { plano, projetosCompletos, presidente } = dados
+        const inst = instituicao
+        return (
+          <div>
+            {/* Identificação */}
+            <div style={{ ...s.card, background:'linear-gradient(135deg,#F0EAFA,#F8F7F2)' }}>
+              <div style={{ fontSize:14, fontWeight:700, color:ROXO, marginBottom:12 }}>📋 {plano.nome_plano}</div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
+                {[
+                  ['Instituição', inst?.nome_completo||'—'],
+                  ['CNPJ', inst?.cnpj||'—'],
+                  ['Endereço', inst?.endereco||'—'],
+                  ['Período', plano.periodo_inicio ? `${fmtData(plano.periodo_inicio)} a ${fmtData(plano.periodo_fim)}` : '—'],
+                  ['Representante legal', presidente?.nome||'—'],
+                  ['CPF', presidente?.cpf||'—'],
+                  ['Abrangência', plano.abrangencia_territorial||'Município de Teresópolis/RJ'],
+                  ['Valor previsto', fmt(plano.valor_total_previsto)],
+                ].map(([l,v]) => (
+                  <div key={l} style={s.infoBox}>
+                    <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
+                    <div style={{ fontSize:12, fontWeight:500 }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {plano.objeto && <div style={{ ...s.infoBox, marginBottom:6 }}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>Objeto</div><div style={{ fontSize:12 }}>{plano.objeto}</div></div>}
+              {plano.objetivo_geral && <div style={s.infoBox}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>Objetivo geral</div><div style={{ fontSize:12 }}>{plano.objetivo_geral}</div></div>}
+              {plano.origens_recursos?.length > 0 && (
+                <div style={{ marginTop:8 }}>
+                  <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Origem dos recursos</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
+                    {plano.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Finalidades e infraestrutura */}
+            {plano.finalidades_estatutarias && (
+              <div style={s.card}>
+                <div style={s.secao(AZUL)}>Finalidades estatutárias</div>
+                <div style={{ fontSize:12, lineHeight:1.7 }}>{plano.finalidades_estatutarias}</div>
+              </div>
+            )}
+            {plano.infraestrutura && (
+              <div style={s.card}>
+                <div style={s.secao(AZUL)}>Infraestrutura disponível</div>
+                <div style={{ fontSize:12, lineHeight:1.7 }}>{plano.infraestrutura}</div>
+              </div>
+            )}
+
+            {/* Projetos */}
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'1rem' }}>
+                Serviços, Projetos e Ações ({projetosCompletos.length})
+              </div>
+              {projetosCompletos.map((pv, idx) => {
+                const p = pv.projeto
+                return (
+                  <div key={pv.id} style={{ border:'0.5px solid #E0DDD5', borderRadius:10, marginBottom:12, overflow:'hidden' }}>
+                    <div style={{ background:`${VERDE}08`, borderBottom:'0.5px solid #E0DDD5', padding:'10px 14px', display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:12, fontWeight:700, color:'#888780' }}>{idx+1}.</span>
+                      <div>
+                        <div style={{ fontSize:11, color:'#888780' }}>{p?.tipo}</div>
+                        <div style={{ fontSize:13, fontWeight:600 }}>{p?.nome}</div>
+                      </div>
+                    </div>
+                    <div style={{ padding:'10px 14px' }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:6, marginBottom:8 }}>
+                        {[['Público-alvo',p?.publico_alvo],['Faixa etária',p?.faixa_etaria],['Capacidade',p?.capacidade_prevista],['Abrangência',p?.abrangencia]].filter(([,v])=>v).map(([l,v])=>(
+                          <div key={l} style={s.infoBox}><div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>{l}</div><div style={{ fontSize:11 }}>{v}</div></div>
+                        ))}
+                      </div>
+                      {p?.objeto && <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:6 }}><strong>Objeto:</strong> {p.objeto}</div>}
+                      {p?.atividades_previstas && <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:6 }}><strong>Atividades:</strong> {p.atividades_previstas}</div>}
+                      {p?.participacao_usuarios && <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:6 }}><strong>Participação dos usuários:</strong> {p.participacao_usuarios}</div>}
+                      {p?.monitoramento_avaliacao && <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:6 }}><strong>Monitoramento:</strong> {p.monitoramento_avaliacao}</div>}
+                      {pv.equipe?.length > 0 && (
+                        <div style={{ marginTop:6 }}>
+                          <div style={{ fontSize:11, fontWeight:600, color:'#5F5E5A', marginBottom:4 }}>Recursos humanos:</div>
+                          {pv.equipe.map(pe => (
+                            <div key={pe.id} style={{ fontSize:11, color:'#5F5E5A', marginBottom:2 }}>
+                              • {pe.membro?.nome} — {pe.funcao_no_projeto||pe.membro?.funcao}
+                              {pe.tipo_vinculo ? ` (${pe.tipo_vinculo})` : ''}
+                              {pe.carga_horaria ? ` · ${pe.carga_horaria}` : ''}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {pv.orcamento?.length > 0 && (
+                        <div style={{ marginTop:6 }}>
+                          <div style={{ fontSize:11, fontWeight:600, color:'#5F5E5A', marginBottom:4 }}>Recursos financeiros previstos:</div>
+                          {pv.orcamento.map(o => (
+                            <div key={o.id} style={{ fontSize:11, color:'#5F5E5A', marginBottom:2, display:'flex', justifyContent:'space-between' }}>
+                              <span>• {o.categoria}{o.subcategoria?` / ${o.subcategoria}`:''}{o.fonte_recurso?` (${o.fonte_recurso})`:''}</span>
+                              <span style={{ fontWeight:500, color:AZUL }}>{fmt(o.valor_previsto)}</span>
+                            </div>
+                          ))}
+                          <div style={{ fontSize:12, fontWeight:600, color:AZUL, marginTop:4, textAlign:'right' }}>
+                            Total previsto: {fmt(pv.orcamento.reduce((a,o)=>a+Number(o.valor_previsto||0),0))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Recursos humanos geral */}
+            {plano.recursos_humanos_cnas && (
+              <div style={s.card}>
+                <div style={s.secao(AZUL)}>Recursos humanos — equipe geral</div>
+                <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:'pre-line' }}>{plano.recursos_humanos_cnas}</div>
+              </div>
+            )}
+            {plano.recursos_financeiros && (
+              <div style={s.card}>
+                <div style={s.secao(AZUL)}>Recursos financeiros previstos — geral</div>
+                <div style={{ fontSize:12, lineHeight:1.7 }}>{plano.recursos_financeiros}</div>
+              </div>
+            )}
+            {plano.forma_participacao_usuarios && (
+              <div style={s.card}>
+                <div style={s.secao(AZUL)}>Forma de participação dos usuários</div>
+                <div style={{ fontSize:12, lineHeight:1.7 }}>{plano.forma_participacao_usuarios}</div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
+      {/* ===== RELATÓRIO ANUAL ===== */}
+      {dados?.tipo === 'relat_anual' && (() => {
+        const { plano, projetosCompletos, totalEntGeral, totalDespGeral, totalAtendGeral, totalUsersGeral } = dados
+        return (
+          <div>
+            {/* Cabeçalho */}
+            <div style={{ ...s.card, background:'linear-gradient(135deg,#EAF3DE,#F8F7F2)' }}>
+              <div style={{ fontSize:14, fontWeight:700, color:VERDE, marginBottom:8 }}>📊 Relatório de Execução — {plano.nome_plano}</div>
+              <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:10 }}>
+                Período: {fmtData(plano.periodo_inicio)} a {fmtData(plano.periodo_fim)}
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8 }}>
+                {[
+                  ['Projetos', projetosCompletos.length, ROXO],
+                  ['Atendimentos', totalAtendGeral, AZUL],
+                  ['Usuários ativos', totalUsersGeral, VERDE],
+                  ['Total entradas', fmt(totalEntGeral), VERDE],
+                  ['Total despesas', fmt(totalDespGeral), VERMELHO],
+                  ['Saldo', fmt(totalEntGeral-totalDespGeral), totalEntGeral>=totalDespGeral?VERDE:VERMELHO],
+                ].map(([l,v,cor]) => (
+                  <div key={l} style={{ background:'rgba(255,255,255,0.8)', borderRadius:8, padding:'8px 10px' }}>
+                    <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
+                    <div style={{ fontSize:15, fontWeight:700, color:cor }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Por projeto */}
+            {projetosCompletos.map((pv, idx) => {
+              const p = pv.projeto
+              const metasProjeto = pv.metas
+              return (
+                <div key={pv.id} style={s.card}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:10 }}>
+                    <div>
+                      <div style={{ fontSize:11, color:'#888780' }}>{idx+1}. {p?.tipo}</div>
+                      <div style={{ fontSize:13, fontWeight:600 }}>{p?.nome}</div>
+                    </div>
+                    <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                      <span style={s.badge('#EAF3DE',VERDE)}>{pv.atendimentos.length} atend.</span>
+                      <span style={s.badge('#E6F1FB',AZUL)}>{pv.usuarios.length} usuários</span>
+                      <span style={s.badge('#FAEEDA','#854F0B')}>{fmt(pv.totalDespesas)} exec.</span>
+                    </div>
+                  </div>
+
+                  {/* Metas previsto x realizado */}
+                  {metasProjeto.length > 0 && (
+                    <div style={{ marginBottom:10 }}>
+                      <div style={{ fontSize:11, fontWeight:600, color:'#5F5E5A', marginBottom:6 }}>Metas — Previsto x Realizado</div>
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+                        <thead><tr>{['Meta','Previsto','Realizado','% Exec.','Status'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {metasProjeto.map(m => {
+                            const p2 = pct(Number(m.quantidade_realizada||0), Number(m.quantidade_prevista||0))
+                            return (
+                              <tr key={m.id}>
+                                <td style={{ ...s.td, fontWeight:500 }}>{m.descricao_meta}</td>
+                                <td style={s.td}>{m.quantidade_prevista||'—'} {m.unidade_medida}</td>
+                                <td style={{ ...s.td, color:VERDE, fontWeight:600 }}>{m.quantidade_realizada||'—'}</td>
+                                <td style={s.td}>
+                                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                    <div style={{ width:40, height:4, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                                      <div style={{ height:'100%', width:Math.min(p2,100)+'%', background:p2>=100?VERDE:p2>=50?LARANJA:VERMELHO, borderRadius:99 }} />
+                                    </div>
+                                    <span style={{ fontWeight:600 }}>{p2}%</span>
+                                  </div>
+                                </td>
+                                <td style={s.td}><span style={s.badge(m.status_meta==='alcançada'?'#EAF3DE':'#FAEEDA', m.status_meta==='alcançada'?'#3B6D11':'#854F0B')}>{m.status_meta}</span></td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Financeiro previsto x executado */}
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:8, marginBottom:10 }}>
+                    {[
+                      ['Previsto', fmt(pv.totalPrevisto), AZUL],
+                      ['Entradas', fmt(pv.totalEntradas), VERDE],
+                      ['Despesas', fmt(pv.totalDespesas), VERMELHO],
+                      ['Saldo', fmt(pv.saldo), pv.saldo>=0?VERDE:VERMELHO],
+                    ].map(([l,v,cor]) => (
+                      <div key={l} style={{ background:'#F8F7F2', borderRadius:8, padding:'6px 10px' }}>
+                        <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
+                        <div style={{ fontSize:13, fontWeight:600, color:cor }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Categorias de despesa */}
+                  {Object.keys(pv.catDespesas).length > 0 && (
+                    <div style={{ marginBottom:8 }}>
+                      <div style={{ fontSize:11, fontWeight:600, color:'#5F5E5A', marginBottom:4 }}>Despesas por categoria:</div>
+                      {Object.entries(pv.catDespesas).sort((a,b)=>b[1]-a[1]).map(([cat,val]) => (
+                        <div key={cat} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:11 }}>
+                          <span>{cat}</span>
+                          <span style={{ color:VERMELHO, fontWeight:500 }}>{fmt(val)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Equipe */}
+                  {pv.equipe?.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:600, color:'#5F5E5A', marginBottom:4 }}>Equipe ({pv.equipe.length}):</div>
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
+                        {pv.equipe.map(pe => (
+                          <span key={pe.id} style={s.badge('#F8F7F2','#5F5E5A')}>
+                            {pe.membro?.nome?.split(' ')[0]} — {pe.funcao_no_projeto||pe.membro?.funcao}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
 
       {/* ===== FINANCEIRO ===== */}
       {dados?.tipo === 'financeiro' && (
@@ -382,7 +707,7 @@ export default function RelatoriosCentral() {
           )}
           {dados.atendimentos.length > 0 && (
             <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Atendimentos realizados ({dados.atendimentos.length}) · {dados.totalPart} participantes</div>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Atendimentos realizados ({dados.atendimentos.length})</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:10 }}>
                 {Object.entries(dados.porTipo).sort((a,b)=>b[1]-a[1]).map(([t,q]) => (
                   <span key={t} style={s.badge('#E6F1FB','#185FA5')}>{t}: {q}</span>
@@ -473,15 +798,8 @@ export default function RelatoriosCentral() {
       {dados?.tipo === 'usuarios' && (
         <>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:8, marginBottom:'1.25rem' }}>
-            {[
-              { label:'Total', val:dados.lista.length, cor:AZUL },
-              { label:'Ativos', val:dados.ativos, cor:VERDE },
-              { label:'Desligados', val:dados.desligados, cor:'#888780' },
-            ].map(m => (
-              <div key={m.label} style={s.metric()}>
-                <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-                <div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div>
-              </div>
+            {[{ label:'Total', val:dados.lista.length, cor:AZUL },{ label:'Ativos', val:dados.ativos, cor:VERDE },{ label:'Desligados', val:dados.desligados, cor:'#888780' }].map(m => (
+              <div key={m.label} style={s.metric()}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div><div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div></div>
             ))}
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
@@ -531,14 +849,8 @@ export default function RelatoriosCentral() {
       {dados?.tipo === 'atendimentos' && (
         <>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:8, marginBottom:'1.25rem' }}>
-            {[
-              { label:'Atendimentos', val:dados.lista.length, cor:AZUL },
-              { label:'Participantes', val:dados.totalPart, cor:VERDE },
-            ].map(m => (
-              <div key={m.label} style={s.metric()}>
-                <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-                <div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div>
-              </div>
+            {[{ label:'Atendimentos', val:dados.lista.length, cor:AZUL },{ label:'Participantes', val:dados.totalPart, cor:VERDE }].map(m => (
+              <div key={m.label} style={s.metric()}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div><div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div></div>
             ))}
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
@@ -587,14 +899,8 @@ export default function RelatoriosCentral() {
       {dados?.tipo === 'doacoes' && (
         <>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:8, marginBottom:'1.25rem' }}>
-            {[
-              { label:'Doações', val:dados.lista.length, cor:AZUL },
-              { label:'Valor estimado', val:fmt(dados.totalEstimado), cor:VERDE },
-            ].map(m => (
-              <div key={m.label} style={s.metric()}>
-                <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-                <div style={{ fontSize:dados.lista.length>0?16:16, fontWeight:600, color:m.cor }}>{m.val}</div>
-              </div>
+            {[{ label:'Doações', val:dados.lista.length, cor:AZUL },{ label:'Valor estimado', val:fmt(dados.totalEstimado), cor:VERDE }].map(m => (
+              <div key={m.label} style={s.metric()}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div><div style={{ fontSize:16, fontWeight:600, color:m.cor }}>{m.val}</div></div>
             ))}
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
