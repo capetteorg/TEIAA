@@ -124,12 +124,20 @@ export default function Lancamentos({ tipo = 'despesa' }) {
     const reader = new FileReader()
     reader.onload = async ev => {
       try {
-        // Carrega pdfjs dinamicamente
-        const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js')
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-        
+        // Carrega pdfjs via script tag se não estiver disponível
+        if (!window.pdfjsLib) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+            script.onload = resolve
+            script.onerror = reject
+            document.head.appendChild(script)
+          })
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+        }
+
         const typedArray = new Uint8Array(ev.target.result)
-        const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise
+        const pdf = await window.pdfjsLib.getDocument({ data: typedArray }).promise
         const page = await pdf.getPage(1)
         const viewport = page.getViewport({ scale: 2 })
         const canvas = document.createElement('canvas')
