@@ -25,6 +25,14 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const [dividaId, setDividaId] = useState('')
   const [valorAbatimento, setValorAbatimento] = useState('')
 
+  // Fornecedor
+  const [fornecedores, setFornecedores] = useState([])
+  const [fornecedorId, setFornecedorId] = useState('')
+  const [buscaFornecedor, setBuscaFornecedor] = useState('')
+  const [mostrarCadRapido, setMostrarCadRapido] = useState(false)
+  const [formFornRapido, setFormFornRapido] = useState({ nome:'', tipo:'juridica', cpf_cnpj:'' })
+  const [salvandoForn, setSalvandoForn] = useState(false)
+
   // IA — Foto de nota
   const [modoIA, setModoIA] = useState(false)
   const [fotoBase64, setFotoBase64] = useState(null)
@@ -34,6 +42,11 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const inputFotoRef = useRef(null)
 
   useEffect(() => { carregarContas(); carregarLista() }, [tipo])
+
+  useEffect(() => {
+    supabase.from('fornecedores').select('id,nome,cpf_cnpj,tipo,cadastro_rapido').eq('ativo',true).order('nome')
+      .then(({ data }) => setFornecedores(data || []))
+  }, [])
 
   useEffect(() => {
     supabase.from('projetos').select('id,nome,situacao').in('situacao',['ativo','em planejamento']).order('nome')
@@ -152,6 +165,29 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
   const precisaRateio = contaSel?.preponderancia === 'rateio'
   const isAbatimento = parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID
 
+  const fornecedoresFiltrados = fornecedores.filter(f =>
+    !buscaFornecedor || f.nome.toLowerCase().includes(buscaFornecedor.toLowerCase()) ||
+    (f.cpf_cnpj||'').includes(buscaFornecedor)
+  )
+
+  async function salvarFornRapido() {
+    if (!formFornRapido.nome) return
+    setSalvandoForn(true)
+    const { data, error } = await supabase.from('fornecedores').insert({
+      ...formFornRapido,
+      cadastro_rapido: true,
+      ativo: true,
+    }).select().single()
+    if (!error && data) {
+      setFornecedores(f => [...f, data])
+      setFornecedorId(String(data.id))
+      setBuscaFornecedor(data.nome)
+      setMostrarCadRapido(false)
+      setFormFornRapido({ nome:'', tipo:'juridica', cpf_cnpj:'' })
+    }
+    setSalvandoForn(false)
+  }
+
   async function salvar(e) {
     e.preventDefault()
     if (precisaRateio && rateioTotal !== 100) { setMsg('O rateio precisa somar 100%.'); return }
@@ -167,6 +203,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
       conciliado: false,
       subcategoria_id: subcategoriaId ? parseInt(subcategoriaId) : null,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
+      fornecedor_id: fornecedorId ? parseInt(fornecedorId) : null,
     }
 
     const { data: lanc, error } = await dbLanc.criar(dadosLanc)
@@ -203,6 +240,8 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
     setSubcategorias([])
     setDividaId('')
     setValorAbatimento('')
+    setFornecedorId('')
+    setBuscaFornecedor('')
     setRateio({ educ: '', social: '', saude: '' })
     setFotoBase64(null); setFotoPreview(null); setMsgIA('')
     carregarLista()
@@ -333,6 +372,72 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
             </div>
           )}
 
+          {/* Fornecedor — apenas despesas */}
+          {tipo === 'despesa' && (
+            <div style={{ marginBottom:10 }}>
+              <label style={s.label}>Fornecedor</label>
+              {!mostrarCadRapido ? (
+                <div style={{ display:'flex', gap:6 }}>
+                  <div style={{ flex:1, position:'relative' }}>
+                    <select value={fornecedorId} onChange={e=>setFornecedorId(e.target.value)} style={s.input}>
+                      <option value="">Sem fornecedor</option>
+                      {fornecedoresFiltrados.map(f => (
+                        <option key={f.id} value={f.id}>
+                          {f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}{f.cadastro_rapido?' ⚠️':''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="button" onClick={() => setMostrarCadRapido(true)}
+                    style={{ padding:'7px 12px', fontSize:11, borderRadius:8, border:`0.5px solid #D3D1C7`, background:'#F8F7F2', color:'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }}>
+                    + Cadastro rápido
+                  </button>
+                </div>
+              ) : (
+                <div style={{ background:'#F8F7F2', borderRadius:10, padding:'10px 12px', border:'0.5px solid #D3D1C7' }}>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#5F5E5A', marginBottom:8 }}>Cadastro rápido de fornecedor</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap:8, marginBottom:8 }}>
+                    <div>
+                      <label style={s.label}>Nome / Razão social *</label>
+                      <input value={formFornRapido.nome} onChange={e=>setFormFornRapido(f=>({...f,nome:e.target.value}))}
+                        placeholder="Ex: Papelaria Silva" style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Tipo</label>
+                      <select value={formFornRapido.tipo} onChange={e=>setFormFornRapido(f=>({...f,tipo:e.target.value}))} style={s.input}>
+                        <option value="juridica">PJ</option>
+                        <option value="fisica">PF</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={s.label}>CPF/CNPJ</label>
+                      <input value={formFornRapido.cpf_cnpj} onChange={e=>setFormFornRapido(f=>({...f,cpf_cnpj:e.target.value}))}
+                        placeholder="Opcional" style={s.input} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize:11, color:LARANJA, marginBottom:8 }}>
+                    ⚠️ Cadastro rápido — gera pendência para completar os dados depois
+                  </div>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button type="button" onClick={salvarFornRapido} disabled={salvandoForn||!formFornRapido.nome}
+                      style={{ padding:'6px 14px', fontSize:11, borderRadius:8, border:'none', background:formFornRapido.nome?VERDE:'#D3D1C7', color:'#fff', cursor:'pointer' }}>
+                      {salvandoForn ? 'Salvando...' : '+ Adicionar'}
+                    </button>
+                    <button type="button" onClick={() => setMostrarCadRapido(false)}
+                      style={{ padding:'6px 12px', fontSize:11, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+              {fornecedorId && fornecedores.find(f=>String(f.id)===String(fornecedorId))?.cadastro_rapido && (
+                <div style={{ fontSize:11, color:LARANJA, marginTop:3 }}>
+                  ⚠️ Fornecedor com cadastro incompleto — complete em Fornecedores
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Categoria */}
           <div style={{ marginBottom: subcategorias.length > 0 ? 10 : 14 }}>
             <label style={s.label}>Categoria</label>
@@ -419,7 +524,7 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead><tr>
-                {['Data','Descrição','Projeto','Conta','Valor'].map(h=>(
+                {['Data','Descrição','Fornecedor','Projeto','Conta','Valor'].map(h=>(
                   <th key={h} style={{ textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' }}>{h}</th>
                 ))}
               </tr></thead>
@@ -427,7 +532,10 @@ Se não conseguir identificar algum campo com certeza, deixe como string vazia.`
                 {lista.slice(0,10).map((l,i) => (
                   <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                     <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>
+                      {l.fornecedor_id ? (fornecedores.find(f=>f.id===l.fornecedor_id)?.nome?.split(' ')[0] || '—') : <span style={{ color:'#D3D1C7' }}>—</span>}
+                    </td>
                     <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>
                       {l.projeto_id ? (projetos.find(p=>p.id===l.projeto_id)?.nome || '—') : <span style={{ color:'#D3D1C7' }}>—</span>}
                     </td>

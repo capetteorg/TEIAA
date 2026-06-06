@@ -36,6 +36,7 @@ import PainelAdmin from './pages/PainelAdmin'
 import Parcerias from './pages/Parcerias'
 import ParceriaDetalhe from './pages/ParceriaDetalhe'
 import Fechamento from './pages/Fechamento'
+import Fornecedores from './pages/Fornecedores'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
         <Route path="instituicao" element={<RotaProtegida perfisPermitidos={['admin']}><Instituicao /></RotaProtegida>} />
         <Route path="documentos" element={<RotaProtegida perfisPermitidos={['admin']}><Documentos /></RotaProtegida>} />
+        <Route path="fornecedores" element={<RotaProtegida perfisPermitidos={['admin']}><Fornecedores /></RotaProtegida>} />
         <Route path="projetos" element={<RotaProtegida perfisPermitidos={['admin']}><Projetos /></RotaProtegida>} />
         <Route path="planos-execucao" element={<RotaProtegida perfisPermitidos={['admin']}><PlanosExecucao /></RotaProtegida>} />
         <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
