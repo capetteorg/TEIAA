@@ -409,27 +409,97 @@ export default function Sociedade() {
               )}
             </div>
 
-            {/* Movimentações */}
-            <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Movimentações — {ano}</div>
-              <div style={{ maxHeight:400, overflowY:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead style={{ position:'sticky', top:0 }}><tr>{['Data','Descrição','Categoria','Valor'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                  <tbody>
-                    {movs.slice(0,200).map((m,i) => (
-                      <tr key={m.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
-                        <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(m.data)}</td>
-                        <td style={{ ...s.td, maxWidth:250, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                          {(m.descricao||'').replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g,'***').replace(/\b\d{2}\.?\d{3}\.?\d{3}\/?0001-?\d{2}\b/g,'***')}
-                        </td>
-                        <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.categoria?.nome||'—'}</td>
-                        <td style={{ ...s.td, color:Number(m.valor)>=0?VERDE:VERMELHO, fontWeight:500, textAlign:'right' }}>{fmt(m.valor)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {/* Resumo por categoria */}
+            {(() => {
+              const entradas = movs.filter(m => Number(m.valor) > 0)
+              const saidas = movs.filter(m => Number(m.valor) < 0)
+
+              const agrupar = (lista) => {
+                const mapa = {}
+                lista.forEach(m => {
+                  const cat = m.categoria?.nome || 'Sem categoria'
+                  mapa[cat] = (mapa[cat] || 0) + Math.abs(Number(m.valor))
+                })
+                return Object.entries(mapa).sort((a,b) => b[1]-a[1])
+              }
+
+              const grpEnt = agrupar(entradas)
+              const grpSai = agrupar(saidas)
+              const totalEnt = entradas.reduce((a,m)=>a+Number(m.valor),0)
+              const totalSai = Math.abs(saidas.reduce((a,m)=>a+Number(m.valor),0))
+
+              return (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                  {/* Entradas por categoria */}
+                  <div style={s.card}>
+                    <div style={{ fontSize:13, fontWeight:500, color:VERDE, marginBottom:'.85rem' }}>
+                      Entradas por categoria — {ano}
+                    </div>
+                    {grpEnt.length === 0 ? (
+                      <div style={{ fontSize:12, color:'#888780', textAlign:'center', padding:'1rem' }}>Nenhuma entrada registrada.</div>
+                    ) : (
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                        <thead><tr>
+                          <th style={s.th}>Categoria</th>
+                          <th style={{ ...s.th, textAlign:'right' }}>Total</th>
+                          <th style={{ ...s.th, textAlign:'right' }}>%</th>
+                        </tr></thead>
+                        <tbody>
+                          {grpEnt.map(([cat, val]) => (
+                            <tr key={cat}>
+                              <td style={s.td}>{cat}</td>
+                              <td style={{ ...s.td, color:VERDE, fontWeight:500, textAlign:'right' }}>{fmt(val)}</td>
+                              <td style={{ ...s.td, color:'#888780', textAlign:'right' }}>
+                                {totalEnt > 0 ? Math.round((val/totalEnt)*100) : 0}%
+                              </td>
+                            </tr>
+                          ))}
+                          <tr style={{ background:'#F2FAE8', fontWeight:700 }}>
+                            <td style={s.td}>Total entradas</td>
+                            <td style={{ ...s.td, color:VERDE, fontWeight:700, textAlign:'right' }}>{fmt(totalEnt)}</td>
+                            <td style={{ ...s.td, textAlign:'right' }}>100%</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  {/* Saídas por categoria */}
+                  <div style={s.card}>
+                    <div style={{ fontSize:13, fontWeight:500, color:VERMELHO, marginBottom:'.85rem' }}>
+                      Despesas por categoria — {ano}
+                    </div>
+                    {grpSai.length === 0 ? (
+                      <div style={{ fontSize:12, color:'#888780', textAlign:'center', padding:'1rem' }}>Nenhuma despesa registrada.</div>
+                    ) : (
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                        <thead><tr>
+                          <th style={s.th}>Categoria</th>
+                          <th style={{ ...s.th, textAlign:'right' }}>Total</th>
+                          <th style={{ ...s.th, textAlign:'right' }}>%</th>
+                        </tr></thead>
+                        <tbody>
+                          {grpSai.map(([cat, val]) => (
+                            <tr key={cat}>
+                              <td style={s.td}>{cat}</td>
+                              <td style={{ ...s.td, color:VERMELHO, fontWeight:500, textAlign:'right' }}>{fmt(val)}</td>
+                              <td style={{ ...s.td, color:'#888780', textAlign:'right' }}>
+                                {totalSai > 0 ? Math.round((val/totalSai)*100) : 0}%
+                              </td>
+                            </tr>
+                          ))}
+                          <tr style={{ background:'#FEF2F2', fontWeight:700 }}>
+                            <td style={s.td}>Total despesas</td>
+                            <td style={{ ...s.td, color:VERMELHO, fontWeight:700, textAlign:'right' }}>{fmt(totalSai)}</td>
+                            <td style={{ ...s.td, textAlign:'right' }}>100%</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
 
             <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:10, padding:'.85rem 1rem', fontSize:11, color:'#3B6D11', lineHeight:1.8 }}>
               <strong style={{ fontSize:12, display:'block', marginBottom:4 }}>Base legal da transparência</strong>
