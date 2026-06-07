@@ -207,8 +207,7 @@ export default function LancamentosLista() {
                               dispensa_nf: l.dispensa_nf || false,
                               prep_educacao: l.prep_educacao || '',
                               prep_social: l.prep_social || '',
-                              prep_saude: l.prep_saude || '',
-                              _contaPrep: contaAtual?.preponderancia,
+                              prep_saude: l.prep_saude || '',                              _contaPrep: contaAtual?.preponderancia,
                             })
                           }} style={s.btn('#E6F1FB', AZUL)}>Editar</button>
                           {p === 'admin' && (
@@ -306,7 +305,7 @@ export default function LancamentosLista() {
               <div style={{ background:'#FAEEDA', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
                 <div style={{ fontSize:12, fontWeight:500, color:'#854F0B', marginBottom:8 }}>Preponderância (deve somar 100%)</div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
-                  {[['prep_educacao','Educação'],['prep_social','Social'],['prep_saude','Saúde']].map(([campo,label]) => (
+                  {[['prep_educacao','Educação'],['prep_social','Social']].map(([campo,label]) => (
                     <div key={campo}>
                       <label style={{ fontSize:11, color:'#5F5E5A', display:'block', marginBottom:2 }}>{label} %</label>
                       <input type="number" min="0" max="100" value={formEdit[campo]||''} placeholder="0"

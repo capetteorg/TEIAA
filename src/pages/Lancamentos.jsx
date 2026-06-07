@@ -15,7 +15,7 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '', projeto_id: '', dispensa_nf: false })
   const [subcategoriaId, setSubcategoriaId] = useState('')
   const [subcategorias, setSubcategorias] = useState([])
-  const [rateio, setRateio] = useState({ educ: '', social: '', saude: '' })
+  const [rateio, setRateio] = useState({ educ: '', social: '' })
   const [contaSel, setContaSel] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [msg, setMsg] = useState('')
@@ -235,7 +235,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
     setAnalisando(false)
   }
 
-  const rateioTotal = (parseFloat(rateio.educ)||0) + (parseFloat(rateio.social)||0) + (parseFloat(rateio.saude)||0)
+  const rateioTotal = (parseFloat(rateio.educ)||0) + (parseFloat(rateio.social)||0)
   const precisaRateio = contaSel?.preponderancia === 'rateio'
   const isAbatimento = parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID
 
@@ -287,7 +287,6 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
       const itens = [
         { lancamento_id: lanc.id, area: 'Educação',          percentual: parseFloat(rateio.educ)||0 },
         { lancamento_id: lanc.id, area: 'Assistência Social', percentual: parseFloat(rateio.social)||0 },
-        { lancamento_id: lanc.id, area: 'Saúde',             percentual: parseFloat(rateio.saude)||0 },
       ].filter(i => i.percentual > 0)
       await dbRateios.criar(itens)
     }
@@ -316,7 +315,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
     setValorAbatimento('')
     setFornecedorId('')
     setBuscaFornecedor('')
-    setRateio({ educ: '', social: '', saude: '' })
+    setRateio({ educ: '', social: '' })
     setFotoBase64(null); setFotoPreview(null); setMsgIA('')
     carregarLista()
     setSalvando(false)
@@ -637,7 +636,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                 Rateio por área — Total: <span style={{ color: rateioTotal===100?VERDE:VERMELHO }}>{rateioTotal}%</span>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr 1fr', gap:8 }}>
-                {[['educ','Educação'],['social','Assistência Social'],['saude','Saúde']].map(([k,label]) => (
+                {[['educ','Educação'],['social','Assistência Social']].map(([k,label]) => (
                   <div key={k}>
                     <label style={s.label}>{label} (%) — {fmt(parseFloat(rateio[k])||0)}</label>
                     <input type="number" min="0" max="100" value={rateio[k]}

@@ -454,12 +454,10 @@ export default function Conciliacao() {
                 <tr>
                   <th style={s.th}>Data</th>
                   <th style={s.th}>Descrição</th>
-                  <th style={s.th}>Doc</th>
                   <th style={s.th}>Categoria</th>
                   <th style={s.th}>Subcategoria</th>
                   {isRateio && <th style={s.th}>Educ%</th>}
                   {isRateio && <th style={s.th}>Social%</th>}
-                  {isRateio && <th style={s.th}>Saúde%</th>}
                   {isEmenda && <th style={s.th}>Plano de trabalho</th>}
                   <th style={s.th}>Dados compl.</th>
                   <th style={s.th}>Valor</th>
@@ -473,7 +471,7 @@ export default function Conciliacao() {
                 )}
                 {movsFiltradas.map(m => {
                   const subcats = m.categoria_id ? subcatsDa(m.categoria_id) : []
-                  const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0) + (parseFloat(m.prep_saude)||0)
+                  const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0)
                   const prepOk = !isRateio || totalPrep === 100 || totalPrep === 0
                   const temCompl = temDadosCompl(m)
                   const isAberto = complementarAberto === m.id
@@ -499,10 +497,6 @@ export default function Conciliacao() {
                           </div>
                         </td>
 
-                        <td style={s.td}>
-                          <span style={{ fontSize: 10, background: '#F1EFE8', color: '#5F5E5A', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace' }}>{m.doc}</span>
-                        </td>
-
                         <td style={{ ...s.td, minWidth: 140 }}>
                           <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)} style={s.select}>
                             <option value="">Selecione...</option>
@@ -525,7 +519,6 @@ export default function Conciliacao() {
                           <>
                             <td style={s.td}><input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
                             <td style={s.td}><input type="number" min="0" max="100" value={m.prep_social || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_social', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
-                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_saude || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_saude', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
                           </>
                         )}
 
