@@ -46,7 +46,24 @@ export default function Conciliacao() {
       .from('extratos')
       .select('*, conta:contas(id,nome,banco,preponderancia,tipo_conta)')
       .order('importado_em', { ascending: false })
-    setExtratos(data || [])
+    
+    // Buscar contagem de movimentações conciliadas por extrato
+    const ext = data || []
+    if (ext.length > 0) {
+      const { data: concilData } = await supabase
+        .from('extrato_movs')
+        .select('extrato_id, conciliado')
+        .in('extrato_id', ext.map(e => e.id))
+      const mapa = {}
+      ;(concilData || []).forEach(m => {
+        if (!mapa[m.extrato_id]) mapa[m.extrato_id] = { total: 0, conciliados: 0 }
+        mapa[m.extrato_id].total++
+        if (m.conciliado) mapa[m.extrato_id].conciliados++
+      })
+      setExtratos(ext.map(e => ({ ...e, _stats: mapa[e.id] || { total: e.total_movs, conciliados: 0 } })))
+    } else {
+      setExtratos([])
+    }
   }
 
   const [movsDivida, setMovsDivida] = useState({}) // extrato_mov_id -> {pessoa, competencia, valor_mensal, valor_abatimento}
@@ -354,9 +371,17 @@ export default function Conciliacao() {
                   ))}
                 </tr></thead>
                 <tbody>
-                  {extratos.map(e => (
-                    <tr key={e.id} style={{ cursor: 'pointer' }} onClick={() => abrirExtrato(e)}>
-                      <td style={s.td}><strong>{e.competencia}</strong></td>
+                  {extratos.map(e => {
+                    const stats = e._stats || { total: e.total_movs, conciliados: 0 }
+                    const fechado = stats.total > 0 && stats.conciliados === stats.total
+                    return (
+                    <tr key={e.id} style={{ cursor:'pointer', background: fechado ? '#F8F7F2' : '#fff', opacity: fechado ? 0.75 : 1 }} onClick={() => abrirExtrato(e)}>
+                      <td style={s.td}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          {fechado && <span title="Totalmente conciliado">🔒</span>}
+                          <strong style={{ color: fechado ? '#888780' : '#2C2C2A' }}>{e.competencia}</strong>
+                        </div>
+                      </td>
                       <td style={{ ...s.td, fontSize:11, color:'#888780' }}>
                         {e.data_inicio && e.data_fim
                           ? `${fmtData(e.data_inicio)} a ${fmtData(e.data_fim)}`
@@ -364,7 +389,11 @@ export default function Conciliacao() {
                       </td>
                       <td style={s.td}>{e.conta?.nome || '—'}</td>
                       <td style={s.td}>
-                        <span style={s.badge('#E6F1FB','#185FA5')}>{e.total_movs} movs</span>
+                        {fechado ? (
+                          <span style={s.badge('#EAF3DE','#3B6D11')}>✓ {stats.conciliados}/{stats.total}</span>
+                        ) : (
+                          <span style={s.badge('#E6F1FB','#185FA5')}>{stats.conciliados}/{stats.total} concil.</span>
+                        )}
                       </td>
                       <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>
                         R$ {Number(e.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -372,10 +401,14 @@ export default function Conciliacao() {
                       <td style={{ ...s.td, color: '#888780', fontSize:11 }}>{fmtDataHora(e.importado_em)}</td>
                       <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
                       <td style={s.td}>
-                        <button onClick={ev => { ev.stopPropagation(); abrirExtrato(e) }} style={s.btn(VERDE)}>Abrir →</button>
+                        <button onClick={ev => { ev.stopPropagation(); abrirExtrato(e) }}
+                          style={s.btn(fechado ? '#F1EFE8' : VERDE, fechado ? '#5F5E5A' : '#fff')}>
+                          {fechado ? '🔒 Ver' : 'Abrir →'}
+                        </button>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
