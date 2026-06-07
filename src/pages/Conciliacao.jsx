@@ -343,6 +343,8 @@ export default function Conciliacao() {
     setMsg('✅ Movimentação dividida com sucesso!')
     setTimeout(() => setMsg(''), 4000)
   }
+
+  function temDadosCompl(m) {
     return !!(m.fornecedor_id||m.num_nota||m.data_documento||m.descricao_produto||m.local_comprovante||m.link_externo||m.bem_permanente||m.despesa_rateada||m.obs_prestacao||m.tipo_receita||m.evento_id||m.campanha_id)
   }
 
