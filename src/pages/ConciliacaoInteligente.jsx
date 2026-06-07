@@ -148,10 +148,18 @@ export default function ConciliacaoInteligente() {
   }
 
   async function confirmarConciliacao(item) {
-    await supabase.from('extrato_movs').update({
+    // Atualiza extrato_mov — só preenche categoria se ainda não tiver
+    const updateMov = {
       conciliado: true,
       status_mov: 'conciliado',
-    }).eq('id', item.mov.id)
+    }
+    if (item.match) {
+      if (!item.mov.categoria_id && item.match.categoria_id) updateMov.categoria_id = item.match.categoria_id
+      if (!item.mov.subcategoria_id && item.match.subcategoria_id) updateMov.subcategoria_id = item.match.subcategoria_id
+      if (!item.mov.fornecedor_id && item.match.fornecedor_id) updateMov.fornecedor_id = item.match.fornecedor_id
+      if (!item.mov.fornecedor && item.match.fornecedor) updateMov.fornecedor = item.match.fornecedor
+    }
+    await supabase.from('extrato_movs').update(updateMov).eq('id', item.mov.id)
 
     if (item.match) {
       await supabase.from('lancamentos').update({
