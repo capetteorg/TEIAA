@@ -302,10 +302,11 @@ export default function Conciliacao() {
 
   async function confirmarDivisao(m) {
     const total = partesDivisao.reduce((a, p) => a + (parseFloat(p.valor) || 0), 0)
-    if (Math.abs(total - Math.abs(Number(m.valor))) > 0.01) {
-      setMsg('⚠ A soma das partes deve ser igual ao valor original.')
-      setTimeout(() => setMsg(''), 3000)
-      return
+    const original = Math.abs(Number(m.valor))
+    const diff = Math.abs(total - original)
+    if (diff > 0.01) {
+      const ok = window.confirm(`A soma das partes (R$ ${total.toFixed(2)}) difere do valor original (R$ ${original.toFixed(2)}) em R$ ${diff.toFixed(2)}.\n\nDeseja confirmar mesmo assim?`)
+      if (!ok) return
     }
     if (partesDivisao.some(p => !p.categoria_id)) {
       setMsg('⚠ Todas as partes precisam ter categoria.')
