@@ -95,7 +95,7 @@ export default function PlanosExecucao() {
   const [msgOrc, setMsgOrc] = useState('')
 
   useEffect(() => {
-    carregar()
+    inicializar()
     supabase.from('parcerias').select('id,nome_projeto,tipo').order('nome_projeto').then(({ data }) => setParcerias(data || []))
     supabase.from('projetos').select('id,nome,situacao').order('nome').then(({ data }) => setProjetos(data || []))
     supabase.from('instituicao').select('*').limit(1).single().then(({ data }) => setInstituicao(data))
@@ -103,6 +103,19 @@ export default function PlanosExecucao() {
     supabase.from('diretoria').select('nome,cpf,rg,mandato_inicio,mandato_fim').eq('cargo','Presidente').eq('ativo',true).gte('mandato_fim',hoje).limit(1).single().then(({ data }) => setPresidente(data))
     supabase.from('equipe').select('id,nome,funcao,tipo_vinculo').eq('situacao','ativo').order('nome').then(({ data }) => setEquipe(data || []))
   }, [])
+
+  async function inicializar() {
+    const lista = await carregar()
+    // Se só tem um plano (caso normal), abre direto
+    if (lista.length === 1) {
+      const p = lista[0]
+      setPlanoSel(p)
+      setAba('detalhe')
+      setAbaDetalhe('projetos')
+      await carregarDetalhe(p)
+      await carregarProjetosVinculados(p.id)
+    }
+  }
 
   async function carregar() {
     const { data } = await supabase.from('planos')

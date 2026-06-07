@@ -142,14 +142,24 @@ export default function PainelAdmin() {
     </div>
   )
 
+  const pctOrc = orcamentoPlano.prevSaidas > 0 ? Math.round((orcamentoPlano.realSaidas / orcamentoPlano.prevSaidas) * 100) : 0
+  const anoPlano = planoAcao?.periodo_inicio?.slice(0,4)
+
   return (
-    <div style={{ padding:'1.5rem', maxWidth:1100, margin:'0 auto' }}>
+    <div style={{ padding:'1.5rem', maxWidth:1200, margin:'0 auto' }}>
 
       {/* Cabeçalho */}
-      <div style={{ marginBottom:'1.5rem' }}>
-        <div style={{ fontSize:18, fontWeight:600, color:'#2C2C2A' }}>Painel Administrativo</div>
-        <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>
-          {instituicao?.nome_completo || 'CAPETTE'} · {new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'1.5rem', flexWrap:'wrap', gap:8 }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:700, color:'#2C2C2A' }}>Painel Administrativo</div>
+          <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>
+            {new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:6 }}>
+          <button onClick={() => navigate('/despesas')} style={{ fontSize:12, padding:'7px 14px', borderRadius:8, border:'none', background:'#FEF2F2', color:VERMELHO, cursor:'pointer', fontWeight:500 }}>+ Despesa</button>
+          <button onClick={() => navigate('/entradas')} style={{ fontSize:12, padding:'7px 14px', borderRadius:8, border:'none', background:'#EAF3DE', color:VERDE, cursor:'pointer', fontWeight:500 }}>+ Entrada</button>
+          <button onClick={() => navigate('/relatorios')} style={{ fontSize:12, padding:'7px 14px', borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer', fontWeight:500 }}>Relatórios</button>
         </div>
       </div>
 
@@ -158,180 +168,186 @@ export default function PainelAdmin() {
         <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:'1.25rem' }}>
           {cobrancasPendentes > 0 && (
             <div style={{ background:'#FEF2F2', border:'0.5px solid #F7C1C1', borderRadius:10, padding:'.75rem 1rem', fontSize:12, color:'#A32D2D', display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:16 }}>⚠️</span>
-              <span><strong>{cobrancasPendentes} cobranças</strong> pendentes de confirmação.</span>
-              <button onClick={() => navigate('/cobrancas')} style={{ ...s.btn(VERMELHO), marginLeft:'auto' }}>Ver cobranças →</button>
+              <span>⚠️ <strong>{cobrancasPendentes} cobranças</strong> pendentes de confirmação.</span>
+              <button onClick={() => navigate('/cobrancas')} style={{ marginLeft:'auto', fontSize:11, padding:'4px 12px', borderRadius:6, border:'none', background:VERMELHO, color:'#fff', cursor:'pointer' }}>Ver →</button>
             </div>
           )}
           {dividasAbertas > 0 && (
             <div style={{ background:'#FAEEDA', border:'0.5px solid #F5C99A', borderRadius:10, padding:'.75rem 1rem', fontSize:12, color:'#854F0B', display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:16 }}>💳</span>
-              <span><strong>{dividasAbertas} dívida{dividasAbertas>1?'s':''}</strong> em aberto — saldo devedor {fmt(totalDividaAberta)}.</span>
-              <button onClick={() => navigate('/controle-dividas')} style={{ ...s.btn(LARANJA), marginLeft:'auto' }}>Ver dívidas →</button>
+              <span>💳 <strong>{dividasAbertas} dívida{dividasAbertas>1?'s':''}</strong> em aberto — {fmt(totalDividaAberta)}</span>
+              <button onClick={() => navigate('/controle-dividas')} style={{ marginLeft:'auto', fontSize:11, padding:'4px 12px', borderRadius:6, border:'none', background:LARANJA, color:'#fff', cursor:'pointer' }}>Ver →</button>
             </div>
           )}
         </div>
       )}
 
-      {/* 4 Cards principais */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'1.25rem', marginBottom:'1.75rem' }}>
+      {/* Linha 1: Financeiro (largo) + Plano de Ação */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', marginBottom:'1rem' }}>
 
         {/* Card Financeiro */}
-        <div style={s.card(AZUL)} onClick={() => navigate('/conciliacao')}>
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:`${AZUL}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏦</div>
-            <div>
-              <div style={{ fontSize:14, fontWeight:600 }}>Financeiro</div>
-              <div style={{ fontSize:11, color:'#888780' }}>Movimentação — {mesLabel}</div>
+        <div style={{ background:'#fff', borderRadius:14, border:`1.5px solid ${AZUL}20`, padding:'1.25rem', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ width:36, height:36, borderRadius:10, background:`${AZUL}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🏦</div>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600 }}>Financeiro</div>
+                <div style={{ fontSize:11, color:'#888780' }}>{mesLabel}</div>
+              </div>
             </div>
-            <input type="month" value={mes} onChange={e => { e.stopPropagation(); setMes(e.target.value) }}
-              onClick={e => e.stopPropagation()}
-              style={{ marginLeft:'auto', fontSize:11, padding:'3px 6px', border:'0.5px solid #D3D1C7', borderRadius:6 }} />
+            <input type="month" value={mes} onChange={e => setMes(e.target.value)}
+              style={{ fontSize:11, padding:'4px 8px', border:'0.5px solid #D3D1C7', borderRadius:8, color:'#5F5E5A' }} />
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:10 }}>
-            {[['Entradas',fmt(resumo.entradas),VERDE],['Saídas',fmt(resumo.saidas),VERMELHO],['Resultado',fmt(resumo.saldo),resumo.saldo>=0?AZUL:VERMELHO]].map(([l,v,c])=>(
-              <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:12, fontWeight:600, color:c }}>{v}</div></div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
+            {[['Entradas',fmt(resumo.entradas),VERDE,'#EAF3DE'],['Saídas',fmt(resumo.saidas),VERMELHO,'#FEF2F2'],['Saldo',fmt(resumo.saldo),resumo.saldo>=0?AZUL:VERMELHO,resumo.saldo>=0?'#E6F1FB':'#FEF2F2']].map(([l,v,c,bg])=>(
+              <div key={l} style={{ background:bg, borderRadius:10, padding:'10px 12px' }}>
+                <div style={{ fontSize:10, color:'#888780', marginBottom:3 }}>{l}</div>
+                <div style={{ fontSize:13, fontWeight:700, color:c }}>{v}</div>
+              </div>
             ))}
           </div>
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-            <button onClick={e=>{e.stopPropagation();navigate('/despesas')}} style={s.btn('#FEF2F2',VERMELHO,VERMELHO)}>+ Despesa</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/entradas')}} style={s.btn('#EAF3DE',VERDE,VERDE)}>+ Entrada</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/importar')}} style={s.btn('transparent',AZUL,AZUL)}>Extrato</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/relatorios')}} style={s.btn(AZUL)}>Relatórios →</button>
+          <div style={{ display:'flex', gap:6 }}>
+            <button onClick={() => navigate('/lancamentos')} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid ${AZUL}`, background:'transparent', color:AZUL, cursor:'pointer' }}>Lançamentos</button>
+            <button onClick={() => navigate('/conciliacao')} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Conciliação</button>
+            <button onClick={() => navigate('/importar')} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Importar extrato</button>
           </div>
         </div>
 
         {/* Card Plano de Ação */}
-        {planoAcao && (() => {
-          const pctOrc = orcamentoPlano.prevSaidas > 0 ? Math.round((orcamentoPlano.realSaidas / orcamentoPlano.prevSaidas) * 100) : 0
-          const pctMetas = metasPlano.total > 0 ? Math.round((metasPlano.alcancadas / metasPlano.total) * 100) : 0
-          const ano = planoAcao.periodo_inicio?.slice(0,4)
-          return (
-            <div style={s.card(ROXO)} onClick={() => navigate('/planos-execucao')}>
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
-                <div style={{ width:40, height:40, borderRadius:10, background:`${ROXO}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>📋</div>
-                <div>
-                  <div style={{ fontSize:14, fontWeight:600 }}>Plano de Ação {ano}</div>
-                  <div style={{ fontSize:11, color:'#888780' }}>{planoAcao.situacao}</div>
-                </div>
+        {planoAcao ? (
+          <div onClick={() => navigate('/planos-execucao')} style={{ background:`linear-gradient(135deg, ${ROXO}08, #fff)`, borderRadius:14, border:`1.5px solid ${ROXO}30`, padding:'1.25rem', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', cursor:'pointer' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
+              <div style={{ width:36, height:36, borderRadius:10, background:`${ROXO}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>📋</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:600 }}>Plano de Ação {anoPlano}</div>
+                <div style={{ fontSize:11, color:'#888780' }}>{planoAcao.situacao}</div>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
-                {[
-                  ['Orçamento previsto', fmt(orcamentoPlano.prevSaidas), ROXO],
-                  ['Executado', fmt(orcamentoPlano.realSaidas), orcamentoPlano.realSaidas > 0 ? VERDE : '#888780'],
-                  ['Metas', `${metasPlano.total} total`, '#5F5E5A'],
-                  ['Em andamento', metasPlano.emAndamento, AZUL],
-                ].map(([l,v,c])=>(
-                  <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:12, fontWeight:600, color:c }}>{v}</div></div>
-                ))}
-              </div>
-              <div style={{ marginBottom:10 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#888780', marginBottom:3 }}>
-                  <span>Execução orçamentária</span><span style={{ fontWeight:600, color:ROXO }}>{pctOrc}%</span>
+              <span style={{ fontSize:10, padding:'3px 10px', borderRadius:99, background:`${ROXO}15`, color:ROXO, fontWeight:600 }}>em execução</span>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
+              {[
+                ['Orçamento', fmt(orcamentoPlano.prevSaidas), '#5F5E5A', '#F8F7F2'],
+                ['Executado', fmt(orcamentoPlano.realSaidas), ROXO, `${ROXO}10`],
+                ['Metas', `${metasPlano.emAndamento} / ${metasPlano.total}`, AZUL, '#E6F1FB'],
+              ].map(([l,v,c,bg])=>(
+                <div key={l} style={{ background:bg, borderRadius:10, padding:'10px 12px' }}>
+                  <div style={{ fontSize:10, color:'#888780', marginBottom:3 }}>{l}</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:c }}>{v}</div>
                 </div>
-                <div style={{ height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:Math.min(pctOrc,100)+'%', background:ROXO, borderRadius:99, transition:'width .3s' }} />
-                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom:10 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#888780', marginBottom:4 }}>
+                <span>Execução orçamentária</span>
+                <span style={{ fontWeight:700, color:ROXO }}>{pctOrc}%</span>
               </div>
-              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                <button onClick={e=>{e.stopPropagation();navigate('/planos-execucao')}} style={s.btn(ROXO)}>Ver plano →</button>
-                <button onClick={e=>{e.stopPropagation();navigate('/projetos')}} style={s.btn('transparent',ROXO,ROXO)}>Projetos</button>
+              <div style={{ height:7, background:`${ROXO}20`, borderRadius:99, overflow:'hidden' }}>
+                <div style={{ height:'100%', width:Math.min(pctOrc,100)+'%', background:ROXO, borderRadius:99 }} />
               </div>
             </div>
-          )
-        })()}
+            <button onClick={e=>{e.stopPropagation();navigate('/planos-execucao')}} style={{ fontSize:11, padding:'5px 14px', borderRadius:7, border:'none', background:ROXO, color:'#fff', cursor:'pointer', fontWeight:500 }}>Abrir plano completo →</button>
+          </div>
+        ) : (
+          <div style={{ background:'#F8F7F2', borderRadius:14, border:'1.5px dashed #D3D1C7', padding:'1.25rem', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8 }}>
+            <div style={{ fontSize:28 }}>📋</div>
+            <div style={{ fontSize:13, color:'#888780' }}>Nenhum plano de ação cadastrado</div>
+            <button onClick={() => navigate('/planos-execucao')} style={{ fontSize:11, padding:'5px 14px', borderRadius:7, border:'none', background:ROXO, color:'#fff', cursor:'pointer' }}>Criar plano →</button>
+          </div>
+        )}
+      </div>
 
-        {/* Card Execução */}
-        <div style={s.card(VERDE)} onClick={() => navigate('/projetos')}>
+      {/* Linha 2: Programas + Institucional */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', marginBottom:'1.5rem' }}>
+
+        {/* Card Programas */}
+        <div onClick={() => navigate('/projetos')} style={{ background:'#fff', borderRadius:14, border:`1.5px solid ${VERDE}20`, padding:'1.25rem', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', cursor:'pointer' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:`${VERDE}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>👥</div>
+            <div style={{ width:36, height:36, borderRadius:10, background:`${VERDE}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>📁</div>
             <div>
-              <div style={{ fontSize:14, fontWeight:600 }}>Programas e Projetos</div>
+              <div style={{ fontSize:13, fontWeight:600 }}>Programas e Projetos</div>
               <div style={{ fontSize:11, color:'#888780' }}>Execução e acompanhamento</div>
             </div>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 }}>
             {[
-              ['Projetos ativos', projetosAtivos, VERDE],
-              ['Atend. este mês', atendimentosMes, AZUL],
-              ['Usuários ativos', usuariosAtivos, VERDE],
-              ['Equipe ativa', equipeAtiva, '#5F5E5A'],
-            ].map(([l,v,c])=>(
-              <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:14, fontWeight:600, color:c }}>{v}</div></div>
+              ['Projetos ativos', projetosAtivos, VERDE, '#EAF3DE'],
+              ['Usuários ativos', usuariosAtivos, AZUL, '#E6F1FB'],
+              ['Atend. este mês', atendimentosMes, LARANJA, '#FAEEDA'],
+              ['Equipe ativa', equipeAtiva, '#5F5E5A', '#F8F7F2'],
+            ].map(([l,v,c,bg])=>(
+              <div key={l} style={{ background:bg, borderRadius:10, padding:'10px 12px' }}>
+                <div style={{ fontSize:10, color:'#888780', marginBottom:3 }}>{l}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:c }}>{v}</div>
+              </div>
             ))}
           </div>
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-            <button onClick={e=>{e.stopPropagation();navigate('/projetos')}} style={s.btn(VERDE)}>Projetos →</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/atendimentos')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Atendimentos</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/equipe')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Equipe</button>
+          <div style={{ display:'flex', gap:6 }}>
+            <button onClick={e=>{e.stopPropagation();navigate('/projetos')}} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:'none', background:VERDE, color:'#fff', cursor:'pointer', fontWeight:500 }}>Projetos →</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/atendimentos')}} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Atendimentos</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/equipe')}} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Equipe</button>
           </div>
         </div>
 
         {/* Card Institucional */}
-        <div style={s.card(LARANJA)} onClick={() => navigate('/instituicao')}>
+        <div onClick={() => navigate('/instituicao')} style={{ background:'#fff', borderRadius:14, border:`1.5px solid ${LARANJA}20`, padding:'1.25rem', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', cursor:'pointer' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:`${LARANJA}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏛️</div>
+            <div style={{ width:36, height:36, borderRadius:10, background:`${LARANJA}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🏛️</div>
             <div>
-              <div style={{ fontSize:14, fontWeight:600 }}>Institucional</div>
-              <div style={{ fontSize:11, color:'#888780' }}>Dados, diretoria e parcerias</div>
+              <div style={{ fontSize:13, fontWeight:600 }}>Institucional</div>
+              <div style={{ fontSize:11, color:'#888780' }}>Dados, diretoria e instrumentos</div>
             </div>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom: parcerias.filter(p=>p.situacao==='em execução').length > 0 ? 10 : 12 }}>
             {[
-              ['Presidente', presidente?.nome?.split(' ').slice(0,2).join(' ')||'—', LARANJA],
-              ['Mandato até', presidente ? fmtData(presidente.mandato_fim) : '—', '#5F5E5A'],
-              ['Instrumentos ativos', parcerias.filter(p=>p.situacao==='em execução').length, LARANJA],
-              ['CNPJ', instituicao?.cnpj||'—', '#5F5E5A'],
-            ].map(([l,v,c])=>(
-              <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:12, fontWeight:500, color:c, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v}</div></div>
+              ['Presidente', presidente?.nome?.split(' ').slice(0,2).join(' ')||'—', LARANJA, '#FEF4E8'],
+              ['Mandato até', presidente ? fmtData(presidente.mandato_fim) : '—', '#5F5E5A', '#F8F7F2'],
+              ['Instrumentos ativos', parcerias.filter(p=>p.situacao==='em execução').length, LARANJA, '#FEF4E8'],
+              ['CNPJ', instituicao?.cnpj||'—', '#5F5E5A', '#F8F7F2'],
+            ].map(([l,v,c,bg])=>(
+              <div key={l} style={{ background:bg, borderRadius:10, padding:'10px 12px' }}>
+                <div style={{ fontSize:10, color:'#888780', marginBottom:3 }}>{l}</div>
+                <div style={{ fontSize:12, fontWeight:600, color:c, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v}</div>
+              </div>
             ))}
           </div>
-          {parcerias.filter(p=>p.situacao==='em execução').length > 0 && (
-            <div style={{ display:'flex', flexDirection:'column', gap:4, marginBottom:10 }}>
-              {parcerias.filter(p=>p.situacao==='em execução').slice(0,2).map(p => {
-                const [bg,cor] = SITUACAO_COR[p.situacao]||['#F1EFE8','#888780']
-                return (
-                  <div key={p.id} onClick={e=>{e.stopPropagation();navigate(`/parcerias/${p.id}`)}}
-                    style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'#F8F7F2', borderRadius:7, padding:'6px 8px', cursor:'pointer' }}>
-                    <div style={{ fontSize:11, fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{p.nome_projeto}</div>
-                    <span style={s.badge(bg,cor)}>{p.situacao}</span>
-                  </div>
-                )
-              })}
+          {parcerias.filter(p=>p.situacao==='em execução').slice(0,2).map(p => (
+            <div key={p.id} onClick={e=>{e.stopPropagation();navigate(`/parcerias/${p.id}`)}}
+              style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'#F8F7F2', borderRadius:8, padding:'6px 10px', marginBottom:4, cursor:'pointer' }}>
+              <div style={{ fontSize:11, fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{p.nome_projeto}</div>
+              <span style={{ fontSize:10, padding:'2px 8px', borderRadius:99, background:'#EAF3DE', color:'#3B6D11', fontWeight:500, flexShrink:0, marginLeft:6 }}>ativo</span>
             </div>
-          )}
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-            <button onClick={e=>{e.stopPropagation();navigate('/parcerias')}} style={s.btn(LARANJA)}>Instrumentos →</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/instituicao')}} style={s.btn('transparent',LARANJA,LARANJA)}>Instituição</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/documentos')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Documentos</button>
+          ))}
+          <div style={{ display:'flex', gap:6, marginTop: parcerias.filter(p=>p.situacao==='em execução').length > 0 ? 8 : 0 }}>
+            <button onClick={e=>{e.stopPropagation();navigate('/parcerias')}} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:'none', background:LARANJA, color:'#fff', cursor:'pointer', fontWeight:500 }}>Instrumentos →</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/instituicao')}} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Instituição</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/documentos')}} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Documentos</button>
           </div>
         </div>
       </div>
 
-      {/* Atalhos rápidos */}
-      <div style={{ marginBottom:'1.5rem' }}>
-        <div style={{ fontSize:13, fontWeight:500, color:'#5F5E5A', marginBottom:'.75rem' }}>Acesso rápido</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px, 1fr))', gap:8 }}>
+      {/* Acesso rápido */}
+      <div>
+        <div style={{ fontSize:12, fontWeight:600, color:'#888780', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:10 }}>Acesso rápido</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(110px, 1fr))', gap:8 }}>
           {[
-            { icon:'📥', label:'Lançar despesa',    rota:'/despesas',         cor:'#FEF2F2' },
-            { icon:'📤', label:'Lançar entrada',    rota:'/entradas',         cor:'#EAF3DE' },
-            { icon:'📊', label:'Relatórios',        rota:'/relatorios',       cor:'#E6F1FB' },
-            { icon:'📁', label:'Projetos',          rota:'/projetos',         cor:'#F0EAFA' },
-            { icon:'📋', label:'Plano de Ação',     rota:'/planos-execucao',  cor:'#F0EAFA' },
-            { icon:'🤝', label:'Instrumentos',      rota:'/parcerias',        cor:'#FEF4E8' },
-            { icon:'👥', label:'Equipe',            rota:'/equipe',           cor:'#EEEDFE' },
-            { icon:'💳', label:'Controle Dívidas',  rota:'/controle-dividas', cor:'#FAEEDA', badge: dividasAbertas > 0 ? dividasAbertas : null },
-            { icon:'🧾', label:'Cobranças',         rota:'/cobrancas',        cor:'#FEF2F2', badge: cobrancasPendentes > 0 ? cobrancasPendentes : null },
-            { icon:'📄', label:'Prestação Contas',  rota:'/prestacao-contas', cor:'#FAEEDA' },
-            { icon:'🔒', label:'Fechamento',        rota:'/fechamento',       cor:'#F8F7F2' },
-            { icon:'🌐', label:'Transparência',     rota:'/transparencia',    cor:'#E6F1FB' },
+            { icon:'📥', label:'Lançar despesa',    rota:'/despesas',         cor:'#FEF2F2', icorCor:VERMELHO },
+            { icon:'📤', label:'Lançar entrada',    rota:'/entradas',         cor:'#EAF3DE', icorCor:VERDE },
+            { icon:'🔍', label:'Conciliação',       rota:'/conciliacao',      cor:'#E6F1FB', icorCor:AZUL },
+            { icon:'📊', label:'Relatórios',        rota:'/relatorios',       cor:'#E6F1FB', icorCor:AZUL },
+            { icon:'👥', label:'Usuários atend.',   rota:'/usuarios-atendidos',cor:'#EAF3DE', icorCor:VERDE },
+            { icon:'💳', label:'Dívidas',           rota:'/controle-dividas', cor:'#FAEEDA', icorCor:LARANJA, badge: dividasAbertas > 0 ? dividasAbertas : null },
+            { icon:'🧾', label:'Cobranças',         rota:'/cobrancas',        cor:'#FEF2F2', icorCor:VERMELHO, badge: cobrancasPendentes > 0 ? cobrancasPendentes : null },
+            { icon:'⚠️', label:'Pendências',        rota:'/pendencias',       cor:'#FAEEDA', icorCor:LARANJA },
+            { icon:'📄', label:'Prestação',         rota:'/prestacao-contas', cor:'#F0EAFA', icorCor:ROXO },
+            { icon:'🔒', label:'Fechamento',        rota:'/fechamento',       cor:'#F8F7F2', icorCor:'#5F5E5A' },
+            { icon:'💾', label:'Backup',            rota:'/backup',           cor:'#F8F7F2', icorCor:'#5F5E5A' },
+            { icon:'🌐', label:'Transparência',     rota:'/transparencia',    cor:'#E6F1FB', icorCor:AZUL },
           ].map(item => (
             <button key={item.rota} onClick={() => navigate(item.rota)}
-              style={{ background:item.cor, border:'0.5px solid #E0DDD5', borderRadius:10, padding:'12px 10px', cursor:'pointer', textAlign:'center', position:'relative' }}>
-              <div style={{ fontSize:20, marginBottom:4 }}>{item.icon}</div>
-              <div style={{ fontSize:11, color:'#2C2C2A', fontWeight:500, lineHeight:1.3 }}>{item.label}</div>
+              style={{ background:item.cor, border:'0.5px solid #E8E6DE', borderRadius:12, padding:'14px 8px', cursor:'pointer', textAlign:'center', position:'relative', transition:'transform .1s', display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+              <div style={{ fontSize:22 }}>{item.icon}</div>
+              <div style={{ fontSize:10, color:'#2C2C2A', fontWeight:500, lineHeight:1.3 }}>{item.label}</div>
               {item.badge && (
-                <div style={{ position:'absolute', top:6, right:6, background:VERMELHO, color:'#fff', fontSize:9, fontWeight:700, borderRadius:99, width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ position:'absolute', top:6, right:6, background:VERMELHO, color:'#fff', fontSize:9, fontWeight:700, borderRadius:99, minWidth:16, height:16, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px' }}>
                   {item.badge > 99 ? '99+' : item.badge}
                 </div>
               )}
@@ -340,30 +356,6 @@ export default function PainelAdmin() {
         </div>
       </div>
 
-      {/* Parcerias em execução */}
-      {parcerias.filter(p=>p.situacao==='em execução').length > 0 && (
-        <div style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.85rem' }}>
-            <div style={{ fontSize:13, fontWeight:500 }}>Parcerias em execução</div>
-            <button onClick={() => navigate('/parcerias')} style={{ fontSize:11, background:'none', border:'none', color:AZUL, cursor:'pointer' }}>Ver todas →</button>
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:8 }}>
-            {parcerias.filter(p=>p.situacao==='em execução').map(p => {
-              const [bg,cor] = SITUACAO_COR[p.situacao]||['#F1EFE8','#888780']
-              return (
-                <div key={p.id} onClick={() => navigate(`/parcerias/${p.id}`)}
-                  style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'#F8F7F2', borderRadius:8, padding:'8px 12px', cursor:'pointer' }}>
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:500 }}>{p.nome_projeto}</div>
-                    <div style={{ fontSize:10, color:'#888780' }}>{p.tipo}</div>
-                  </div>
-                  <span style={s.badge(bg,cor)}>{p.situacao}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
