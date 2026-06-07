@@ -18,6 +18,9 @@ export default function Conciliacao() {
   const [eventos, setEventos] = useState([])
   const [campanhas, setCampanhas] = useState([])
   const [fornecedores, setFornecedores] = useState([])
+  const [pessoasRecorrentes, setPessoasRecorrentes] = useState([])
+  const [pagFuncAberto, setPagFuncAberto] = useState(null)
+  const [formPagFunc, setFormPagFunc] = useState({})
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
   const [abaConcil, setAbaConcil] = useState('manual')
@@ -34,6 +37,7 @@ export default function Conciliacao() {
     supabase.from('eventos').select('id,nome').order('nome').then(({ data }) => setEventos(data || []))
     supabase.from('campanhas').select('id,nome').order('nome').then(({ data }) => setCampanhas(data || []))
     supabase.from('fornecedores').select('id,nome,cpf_cnpj').eq('ativo',true).order('nome').then(({ data }) => setFornecedores(data || []))
+    supabase.from('pessoas_recorrentes').select('*').eq('ativo',true).order('nome').then(({ data }) => setPessoasRecorrentes(data || []))
   }, [])
 
   async function carregarExtratos() {
@@ -79,6 +83,70 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id === movId
       ? { ...m, plano_trabalho_id: planoId, plano: planos.find(p => String(p.id) === String(planoId)) }
       : m))
+  }
+
+  async function salvarPagamentoFuncionario(movId, mov) {
+    const { pessoa_id, competencia, valor_mensal, valor_abatimento } = formPagFunc
+    if (!pessoa_id || !competencia) return
+    const pessoa = pessoasRecorrentes.find(p => String(p.id) === String(pessoa_id))
+    const valMensal = parseFloat(valor_mensal) || 0
+    const valAbat = parseFloat(valor_abatimento) || 0
+    const totalMov = Math.abs(Number(mov.valor))
+    if (Math.abs(valMensal + valAbat - totalMov) > 0.01) {
+      alert(`A soma (R$ ${(valMensal+valAbat).toFixed(2)}) deve ser igual ao valor do extrato (R$ ${totalMov.toFixed(2)})`)
+      return
+    }
+    const valorMensalDevido = Number(pessoa?.valor_mensal_normal || 0)
+    const valorNaoPago = Math.max(0, valorMensalDevido - valMensal)
+
+    // Buscar saldo atual
+    const { data: movsPessoa } = await supabase.from('divida_movimentacoes').select('tipo,valor').eq('pessoa_id', parseInt(pessoa_id))
+    const saldoAtual = (movsPessoa||[]).reduce((acc, m) => {
+      if (m.tipo === 'divida_inicial' || m.tipo === 'acrescimo') return acc + Number(m.valor)
+      if (m.tipo === 'abatimento') return acc - Number(m.valor)
+      return acc + Number(m.valor)
+    }, 0)
+    const saldoFim = Math.max(0, saldoAtual + valorNaoPago - valAbat)
+
+    // Atualizar competência
+    const { data: compExiste } = await supabase.from('competencias_mensais')
+      .select('id').eq('pessoa_id', parseInt(pessoa_id)).eq('competencia', competencia).single()
+    if (compExiste) {
+      await supabase.from('competencias_mensais').update({
+        valor_pago_mensal: valMensal,
+        valor_nao_pago: valorNaoPago,
+        valor_abatido_divida: valAbat,
+        saldo_divida_inicio: saldoAtual,
+        saldo_divida_fim: saldoFim,
+        extrato_mov_id: movId,
+        status: valorNaoPago === 0 ? 'pago' : 'parcial',
+      }).eq('id', compExiste.id)
+    }
+
+    // Lançar movimentações
+    if (valAbat > 0) {
+      await supabase.from('divida_movimentacoes').insert({
+        pessoa_id: parseInt(pessoa_id), tipo: 'abatimento',
+        valor: valAbat, data_movimentacao: mov.data, competencia,
+        descricao: `Abatimento de dívida — ${competencia} — extrato`,
+        extrato_mov_id: movId,
+      })
+    }
+    if (valorNaoPago > 0) {
+      await supabase.from('divida_movimentacoes').insert({
+        pessoa_id: parseInt(pessoa_id), tipo: 'acrescimo',
+        valor: valorNaoPago, data_movimentacao: mov.data, competencia,
+        descricao: `Valor não pago em ${competencia} — acréscimo de dívida`,
+        extrato_mov_id: movId,
+      })
+    }
+
+    await supabase.from('extrato_movs').update({ fornecedor: pessoa?.nome, obs_prestacao: `Pagamento ${competencia} — mensal: R$${valMensal.toFixed(2)}, abatimento: R$${valAbat.toFixed(2)}` }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id === movId ? { ...m, fornecedor: pessoa?.nome } : m))
+    setPagFuncAberto(null)
+    setFormPagFunc({})
+    setMsg(`✅ Pagamento de ${pessoa?.nome} registrado! Competência ${competencia} atualizada.`)
+    setTimeout(() => setMsg(''), 4000)
   }
 
   async function salvarComplementar(movId) {
@@ -442,6 +510,15 @@ export default function Conciliacao() {
                             style={{ ...s.btn(temCompl ? '#EAF3DE' : '#F1EFE8', temCompl ? '#3B6D11' : '#5F5E5A'), fontSize: 10 }}>
                             {temCompl ? '✓ Preenchido' : '+ Dados'}
                           </button>
+                          {m.valor < 0 && pessoasRecorrentes.length > 0 && (
+                            <button onClick={() => {
+                              if (pagFuncAberto === m.id) { setPagFuncAberto(null); return }
+                              setPagFuncAberto(m.id)
+                              setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal: Math.abs(Number(m.valor)), valor_abatimento: 0 })
+                            }} style={{ ...s.btn(pagFuncAberto===m.id?'#FAEEDA':'#F0EAFA', pagFuncAberto===m.id?'#854F0B':'#534AB7'), fontSize:10, marginLeft:4 }}>
+                              👤 Func.
+                            </button>
+                          )}
                         </td>
 
                         <td style={{ ...s.td, fontWeight: 500, color: m.valor >= 0 ? VERDE : VERMELHO, whiteSpace: 'nowrap' }}>
@@ -575,6 +652,59 @@ export default function Conciliacao() {
                               <div style={{ display: 'flex', gap: 8 }}>
                                 <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>Salvar dados complementares</button>
                                 <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {pagFuncAberto === m.id && (
+                        <tr>
+                          <td colSpan={13} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                            <div style={{ background:'#F5F0FF', padding:'12px 16px', borderLeft:`3px solid #8B2FC9` }}>
+                              <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:'#8B2FC9' }}>
+                                👤 Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
+                              </div>
+                              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                                <div>
+                                  <label style={s.label}>Pessoa *</label>
+                                  <select value={formPagFunc.pessoa_id||''} onChange={e => {
+                                    const pe = pessoasRecorrentes.find(p => String(p.id) === e.target.value)
+                                    setFormPagFunc(f => ({ ...f, pessoa_id: e.target.value, valor_mensal: pe?.valor_mensal_normal||f.valor_mensal }))
+                                  }} style={s.inputCompl}>
+                                    <option value="">Selecione...</option>
+                                    {pessoasRecorrentes.map(pe => <option key={pe.id} value={pe.id}>{pe.nome} — Mensal: R$ {Number(pe.valor_mensal_normal||0).toFixed(2)}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label style={s.label}>Competência (mês de referência) *</label>
+                                  <input type="month" value={formPagFunc.competencia||''} onChange={e=>setFormPagFunc(f=>({...f,competencia:e.target.value}))} style={s.inputCompl} />
+                                </div>
+                              </div>
+                              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                                <div>
+                                  <label style={s.label}>Valor referente ao mensal normal (R$)</label>
+                                  <input type="number" step="0.01" value={formPagFunc.valor_mensal||''} onChange={e=>setFormPagFunc(f=>({...f,valor_mensal:e.target.value}))} style={s.inputCompl} />
+                                </div>
+                                <div>
+                                  <label style={s.label}>Valor para abater dívida antiga (R$)</label>
+                                  <input type="number" step="0.01" value={formPagFunc.valor_abatimento||''} onChange={e=>setFormPagFunc(f=>({...f,valor_abatimento:e.target.value}))} style={s.inputCompl} />
+                                </div>
+                              </div>
+                              {(() => {
+                                const totalMov = Math.abs(Number(m.valor))
+                                const soma = (parseFloat(formPagFunc.valor_mensal)||0) + (parseFloat(formPagFunc.valor_abatimento)||0)
+                                const diff = Math.abs(soma - totalMov)
+                                const ok = diff < 0.01
+                                return (
+                                  <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:10, background:ok?'#EAF3DE':'#FEF2F2', color:ok?'#3B6D11':'#A32D2D' }}>
+                                    Valor do extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Classificado: <strong>R$ {soma.toFixed(2)}</strong>
+                                    {ok ? ' ✓ OK' : ` · Faltam R$ ${diff.toFixed(2)}`}
+                                  </div>
+                                )
+                              })()}
+                              <div style={{ display:'flex', gap:8 }}>
+                                <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn('#8B2FC9')}>✅ Registrar pagamento</button>
+                                <button onClick={() => { setPagFuncAberto(null); setFormPagFunc({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                               </div>
                             </div>
                           </td>
