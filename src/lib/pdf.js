@@ -192,6 +192,8 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
   const linhas = lista.map((m,i) => {
     const isEnt = Number(m.valor) > 0
     const partes = m._partes || []
+    const fornecedor = m.fornecedor || m.lancamento?.fornecedor || '—'
+    const numNota = m.num_nota || m.lancamento?.num_nota || '—'
     const subLinhas = partes.map(p => `
       <tr style="background:#F8F7F2">
         <td></td>
@@ -205,8 +207,8 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}${partes.length>0?` <span style="font-size:9px;color:#185FA5">(${partes.length} itens)</span>`:''}</td>
       <td>${partes.length>0?'<em style="color:#888;font-size:9px">ver abaixo</em>':(m.categoria?.nome||'—')}</td>
       <td style="color:#888;font-size:9px">${partes.length>0?'':m.subcategoria?.nome||'—'}</td>
-      <td style="font-size:9px">${m.fornecedor||'—'}</td>
-      <td style="font-family:monospace;font-size:9px">${m.num_nota||'—'}</td>
+      <td style="font-size:9px">${fornecedor}</td>
+      <td style="font-family:monospace;font-size:9px">${numNota}</td>
       <td class="num" style="font-weight:600;color:${isEnt?'#3B6D11':'#A32D2D'}">${isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
       <td class="center"><span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${m.conciliado?'#EAF3DE':'#FAEEDA'};color:${m.conciliado?'#3B6D11':'#854F0B'}">${m.conciliado?'✓ OK':'Pendente'}</span></td>
     </tr>${subLinhas}`

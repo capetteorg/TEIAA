@@ -60,7 +60,7 @@ export default function RelatoriosCentral() {
 
   async function gerarConciliacao(pId) {
     let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome,banco,agencia,conta_num))')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome,banco,agencia,conta_num)), lancamento:lancamentos(fornecedor,num_nota,cpf_cnpj,descricao_produto)')
       .gte('data', dataInicio).lte('data', dataFim).order('data')
     const { data: movs } = await q
     let todasMovs = movs || []
