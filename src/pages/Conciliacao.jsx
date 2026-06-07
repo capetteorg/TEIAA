@@ -388,8 +388,8 @@ export default function Conciliacao() {
     return true
   })
 
-  const totalConciliados = movs.filter(m=>m.conciliado).length
-  const totalPendentes = movs.filter(m=>!m.conciliado).length
+  const totalConciliados = movs.filter(m=>m.conciliado && !m.dividida).length
+  const totalPendentes = movs.filter(m=>!m.conciliado && !m.dividida).length
   const autoCount = Object.values(matchMap).filter(v=>v.auto).length
   const possivelCount = Object.values(matchMap).filter(v=>!v.auto).length
 
@@ -496,10 +496,10 @@ export default function Conciliacao() {
       {/* Métricas */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))', gap:8, marginBottom:'1rem' }}>
         {[
-          ['Total', movs.length, '#5F5E5A'],
+          ['Total', movs.filter(m=>!m.dividida).length, '#5F5E5A'],
           ['Conciliados', totalConciliados, VERDE],
           ['Pendentes', totalPendentes, totalPendentes>0?LARANJA:'#888780'],
-          ['Sem categoria', movs.filter(m=>!m.categoria_id).length, movs.filter(m=>!m.categoria_id).length>0?VERMELHO:'#888780'],
+          ['Sem categoria', movs.filter(m=>!m.categoria_id&&!m.dividida).length, movs.filter(m=>!m.categoria_id&&!m.dividida).length>0?VERMELHO:'#888780'],
           ...(autoCount>0||possivelCount>0 ? [['🤖 Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
         ].map(([l,v,c]) => (
           <div key={l} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
