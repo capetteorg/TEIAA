@@ -53,12 +53,12 @@ const FORM_VAZIO = {
 const META_VAZIO = {
   descricao_meta: '', indicador: '', quantidade_prevista: '',
   unidade_medida: 'Usuários atendidos', quantidade_realizada: '',
-  status_meta: 'não iniciada', justificativa: '',
+  status_meta: 'não iniciada', justificativa: '', projeto_id: '',
 }
 
 const ATIVIDADE_VAZIA = {
   nome_atividade: '', descricao: '', periodo_inicio: '', periodo_fim: '',
-  responsavel_equipe: '', status: 'prevista', observacoes: '',
+  responsavel_equipe: '', status: 'prevista', observacoes: '', projeto_id: '',
 }
 
 export default function PlanosExecucao() {
@@ -251,7 +251,7 @@ export default function PlanosExecucao() {
     const dados = {
       ...formAtiv,
       plano_id: planoSel.id,
-      projeto_id: null,
+      projeto_id: formAtiv.projeto_id ? parseInt(formAtiv.projeto_id) : null,
       periodo_inicio: formAtiv.periodo_inicio || null,
       periodo_fim: formAtiv.periodo_fim || null,
     }
@@ -756,8 +756,9 @@ export default function PlanosExecucao() {
                 <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoMeta ? 'Editar meta' : 'Adicionar meta'}</div>
                 <div style={s.grupo('2fr 1fr')}>
                   <div><label style={s.label}>Descrição da meta *</label><input value={formMeta.descricao_meta} onChange={e=>setFormMeta(f=>({...f,descricao_meta:e.target.value}))} style={s.input} required /></div>
-                  <div><label style={s.label}>Indicador</label><input value={formMeta.indicador} onChange={e=>setFormMeta(f=>({...f,indicador:e.target.value}))} style={s.input} /></div>
+                  <div><label style={s.label}>Projeto vinculado</label><select value={formMeta.projeto_id||''} onChange={e=>setFormMeta(f=>({...f,projeto_id:e.target.value}))} style={s.input}><option value="">Plano geral</option>{projetosVinculados.map(pv=><option key={pv.projeto_id} value={pv.projeto_id}>{pv.projeto?.nome}</option>)}</select></div>
                 </div>
+                <div style={{ marginBottom:8 }}><label style={s.label}>Indicador</label><input value={formMeta.indicador} onChange={e=>setFormMeta(f=>({...f,indicador:e.target.value}))} style={s.input} /></div>
                 <div style={s.grupo('1fr 1fr 1fr 1fr')}>
                   <div><label style={s.label}>Qtd prevista</label><input type="number" value={formMeta.quantidade_prevista} onChange={e=>setFormMeta(f=>({...f,quantidade_prevista:e.target.value}))} style={s.input} /></div>
                   <div><label style={s.label}>Unidade</label><select value={formMeta.unidade_medida} onChange={e=>setFormMeta(f=>({...f,unidade_medida:e.target.value}))} style={s.input}>{UNIDADES_META.map(u=><option key={u} value={u}>{u}</option>)}</select></div>
@@ -774,13 +775,14 @@ export default function PlanosExecucao() {
                 <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhuma meta cadastrada.</div>
               ) : (
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead><tr>{['Meta','Indicador','Previsto','Realizado','% Exec.','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Projeto','Meta','Indicador','Previsto','Realizado','% Exec.','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
                   <tbody>
                     {metas.map(m => {
                       const [bg,cor] = STATUS_META_COR[m.status_meta]||['#F1EFE8','#888780']
                       const p = pct(Number(m.quantidade_realizada||0), Number(m.quantidade_prevista||0))
                       return (
                         <tr key={m.id}>
+                          <td style={{ ...s.td, fontSize:11, color:'#888780', whiteSpace:'nowrap' }}>{m.projeto?.nome||<span style={{ color:'#D3D1C7' }}>Geral</span>}</td>
                           <td style={{ ...s.td, fontWeight:500, maxWidth:200 }}>{m.descricao_meta}</td>
                           <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.indicador||'—'}</td>
                           <td style={s.td}>{m.quantidade_prevista||'—'} {m.unidade_medida}</td>
@@ -795,7 +797,7 @@ export default function PlanosExecucao() {
                           </td>
                           <td style={s.td}><span style={s.badge(bg,cor)}>{m.status_meta}</span></td>
                           <td style={s.td}>
-                            <button onClick={() => { setFormMeta({...m, quantidade_prevista:m.quantidade_prevista||'', quantidade_realizada:m.quantidade_realizada||''}); setEditandoMeta(m.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                            <button onClick={() => { setFormMeta({...m, quantidade_prevista:m.quantidade_prevista||'', quantidade_realizada:m.quantidade_realizada||'', projeto_id:m.projeto_id||''}); setEditandoMeta(m.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                             <button onClick={() => excluirMeta(m.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
                           </td>
                         </tr>
@@ -815,9 +817,12 @@ export default function PlanosExecucao() {
                 <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoAtiv ? 'Editar atividade' : 'Adicionar atividade prevista'}</div>
                 <div style={s.grupo('2fr 1fr')}>
                   <div><label style={s.label}>Nome da atividade *</label><input value={formAtiv.nome_atividade} onChange={e=>setFormAtiv(f=>({...f,nome_atividade:e.target.value}))} style={s.input} required /></div>
+                  <div><label style={s.label}>Projeto vinculado</label><select value={formAtiv.projeto_id||''} onChange={e=>setFormAtiv(f=>({...f,projeto_id:e.target.value}))} style={s.input}><option value="">Plano geral</option>{projetosVinculados.map(pv=><option key={pv.projeto_id} value={pv.projeto_id}>{pv.projeto?.nome}</option>)}</select></div>
+                </div>
+                <div style={s.grupo('3fr 1fr')}>
+                  <div><label style={s.label}>Descrição</label><input value={formAtiv.descricao} onChange={e=>setFormAtiv(f=>({...f,descricao:e.target.value}))} style={s.input} /></div>
                   <div><label style={s.label}>Status</label><select value={formAtiv.status} onChange={e=>setFormAtiv(f=>({...f,status:e.target.value}))} style={s.input}>{STATUS_ATIVIDADE.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}</select></div>
                 </div>
-                <div style={{ marginBottom:8 }}><label style={s.label}>Descrição</label><input value={formAtiv.descricao} onChange={e=>setFormAtiv(f=>({...f,descricao:e.target.value}))} style={s.input} /></div>
                 <div style={s.grupo('1fr 1fr 2fr')}>
                   <div><label style={s.label}>Período início</label><input type="date" value={formAtiv.periodo_inicio} onChange={e=>setFormAtiv(f=>({...f,periodo_inicio:e.target.value}))} style={s.input} /></div>
                   <div><label style={s.label}>Período fim</label><input type="date" value={formAtiv.periodo_fim} onChange={e=>setFormAtiv(f=>({...f,periodo_fim:e.target.value}))} style={s.input} /></div>
@@ -832,17 +837,18 @@ export default function PlanosExecucao() {
                 <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhuma atividade prevista cadastrada.</div>
               ) : (
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead><tr>{['Atividade','Descrição','Período','Responsável','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Projeto','Atividade','Descrição','Período','Responsável','Status',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
                   <tbody>
                     {atividades.map(a => (
                       <tr key={a.id}>
+                        <td style={{ ...s.td, fontSize:11, color:'#888780', whiteSpace:'nowrap' }}>{a.projeto?.nome||<span style={{ color:'#D3D1C7' }}>Geral</span>}</td>
                         <td style={{ ...s.td, fontWeight:500 }}>{a.nome_atividade}</td>
-                        <td style={{ ...s.td, color:'#888780', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.descricao||'—'}</td>
+                        <td style={{ ...s.td, color:'#888780', maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.descricao||'—'}</td>
                         <td style={{ ...s.td, fontSize:11, whiteSpace:'nowrap' }}>{a.periodo_inicio ? `${fmtData(a.periodo_inicio)} a ${fmtData(a.periodo_fim)}` : '—'}</td>
                         <td style={s.td}>{a.responsavel_equipe||'—'}</td>
                         <td style={s.td}><span style={s.badge(a.status==='realizada'?'#EAF3DE':a.status==='cancelada'?'#FCEBEB':'#E6F1FB', a.status==='realizada'?'#3B6D11':a.status==='cancelada'?'#A32D2D':'#185FA5')}>{a.status}</span></td>
                         <td style={s.td}>
-                          <button onClick={() => { setFormAtiv({...a, periodo_inicio:a.periodo_inicio||'', periodo_fim:a.periodo_fim||''}); setEditandoAtiv(a.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                          <button onClick={() => { setFormAtiv({...a, periodo_inicio:a.periodo_inicio||'', periodo_fim:a.periodo_fim||'', projeto_id:a.projeto_id||''}); setEditandoAtiv(a.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                           <button onClick={() => excluirAtividade(a.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
                         </td>
                       </tr>
