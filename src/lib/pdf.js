@@ -128,7 +128,7 @@ function htmlRodape() {
   return `
   <div class="rodape">
     <div>${CAPETTE_INFO.endereco} · WhatsApp: ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email} · @${CAPETTE_INFO.instagram}</div>
-    <div class="rodape-sistema">FinOSC Capette · Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="rodape-sistema">AGENDO Integra · Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro</div>
   </div>`
 }
 

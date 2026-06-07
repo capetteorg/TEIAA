@@ -188,6 +188,10 @@ export default function Layout() {
         <div style={{flex:1,overflowY:'auto'}}>
           <Outlet />
         </div>
+        <div style={{padding:'6px 1.25rem',borderTop:'0.5px solid #E0DDD5',background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+          <span style={{fontSize:10,color:'#B4B2A9'}}>AGENDO Integra · CAPETTE — Casa do Pequeno Trabalhador de Teresópolis</span>
+          <span style={{fontSize:10,color:'#D3D1C7'}}>Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro</span>
+        </div>
       </div>
     </div>
   )
