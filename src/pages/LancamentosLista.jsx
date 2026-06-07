@@ -45,7 +45,11 @@ export default function LancamentosLista() {
       if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
       else q = q.eq('tipo', filtroTipo)
     }
-    if (filtroPeriodo) q = q.gte('data', filtroPeriodo+'-01').lte('data', filtroPeriodo+'-31')
+    if (filtroPeriodo) {
+      const [ano, mes] = filtroPeriodo.split('-')
+      const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
+      q = q.gte('data', filtroPeriodo+'-01').lte('data', `${filtroPeriodo}-${ultimoDia}`)
+    }
     if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
     if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
     const { data } = await q
