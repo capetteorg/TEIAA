@@ -109,16 +109,12 @@ export default function Layout() {
         {/* Financeiro */}
         <NavSecao label="Financeiro" />
         <NavItem to="/lancamentos"        icon="list-details"      label="Lançamentos"      visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/pendencias"          icon="alert-triangle"    label="Pendências"       visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
-        <NavItem to="/despesas"           icon="receipt"           label="Lançar despesa"   visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/entradas"           icon="arrow-bar-to-down" label="Lançar entrada"   visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/importar"           icon="upload"            label="Importar extrato" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/pendencias"         icon="alert-triangle"    label="Pendências"       visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
         <NavItem to="/conciliacao"        icon="checks"            label="Conciliação"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/aplicacoes"         icon="chart-line"        label="Aplicações"       visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/controle-dividas"   icon="alert-triangle"    label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
         <NavItem to="/cobrancas"          icon="receipt-2"         label="Cobranças"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
         <NavItem to="/fornecedores"       icon="building-store"    label="Fornecedores"     visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/historico-fornecedor" icon="chart-bar"        label="Hist. fornecedor" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/aplicacoes"         icon="chart-line"        label="Aplicações"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/controle-dividas"   icon="credit-card-off"   label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
 
         {/* Programas e Projetos */}
         <NavSecao label="Programas e Projetos" />
@@ -144,13 +140,13 @@ export default function Layout() {
 
         {/* Configurações */}
         <NavSecao label="Configurações" />
-        <NavItem to="/contas"             icon="building-bank"     label="Contas bancárias" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/categorias"         icon="tag"               label="Categorias"       visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/classificacoes"     icon="list-tree"         label="Classificações"   visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/usuarios"           icon="user-cog"          label="Usuários do sistema" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/fechamento"         icon="lock"              label="Fechamento"       visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/backup"             icon="database-export"   label="Backup"           visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/configuracoes"      icon="settings"          label="Configurações"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/fechamento"         icon="lock"              label="Fechamento"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/configuracoes"      icon="settings"          label="Configurações"       visivel={p==='admin'} onClick={fecharMenu} />
 
       </div>
 
