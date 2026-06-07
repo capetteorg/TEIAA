@@ -173,10 +173,18 @@ ${paisagem ? '@page { size: A4 landscape; margin: 10mm; }' : ''}
 // RELATÓRIO FINANCEIRO GERAL
 // =============================================
 export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
-  const { entradas, saidas, totalEnt, totalSai, saldo, lista } = dados
+  const { entradas, saidas, totalEnt, totalSai, saldo, lista, contaDados } = dados
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const periodoLabel = `${fmtData(dataInicio)} a ${fmtData(dataFim)}`
+
+  const infoConta = contaDados ? `
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+    <div class="info-item"><div class="info-label">Conta</div><div class="info-valor">${contaDados.nome || '—'}</div></div>
+    <div class="info-item"><div class="info-label">Banco</div><div class="info-valor">${contaDados.banco || '—'}</div></div>
+    <div class="info-item"><div class="info-label">Agência</div><div class="info-valor">${contaDados.agencia || '—'}</div></div>
+    <div class="info-item"><div class="info-label">Número da conta</div><div class="info-valor">${contaDados.conta_num || contaDados.numero || '—'}</div></div>
+  </div>` : `<div style="margin-bottom:16px;padding:8px 12px;background:#F8F7F2;border-radius:6px;font-size:10px;color:#888">Todas as contas</div>`
 
   // Agrupar entradas por categoria
   const grupoEnt = {}
@@ -253,6 +261,8 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
     <div class="titulo-principal">Relatório Financeiro</div>
     <div class="titulo-sub">Período: ${periodoLabel}</div>
   </div>
+
+  ${infoConta}
 
   <div class="resumo-box">
     <div class="resumo-titulo">Resumo do Período</div>

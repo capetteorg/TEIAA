@@ -63,6 +63,14 @@ export default function RelatoriosCentral() {
     const { data: movs } = await q
     let lista = movs || []
     if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
+
+    // Buscar dados completos da conta selecionada
+    let contaDados = null
+    if (contaSel !== 'todas') {
+      const { data: c } = await supabase.from('contas').select('*').eq('id', parseInt(contaSel)).single()
+      contaDados = c
+    }
+
     const entradas = lista.filter(m => Number(m.valor) > 0)
     const saidas = lista.filter(m => Number(m.valor) < 0)
     const totalEnt = entradas.reduce((a,m) => a+Number(m.valor), 0)
@@ -74,7 +82,7 @@ export default function RelatoriosCentral() {
       grupoSai[cat].total += Math.abs(Number(m.valor))
       grupoSai[cat].qtd++
     })
-    setDados({ tipo: 'financeiro', entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, grupoSai, lista })
+    setDados({ tipo: 'financeiro', entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, grupoSai, lista, contaDados })
   }
 
   async function gerarExecucao(pId, plId) {
