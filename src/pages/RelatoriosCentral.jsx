@@ -348,7 +348,7 @@ export default function RelatoriosCentral() {
               <input type="date" value={dataFim} onChange={e=>setDataFim(e.target.value)} style={s.input} />
             </div>
           </>)}
-          {(aba !== 'plano_acao' && aba !== 'relat_anual') && (
+          {(aba !== 'plano_acao' && aba !== 'relat_anual' && aba !== 'conciliacao') && (
             <div>
               <label style={s.label}>Projeto</label>
               <select value={projetoSel} onChange={e=>setProjetoSel(e.target.value)} style={s.input}>
@@ -366,12 +366,13 @@ export default function RelatoriosCentral() {
               </select>
             </div>
           )}
-          {aba==='financeiro' && (
+          {(aba==='financeiro'||aba==='conciliacao') && (
             <div>
-              <label style={s.label}>Conta bancária</label>
+              <label style={s.label}>Conta bancária {aba==='conciliacao'?'*':''}</label>
               <select value={contaSel} onChange={e=>setContaSel(e.target.value)} style={s.input}>
-                <option value="todas">Todas as contas</option>
-                {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                {aba==='financeiro' && <option value="todas">Todas as contas</option>}
+                {aba==='conciliacao' && <option value="">Selecione a conta...</option>}
+                {contas.map(c => <option key={c.id} value={c.id}>{c.nome} — {c.banco}</option>)}
               </select>
             </div>
           )}
