@@ -88,50 +88,66 @@ export default function Conciliacao() {
 
   async function salvarPagamentoFuncionario(movId, mov) {
     const { pessoa_id, competencia, valor_mensal, valor_abatimento } = formPagFunc
-    if (!pessoa_id || !competencia) return
+    if (!pessoa_id || !competencia) { alert('Selecione a pessoa e a competência.'); return }
     const pessoa = pessoasRecorrentes.find(p => String(p.id) === String(pessoa_id))
     const valMensal = parseFloat(valor_mensal) || 0
     const valAbat = parseFloat(valor_abatimento) || 0
     const totalMov = Math.abs(Number(mov.valor))
-    if (Math.abs(valMensal + valAbat - totalMov) > 0.01) {
-      alert(`A soma (R$ ${(valMensal+valAbat).toFixed(2)}) deve ser igual ao valor do extrato (R$ ${totalMov.toFixed(2)})`)
+
+    if (valMensal + valAbat > totalMov + 0.01) {
+      alert(`Mensal + Abatimento não pode exceder o valor do extrato (R$ ${totalMov.toFixed(2)})`)
       return
     }
-    const valorMensalDevido = Number(pessoa?.valor_mensal_normal || 0)
-    const valorNaoPago = Math.max(0, valorMensalDevido - valMensal)
 
-    // Buscar saldo atual
-    const { data: movsPessoa } = await supabase.from('divida_movimentacoes').select('tipo,valor').eq('pessoa_id', parseInt(pessoa_id))
-    const saldoAtual = (movsPessoa||[]).reduce((acc, m) => {
+    const valorMensalDevido = Number(pessoa?.valor_mensal_normal || 0)
+
+    // Buscar competência existente para acumular
+    const { data: compExiste } = await supabase.from('competencias_mensais')
+      .select('*').eq('pessoa_id', parseInt(pessoa_id)).eq('competencia', competencia).single()
+
+    const jaPageMensal = Number(compExiste?.valor_pago_mensal || 0)
+    const jaAbateu = Number(compExiste?.valor_abatido_divida || 0)
+
+    const totalPagoMensal = jaPageMensal + valMensal
+    const totalAbatido = jaAbateu + valAbat
+    const valorNaoPago = Math.max(0, valorMensalDevido - totalPagoMensal)
+
+    // Buscar saldo atual (antes de qualquer mudança neste mês)
+    const { data: todasMovs } = await supabase.from('divida_movimentacoes')
+      .select('tipo,valor,competencia').eq('pessoa_id', parseInt(pessoa_id))
+    
+    // Saldo desconsiderando acréscimos deste mês (serão recalculados)
+    const saldoBase = (todasMovs||[]).reduce((acc, m) => {
+      if (m.competencia === competencia && m.tipo === 'acrescimo') return acc // ignora este mês
       if (m.tipo === 'divida_inicial' || m.tipo === 'acrescimo') return acc + Number(m.valor)
       if (m.tipo === 'abatimento') return acc - Number(m.valor)
-      return acc + Number(m.valor)
+      return acc
     }, 0)
-    const saldoFim = Math.max(0, saldoAtual + valorNaoPago - valAbat)
 
-    // Atualizar competência
-    const { data: compExiste } = await supabase.from('competencias_mensais')
-      .select('id').eq('pessoa_id', parseInt(pessoa_id)).eq('competencia', competencia).single()
+    const saldoInicio = Math.max(0, saldoBase)
+    const saldoFim = Math.max(0, saldoBase + valorNaoPago - totalAbatido)
+
+    // Atualizar competência acumulando valores
     if (compExiste) {
       await supabase.from('competencias_mensais').update({
-        valor_pago_mensal: valMensal,
+        valor_pago_mensal: totalPagoMensal,
         valor_nao_pago: valorNaoPago,
-        valor_abatido_divida: valAbat,
-        saldo_divida_inicio: saldoAtual,
+        valor_abatido_divida: totalAbatido,
+        saldo_divida_inicio: saldoInicio,
         saldo_divida_fim: saldoFim,
         extrato_mov_id: movId,
         status: valorNaoPago === 0 ? 'pago' : 'parcial',
       }).eq('id', compExiste.id)
     }
 
-    // Remover TODOS os acréscimos desta competência antes de inserir o correto
+    // Remover acréscimo automático deste mês e recriar com valor correto
     await supabase.from('divida_movimentacoes')
       .delete()
       .eq('pessoa_id', parseInt(pessoa_id))
       .eq('competencia', competencia)
       .eq('tipo', 'acrescimo')
 
-    // Lançar abatimento se houver
+    // Inserir abatimento deste pagamento
     if (valAbat > 0) {
       await supabase.from('divida_movimentacoes').insert({
         pessoa_id: parseInt(pessoa_id), tipo: 'abatimento',
@@ -141,22 +157,29 @@ export default function Conciliacao() {
       })
     }
 
-    // Lançar apenas o que ficou em aberto
+    // Inserir acréscimo com o saldo correto que ficou em aberto no mês
     if (valorNaoPago > 0) {
       await supabase.from('divida_movimentacoes').insert({
         pessoa_id: parseInt(pessoa_id), tipo: 'acrescimo',
         valor: valorNaoPago, data_movimentacao: mov.data, competencia,
-        descricao: `Pagamento parcial ${competencia} — faltaram R$ ${valorNaoPago.toFixed(2)}`,
+        descricao: `${competencia} — pago R$ ${totalPagoMensal.toFixed(2)} de R$ ${valorMensalDevido.toFixed(2)}`,
         extrato_mov_id: movId,
       })
     }
 
-    await supabase.from('extrato_movs').update({ fornecedor: pessoa?.nome, obs_prestacao: `Pagamento ${competencia} — mensal: R$${valMensal.toFixed(2)}, abatimento: R$${valAbat.toFixed(2)}` }).eq('id', movId)
+    await supabase.from('extrato_movs').update({
+      fornecedor: pessoa?.nome,
+      obs_prestacao: `Pgto ${competencia} — mensal: R$${valMensal.toFixed(2)}${valAbat>0?`, abat: R$${valAbat.toFixed(2)}`:''}${valorNaoPago>0?` (faltam R$${valorNaoPago.toFixed(2)})`:''}`,
+    }).eq('id', movId)
+
     setMovs(prev => prev.map(m => m.id === movId ? { ...m, fornecedor: pessoa?.nome } : m))
     setPagFuncAberto(null)
     setFormPagFunc({})
-    setMsg(`✅ Pagamento de ${pessoa?.nome} registrado! Competência ${competencia} atualizada.`)
-    setTimeout(() => setMsg(''), 4000)
+    const msg = valorNaoPago === 0
+      ? `✅ ${pessoa?.nome} — ${competencia} quitado!`
+      : `✅ ${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos em ${competencia}. Faltam R$ ${valorNaoPago.toFixed(2)}.`
+    setMsg(msg)
+    setTimeout(() => setMsg(''), 5000)
   }
 
   async function salvarComplementar(movId) {
