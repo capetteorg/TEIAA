@@ -295,8 +295,8 @@ export default function Conciliacao() {
     setDividirAberto(m.id)
     const metade = Math.round(Math.abs(Number(m.valor)) / 2 * 100) / 100
     setPartesDivisao([
-      { valor: metade, categoria_id: m.categoria_id || '', descricao: '' },
-      { valor: Math.abs(Number(m.valor)) - metade, categoria_id: '', descricao: '' },
+      { valor: metade, categoria_id: m.categoria_id || '', descricao: '', lancamento_id: '' },
+      { valor: Math.abs(Number(m.valor)) - metade, categoria_id: '', descricao: '', lancamento_id: '' },
     ])
   }
 
@@ -312,12 +312,10 @@ export default function Conciliacao() {
       setTimeout(() => setMsg(''), 3000)
       return
     }
-    // Marcar original como dividida
     await supabase.from('extrato_movs').update({ dividida: true, conciliado: true }).eq('id', m.id)
-    // Criar partes
     const sinal = Number(m.valor) >= 0 ? 1 : -1
     for (const parte of partesDivisao) {
-      await supabase.from('extrato_movs').insert({
+      const { data: novaMov } = await supabase.from('extrato_movs').insert({
         extrato_id: m.extrato_id,
         data: m.data,
         descricao: parte.descricao || m.descricao,
@@ -328,10 +326,16 @@ export default function Conciliacao() {
         subcategoria_id: parte.subcategoria_id ? parseInt(parte.subcategoria_id) : null,
         parent_id: m.id,
         conciliado: true,
-      })
+      }).select().single()
+      // Vincular lançamento se selecionado
+      if (parte.lancamento_id && novaMov) {
+        await supabase.from('lancamentos').update({
+          status_lanc: 'conciliado',
+          extrato_mov_id: novaMov.id,
+        }).eq('id', parte.lancamento_id)
+      }
     }
     setDividirAberto(null)
-    // Recarregar movimentações
     const { data } = await supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .eq('extrato_id', extratoSel.id).order('data')
@@ -768,12 +772,59 @@ export default function Conciliacao() {
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>
                             ✂ Dividir movimentação — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
                           </div>
+
+                          {/* Lançamentos não conciliados do mês */}
+                          {(() => {
+                            const mes = m.data?.slice(0,7)
+                            const tipoMov = m.valor >= 0 ? 'entrada' : 'despesa'
+                            const lancNaoConcil = lancamentos.filter(l => !l.extrato_mov_id && l.data?.slice(0,7)===mes && l.tipo===tipoMov)
+                            if (!lancNaoConcil.length) return null
+                            return (
+                              <div style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:12, border:'0.5px solid #B3D1F0' }}>
+                                <div style={{ fontSize:11, fontWeight:600, color:AZUL, marginBottom:8 }}>
+                                  💡 Lançamentos não conciliados em {new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
+                                </div>
+                                {lancNaoConcil.map(l => (
+                                  <div key={l.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'5px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:11 }}>
+                                    <input type="checkbox" checked={partesDivisao.some(p=>p.lancamento_id===l.id)}
+                                      onChange={e => {
+                                        if (e.target.checked) {
+                                          setPartesDivisao(prev => {
+                                            const vazio = prev.findIndex(p => !p.lancamento_id && !p.valor)
+                                            const nova = { valor: Number(l.valor), categoria_id: String(l.categoria_id||''), subcategoria_id: String(l.subcategoria_id||''), descricao: l.descricao, lancamento_id: l.id }
+                                            if (vazio >= 0) return prev.map((p,i) => i===vazio ? nova : p)
+                                            return [...prev, nova]
+                                          })
+                                        } else {
+                                          setPartesDivisao(prev => prev.map(p => p.lancamento_id===l.id ? { ...p, lancamento_id:'' } : p))
+                                        }
+                                      }} />
+                                    <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</span>
+                                    <span style={{ color:'#888780', fontSize:10 }}>{l.categoria?.nome||'—'}</span>
+                                    <span style={{ fontWeight:600, color:VERMELHO }}>{fmt(l.valor)}</span>
+                                  </div>
+                                ))}
+                                <button onClick={() => setPartesDivisao(lancNaoConcil.slice(0,5).map(l => ({ valor: Number(l.valor), categoria_id: String(l.categoria_id||''), subcategoria_id: String(l.subcategoria_id||''), descricao: l.descricao, lancamento_id: l.id })))}
+                                  style={{ ...s.btn('#E6F1FB',AZUL), fontSize:10, marginTop:8 }}>
+                                  Usar todos como partes
+                                </button>
+                              </div>
+                            )
+                          })()}
+
                           {partesDivisao.map((parte, i) => {
                             const subcats = subcatsDa(parte.categoria_id)
                             return (
-                              <div key={i} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'0.5px solid #D3D1C7' }}>
-                                <div style={{ fontSize:11, fontWeight:600, color:AZUL, marginBottom:8 }}>Parte {i+1}</div>
-                                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 2fr auto', gap:8, alignItems:'end' }}>
+                              <div key={i} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:8, border: parte.lancamento_id ? `1px solid ${VERDE}` : '0.5px solid #D3D1C7' }}>
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                                  <span style={{ fontSize:11, fontWeight:600, color:parte.lancamento_id?VERDE:AZUL }}>
+                                    Parte {i+1} {parte.lancamento_id ? '🔗 vinculado ao lançamento' : ''}
+                                  </span>
+                                  {partesDivisao.length > 2 && (
+                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'2px 8px', fontSize:10 }}>✕</button>
+                                  )}
+                                </div>
+                                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 2fr', gap:8 }}>
                                   <div>
                                     <label style={s.label}>Valor (R$) *</label>
                                     <input type="number" step="0.01" value={parte.valor} onChange={e => setPartesDivisao(prev => prev.map((p,j) => j===i?{...p,valor:e.target.value}:p))} style={s.inputCompl} />
@@ -796,14 +847,11 @@ export default function Conciliacao() {
                                     <label style={s.label}>Descrição</label>
                                     <input value={parte.descricao||''} onChange={e => setPartesDivisao(prev => prev.map((p,j) => j===i?{...p,descricao:e.target.value}:p))} placeholder={m.descricao} style={s.inputCompl} />
                                   </div>
-                                  {partesDivisao.length > 2 && (
-                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'6px 10px' }}>✕</button>
-                                  )}
                                 </div>
                               </div>
                             )
                           })}
-                          {/* Totalizador */}
+
                           {(() => {
                             const soma = partesDivisao.reduce((a,p)=>a+(parseFloat(p.valor)||0),0)
                             const original = Math.abs(Number(m.valor))
@@ -816,7 +864,7 @@ export default function Conciliacao() {
                             )
                           })()}
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => setPartesDivisao(prev => [...prev, { valor:'', categoria_id:'', descricao:'' }])} style={s.btn('#E6F1FB',AZUL)}>+ Parte</button>
+                            <button onClick={() => setPartesDivisao(prev => [...prev, { valor:'', categoria_id:'', descricao:'', lancamento_id:'' }])} style={s.btn('#E6F1FB',AZUL)}>+ Parte</button>
                             <button onClick={() => confirmarDivisao(m)} style={s.btn(AZUL)}>✅ Confirmar divisão</button>
                             <button onClick={() => setDividirAberto(null)} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
