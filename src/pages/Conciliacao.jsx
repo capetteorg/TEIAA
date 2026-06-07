@@ -718,7 +718,7 @@ export default function Conciliacao() {
                                     const mensal = Number(pe?.valor_mensal_normal || 0)
                                     const totalMov = Math.abs(Number(m.valor))
                                     const valorMensal = Math.min(totalMov, mensal)
-                                    const valorAbat = Math.max(0, totalMov - valorMensal)
+                                    const valorAbat = Math.round(Math.max(0, totalMov - valorMensal) * 100) / 100
                                     setFormPagFunc(f => ({ 
                                       ...f, 
                                       pessoa_id: pessoaId,
@@ -736,7 +736,7 @@ export default function Conciliacao() {
                                           if (jaPago > 0) {
                                             const faltaMensal = Math.max(0, mensal - jaPago)
                                             const vMensal = Math.min(totalMov, faltaMensal)
-                                            const vAbat = Math.max(0, totalMov - vMensal)
+                                            const vAbat = Math.round(Math.max(0, totalMov - vMensal) * 100) / 100
                                             setFormPagFunc(f => ({ 
                                               ...f, 
                                               valor_mensal: vMensal > 0 ? vMensal : '',
@@ -766,7 +766,7 @@ export default function Conciliacao() {
                                           const jaPago = Number(compData?.valor_pago_mensal || 0)
                                           const faltaMensal = Math.max(0, mensal - jaPago)
                                           const vMensal = Math.min(totalMov, faltaMensal)
-                                          const vAbat = Math.max(0, totalMov - vMensal)
+                                          const vAbat = Math.round(Math.max(0, totalMov - vMensal) * 100) / 100
                                           setFormPagFunc(f => ({
                                             ...f,
                                             valor_mensal: vMensal > 0 ? vMensal : '',
