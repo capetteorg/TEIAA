@@ -288,7 +288,57 @@ export default function Conciliacao() {
     setTimeout(() => setMsg(''), 5000)
   }
 
-  function temDadosCompl(m) {
+  const [dividirAberto, setDividirAberto] = useState(null)
+  const [partesDivisao, setPartesDivisao] = useState([])
+
+  function abrirDivisao(m) {
+    setDividirAberto(m.id)
+    const metade = Math.round(Math.abs(Number(m.valor)) / 2 * 100) / 100
+    setPartesDivisao([
+      { valor: metade, categoria_id: m.categoria_id || '', descricao: '' },
+      { valor: Math.abs(Number(m.valor)) - metade, categoria_id: '', descricao: '' },
+    ])
+  }
+
+  async function confirmarDivisao(m) {
+    const total = partesDivisao.reduce((a, p) => a + (parseFloat(p.valor) || 0), 0)
+    if (Math.abs(total - Math.abs(Number(m.valor))) > 0.01) {
+      setMsg('⚠ A soma das partes deve ser igual ao valor original.')
+      setTimeout(() => setMsg(''), 3000)
+      return
+    }
+    if (partesDivisao.some(p => !p.categoria_id)) {
+      setMsg('⚠ Todas as partes precisam ter categoria.')
+      setTimeout(() => setMsg(''), 3000)
+      return
+    }
+    // Marcar original como dividida
+    await supabase.from('extrato_movs').update({ dividida: true, conciliado: true }).eq('id', m.id)
+    // Criar partes
+    const sinal = Number(m.valor) >= 0 ? 1 : -1
+    for (const parte of partesDivisao) {
+      await supabase.from('extrato_movs').insert({
+        extrato_id: m.extrato_id,
+        data: m.data,
+        descricao: parte.descricao || m.descricao,
+        doc: m.doc,
+        valor: sinal * Math.abs(parseFloat(parte.valor)),
+        tipo: m.tipo,
+        categoria_id: parseInt(parte.categoria_id),
+        subcategoria_id: parte.subcategoria_id ? parseInt(parte.subcategoria_id) : null,
+        parent_id: m.id,
+        conciliado: true,
+      })
+    }
+    setDividirAberto(null)
+    // Recarregar movimentações
+    const { data } = await supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .eq('extrato_id', extratoSel.id).order('data')
+    setMovs(data || [])
+    setMsg('✅ Movimentação dividida com sucesso!')
+    setTimeout(() => setMsg(''), 4000)
+  }
     return !!(m.fornecedor_id||m.num_nota||m.data_documento||m.descricao_produto||m.local_comprovante||m.link_externo||m.bem_permanente||m.despesa_rateada||m.obs_prestacao||m.tipo_receita||m.evento_id||m.campanha_id)
   }
 
@@ -303,6 +353,8 @@ export default function Conciliacao() {
   const planosDisponiveis = extratoSel ? planosDaConta(extratoSel.conta?.id) : []
 
   const movsFiltradas = movs.filter(m => {
+    if (m.dividida) return false // esconde originais divididas
+    if (m.parent_id) return true // sempre mostra partes
     if (filtro==='pendentes') return !m.conciliado
     if (filtro==='conciliados') return m.conciliado
     if (filtro==='sem_dados') return !m.categoria_id
@@ -482,7 +534,8 @@ export default function Conciliacao() {
                     <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(m.data)}</td>
 
                     <td style={{ ...s.td, maxWidth:160 }}>
-                      <div onClick={() => setDescExpandida(descExpandida===m.id?null:m.id)} style={{ cursor:'pointer' }}>
+                      {m.parent_id && <span style={{ fontSize:9, background:'#E6F1FB', color:'#185FA5', padding:'1px 5px', borderRadius:4, marginRight:4 }}>✂ parte</span>}
+                      <div onClick={() => setDescExpandida(descExpandida===m.id?null:m.id)} style={{ cursor:'pointer', display:'inline' }}>
                         {descExpandida===m.id ? (
                           <div style={{ whiteSpace:'normal', wordBreak:'break-all', background:'#F8F7F2', borderRadius:6, padding:'4px 6px', fontSize:11 }}>
                             {m.descricao}<div style={{ marginTop:4, fontSize:10, color:VERDE }}>▲ recolher</div>
@@ -572,6 +625,12 @@ export default function Conciliacao() {
                               style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:temCompl?'#3B6D11':'#2C2C2A' }}>
                               📋 {temCompl?'Dados complementares ✓':'Dados complementares'}
                             </button>
+                            {!m.dividida && (
+                              <button onClick={() => { setMenuAberto(null); abrirDivisao(m) }}
+                                style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:'#185FA5' }}>
+                                ✂ Dividir movimentação
+                              </button>
+                            )}
                             {m.valor<0 && pessoasRecorrentes.length>0 && (
                               <button onClick={() => {
                                 setMenuAberto(null)
@@ -695,6 +754,71 @@ export default function Conciliacao() {
                           <div style={{ display:'flex', gap:8 }}>
                             <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>💾 Salvar</button>
                             <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Divisão de movimentação */}
+                  {dividirAberto===m.id && (
+                    <tr>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                        <div style={{ background:'#E6F1FB', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
+                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>
+                            ✂ Dividir movimentação — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
+                          </div>
+                          {partesDivisao.map((parte, i) => {
+                            const subcats = subcatsDa(parte.categoria_id)
+                            return (
+                              <div key={i} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:8, border:'0.5px solid #D3D1C7' }}>
+                                <div style={{ fontSize:11, fontWeight:600, color:AZUL, marginBottom:8 }}>Parte {i+1}</div>
+                                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 2fr auto', gap:8, alignItems:'end' }}>
+                                  <div>
+                                    <label style={s.label}>Valor (R$) *</label>
+                                    <input type="number" step="0.01" value={parte.valor} onChange={e => setPartesDivisao(prev => prev.map((p,j) => j===i?{...p,valor:e.target.value}:p))} style={s.inputCompl} />
+                                  </div>
+                                  <div>
+                                    <label style={s.label}>Categoria *</label>
+                                    <select value={parte.categoria_id||''} onChange={e => setPartesDivisao(prev => prev.map((p,j) => j===i?{...p,categoria_id:e.target.value,subcategoria_id:''}:p))} style={s.inputCompl}>
+                                      <option value="">Selecione...</option>
+                                      {categorias.filter(c => !c.tipo||c.tipo===(m.valor>=0?'entrada':'despesa')).map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label style={s.label}>Subcategoria</label>
+                                    <select value={parte.subcategoria_id||''} onChange={e => setPartesDivisao(prev => prev.map((p,j) => j===i?{...p,subcategoria_id:e.target.value}:p))} style={s.inputCompl}>
+                                      <option value="">—</option>
+                                      {subcats.map(sc=><option key={sc.id} value={sc.id}>{sc.nome}</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label style={s.label}>Descrição</label>
+                                    <input value={parte.descricao||''} onChange={e => setPartesDivisao(prev => prev.map((p,j) => j===i?{...p,descricao:e.target.value}:p))} placeholder={m.descricao} style={s.inputCompl} />
+                                  </div>
+                                  {partesDivisao.length > 2 && (
+                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'6px 10px' }}>✕</button>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                          {/* Totalizador */}
+                          {(() => {
+                            const soma = partesDivisao.reduce((a,p)=>a+(parseFloat(p.valor)||0),0)
+                            const original = Math.abs(Number(m.valor))
+                            const ok = Math.abs(soma-original)<0.01
+                            return (
+                              <div style={{ fontSize:11, padding:'6px 12px', borderRadius:6, marginBottom:10, background:ok?'#EAF3DE':'#FEF2F2', color:ok?'#3B6D11':'#A32D2D' }}>
+                                Valor original: <strong>{fmt(m.valor)}</strong> · Soma das partes: <strong>R$ {soma.toFixed(2)}</strong>
+                                {ok ? ' ✓ OK' : ` · Diferença: R$ ${Math.abs(soma-original).toFixed(2)}`}
+                              </div>
+                            )
+                          })()}
+                          <div style={{ display:'flex', gap:8 }}>
+                            <button onClick={() => setPartesDivisao(prev => [...prev, { valor:'', categoria_id:'', descricao:'' }])} style={s.btn('#E6F1FB',AZUL)}>+ Parte</button>
+                            <button onClick={() => confirmarDivisao(m)} style={s.btn(AZUL)}>✅ Confirmar divisão</button>
+                            <button onClick={() => setDividirAberto(null)} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>
                       </td>
