@@ -167,74 +167,133 @@ ${paisagem ? '@page { size: A4 landscape; margin: 10mm; }' : ''}
 // =============================================
 // RELATÓRIO FINANCEIRO GERAL
 // =============================================
-export function gerarPDFRelatorio(dados, filtros) {
-  const { totalEnt, totalSai, resultado, grupoEnt, grupoSai, totalMovs } = dados
-  const titulo = filtros.periodo === 'mes'
-    ? new Date(filtros.mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})
-    : filtros.ano
+export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
+  const { entradas, saidas, totalEnt, totalSai, saldo, lista } = dados
 
-  const linhasEnt = Object.entries(grupoEnt).sort((a,b)=>b[1].total-a[1].total).map(([cat,info],i) => {
-    const total = Object.values(grupoEnt).reduce((a,v)=>a+v.total,0)
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const periodoLabel = `${fmtData(dataInicio)} a ${fmtData(dataFim)}`
+
+  // Agrupar entradas por categoria
+  const grupoEnt = {}
+  entradas.forEach(m => {
+    const cat = m.categoria?.nome || 'Sem categoria'
+    if (!grupoEnt[cat]) grupoEnt[cat] = { total: 0, qtd: 0 }
+    grupoEnt[cat].total += Math.abs(Number(m.valor))
+    grupoEnt[cat].qtd++
+  })
+
+  // Agrupar saídas por categoria
+  const grupoSai = {}
+  saidas.forEach(m => {
+    const cat = m.categoria?.nome || 'Sem categoria'
+    if (!grupoSai[cat]) grupoSai[cat] = { total: 0, qtd: 0 }
+    grupoSai[cat].total += Math.abs(Number(m.valor))
+    grupoSai[cat].qtd++
+  })
+
+  // Linhas de resumo entradas
+  const linhasResEnt = Object.entries(grupoEnt).sort((a,b)=>b[1].total-a[1].total).map(([cat,info]) => {
     return `<tr>
       <td>${cat}</td>
       <td class="center">${info.qtd}</td>
       <td class="num verde">${fmt(info.total)}</td>
-      <td class="num">${total>0?Math.round(info.total/total*100):0}%</td>
+      <td class="num">${totalEnt>0?Math.round(info.total/totalEnt*100):0}%</td>
     </tr>`
   }).join('')
 
-  const linhasSai = Object.entries(grupoSai).sort((a,b)=>b[1].total-a[1].total).map(([cat,info]) => {
-    const total = Object.values(grupoSai).reduce((a,v)=>a+v.total,0)
+  // Linhas de resumo saídas
+  const linhasResSai = Object.entries(grupoSai).sort((a,b)=>b[1].total-a[1].total).map(([cat,info]) => {
     return `<tr>
       <td>${cat}</td>
       <td class="center">${info.qtd}</td>
       <td class="num vermelho">${fmt(info.total)}</td>
-      <td class="num">${total>0?Math.round(info.total/total*100):0}%</td>
+      <td class="num">${totalSai>0?Math.round(info.total/totalSai*100):0}%</td>
     </tr>`
   }).join('')
+
+  // Linhas detalhadas de entradas
+  const linhasDetEnt = entradas.map((m, i) => `<tr>
+    <td style="white-space:nowrap">${fmtData(m.data)}</td>
+    <td>${m.categoria?.nome || '—'}</td>
+    <td style="color:#888">${m.subcategoria?.nome || '—'}</td>
+    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao || '—'}</td>
+    <td class="num verde">${fmt(m.valor)}</td>
+  </tr>`).join('')
+
+  // Linhas detalhadas de saídas
+  const linhasDetSai = saidas.map((m, i) => `<tr>
+    <td style="white-space:nowrap">${fmtData(m.data)}</td>
+    <td>${m.categoria?.nome || '—'}</td>
+    <td style="color:#888">${m.subcategoria?.nome || '—'}</td>
+    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao || '—'}</td>
+    <td class="num vermelho">${fmt(Math.abs(Number(m.valor)))}</td>
+  </tr>`).join('')
 
   const html = `
   ${htmlCabecalho()}
   <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório Financeiro Geral</div>
-    <div class="titulo-sub">Período: ${titulo} · Conta: ${filtros.contaNome || 'Todas as contas'}</div>
+    <div class="titulo-principal">Relatório Financeiro</div>
+    <div class="titulo-sub">Período: ${periodoLabel}</div>
   </div>
 
   <div class="resumo-box">
-    <div class="resumo-titulo">Resumo Financeiro</div>
+    <div class="resumo-titulo">Resumo do Período</div>
     <div class="resumo-grid">
       <div class="resumo-item"><div class="resumo-label">Total Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total Gastos</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Resultado</div><div class="resumo-valor ${resultado>=0?'verde':'vermelho'}">${resultado>=0?'+':''}${fmt(resultado)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor azul">${totalMovs}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Total Saídas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Saldo</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${saldo>=0?'+':''}${fmt(saldo)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor azul">${lista.length}</div></div>
     </div>
   </div>
 
   <div class="secao">
-    <div class="secao-titulo">Entradas por Categoria</div>
+    <div class="secao-titulo">Resumo — Entradas por Categoria</div>
     <table>
       <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
       <tbody>
-        ${linhasEnt || '<tr><td colspan="4" style="text-align:center;color:#888">Sem dados</td></tr>'}
-        <tr class="total-row"><td><strong>TOTAL DE ENTRADAS</strong></td><td></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr>
+        ${linhasResEnt || '<tr><td colspan="4" style="text-align:center;color:#888">Sem dados</td></tr>'}
+        <tr class="total-row"><td><strong>TOTAL ENTRADAS</strong></td><td></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="secao">
-    <div class="secao-titulo">Gastos por Categoria</div>
+    <div class="secao-titulo">Resumo — Saídas por Categoria</div>
     <table>
       <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
       <tbody>
-        ${linhasSai || '<tr><td colspan="4" style="text-align:center;color:#888">Sem dados</td></tr>'}
-        <tr class="total-row"><td><strong>TOTAL DE GASTOS</strong></td><td></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr>
+        ${linhasResSai || '<tr><td colspan="4" style="text-align:center;color:#888">Sem dados</td></tr>'}
+        <tr class="total-row"><td><strong>TOTAL SAÍDAS</strong></td><td></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr>
       </tbody>
     </table>
   </div>
 
+  <div class="secao" style="page-break-before:always">
+    <div class="secao-titulo">Detalhamento — Entradas (${entradas.length})</div>
+    <table>
+      <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+      <tbody>
+        ${linhasDetEnt || '<tr><td colspan="5" style="text-align:center;color:#888">Sem entradas no período</td></tr>'}
+        <tr class="total-row"><td colspan="4"><strong>TOTAL ENTRADAS</strong></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="secao" style="page-break-before:always">
+    <div class="secao-titulo">Detalhamento — Saídas (${saidas.length})</div>
+    <table>
+      <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+      <tbody>
+        ${linhasDetSai || '<tr><td colspan="5" style="text-align:center;color:#888">Sem saídas no período</td></tr>'}
+        <tr class="total-row"><td colspan="4"><strong>TOTAL SAÍDAS</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  ${htmlAssinaturas(['Responsável Financeiro', 'Representante Legal', 'Contador'])}
   ${htmlRodape()}`
 
-  abrirImpressao(html, 'Relatório Financeiro Geral')
+  abrirImpressao(html, 'Relatório Financeiro', true)
 }
 
 // =============================================

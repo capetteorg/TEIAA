@@ -58,7 +58,7 @@ export default function RelatoriosCentral() {
 
   async function gerarFinanceiro(pId) {
     let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, competencia, conta:contas(nome))')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome))')
       .gte('data', dataInicio).lte('data', dataFim).order('data')
     const { data: movs } = await q
     let lista = movs || []
@@ -642,13 +642,14 @@ export default function RelatoriosCentral() {
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Todas as movimentações ({dados.lista.length})</div>
               <div style={{ maxHeight:400, overflowY:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead style={{ position:'sticky', top:0 }}><tr>{['Data','Descrição','Categoria','Valor'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <thead style={{ position:'sticky', top:0 }}><tr>{['Data','Categoria','Subcategoria','Descrição','Valor'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
                   <tbody>
                     {dados.lista.map((m,i) => (
                       <tr key={m.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                         <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(m.data)}</td>
-                        <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.descricao}</td>
-                        <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.categoria?.nome||'—'}</td>
+                        <td style={{ ...s.td, fontSize:11 }}>{m.categoria?.nome||'—'}</td>
+                        <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.subcategoria?.nome||'—'}</td>
+                        <td style={{ ...s.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:'#888780' }}>{m.descricao}</td>
                         <td style={{ ...s.td, color:Number(m.valor)>=0?VERDE:VERMELHO, fontWeight:500, textAlign:'right' }}>{fmt(m.valor)}</td>
                       </tr>
                     ))}
