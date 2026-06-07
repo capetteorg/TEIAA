@@ -65,6 +65,7 @@ export default function RelatoriosCentral() {
     const { data: movs } = await q
     let lista = movs || []
     if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
+    lista = lista.filter(m => !m.dividida) // excluir originais divididas
     let contaDados = null
     if (contaSel !== 'todas') {
       const { data: c } = await supabase.from('contas').select('*').eq('id', parseInt(contaSel)).single()
@@ -84,6 +85,7 @@ export default function RelatoriosCentral() {
     const { data: movs } = await q
     let lista = movs || []
     if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
+    lista = lista.filter(m => !m.dividida) // excluir originais divididas
 
     // Buscar dados completos da conta selecionada
     let contaDados = null
