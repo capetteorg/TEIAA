@@ -184,12 +184,14 @@ export default function LancamentosLista() {
                         {l.tipo==='entrada'?'+':'-'}{fmt(l.valor)}
                       </td>
                       <td style={s.td}>
-                        <span style={s.badge(
-                          l.conciliado ? '#EAF3DE' : l.status_lanc === 'lancado' ? '#E6F1FB' : '#F1EFE8',
-                          l.conciliado ? '#3B6D11' : l.status_lanc === 'lancado' ? '#185FA5' : '#888780'
-                        )}>
-                          {l.conciliado ? '✓ Conciliado' : l.status_lanc === 'lancado' ? 'Lançado' : 'Pendente'}
-                        </span>
+                        {(() => {
+                          const isConciliado = l.conciliado === true || l.status_lanc === 'conciliado'
+                          const isLancado = l.status_lanc === 'lancado'
+                          const bg = isConciliado ? '#EAF3DE' : isLancado ? '#E6F1FB' : '#F1EFE8'
+                          const cor = isConciliado ? '#3B6D11' : isLancado ? '#185FA5' : '#888780'
+                          const label = isConciliado ? '✓ Conciliado' : isLancado ? 'Lançado' : 'Pendente'
+                          return <span style={s.badge(bg, cor)}>{label}</span>
+                        })()}
                       </td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:4 }}>
