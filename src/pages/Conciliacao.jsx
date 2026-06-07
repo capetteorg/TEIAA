@@ -20,6 +20,7 @@ export default function Conciliacao() {
   const [fornecedores, setFornecedores] = useState([])
   const [pessoasRecorrentes, setPessoasRecorrentes] = useState([])
   const [menuAberto, setMenuAberto] = useState(null)
+  const [pagFuncAberto, setPagFuncAberto] = useState(null)
   const [formPagFunc, setFormPagFunc] = useState({})
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
