@@ -714,7 +714,6 @@ export default function Conciliacao() {
                                   <select value={formPagFunc.pessoa_id||''} onChange={async e => {
                                     const pe = pessoasRecorrentes.find(p => String(p.id) === e.target.value)
                                     const comp = formPagFunc.competencia || m.data?.slice(0,7) || ''
-                                    // Buscar quanto já foi pago neste mês
                                     let jaPagoMensal = 0
                                     if (pe && comp) {
                                       const { data: compData } = await supabase.from('competencias_mensais')
@@ -726,7 +725,14 @@ export default function Conciliacao() {
                                     const faltaMensal = Math.max(0, mensal - jaPagoMensal)
                                     const valorMensal = Math.min(totalMov, faltaMensal)
                                     const valorAbat = Math.max(0, totalMov - valorMensal)
-                                    setFormPagFunc(f => ({ ...f, pessoa_id: e.target.value, valor_mensal: valorMensal || '', valor_abatimento: valorAbat || '', ja_pago_mensal: jaPagoMensal }))
+                                    setFormPagFunc(f => ({ 
+                                      ...f, 
+                                      pessoa_id: e.target.value, 
+                                      competencia: comp,
+                                      valor_mensal: valorMensal > 0 ? valorMensal : '', 
+                                      valor_abatimento: valorAbat > 0 ? valorAbat : '', 
+                                      ja_pago_mensal: jaPagoMensal 
+                                    }))
                                   }} style={s.inputCompl}>
                                     <option value="">Selecione...</option>
                                     {pessoasRecorrentes.map(pe => <option key={pe.id} value={pe.id}>{pe.nome} — Mensal: R$ {Number(pe.valor_mensal_normal||0).toFixed(2)}</option>)}
