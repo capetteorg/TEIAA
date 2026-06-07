@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import ConciliacaoInteligente from './ConciliacaoInteligente'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
@@ -7,6 +8,7 @@ const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 const TIPOS_RECEITA = ['Repasse da emenda', 'Rendimento de aplicação', 'Estorno', 'Devolução recebida', 'Outra entrada']
 
 export default function Conciliacao() {
+  const navigate = useNavigate()
   const [extratos, setExtratos] = useState([])
   const [extratoSel, setExtratoSel] = useState(null)
   const [movs, setMovs] = useState([])
@@ -186,12 +188,21 @@ export default function Conciliacao() {
 
       {abaConcil === 'manual' && (
         <>
-          <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Conciliação bancária</div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
+            <div style={{ fontSize:15, fontWeight:500 }}>Conciliação bancária</div>
+            <button onClick={() => navigate('/importar')} style={{ fontSize:12, padding:'7px 14px', borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer', fontWeight:500 }}>
+              ↑ Importar extrato
+            </button>
+          </div>
           {extratos.length === 0 ? (
             <div style={{ ...s.card, textAlign: 'center', padding: '3rem', color: '#888780' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
               <div style={{ fontSize: 13 }}>Nenhum extrato importado ainda.</div>
-              <div style={{ fontSize: 12, marginTop: 4 }}>Vá em <strong>Importar extrato</strong> para começar.</div>
+              <div style={{ fontSize: 12, marginTop: 8 }}>
+                <button onClick={() => navigate('/importar')} style={{ fontSize:12, padding:'7px 16px', borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>
+                  Importar primeiro extrato →
+                </button>
+              </div>
             </div>
           ) : (
             <div style={s.card}>
