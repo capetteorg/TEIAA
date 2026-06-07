@@ -454,10 +454,12 @@ export default function Conciliacao() {
                 <tr>
                   <th style={s.th}>Data</th>
                   <th style={s.th}>Descrição</th>
+                  <th style={s.th}>Doc</th>
                   <th style={s.th}>Categoria</th>
                   <th style={s.th}>Subcategoria</th>
                   {isRateio && <th style={s.th}>Educ%</th>}
                   {isRateio && <th style={s.th}>Social%</th>}
+                  {isRateio && <th style={s.th}>Saúde%</th>}
                   {isEmenda && <th style={s.th}>Plano de trabalho</th>}
                   <th style={s.th}>Dados compl.</th>
                   <th style={s.th}>Valor</th>
@@ -471,7 +473,7 @@ export default function Conciliacao() {
                 )}
                 {movsFiltradas.map(m => {
                   const subcats = m.categoria_id ? subcatsDa(m.categoria_id) : []
-                  const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0)
+                  const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0) + (parseFloat(m.prep_saude)||0)
                   const prepOk = !isRateio || totalPrep === 100 || totalPrep === 0
                   const temCompl = temDadosCompl(m)
                   const isAberto = complementarAberto === m.id
@@ -497,6 +499,10 @@ export default function Conciliacao() {
                           </div>
                         </td>
 
+                        <td style={s.td}>
+                          <span style={{ fontSize: 10, background: '#F1EFE8', color: '#5F5E5A', padding: '1px 5px', borderRadius: 4, fontFamily: 'monospace' }}>{m.doc}</span>
+                        </td>
+
                         <td style={{ ...s.td, minWidth: 140 }}>
                           <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)} style={s.select}>
                             <option value="">Selecione...</option>
@@ -519,6 +525,7 @@ export default function Conciliacao() {
                           <>
                             <td style={s.td}><input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
                             <td style={s.td}><input type="number" min="0" max="100" value={m.prep_social || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_social', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
+                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_saude || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_saude', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
                           </>
                         )}
 
@@ -704,9 +711,22 @@ export default function Conciliacao() {
                               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
                                 <div>
                                   <label style={s.label}>Pessoa *</label>
-                                  <select value={formPagFunc.pessoa_id||''} onChange={e => {
+                                  <select value={formPagFunc.pessoa_id||''} onChange={async e => {
                                     const pe = pessoasRecorrentes.find(p => String(p.id) === e.target.value)
-                                    setFormPagFunc(f => ({ ...f, pessoa_id: e.target.value, valor_mensal: pe?.valor_mensal_normal||f.valor_mensal }))
+                                    const comp = formPagFunc.competencia || m.data?.slice(0,7) || ''
+                                    // Buscar quanto já foi pago neste mês
+                                    let jaPagoMensal = 0
+                                    if (pe && comp) {
+                                      const { data: compData } = await supabase.from('competencias_mensais')
+                                        .select('valor_pago_mensal').eq('pessoa_id', pe.id).eq('competencia', comp).single()
+                                      jaPagoMensal = Number(compData?.valor_pago_mensal || 0)
+                                    }
+                                    const mensal = Number(pe?.valor_mensal_normal || 0)
+                                    const totalMov = Math.abs(Number(m.valor))
+                                    const faltaMensal = Math.max(0, mensal - jaPagoMensal)
+                                    const valorMensal = Math.min(totalMov, faltaMensal)
+                                    const valorAbat = Math.max(0, totalMov - valorMensal)
+                                    setFormPagFunc(f => ({ ...f, pessoa_id: e.target.value, valor_mensal: valorMensal || '', valor_abatimento: valorAbat || '', ja_pago_mensal: jaPagoMensal }))
                                   }} style={s.inputCompl}>
                                     <option value="">Selecione...</option>
                                     {pessoasRecorrentes.map(pe => <option key={pe.id} value={pe.id}>{pe.nome} — Mensal: R$ {Number(pe.valor_mensal_normal||0).toFixed(2)}</option>)}
@@ -714,9 +734,40 @@ export default function Conciliacao() {
                                 </div>
                                 <div>
                                   <label style={s.label}>Competência (mês de referência) *</label>
-                                  <input type="month" value={formPagFunc.competencia||''} onChange={e=>setFormPagFunc(f=>({...f,competencia:e.target.value}))} style={s.inputCompl} />
+                                  <input type="month" value={formPagFunc.competencia||''} onChange={async e => {
+                                    const comp = e.target.value
+                                    const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
+                                    let jaPagoMensal = 0
+                                    if (pe && comp) {
+                                      const { data: compData } = await supabase.from('competencias_mensais')
+                                        .select('valor_pago_mensal').eq('pessoa_id', pe.id).eq('competencia', comp).single()
+                                      jaPagoMensal = Number(compData?.valor_pago_mensal || 0)
+                                    }
+                                    const mensal = Number(pe?.valor_mensal_normal || 0)
+                                    const totalMov = Math.abs(Number(m.valor))
+                                    const faltaMensal = Math.max(0, mensal - jaPagoMensal)
+                                    const valorMensal = Math.min(totalMov, faltaMensal)
+                                    const valorAbat = Math.max(0, totalMov - valorMensal)
+                                    setFormPagFunc(f => ({ ...f, competencia: comp, valor_mensal: valorMensal || '', valor_abatimento: valorAbat || '', ja_pago_mensal: jaPagoMensal }))
+                                  }} style={s.inputCompl} />
                                 </div>
                               </div>
+
+                              {/* Info do que já foi pago no mês */}
+                              {formPagFunc.pessoa_id && formPagFunc.competencia && (
+                                (() => {
+                                  const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
+                                  const mensal = Number(pe?.valor_mensal_normal || 0)
+                                  const jaPago = Number(formPagFunc.ja_pago_mensal || 0)
+                                  const falta = Math.max(0, mensal - jaPago)
+                                  return jaPago > 0 ? (
+                                    <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:8, background:'#E6F1FB', color:'#185FA5' }}>
+                                      📊 Já pago neste mês: <strong>R$ {jaPago.toFixed(2)}</strong> de R$ {mensal.toFixed(2)} · Falta: <strong>R$ {falta.toFixed(2)}</strong>
+                                    </div>
+                                  ) : null
+                                })()
+                              )}
+
                               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
                                 <div>
                                   <label style={s.label}>💼 Ano corrente — salário/serviço mensal (R$)</label>
@@ -729,13 +780,22 @@ export default function Conciliacao() {
                               </div>
                               {(() => {
                                 const totalMov = Math.abs(Number(m.valor))
-                                const soma = (parseFloat(formPagFunc.valor_mensal)||0) + (parseFloat(formPagFunc.valor_abatimento)||0)
-                                const diff = Math.abs(soma - totalMov)
-                                const ok = diff < 0.01
+                                const valMens = parseFloat(formPagFunc.valor_mensal)||0
+                                const valAbat = parseFloat(formPagFunc.valor_abatimento)||0
+                                const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
+                                const mensal = Number(pe?.valor_mensal_normal||0)
+                                const jaPago = Number(formPagFunc.ja_pago_mensal||0)
+                                const naoPago = Math.max(0, mensal - jaPago - valMens)
+                                const excede = valMens + valAbat > totalMov + 0.01
                                 return (
-                                  <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:10, background:ok?'#EAF3DE':'#FEF2F2', color:ok?'#3B6D11':'#A32D2D' }}>
-                                    Valor do extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Classificado: <strong>R$ {soma.toFixed(2)}</strong>
-                                    {ok ? ' ✓ OK' : ` · Faltam R$ ${diff.toFixed(2)}`}
+                                  <div style={{ fontSize:11, padding:'8px 12px', borderRadius:6, marginBottom:10, background:excede?'#FEF2F2':'#E6F1FB', color:excede?'#A32D2D':'#185FA5' }}>
+                                    <div>Valor do extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Mensal: <strong>R$ {valMens.toFixed(2)}</strong> · Abatimento: <strong>R$ {valAbat.toFixed(2)}</strong></div>
+                                    {pe && !excede && <div style={{ marginTop:4, color:naoPago>0?'#854F0B':'#3B6D11', fontWeight:500 }}>
+                                      {naoPago > 0
+                                        ? `⚠ Após este pagamento ainda faltam R$ ${naoPago.toFixed(2)} no mês`
+                                        : '✓ Mês integralmente pago'}
+                                    </div>}
+                                    {excede && <div style={{ marginTop:4, fontWeight:600 }}>⛔ Soma excede o valor do extrato</div>}
                                   </div>
                                 )
                               })()}
