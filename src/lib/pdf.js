@@ -24,80 +24,85 @@ const CAPETTE_INFO = {
 // CSS base para todos os relatórios
 const CSS_BASE = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 11px; color: #1a1a1a; padding: 20px; }
-  
+  body { font-family: 'Arial', sans-serif; font-size: 11px; color: #2C2C2A; padding: 20px; background: #fff; }
+
   /* Cabeçalho */
-  .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #2C2C2A; }
+  .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 3px solid #6BBF2B; }
   .cab-esq { display: flex; flex-direction: column; gap: 2px; }
   .cab-logo { display: flex; gap: 1px; align-items: center; margin-bottom: 2px; }
   .cab-logo span { font-size: 20px; font-weight: 900; line-height: 1; }
   .cab-desde { font-size: 9px; color: #888; }
-  .cab-dir { text-align: right; font-size: 10px; color: #444; }
-  .cab-dir strong { font-size: 12px; color: #1a1a1a; display: block; margin-bottom: 2px; }
-  .cab-dir .cnpj { font-size: 11px; color: #1a1a1a; margin-bottom: 4px; }
-  .cab-registros { font-size: 8px; color: #888; line-height: 1.4; text-align: right; }
+  .cab-dir { text-align: right; font-size: 9px; color: #666; max-width: 380px; }
+  .cab-dir strong { font-size: 13px; color: #2C2C2A; display: block; margin-bottom: 3px; }
+  .cab-dir .cnpj { font-size: 10px; font-weight: 600; color: #2C2C2A; margin-bottom: 4px; }
+  .cab-registros { font-size: 8px; color: #999; line-height: 1.5; text-align: right; }
 
   /* Título */
-  .titulo-bloco { text-align: center; margin-bottom: 14px; }
-  .titulo-principal { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; }
-  .titulo-sub { font-size: 11px; color: #444; margin-top: 2px; }
+  .titulo-bloco { text-align: center; margin-bottom: 16px; padding: 12px; background: linear-gradient(135deg, #F2FAE8, #E6F1FB); border-radius: 8px; border: 1px solid #C0DD97; }
+  .titulo-principal { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #2C2C2A; }
+  .titulo-sub { font-size: 11px; color: #5F5E5A; margin-top: 3px; }
   .titulo-status { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; margin-top: 4px; }
   .status-preliminar { background: #FAEEDA; color: #854F0B; }
   .status-final { background: #EAF3DE; color: #3B6D11; }
-  .status-pendencias { background: #FEF2F2; color: #A32D2D; }
 
   /* Info do relatório */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 10px; }
   .info-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 10px; }
-  .info-item { background: #F8F7F2; border-radius: 4px; padding: 5px 8px; }
-  .info-label { color: #888; font-size: 9px; margin-bottom: 1px; }
-  .info-valor { font-weight: 600; color: #1a1a1a; }
+  .info-item { background: #F8F7F2; border-radius: 6px; padding: 6px 10px; border: 0.5px solid #E0DDD5; }
+  .info-label { color: #888; font-size: 8px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .3px; }
+  .info-valor { font-weight: 600; color: #2C2C2A; }
 
   /* Resumo financeiro */
-  .resumo-box { border: 1px solid #E0DDD5; border-radius: 6px; padding: 10px; margin-bottom: 14px; }
-  .resumo-titulo { font-size: 11px; font-weight: 700; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #E0DDD5; }
-  .resumo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
-  .resumo-item { text-align: center; }
-  .resumo-label { font-size: 9px; color: #888; margin-bottom: 2px; }
-  .resumo-valor { font-size: 13px; font-weight: 700; }
+  .resumo-box { border: 1px solid #C0DD97; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; background: #F2FAE8; }
+  .resumo-titulo { font-size: 11px; font-weight: 700; margin-bottom: 10px; color: #3B6D11; text-transform: uppercase; letter-spacing: .3px; }
+  .resumo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .resumo-item { text-align: center; background: #fff; border-radius: 6px; padding: 8px 6px; border: 0.5px solid #E0DDD5; }
+  .resumo-label { font-size: 8px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .3px; }
+  .resumo-valor { font-size: 14px; font-weight: 700; }
   .verde { color: #3B6D11; }
   .vermelho { color: #A32D2D; }
   .azul { color: #185FA5; }
 
   /* Seção */
-  .secao { margin-bottom: 16px; }
-  .secao-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; padding: 4px 8px; background: #F8F7F2; border-left: 3px solid #2C2C2A; letter-spacing: .3px; }
+  .secao { margin-bottom: 18px; }
+  .secao-titulo { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; padding: 5px 10px; background: #2C2C2A; color: #fff; border-radius: 4px; display: flex; align-items: center; gap: 6px; }
+  .secao-titulo-verde { background: #3B6D11; }
+  .secao-titulo-vermelho { background: #A32D2D; }
+  .secao-titulo-azul { background: #185FA5; }
 
   /* Tabelas */
   table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 8px; }
-  thead { background: #2C2C2A; color: #fff; }
-  th { padding: 5px 6px; text-align: left; font-size: 9px; font-weight: 600; letter-spacing: .2px; }
-  td { padding: 4px 6px; border-bottom: 0.5px solid #E0DDD5; vertical-align: top; }
-  tr:nth-child(even) { background: #FAFAF8; }
-  .total-row { background: #F1EFE8 !important; font-weight: 700; }
-  .total-row td { border-top: 1px solid #D3D1C7; }
+  thead tr { background: #F8F7F2; }
+  th { padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; color: #5F5E5A; border-bottom: 2px solid #E0DDD5; letter-spacing: .2px; text-transform: uppercase; }
+  td { padding: 5px 8px; border-bottom: 0.5px solid #F1EFE8; vertical-align: top; }
+  tr:nth-child(even) td { background: #FAFAF8; }
+  .total-row td { background: #F8F7F2 !important; font-weight: 700; border-top: 1.5px solid #D3D1C7; border-bottom: none; }
   .num { text-align: right; }
   .center { text-align: center; }
 
+  /* Extrato — linha verde (entrada) */
+  .ext-entrada td { border-left: 3px solid #6BBF2B; }
+  /* Extrato — linha vermelha (saída) */
+  .ext-saida td { border-left: 3px solid #E8212A; }
+
   /* Alertas */
-  .alerta { padding: 8px 10px; border-radius: 4px; margin-bottom: 10px; font-size: 10px; }
+  .alerta { padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; font-size: 10px; }
   .alerta-critico { background: #FEF2F2; border-left: 3px solid #E8212A; color: #A32D2D; }
   .alerta-aviso { background: #FAEEDA; border-left: 3px solid #F4821F; color: #854F0B; }
   .alerta-ok { background: #EAF3DE; border-left: 3px solid #6BBF2B; color: #3B6D11; }
 
   /* Assinaturas */
-  .assinaturas { margin-top: 24px; padding-top: 12px; border-top: 1px solid #E0DDD5; }
-  .assin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 12px; }
+  .assinaturas { margin-top: 28px; padding-top: 14px; border-top: 1.5px solid #E0DDD5; }
+  .assin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 14px; }
   .assin-item { text-align: center; }
-  .assin-linha { border-bottom: 1px solid #1a1a1a; margin-bottom: 4px; height: 30px; }
-  .assin-label { font-size: 9px; color: #444; }
+  .assin-linha { border-bottom: 1px solid #2C2C2A; margin-bottom: 5px; height: 32px; }
+  .assin-label { font-size: 9px; color: #444; font-weight: 600; }
   .assin-cargo { font-size: 9px; color: #888; }
 
   /* Rodapé */
-  .rodape { margin-top: 16px; padding-top: 8px; border-top: 1px solid #E0DDD5; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #888; }
+  .rodape { margin-top: 18px; padding-top: 10px; border-top: 1px solid #E0DDD5; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #888; }
   .rodape-sistema { font-size: 8px; color: #aaa; }
 
-  /* Paisagem */
   @page { margin: 15mm; }
   @media print { body { padding: 0; } .no-print { display: none; } }
 `
@@ -229,6 +234,19 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
     <td class="num vermelho">${fmt(Math.abs(Number(m.valor)))}</td>
   </tr>`).join('')
 
+  // Linhas do extrato cronológico
+  const linhasExtrato = lista.map((m) => {
+    const isEnt = Number(m.valor) > 0
+    return `<tr class="${isEnt ? 'ext-entrada' : 'ext-saida'}">
+      <td style="white-space:nowrap">${fmtData(m.data)}</td>
+      <td style="font-weight:600;color:${isEnt?'#3B6D11':'#A32D2D'}">${isEnt ? '↑ Entrada' : '↓ Saída'}</td>
+      <td>${m.categoria?.nome || '—'}</td>
+      <td style="color:#888;font-size:9px">${m.subcategoria?.nome || '—'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px">${m.descricao || '—'}</td>
+      <td class="num" style="font-weight:700;color:${isEnt?'#3B6D11':'#A32D2D'}">${isEnt ? '+' : '-'} ${fmt(Math.abs(Number(m.valor)))}</td>
+    </tr>`
+  }).join('')
+
   const html = `
   ${htmlCabecalho()}
   <div class="titulo-bloco">
@@ -247,29 +265,29 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
   </div>
 
   <div class="secao">
-    <div class="secao-titulo">Resumo — Entradas por Categoria</div>
+    <div class="secao-titulo secao-titulo-verde">▲ Entradas por Categoria</div>
     <table>
       <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
       <tbody>
-        ${linhasResEnt || '<tr><td colspan="4" style="text-align:center;color:#888">Sem dados</td></tr>'}
+        ${linhasResEnt || '<tr><td colspan="4" style="text-align:center;color:#888">Sem entradas</td></tr>'}
         <tr class="total-row"><td><strong>TOTAL ENTRADAS</strong></td><td></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="secao">
-    <div class="secao-titulo">Resumo — Saídas por Categoria</div>
+    <div class="secao-titulo secao-titulo-vermelho">▼ Saídas por Categoria</div>
     <table>
       <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
       <tbody>
-        ${linhasResSai || '<tr><td colspan="4" style="text-align:center;color:#888">Sem dados</td></tr>'}
+        ${linhasResSai || '<tr><td colspan="4" style="text-align:center;color:#888">Sem saídas</td></tr>'}
         <tr class="total-row"><td><strong>TOTAL SAÍDAS</strong></td><td></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="secao" style="page-break-before:always">
-    <div class="secao-titulo">Detalhamento — Entradas (${entradas.length})</div>
+    <div class="secao-titulo secao-titulo-verde">▲ Detalhamento de Entradas (${entradas.length})</div>
     <table>
       <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
       <tbody>
@@ -280,12 +298,26 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
   </div>
 
   <div class="secao" style="page-break-before:always">
-    <div class="secao-titulo">Detalhamento — Saídas (${saidas.length})</div>
+    <div class="secao-titulo secao-titulo-vermelho">▼ Detalhamento de Saídas (${saidas.length})</div>
     <table>
       <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
       <tbody>
         ${linhasDetSai || '<tr><td colspan="5" style="text-align:center;color:#888">Sem saídas no período</td></tr>'}
         <tr class="total-row"><td colspan="4"><strong>TOTAL SAÍDAS</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="secao" style="page-break-before:always">
+    <div class="secao-titulo secao-titulo-azul">⇅ Extrato Cronológico — Todas as Movimentações (${lista.length})</div>
+    <table>
+      <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+      <tbody>
+        ${linhasExtrato || '<tr><td colspan="6" style="text-align:center;color:#888">Sem movimentações</td></tr>'}
+        <tr class="total-row">
+          <td colspan="5"><strong>SALDO DO PERÍODO</strong></td>
+          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':''}${fmt(saldo)}</strong></td>
+        </tr>
       </tbody>
     </table>
   </div>
