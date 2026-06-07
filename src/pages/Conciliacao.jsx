@@ -49,6 +49,8 @@ export default function Conciliacao() {
     setExtratos(data || [])
   }
 
+  const [movsDivida, setMovsDivida] = useState({}) // extrato_mov_id -> {pessoa, competencia, valor_mensal, valor_abatimento}
+
   async function abrirExtrato(ext) {
     setLoading(true)
     setExtratoSel(ext)
@@ -59,6 +61,33 @@ export default function Conciliacao() {
       .order('data')
     if (error) console.error('Erro ao buscar movimentações:', error)
     setMovs(data || [])
+
+    // Buscar movimentações de dívida vinculadas a este extrato
+    const ids = (data || []).map(m => m.id)
+    if (ids.length > 0) {
+      const { data: divMovs } = await supabase
+        .from('divida_movimentacoes')
+        .select('*, pessoa:pessoas_recorrentes(id,nome,valor_mensal_normal)')
+        .in('extrato_mov_id', ids)
+      const mapa = {}
+      ;(divMovs || []).forEach(dm => {
+        if (!mapa[dm.extrato_mov_id]) mapa[dm.extrato_mov_id] = { pessoa: dm.pessoa, competencia: dm.competencia, abatimento: 0, mensal_nao_pago: 0 }
+        if (dm.tipo === 'abatimento') mapa[dm.extrato_mov_id].abatimento += Number(dm.valor)
+        if (dm.tipo === 'acrescimo') mapa[dm.extrato_mov_id].mensal_nao_pago += Number(dm.valor)
+      })
+      // Buscar valor pago mensal das competências
+      for (const movId of Object.keys(mapa)) {
+        const info = mapa[movId]
+        if (info.pessoa && info.competencia) {
+          const { data: comp } = await supabase.from('competencias_mensais')
+            .select('valor_pago_mensal').eq('pessoa_id', info.pessoa.id).eq('competencia', info.competencia).single()
+          info.valor_pago_mensal = Number(comp?.valor_pago_mensal || 0)
+        }
+      }
+      setMovsDivida(mapa)
+    } else {
+      setMovsDivida({})
+    }
     setLoading(false)
   }
 
@@ -535,7 +564,7 @@ export default function Conciliacao() {
                           <div style={{ position:'relative' }}>
                             <button onClick={() => setMenuAberto(menuAberto === m.id ? null : m.id)}
                               style={{ ...s.btn(temCompl||m.fornecedor?'#EAF3DE':'#F1EFE8', temCompl||m.fornecedor?'#3B6D11':'#5F5E5A'), fontSize:10 }}>
-                              {temCompl||m.fornecedor ? '✓ Ações' : '⋯ Ações'}
+                              {temCompl||m.fornecedor ? '✓' : '⋯'} Ações {movsDivida[m.id] ? '👤' : ''}
                             </button>
                             {menuAberto === m.id && (
                               <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
@@ -701,6 +730,22 @@ export default function Conciliacao() {
                               <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:'#8B2FC9' }}>
                                 👤 Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
                               </div>
+
+                              {/* Resumo se já foi lançado */}
+                              {movsDivida[m.id] && (
+                                <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
+                                  <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}>✅ Pagamento já registrado</div>
+                                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8, fontSize:11 }}>
+                                    <div><span style={{ color:'#888780' }}>Pessoa:</span> <strong>{movsDivida[m.id].pessoa?.nome||'—'}</strong></div>
+                                    <div><span style={{ color:'#888780' }}>Competência:</span> <strong>{movsDivida[m.id].competencia ? new Date(movsDivida[m.id].competencia+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'}</strong></div>
+                                    <div><span style={{ color:'#888780' }}>💼 Ano corrente:</span> <strong style={{ color:'#185FA5' }}>R$ {Number(movsDivida[m.id].valor_pago_mensal||0).toFixed(2)}</strong></div>
+                                    <div><span style={{ color:'#888780' }}>📅 Abatimento:</span> <strong style={{ color:'#854F0B' }}>R$ {Number(movsDivida[m.id].abatimento||0).toFixed(2)}</strong></div>
+                                  </div>
+                                  <div style={{ marginTop:8, fontSize:11, color:'#888780' }}>
+                                    Quer corrigir? Preencha os campos abaixo e registre novamente — os valores serão atualizados.
+                                  </div>
+                                </div>
+                              )}
                               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
                                 <div>
                                   <label style={s.label}>Pessoa *</label>
