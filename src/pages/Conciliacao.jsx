@@ -345,6 +345,26 @@ export default function Conciliacao() {
     setTimeout(() => setMsg(''), 4000)
   }
 
+  const [vincularAberto, setVincularAberto] = useState(null)
+
+  async function vincularLancamento(movId, lancId) {
+    const mov = movs.find(m => m.id === movId)
+    const lanc = lancamentos.find(l => l.id === lancId)
+    if (!mov || !lanc) return
+    const upd = { lancamento_id: lancId }
+    if (!mov.categoria_id && lanc.categoria_id) upd.categoria_id = lanc.categoria_id
+    if (!mov.subcategoria_id && lanc.subcategoria_id) upd.subcategoria_id = lanc.subcategoria_id
+    if (!mov.fornecedor_id && lanc.fornecedor_id) upd.fornecedor_id = lanc.fornecedor_id
+    if (!mov.fornecedor && lanc.fornecedor) upd.fornecedor = lanc.fornecedor
+    await supabase.from('extrato_movs').update(upd).eq('id', movId)
+    await supabase.from('lancamentos').update({ extrato_mov_id: movId }).eq('id', lancId)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
+    setLancamentos(prev => prev.map(l => l.id===lancId ? { ...l, extrato_mov_id: movId } : l))
+    setVincularAberto(null)
+    setMsg('✅ Lançamento vinculado!')
+    setTimeout(() => setMsg(''), 3000)
+  }
+
   function temDadosCompl(m) {
     return !!(m.fornecedor_id||m.num_nota||m.data_documento||m.descricao_produto||m.local_comprovante||m.link_externo||m.bem_permanente||m.despesa_rateada||m.obs_prestacao||m.tipo_receita||m.evento_id||m.campanha_id)
   }
@@ -638,6 +658,12 @@ export default function Conciliacao() {
                                 ✂ Dividir movimentação
                               </button>
                             )}
+                            {!m.conciliado && !m.lancamento_id && (
+                              <button onClick={() => { setMenuAberto(null); setVincularAberto(vincularAberto===m.id?null:m.id) }}
+                                style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:VERDE }}>
+                                🔗 Vincular lançamento
+                              </button>
+                            )}
                             {m.valor<0 && pessoasRecorrentes.length>0 && (
                               <button onClick={() => {
                                 setMenuAberto(null)
@@ -762,6 +788,58 @@ export default function Conciliacao() {
                             <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>💾 Salvar</button>
                             <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Vincular lançamento */}
+                  {vincularAberto===m.id && (
+                    <tr>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                        <div style={{ background:'#F2FAE8', padding:'12px 16px', borderLeft:`3px solid ${VERDE}` }}>
+                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:VERDE }}>
+                            🔗 Vincular lançamento — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
+                          </div>
+                          {(() => {
+                            const tipoMov = m.valor >= 0 ? 'entrada' : 'despesa'
+                            const candidatos = lancamentos.filter(l =>
+                              !l.extrato_mov_id &&
+                              l.tipo === tipoMov
+                            ).sort((a,b) => {
+                              const da = Math.abs(new Date(a.data) - new Date(m.data))
+                              const db = Math.abs(new Date(b.data) - new Date(m.data))
+                              return da - db
+                            })
+                            if (!candidatos.length) return (
+                              <div style={{ fontSize:12, color:'#888780', padding:'8px 0' }}>
+                                Nenhum lançamento não conciliado encontrado.
+                              </div>
+                            )
+                            return (
+                              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                                <thead><tr>
+                                  {['Data','Descrição','Categoria','Valor',''].map(h=><th key={h} style={{ textAlign:'left', padding:'5px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5' }}>{h}</th>)}
+                                </tr></thead>
+                                <tbody>
+                                  {candidatos.map(l => (
+                                    <tr key={l.id} style={{ background:'#fff' }}>
+                                      <td style={{ padding:'6px 8px', fontSize:12, whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
+                                      <td style={{ padding:'6px 8px', fontSize:12, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                                      <td style={{ padding:'6px 8px', fontSize:11, color:'#888780' }}>{l.categoria?.nome||'—'}</td>
+                                      <td style={{ padding:'6px 8px', fontSize:12, fontWeight:500, color:VERMELHO }}>{fmt(l.valor)}</td>
+                                      <td style={{ padding:'6px 8px' }}>
+                                        <button onClick={() => vincularLancamento(m.id, l.id)} style={{ padding:'4px 10px', fontSize:11, borderRadius:6, border:'none', background:VERDE, color:'#fff', cursor:'pointer' }}>
+                                          🔗 Vincular
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )
+                          })()}
+                          <button onClick={() => setVincularAberto(null)} style={{ marginTop:10, padding:'5px 12px', fontSize:11, borderRadius:7, border:'none', background:'#F1EFE8', color:'#5F5E5A', cursor:'pointer' }}>Cancelar</button>
                         </div>
                       </td>
                     </tr>
