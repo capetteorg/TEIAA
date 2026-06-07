@@ -31,6 +31,11 @@ export default function PainelAdmin() {
   const [dividasAbertas, setDividasAbertas] = useState(0)
   const [totalDividaAberta, setTotalDividaAberta] = useState(0)
 
+  // Plano de Ação
+  const [planoAcao, setPlanoAcao] = useState(null)
+  const [orcamentoPlano, setOrcamentoPlano] = useState({ prevEntradas:0, prevSaidas:0, realEntradas:0, realSaidas:0 })
+  const [metasPlano, setMetasPlano] = useState({ total:0, alcancadas:0, emAndamento:0 })
+
   useEffect(() => {
     if (carregado.current) return
     carregado.current = true
@@ -45,7 +50,7 @@ export default function PainelAdmin() {
     const [
       extRes, parcRes, instRes, presRes,
       projRes, planosRes, atendRes, usersRes, equipeRes,
-      cobRes, dividasRes,
+      cobRes, dividasRes, planoRes,
     ] = await Promise.all([
       supabase.from('extratos').select('competencia').order('competencia', { ascending:false }).limit(1),
       supabase.from('parcerias').select('id,nome_projeto,tipo,situacao').order('nome_projeto'),
@@ -58,6 +63,7 @@ export default function PainelAdmin() {
       supabase.from('equipe').select('id', { count:'exact' }).eq('situacao','ativo'),
       supabase.from('cobrancas').select('id', { count:'exact' }).eq('pago_confirmado', false),
       supabase.from('dividas').select('valor_original,valor_pago').eq('status','aberta'),
+      supabase.from('planos').select('id,nome_plano,periodo_inicio,periodo_fim,valor_total_previsto,situacao').eq('tipo_plano','Plano de Ação Institucional').order('periodo_inicio', { ascending:false }).limit(1).single(),
     ])
 
     const mesUso = extRes.data?.length ? extRes.data[0].competencia : mesAtual
@@ -76,6 +82,28 @@ export default function PainelAdmin() {
     const divs = dividasRes.data || []
     setDividasAbertas(divs.length)
     setTotalDividaAberta(divs.reduce((a,d) => a + (Number(d.valor_original||0) - Number(d.valor_pago||0)), 0))
+
+    // Plano de Ação
+    if (planoRes.data) {
+      setPlanoAcao(planoRes.data)
+      const [orcRes, metasRes] = await Promise.all([
+        supabase.from('plano_orcamento').select('tipo,valor_previsto,valor_realizado').eq('plano_id', planoRes.data.id),
+        supabase.from('metas_plano').select('status_meta').eq('plano_id', planoRes.data.id),
+      ])
+      const orc = orcRes.data || []
+      setOrcamentoPlano({
+        prevEntradas: orc.filter(o=>o.tipo==='entrada').reduce((a,o)=>a+Number(o.valor_previsto||0),0),
+        prevSaidas:   orc.filter(o=>o.tipo==='saida').reduce((a,o)=>a+Number(o.valor_previsto||0),0),
+        realEntradas: orc.filter(o=>o.tipo==='entrada').reduce((a,o)=>a+Number(o.valor_realizado||0),0),
+        realSaidas:   orc.filter(o=>o.tipo==='saida').reduce((a,o)=>a+Number(o.valor_realizado||0),0),
+      })
+      const mts = metasRes.data || []
+      setMetasPlano({
+        total: mts.length,
+        alcancadas: mts.filter(m=>m.status_meta==='alcançada').length,
+        emAndamento: mts.filter(m=>m.status_meta==='em andamento').length,
+      })
+    }
 
     setLoading(false)
   }
@@ -145,8 +173,8 @@ export default function PainelAdmin() {
         </div>
       )}
 
-      {/* 3 Cards principais */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'1.25rem', marginBottom:'1.75rem' }}>
+      {/* 4 Cards principais */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'1.25rem', marginBottom:'1.75rem' }}>
 
         {/* Card Financeiro */}
         <div style={s.card(AZUL)} onClick={() => navigate('/conciliacao')}>
@@ -168,15 +196,55 @@ export default function PainelAdmin() {
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
             <button onClick={e=>{e.stopPropagation();navigate('/despesas')}} style={s.btn('#FEF2F2',VERMELHO,VERMELHO)}>+ Despesa</button>
             <button onClick={e=>{e.stopPropagation();navigate('/entradas')}} style={s.btn('#EAF3DE',VERDE,VERDE)}>+ Entrada</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/importar')}} style={s.btn('transparent',AZUL,AZUL)}>Importar extrato</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/importar')}} style={s.btn('transparent',AZUL,AZUL)}>Extrato</button>
             <button onClick={e=>{e.stopPropagation();navigate('/relatorios')}} style={s.btn(AZUL)}>Relatórios →</button>
           </div>
         </div>
 
+        {/* Card Plano de Ação */}
+        {planoAcao && (() => {
+          const pctOrc = orcamentoPlano.prevSaidas > 0 ? Math.round((orcamentoPlano.realSaidas / orcamentoPlano.prevSaidas) * 100) : 0
+          const pctMetas = metasPlano.total > 0 ? Math.round((metasPlano.alcancadas / metasPlano.total) * 100) : 0
+          const ano = planoAcao.periodo_inicio?.slice(0,4)
+          return (
+            <div style={s.card(ROXO)} onClick={() => navigate('/planos-execucao')}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:`${ROXO}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>📋</div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:600 }}>Plano de Ação {ano}</div>
+                  <div style={{ fontSize:11, color:'#888780' }}>{planoAcao.situacao}</div>
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
+                {[
+                  ['Orçamento previsto', fmt(orcamentoPlano.prevSaidas), ROXO],
+                  ['Executado', fmt(orcamentoPlano.realSaidas), orcamentoPlano.realSaidas > 0 ? VERDE : '#888780'],
+                  ['Metas', `${metasPlano.total} total`, '#5F5E5A'],
+                  ['Em andamento', metasPlano.emAndamento, AZUL],
+                ].map(([l,v,c])=>(
+                  <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:12, fontWeight:600, color:c }}>{v}</div></div>
+                ))}
+              </div>
+              <div style={{ marginBottom:10 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#888780', marginBottom:3 }}>
+                  <span>Execução orçamentária</span><span style={{ fontWeight:600, color:ROXO }}>{pctOrc}%</span>
+                </div>
+                <div style={{ height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                  <div style={{ height:'100%', width:Math.min(pctOrc,100)+'%', background:ROXO, borderRadius:99, transition:'width .3s' }} />
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                <button onClick={e=>{e.stopPropagation();navigate('/planos-execucao')}} style={s.btn(ROXO)}>Ver plano →</button>
+                <button onClick={e=>{e.stopPropagation();navigate('/projetos')}} style={s.btn('transparent',ROXO,ROXO)}>Projetos</button>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Card Execução */}
         <div style={s.card(VERDE)} onClick={() => navigate('/projetos')}>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:`${VERDE}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>📋</div>
+            <div style={{ width:40, height:40, borderRadius:10, background:`${VERDE}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>👥</div>
             <div>
               <div style={{ fontSize:14, fontWeight:600 }}>Programas e Projetos</div>
               <div style={{ fontSize:11, color:'#888780' }}>Execução e acompanhamento</div>
@@ -185,7 +253,6 @@ export default function PainelAdmin() {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
             {[
               ['Projetos ativos', projetosAtivos, VERDE],
-              ['Planos em execução', planosExecucao, ROXO],
               ['Atend. este mês', atendimentosMes, AZUL],
               ['Usuários ativos', usuariosAtivos, VERDE],
               ['Equipe ativa', equipeAtiva, '#5F5E5A'],
@@ -195,15 +262,15 @@ export default function PainelAdmin() {
           </div>
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
             <button onClick={e=>{e.stopPropagation();navigate('/projetos')}} style={s.btn(VERDE)}>Projetos →</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/planos-execucao')}} style={s.btn('transparent',ROXO,ROXO)}>Planos de Ação</button>
             <button onClick={e=>{e.stopPropagation();navigate('/atendimentos')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Atendimentos</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/equipe')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Equipe</button>
           </div>
         </div>
 
         {/* Card Institucional */}
-        <div style={s.card(ROXO)} onClick={() => navigate('/instituicao')}>
+        <div style={s.card(LARANJA)} onClick={() => navigate('/instituicao')}>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:'1rem' }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:`${ROXO}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏛️</div>
+            <div style={{ width:40, height:40, borderRadius:10, background:`${LARANJA}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏛️</div>
             <div>
               <div style={{ fontSize:14, fontWeight:600 }}>Institucional</div>
               <div style={{ fontSize:11, color:'#888780' }}>Dados, diretoria e parcerias</div>
@@ -211,9 +278,9 @@ export default function PainelAdmin() {
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
             {[
-              ['Presidente', presidente?.nome?.split(' ').slice(0,2).join(' ')||'—', ROXO],
+              ['Presidente', presidente?.nome?.split(' ').slice(0,2).join(' ')||'—', LARANJA],
               ['Mandato até', presidente ? fmtData(presidente.mandato_fim) : '—', '#5F5E5A'],
-              ['Parcerias ativas', parcerias.filter(p=>p.situacao==='em execução').length, ROXO],
+              ['Parcerias ativas', parcerias.filter(p=>p.situacao==='em execução').length, LARANJA],
               ['CNPJ', instituicao?.cnpj||'—', '#5F5E5A'],
             ].map(([l,v,c])=>(
               <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:12, fontWeight:500, color:c, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v}</div></div>
@@ -234,8 +301,8 @@ export default function PainelAdmin() {
             </div>
           )}
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-            <button onClick={e=>{e.stopPropagation();navigate('/parcerias')}} style={s.btn(ROXO)}>Parcerias →</button>
-            <button onClick={e=>{e.stopPropagation();navigate('/instituicao')}} style={s.btn('transparent',ROXO,ROXO)}>Instituição</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/parcerias')}} style={s.btn(LARANJA)}>Parcerias →</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/instituicao')}} style={s.btn('transparent',LARANJA,LARANJA)}>Instituição</button>
             <button onClick={e=>{e.stopPropagation();navigate('/documentos')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Documentos</button>
           </div>
         </div>
@@ -250,13 +317,13 @@ export default function PainelAdmin() {
             { icon:'📤', label:'Lançar entrada',    rota:'/entradas',         cor:'#EAF3DE' },
             { icon:'📊', label:'Relatórios',        rota:'/relatorios',       cor:'#E6F1FB' },
             { icon:'📁', label:'Projetos',          rota:'/projetos',         cor:'#F0EAFA' },
-            { icon:'📋', label:'Planos de Ação',    rota:'/planos-execucao',  cor:'#EAF3DE' },
+            { icon:'📋', label:'Plano de Ação',     rota:'/planos-execucao',  cor:'#F0EAFA' },
+            { icon:'🤝', label:'Parcerias',         rota:'/parcerias',        cor:'#FEF4E8' },
             { icon:'👥', label:'Equipe',            rota:'/equipe',           cor:'#EEEDFE' },
             { icon:'💳', label:'Controle Dívidas',  rota:'/controle-dividas', cor:'#FAEEDA', badge: dividasAbertas > 0 ? dividasAbertas : null },
             { icon:'🧾', label:'Cobranças',         rota:'/cobrancas',        cor:'#FEF2F2', badge: cobrancasPendentes > 0 ? cobrancasPendentes : null },
             { icon:'📄', label:'Prestação Contas',  rota:'/prestacao-contas', cor:'#FAEEDA' },
             { icon:'🔒', label:'Fechamento',        rota:'/fechamento',       cor:'#F8F7F2' },
-            { icon:'💾', label:'Backup',            rota:'/backup',           cor:'#F8F7F2' },
             { icon:'🌐', label:'Transparência',     rota:'/transparencia',    cor:'#E6F1FB' },
           ].map(item => (
             <button key={item.rota} onClick={() => navigate(item.rota)}

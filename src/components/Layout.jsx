@@ -122,8 +122,8 @@ export default function Layout() {
 
         {/* Programas e Projetos */}
         <NavSecao label="Programas e Projetos" />
+        <NavItem to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"    visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/projetos"           icon="folder"            label="Projetos"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/planos-execucao"    icon="clipboard-check"   label="Planos de Ação"   visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"     visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos" visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem to="/equipe"             icon="users-group"       label="Equipe"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
@@ -138,9 +138,9 @@ export default function Layout() {
 
         {/* Institucional */}
         <NavSecao label="Institucional" />
-        <NavItem to="/instituicao"        icon="building"          label="Instituição"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/parcerias"          icon="file-certificate"  label="Parcerias / Emendas" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/documentos"         icon="files"             label="Documentos"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/instituicao"        icon="building"          label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/parcerias"          icon="handshake"         label="Parcerias / Emendas / Editais" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/documentos"         icon="files"             label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Configurações */}
         <NavSecao label="Configurações" />
