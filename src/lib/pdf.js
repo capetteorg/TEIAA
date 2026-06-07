@@ -322,7 +322,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
     </table>
   </div>
 
-  ${htmlAssinaturas(['Responsável Financeiro', 'Representante Legal', 'Contador'])}
+  ${htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal'])}
   ${htmlRodape()}`
 
   abrirImpressao(html, 'Relatório Financeiro', true)
