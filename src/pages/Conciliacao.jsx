@@ -252,12 +252,20 @@ export default function Conciliacao() {
 
   async function conciliarMov(movId, valor) {
     await supabase.from('extrato_movs').update({ conciliado: valor }).eq('id', movId)
+    const mov = movs.find(m => m.id === movId)
+    if (mov?.lancamento_id) {
+      await supabase.from('lancamentos').update({ status_lanc: valor ? 'conciliado' : 'lancado' }).eq('id', mov.lancamento_id)
+    }
     setMovs(prev => prev.map(m => m.id === movId ? { ...m, conciliado: valor } : m))
   }
 
   async function conciliarTodos() {
     const ids = movsFiltradas.map(m => m.id)
     await supabase.from('extrato_movs').update({ conciliado: true }).in('id', ids)
+    const lancIds = movsFiltradas.filter(m => m.lancamento_id).map(m => m.lancamento_id)
+    if (lancIds.length > 0) {
+      await supabase.from('lancamentos').update({ status_lanc: 'conciliado' }).in('id', lancIds)
+    }
     setMovs(prev => prev.map(m => ids.includes(m.id) ? { ...m, conciliado: true } : m))
     setMsg('Tudo conciliado! ✓')
     setTimeout(() => setMsg(''), 3000)
