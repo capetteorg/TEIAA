@@ -63,19 +63,49 @@ export default function RelatoriosCentral() {
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome,banco,agencia,conta_num))')
       .gte('data', dataInicio).lte('data', dataFim).order('data')
     const { data: movs } = await q
-    let lista = movs || []
-    if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
-    lista = lista.filter(m => !m.dividida) // excluir originais divididas
+    let todasMovs = movs || []
+    if (contaSel !== 'todas') todasMovs = todasMovs.filter(m => String(m.extrato?.conta_id) === String(contaSel))
+
+    // Separar originais divididas, partes e normais
+    const partes = todasMovs.filter(m => m.parent_id)
+    const lista = todasMovs.filter(m => !m.dividida) // normais + partes (parent_id não null)
+
+    // Mapa de partes por parent_id
+    const partesMap = {}
+    partes.forEach(p => {
+      if (!partesMap[p.parent_id]) partesMap[p.parent_id] = []
+      partesMap[p.parent_id].push(p)
+    })
+
+    // Reconstruir lista: para cada item dividido (parent), mostrar o original + sub-linhas
+    // Como filtramos dividida=true, os originais não aparecem — as partes já estão na lista
+    // Mas precisamos agrupar as partes sob o pai para o PDF
+
     let contaDados = null
     if (contaSel !== 'todas') {
       const { data: c } = await supabase.from('contas').select('*').eq('id', parseInt(contaSel)).single()
       contaDados = c
     }
+
+    // Para o PDF, reconstruir com originais divididas agrupadas com suas partes
+    const listaPDF = []
+    const partesUsadas = new Set()
+    todasMovs.filter(m => !m.parent_id).forEach(m => {
+      if (m.dividida) {
+        // Adiciona o original com suas partes
+        const filhas = partesMap[m.id] || []
+        listaPDF.push({ ...m, _partes: filhas })
+        filhas.forEach(f => partesUsadas.add(f.id))
+      } else {
+        listaPDF.push(m)
+      }
+    })
+
     const entradas = lista.filter(m => Number(m.valor) > 0)
     const saidas = lista.filter(m => Number(m.valor) < 0)
     const totalEnt = entradas.reduce((a,m) => a+Number(m.valor), 0)
     const totalSai = Math.abs(saidas.reduce((a,m) => a+Number(m.valor), 0))
-    setDados({ tipo: 'conciliacao', lista, entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, contaDados })
+    setDados({ tipo: 'conciliacao', lista: listaPDF, entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, contaDados })
   }
 
   async function gerarFinanceiro(pId) {

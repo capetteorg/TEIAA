@@ -191,16 +191,25 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
 
   const linhas = lista.map((m,i) => {
     const isEnt = Number(m.valor) > 0
+    const partes = m._partes || []
+    const subLinhas = partes.map(p => `
+      <tr style="background:#F8F7F2">
+        <td></td>
+        <td style="padding-left:16px;font-size:9px;color:#888;font-style:italic">└ ${p.descricao||'—'}</td>
+        <td style="font-size:9px;color:#5F5E5A">${p.categoria?.nome||'—'}</td>
+        <td style="font-size:9px;color:#888">${p.subcategoria?.nome||'—'}</td>
+        <td></td><td></td><td></td><td></td>
+      </tr>`).join('')
     return `<tr>
       <td style="white-space:nowrap">${fmtData(m.data)}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}</td>
-      <td>${m.categoria?.nome||'—'}</td>
-      <td style="color:#888;font-size:9px">${m.subcategoria?.nome||'—'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}${partes.length>0?` <span style="font-size:9px;color:#185FA5">(${partes.length} itens)</span>`:''}</td>
+      <td>${partes.length>0?'<em style="color:#888;font-size:9px">ver abaixo</em>':(m.categoria?.nome||'—')}</td>
+      <td style="color:#888;font-size:9px">${partes.length>0?'':m.subcategoria?.nome||'—'}</td>
       <td style="font-size:9px">${m.fornecedor||'—'}</td>
       <td style="font-family:monospace;font-size:9px">${m.num_nota||'—'}</td>
       <td class="num" style="font-weight:600;color:${isEnt?'#3B6D11':'#A32D2D'}">${isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
       <td class="center"><span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${m.conciliado?'#EAF3DE':'#FAEEDA'};color:${m.conciliado?'#3B6D11':'#854F0B'}">${m.conciliado?'✓ OK':'Pendente'}</span></td>
-    </tr>`
+    </tr>${subLinhas}`
   }).join('')
 
   const html = `
