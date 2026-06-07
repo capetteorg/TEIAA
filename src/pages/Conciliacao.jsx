@@ -535,9 +535,13 @@ export default function Conciliacao() {
                         </td>
 
                         <td style={{ ...s.td, minWidth: 140 }}>
-                          <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)} style={s.select}>
+                          <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)}
+                            style={{ ...s.select, borderColor: !m.categoria_id ? VERMELHO : '#D3D1C7' }}>
                             <option value="">Selecione...</option>
-                            {categorias.filter(c => c.tipo === (m.valor >= 0 ? 'entrada' : 'despesa')).map(c => (
+                            {categorias.filter(c => {
+                              const tipoMov = m.valor >= 0 ? 'entrada' : 'despesa'
+                              return !c.tipo || c.tipo === tipoMov
+                            }).map(c => (
                               <option key={c.id} value={c.id}>{c.nome}</option>
                             ))}
                           </select>
@@ -606,8 +610,16 @@ export default function Conciliacao() {
                         </td>
 
                         <td style={s.td}>
-                          <button onClick={() => conciliarMov(m.id, !m.conciliado)}
-                            style={s.btn(m.conciliado ? '#F1EFE8' : VERDE, m.conciliado ? '#5F5E5A' : '#fff')}>
+                          <button
+                            onClick={() => {
+                              if (!m.conciliado && !m.categoria_id) {
+                                setMsg('⚠ Selecione uma categoria antes de conciliar.')
+                                setTimeout(() => setMsg(''), 3000)
+                                return
+                              }
+                              conciliarMov(m.id, !m.conciliado)
+                            }}
+                            style={s.btn(m.conciliado ? '#F1EFE8' : !m.categoria_id ? '#D3D1C7' : VERDE, m.conciliado ? '#5F5E5A' : '#fff')}>
                             {m.conciliado ? 'Desfazer' : 'OK ✓'}
                           </button>
                         </td>
