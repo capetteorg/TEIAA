@@ -19,7 +19,7 @@ export default function Conciliacao() {
   const [campanhas, setCampanhas] = useState([])
   const [fornecedores, setFornecedores] = useState([])
   const [pessoasRecorrentes, setPessoasRecorrentes] = useState([])
-  const [pagFuncAberto, setPagFuncAberto] = useState(null)
+  const [menuAberto, setMenuAberto] = useState(null)
   const [formPagFunc, setFormPagFunc] = useState({})
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
@@ -87,18 +87,15 @@ export default function Conciliacao() {
 
   async function salvarPagamentoFuncionario(movId, mov) {
     const { pessoa_id, competencia, valor_mensal, valor_abatimento } = formPagFunc
-    if (!pessoa_id || !competencia) { alert('Selecione a pessoa e a competência.'); return }
+    if (!pessoa_id || !competencia) return
     const pessoa = pessoasRecorrentes.find(p => String(p.id) === String(pessoa_id))
     const valMensal = parseFloat(valor_mensal) || 0
     const valAbat = parseFloat(valor_abatimento) || 0
     const totalMov = Math.abs(Number(mov.valor))
-
-    // Validação: mensal + abatimento não pode exceder o valor do extrato
-    if (valMensal + valAbat > totalMov + 0.01) {
-      alert(`Mensal (R$ ${valMensal.toFixed(2)}) + Abatimento (R$ ${valAbat.toFixed(2)}) não pode ser maior que o valor do extrato (R$ ${totalMov.toFixed(2)})`)
+    if (Math.abs(valMensal + valAbat - totalMov) > 0.01) {
+      alert(`A soma (R$ ${(valMensal+valAbat).toFixed(2)}) deve ser igual ao valor do extrato (R$ ${totalMov.toFixed(2)})`)
       return
     }
-
     const valorMensalDevido = Number(pessoa?.valor_mensal_normal || 0)
     const valorNaoPago = Math.max(0, valorMensalDevido - valMensal)
 
@@ -126,51 +123,30 @@ export default function Conciliacao() {
       }).eq('id', compExiste.id)
     }
 
-    // Remover acréscimo automático anterior desta competência (para não duplicar)
-    await supabase.from('divida_movimentacoes')
-      .delete()
-      .eq('pessoa_id', parseInt(pessoa_id))
-      .eq('competencia', competencia)
-      .eq('tipo', 'acrescimo')
-      .eq('extrato_mov_id', null)
-
     // Lançar movimentações
     if (valAbat > 0) {
       await supabase.from('divida_movimentacoes').insert({
         pessoa_id: parseInt(pessoa_id), tipo: 'abatimento',
         valor: valAbat, data_movimentacao: mov.data, competencia,
-        descricao: `Abatimento de dívida — ${competencia}`,
+        descricao: `Abatimento de dívida — ${competencia} — extrato`,
         extrato_mov_id: movId,
       })
     }
-    // Registra o que foi pago do mensal (remove o acréscimo automático e lança o que faltou)
     if (valorNaoPago > 0) {
       await supabase.from('divida_movimentacoes').insert({
         pessoa_id: parseInt(pessoa_id), tipo: 'acrescimo',
         valor: valorNaoPago, data_movimentacao: mov.data, competencia,
-        descricao: `Pagamento parcial — faltaram R$ ${valorNaoPago.toFixed(2)} em ${competencia}`,
+        descricao: `Valor não pago em ${competencia} — acréscimo de dívida`,
         extrato_mov_id: movId,
       })
-    } else {
-      // Se pagou tudo, remove o acréscimo automático deste mês
-      await supabase.from('divida_movimentacoes')
-        .delete()
-        .eq('pessoa_id', parseInt(pessoa_id))
-        .eq('competencia', competencia)
-        .eq('tipo', 'acrescimo')
-        .is('extrato_mov_id', null)
     }
 
-    await supabase.from('extrato_movs').update({
-      fornecedor: pessoa?.nome,
-      obs_prestacao: `Pgto ${competencia} — mensal: R$${valMensal.toFixed(2)}${valAbat>0?`, abat: R$${valAbat.toFixed(2)}`:''}${valorNaoPago>0?`, faltou: R$${valorNaoPago.toFixed(2)}`:''}`,
-    }).eq('id', movId)
-
+    await supabase.from('extrato_movs').update({ fornecedor: pessoa?.nome, obs_prestacao: `Pagamento ${competencia} — mensal: R$${valMensal.toFixed(2)}, abatimento: R$${valAbat.toFixed(2)}` }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id === movId ? { ...m, fornecedor: pessoa?.nome } : m))
     setPagFuncAberto(null)
     setFormPagFunc({})
-    setMsg(`✅ Pagamento de ${pessoa?.nome} registrado! ${valorNaoPago > 0 ? `R$ ${valorNaoPago.toFixed(2)} virou acréscimo de dívida.` : 'Mês quitado!'}`)
-    setTimeout(() => setMsg(''), 5000)
+    setMsg(`✅ Pagamento de ${pessoa?.nome} registrado! Competência ${competencia} atualizada.`)
+    setTimeout(() => setMsg(''), 4000)
   }
 
   async function salvarComplementar(movId) {
@@ -530,19 +506,30 @@ export default function Conciliacao() {
                         )}
 
                         <td style={s.td}>
-                          <button onClick={() => isAberto ? setComplementarAberto(null) : abrirComplementar(m)}
-                            style={{ ...s.btn(temCompl ? '#EAF3DE' : '#F1EFE8', temCompl ? '#3B6D11' : '#5F5E5A'), fontSize: 10 }}>
-                            {temCompl ? '✓ Preenchido' : '+ Dados'}
-                          </button>
-                          {m.valor < 0 && pessoasRecorrentes.length > 0 && (
-                            <button onClick={() => {
-                              if (pagFuncAberto === m.id) { setPagFuncAberto(null); return }
-                              setPagFuncAberto(m.id)
-                              setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal: '', valor_abatimento: '' })
-                            }} style={{ ...s.btn(pagFuncAberto===m.id?'#FAEEDA':'#F0EAFA', pagFuncAberto===m.id?'#854F0B':'#534AB7'), fontSize:10, marginLeft:4 }}>
-                              👤 Func.
+                          <div style={{ position:'relative' }}>
+                            <button onClick={() => setMenuAberto(menuAberto === m.id ? null : m.id)}
+                              style={{ ...s.btn(temCompl||m.fornecedor?'#EAF3DE':'#F1EFE8', temCompl||m.fornecedor?'#3B6D11':'#5F5E5A'), fontSize:10 }}>
+                              {temCompl||m.fornecedor ? '✓ Ações' : '⋯ Ações'}
                             </button>
-                          )}
+                            {menuAberto === m.id && (
+                              <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
+                                <button onClick={() => { setMenuAberto(null); isAberto ? setComplementarAberto(null) : abrirComplementar(m) }}
+                                  style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color: temCompl?'#3B6D11':'#2C2C2A' }}>
+                                  📋 {temCompl ? 'Dados complementares ✓' : 'Dados complementares'}
+                                </button>
+                                {m.valor < 0 && pessoasRecorrentes.length > 0 && (
+                                  <button onClick={() => {
+                                    setMenuAberto(null)
+                                    if (pagFuncAberto === m.id) { setPagFuncAberto(null); return }
+                                    setPagFuncAberto(m.id)
+                                    setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal:'', valor_abatimento:'' })
+                                  }} style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', background:'transparent', cursor:'pointer', color:'#8B2FC9' }}>
+                                  👤 Pagamento de funcionário
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         <td style={{ ...s.td, fontWeight: 500, color: m.valor >= 0 ? VERDE : VERMELHO, whiteSpace: 'nowrap' }}>
@@ -716,21 +703,13 @@ export default function Conciliacao() {
                               </div>
                               {(() => {
                                 const totalMov = Math.abs(Number(m.valor))
-                                const valMens = parseFloat(formPagFunc.valor_mensal)||0
-                                const valAbat = parseFloat(formPagFunc.valor_abatimento)||0
-                                const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
-                                const mensal = Number(pe?.valor_mensal_normal||0)
-                                const naoPago = Math.max(0, mensal - valMens)
-                                const excede = valMens + valAbat > totalMov + 0.01
+                                const soma = (parseFloat(formPagFunc.valor_mensal)||0) + (parseFloat(formPagFunc.valor_abatimento)||0)
+                                const diff = Math.abs(soma - totalMov)
+                                const ok = diff < 0.01
                                 return (
-                                  <div style={{ fontSize:11, padding:'8px 12px', borderRadius:6, marginBottom:10, background: excede?'#FEF2F2':'#E6F1FB', color: excede?'#A32D2D':'#185FA5' }}>
-                                    <div>Valor do extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Pago mensal: <strong>R$ {valMens.toFixed(2)}</strong> · Abatimento: <strong>R$ {valAbat.toFixed(2)}</strong></div>
-                                    {pe && <div style={{ marginTop:4, color: naoPago>0?'#854F0B':'#3B6D11', fontWeight:500 }}>
-                                      {naoPago > 0
-                                        ? `⚠ R$ ${naoPago.toFixed(2)} ficará pendente e virará acréscimo de dívida`
-                                        : '✓ Mês integralmente pago'}
-                                    </div>}
-                                    {excede && <div style={{ marginTop:4, fontWeight:600 }}>⛔ Soma excede o valor do extrato</div>}
+                                  <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:10, background:ok?'#EAF3DE':'#FEF2F2', color:ok?'#3B6D11':'#A32D2D' }}>
+                                    Valor do extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Classificado: <strong>R$ {soma.toFixed(2)}</strong>
+                                    {ok ? ' ✓ OK' : ` · Faltam R$ ${diff.toFixed(2)}`}
                                   </div>
                                 )
                               })()}
