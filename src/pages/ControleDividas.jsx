@@ -152,6 +152,14 @@ export default function ControleDividas() {
           valor_abatido_divida: 0, saldo_divida_inicio: 0, saldo_divida_fim: 0,
           status: 'pendente',
         })))
+        await supabase.from('divida_movimentacoes').insert(novas.map(comp => ({
+          pessoa_id: editandoId, tipo: 'acrescimo',
+          valor: dados.valor_mensal_normal,
+          data_movimentacao: comp + '-01',
+          competencia: comp,
+          descricao: `Valor mensal não pago — ${comp}`,
+          usuario_id: user?.id || null,
+        })))
       }
     } else {
       // Verifica se já existe
@@ -187,6 +195,18 @@ export default function ControleDividas() {
           status: 'pendente',
         }))
         await supabase.from('competencias_mensais').insert(inserts)
+
+        // Lançar acréscimo de dívida para cada competência pendente
+        const movInserts = competenciasParaGerar.map(comp => ({
+          pessoa_id: novoId,
+          tipo: 'acrescimo',
+          valor: dados.valor_mensal_normal,
+          data_movimentacao: comp + '-01',
+          competencia: comp,
+          descricao: `Valor mensal não pago — ${comp}`,
+          usuario_id: user?.id || null,
+        }))
+        await supabase.from('divida_movimentacoes').insert(movInserts)
       }
     }
 
