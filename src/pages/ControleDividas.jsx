@@ -113,6 +113,46 @@ export default function ControleDividas() {
     let novoId = editandoId
     if (editandoId) {
       await supabase.from('pessoas_recorrentes').update(dados).eq('id', editandoId)
+      // Se mudou valor mensal, atualiza todas as competências pendentes
+      if (dados.valor_mensal_normal > 0) {
+        await supabase.from('competencias_mensais')
+          .update({ valor_mensal_devido: dados.valor_mensal_normal, valor_nao_pago: dados.valor_mensal_normal })
+          .eq('pessoa_id', editandoId).eq('status', 'pendente')
+      }
+      // Se tem dívida inicial e não havia movimentação anterior, lança
+      if (dados.divida_inicial > 0) {
+        const { data: movExiste } = await supabase.from('divida_movimentacoes')
+          .select('id').eq('pessoa_id', editandoId).eq('tipo', 'divida_inicial').limit(1)
+        if (!movExiste || movExiste.length === 0) {
+          await supabase.from('divida_movimentacoes').insert({
+            pessoa_id: editandoId, tipo: 'divida_inicial',
+            valor: dados.divida_inicial,
+            data_movimentacao: dados.data_base_divida,
+            competencia: dados.data_base_divida.slice(0,7),
+            descricao: `Dívida acumulada até ${new Date(dados.data_base_divida+'T12:00:00').toLocaleDateString('pt-BR')}`,
+            usuario_id: user?.id || null,
+          })
+        } else {
+          // Atualiza a movimentação existente
+          await supabase.from('divida_movimentacoes')
+            .update({ valor: dados.divida_inicial })
+            .eq('pessoa_id', editandoId).eq('tipo', 'divida_inicial')
+        }
+      }
+      // Gerar competências que ainda não existam
+      const compExistentes = await supabase.from('competencias_mensais').select('competencia').eq('pessoa_id', editandoId)
+      const existentes = (compExistentes.data || []).map(c => c.competencia)
+      const todasComps = gerarCompetencias('2025-01')
+      const novas = todasComps.filter(c => !existentes.includes(c))
+      if (novas.length > 0) {
+        await supabase.from('competencias_mensais').insert(novas.map(comp => ({
+          pessoa_id: editandoId, competencia: comp,
+          valor_mensal_devido: dados.valor_mensal_normal,
+          valor_pago_mensal: 0, valor_nao_pago: dados.valor_mensal_normal,
+          valor_abatido_divida: 0, saldo_divida_inicio: 0, saldo_divida_fim: 0,
+          status: 'pendente',
+        })))
+      }
     } else {
       // Verifica se já existe
       const { data: existe } = await supabase.from('pessoas_recorrentes').select('id').ilike('nome', dados.nome).limit(1)
@@ -178,6 +218,16 @@ export default function ControleDividas() {
     setFormAdj({ pessoa_id:'', tipo:'ajuste', valor:'', data_movimentacao:new Date().toISOString().slice(0,10), competencia:new Date().toISOString().slice(0,7), descricao:'', observacoes:'' })
     carregar()
     setSalvando(false)
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  async function excluirPessoa(pe) {
+    if (!window.confirm(`Excluir ${pe.nome}? Isso apagará todas as movimentações e competências vinculadas.`)) return
+    await supabase.from('competencias_mensais').delete().eq('pessoa_id', pe.id)
+    await supabase.from('divida_movimentacoes').delete().eq('pessoa_id', pe.id)
+    await supabase.from('pessoas_recorrentes').delete().eq('id', pe.id)
+    carregar()
+    setMsg('✅ Pessoa excluída.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -376,6 +426,7 @@ export default function ControleDividas() {
                     <button onClick={() => { setPessoaFiltro(String(pe.id)); setTab('historico') }} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Histórico</button>
                     <button onClick={() => { setPessoaFiltro(String(pe.id)); setTab('competencias') }} style={{ ...s.btn('#E6F1FB',AZUL), fontSize:11 }}>Competências</button>
                     {isAdmin && <button onClick={() => editarPessoa(pe)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>}
+                    {isAdmin && <button onClick={() => excluirPessoa(pe)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:11 }}>Excluir</button>}
                   </div>
                 </div>
               </div>
@@ -489,7 +540,10 @@ export default function ControleDividas() {
                       <td style={{ ...s.td, color:'#888780' }}>{fmt(pe.divida_inicial||0)}</td>
                       <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'✅ Quitado'}</td>
                       <td style={s.td}><span style={s.badge(pe.ativo?'#EAF3DE':'#F1EFE8', pe.ativo?'#3B6D11':'#888780')}>{pe.ativo?'Sim':'Não'}</span></td>
-                      <td style={s.td}>{isAdmin && <button onClick={() => editarPessoa(pe)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}</td>
+                      <td style={s.td}>
+                        {isAdmin && <button onClick={() => editarPessoa(pe)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}
+                        {isAdmin && <button onClick={() => excluirPessoa(pe)} style={{ ...s.btn('#FEF2F2',VERMELHO), marginLeft:4 }}>Excluir</button>}
+                      </td>
                     </tr>
                   )
                 })}
