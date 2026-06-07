@@ -1,17 +1,28 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import ConciliacaoInteligente from './ConciliacaoInteligente'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
-
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 const TIPOS_RECEITA = ['Repasse da emenda', 'Rendimento de aplicação', 'Estorno', 'Devolução recebida', 'Outra entrada']
+
+function diffDias(d1, d2) {
+  return Math.abs((new Date(d1+'T12:00:00') - new Date(d2+'T12:00:00')) / (1000*60*60*24))
+}
+function similaridade(s1, s2) {
+  if (!s1||!s2) return 0
+  const a=s1.toLowerCase(), b=s2.toLowerCase()
+  if (a.includes(b)||b.includes(a)) return 0.8
+  const p1=a.split(/\s+/), p2=b.split(/\s+/)
+  const comuns = p1.filter(p=>p.length>3&&p2.some(q=>q.includes(p)||p.includes(q)))
+  return comuns.length/Math.max(p1.length,p2.length)
+}
 
 export default function Conciliacao() {
   const navigate = useNavigate()
   const [extratos, setExtratos] = useState([])
   const [extratoSel, setExtratoSel] = useState(null)
   const [movs, setMovs] = useState([])
+  const [lancamentos, setLancamentos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [subcategorias, setSubcategorias] = useState([])
   const [planos, setPlanos] = useState([])
@@ -19,16 +30,19 @@ export default function Conciliacao() {
   const [campanhas, setCampanhas] = useState([])
   const [fornecedores, setFornecedores] = useState([])
   const [pessoasRecorrentes, setPessoasRecorrentes] = useState([])
-  const [menuAberto, setMenuAberto] = useState(null)
-  const [pagFuncAberto, setPagFuncAberto] = useState(null)
-  const [formPagFunc, setFormPagFunc] = useState({})
+  const [movsDivida, setMovsDivida] = useState({})
+  const [matchMap, setMatchMap] = useState({}) // movId -> lancamento matched
   const [filtro, setFiltro] = useState('todos')
   const [loading, setLoading] = useState(false)
-  const [abaConcil, setAbaConcil] = useState('manual')
+  const [cruzando, setCruzando] = useState(false)
   const [msg, setMsg] = useState('')
   const [descExpandida, setDescExpandida] = useState(null)
   const [complementarAberto, setComplementarAberto] = useState(null)
   const [formCompl, setFormCompl] = useState({})
+  const [menuAberto, setMenuAberto] = useState(null)
+  const [pagFuncAberto, setPagFuncAberto] = useState(null)
+  const [formPagFunc, setFormPagFunc] = useState({})
+  const [lancVinculadoAberto, setLancVinculadoAberto] = useState(null)
 
   useEffect(() => {
     carregarExtratos()
@@ -42,190 +56,168 @@ export default function Conciliacao() {
   }, [])
 
   async function carregarExtratos() {
-    const { data } = await supabase
-      .from('extratos')
+    const { data } = await supabase.from('extratos')
       .select('*, conta:contas(id,nome,banco,preponderancia,tipo_conta)')
       .order('importado_em', { ascending: false })
-    
-    // Buscar contagem de movimentações conciliadas por extrato
     const ext = data || []
     if (ext.length > 0) {
-      const { data: concilData } = await supabase
-        .from('extrato_movs')
-        .select('extrato_id, conciliado')
-        .in('extrato_id', ext.map(e => e.id))
+      const { data: concilData } = await supabase.from('extrato_movs')
+        .select('extrato_id, conciliado').in('extrato_id', ext.map(e => e.id))
       const mapa = {}
-      ;(concilData || []).forEach(m => {
-        if (!mapa[m.extrato_id]) mapa[m.extrato_id] = { total: 0, conciliados: 0 }
+      ;(concilData||[]).forEach(m => {
+        if (!mapa[m.extrato_id]) mapa[m.extrato_id] = { total:0, conciliados:0 }
         mapa[m.extrato_id].total++
         if (m.conciliado) mapa[m.extrato_id].conciliados++
       })
       setExtratos(ext.map(e => ({ ...e, _stats: mapa[e.id] || { total: e.total_movs, conciliados: 0 } })))
-    } else {
-      setExtratos([])
-    }
+    } else setExtratos([])
   }
-
-  const [movsDivida, setMovsDivida] = useState({}) // extrato_mov_id -> {pessoa, competencia, valor_mensal, valor_abatimento}
 
   async function abrirExtrato(ext) {
     setLoading(true)
     setExtratoSel(ext)
-    const { data, error } = await supabase
-      .from('extrato_movs')
+    setMatchMap({})
+    const { data } = await supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
-      .eq('extrato_id', ext.id)
-      .order('data')
-    if (error) console.error('Erro ao buscar movimentações:', error)
+      .eq('extrato_id', ext.id).order('data')
     setMovs(data || [])
 
-    // Buscar movimentações de dívida vinculadas a este extrato
-    const ids = (data || []).map(m => m.id)
+    // Buscar lançamentos da conta para cruzamento
+    const { data: lancs } = await supabase.from('lancamentos')
+      .select('*, categoria:categorias(nome,tipo)')
+      .eq('conta_id', ext.conta?.id).order('data')
+    setLancamentos(lancs || [])
+
+    // Buscar movimentações de dívida
+    const ids = (data||[]).map(m => m.id)
     if (ids.length > 0) {
-      const { data: divMovs } = await supabase
-        .from('divida_movimentacoes')
+      const { data: divMovs } = await supabase.from('divida_movimentacoes')
         .select('*, pessoa:pessoas_recorrentes(id,nome,valor_mensal_normal)')
         .in('extrato_mov_id', ids)
       const mapa = {}
-      ;(divMovs || []).forEach(dm => {
-        if (!mapa[dm.extrato_mov_id]) mapa[dm.extrato_mov_id] = { pessoa: dm.pessoa, competencia: dm.competencia, abatimento: 0, mensal_nao_pago: 0 }
-        if (dm.tipo === 'abatimento') mapa[dm.extrato_mov_id].abatimento += Number(dm.valor)
-        if (dm.tipo === 'acrescimo') mapa[dm.extrato_mov_id].mensal_nao_pago += Number(dm.valor)
+      ;(divMovs||[]).forEach(dm => {
+        if (!mapa[dm.extrato_mov_id]) mapa[dm.extrato_mov_id] = { pessoa: dm.pessoa, competencia: dm.competencia, abatimento:0, mensal_nao_pago:0 }
+        if (dm.tipo==='abatimento') mapa[dm.extrato_mov_id].abatimento += Number(dm.valor)
+        if (dm.tipo==='acrescimo') mapa[dm.extrato_mov_id].mensal_nao_pago += Number(dm.valor)
       })
-      // Buscar valor pago mensal das competências
       for (const movId of Object.keys(mapa)) {
         const info = mapa[movId]
         if (info.pessoa && info.competencia) {
           const { data: comp } = await supabase.from('competencias_mensais')
             .select('valor_pago_mensal').eq('pessoa_id', info.pessoa.id).eq('competencia', info.competencia).single()
-          info.valor_pago_mensal = Number(comp?.valor_pago_mensal || 0)
+          info.valor_pago_mensal = Number(comp?.valor_pago_mensal||0)
         }
       }
       setMovsDivida(mapa)
-    } else {
-      setMovsDivida({})
-    }
+    } else setMovsDivida({})
     setLoading(false)
   }
 
+  // Cruzamento automático
+  function cruzarAutomatico() {
+    setCruzando(true)
+    const usados = new Set()
+    const novoMap = {}
+    for (const mov of movs) {
+      if (mov.conciliado || mov.lancamento_id) continue // já conciliado, pula
+      const tipoMov = mov.valor >= 0 ? 'entrada' : 'despesa'
+      const candidatos = lancamentos.filter(l => {
+        if (usados.has(l.id)) return false
+        if (l.extrato_mov_id) return false // já vinculado
+        if (l.tipo !== tipoMov) return false
+        const diff = Math.abs(Number(l.valor) - Math.abs(Number(mov.valor)))
+        return diff / Math.abs(Number(mov.valor)) <= 0.01
+      })
+      if (!candidatos.length) continue
+      const pontuados = candidatos.map(l => {
+        let score = 0
+        const dias = diffDias(mov.data, l.data)
+        if (dias===0) score+=50; else if (dias<=1) score+=40; else if (dias<=3) score+=25; else if (dias<=7) score+=10; else score-=10
+        const sim = similaridade(mov.descricao, l.descricao)
+        score += sim * 40
+        if (l.fornecedor && mov.descricao?.toLowerCase().includes(l.fornecedor.toLowerCase())) score += 20
+        return { l, score, dias }
+      }).sort((a,b) => b.score-a.score)
+      const melhor = pontuados[0]
+      if (melhor.score >= 70) {
+        novoMap[mov.id] = { lancamento: melhor.l, score: melhor.score, auto: true }
+        usados.add(melhor.l.id)
+      } else if (melhor.score >= 40) {
+        novoMap[mov.id] = { lancamento: melhor.l, score: melhor.score, auto: false }
+        usados.add(melhor.l.id)
+      }
+    }
+    setMatchMap(novoMap)
+    setCruzando(false)
+    const auto = Object.values(novoMap).filter(v=>v.auto).length
+    const possivel = Object.values(novoMap).filter(v=>!v.auto).length
+    setMsg(`🤖 Cruzamento concluído! ${auto} automáticos, ${possivel} possíveis. Confirme abaixo.`)
+    setTimeout(() => setMsg(''), 6000)
+  }
+
+  async function confirmarMatch(movId) {
+    const match = matchMap[movId]
+    if (!match) return
+    const mov = movs.find(m => m.id === movId)
+    const upd = { conciliado: true, status_mov: 'conciliado', lancamento_id: match.lancamento.id }
+    if (!mov.categoria_id && match.lancamento.categoria_id) upd.categoria_id = match.lancamento.categoria_id
+    if (!mov.subcategoria_id && match.lancamento.subcategoria_id) upd.subcategoria_id = match.lancamento.subcategoria_id
+    if (!mov.fornecedor_id && match.lancamento.fornecedor_id) upd.fornecedor_id = match.lancamento.fornecedor_id
+    if (!mov.fornecedor && match.lancamento.fornecedor) upd.fornecedor = match.lancamento.fornecedor
+    await supabase.from('extrato_movs').update(upd).eq('id', movId)
+    await supabase.from('lancamentos').update({ status_lanc:'conciliado', extrato_mov_id: movId }).eq('id', match.lancamento.id)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
+    setMatchMap(prev => { const n={...prev}; delete n[movId]; return n })
+    setMsg('✓ Conciliado!')
+    setTimeout(() => setMsg(''), 2000)
+  }
+
+  async function rejeitarMatch(movId) {
+    setMatchMap(prev => { const n={...prev}; delete n[movId]; return n })
+  }
+
+  async function confirmarTodosAuto() {
+    const autoIds = Object.entries(matchMap).filter(([,v])=>v.auto).map(([k])=>parseInt(k))
+    for (const movId of autoIds) await confirmarMatch(movId)
+    setMsg(`✅ ${autoIds.length} conciliações automáticas confirmadas!`)
+    setTimeout(() => setMsg(''), 4000)
+  }
+
   async function salvarCategoria(movId, catId) {
-    await supabase.from('extrato_movs').update({ categoria_id: catId ? parseInt(catId) : null, subcategoria_id: null }).eq('id', movId)
-    setMovs(prev => prev.map(m => m.id === movId
-      ? { ...m, categoria_id: catId, subcategoria_id: null, subcategoria: null, categoria: categorias.find(c => String(c.id) === String(catId)) }
-      : m))
+    await supabase.from('extrato_movs').update({ categoria_id: catId?parseInt(catId):null, subcategoria_id:null }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, categoria_id:catId, subcategoria_id:null, subcategoria:null, categoria:categorias.find(c=>String(c.id)===String(catId)) } : m))
   }
 
   async function salvarSubcategoria(movId, subId) {
-    await supabase.from('extrato_movs').update({ subcategoria_id: subId ? parseInt(subId) : null }).eq('id', movId)
-    setMovs(prev => prev.map(m => m.id === movId ? { ...m, subcategoria_id: subId } : m))
+    await supabase.from('extrato_movs').update({ subcategoria_id: subId?parseInt(subId):null }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, subcategoria_id:subId } : m))
   }
 
   async function salvarPreponderancia(movId, campo, valor) {
-    await supabase.from('extrato_movs').update({ [campo]: parseFloat(valor) || 0 }).eq('id', movId)
-    setMovs(prev => prev.map(m => m.id === movId ? { ...m, [campo]: valor } : m))
+    await supabase.from('extrato_movs').update({ [campo]: parseFloat(valor)||0 }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, [campo]:valor } : m))
   }
 
   async function salvarPlanoTrabalho(movId, planoId) {
-    await supabase.from('extrato_movs').update({ plano_trabalho_id: planoId ? parseInt(planoId) : null }).eq('id', movId)
-    setMovs(prev => prev.map(m => m.id === movId
-      ? { ...m, plano_trabalho_id: planoId, plano: planos.find(p => String(p.id) === String(planoId)) }
-      : m))
+    await supabase.from('extrato_movs').update({ plano_trabalho_id: planoId?parseInt(planoId):null }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, plano_trabalho_id:planoId } : m))
   }
 
-  async function salvarPagamentoFuncionario(movId, mov) {
-    const { pessoa_id, competencia, valor_mensal, valor_abatimento } = formPagFunc
-    if (!pessoa_id || !competencia) { alert('Selecione a pessoa e a competência.'); return }
-    const pessoa = pessoasRecorrentes.find(p => String(p.id) === String(pessoa_id))
-    const valMensal = parseFloat(valor_mensal) || 0
-    const valAbat = parseFloat(valor_abatimento) || 0
-    const totalMov = Math.abs(Number(mov.valor))
+  async function conciliarMov(movId, valor) {
+    await supabase.from('extrato_movs').update({ conciliado: valor }).eq('id', movId)
+    const mov = movs.find(m => m.id===movId)
+    if (mov?.lancamento_id) await supabase.from('lancamentos').update({ status_lanc: valor?'conciliado':'lancado' }).eq('id', mov.lancamento_id)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, conciliado:valor } : m))
+  }
 
-    if (valMensal + valAbat > totalMov + 0.01) {
-      alert(`Mensal + Abatimento não pode exceder o valor do extrato (R$ ${totalMov.toFixed(2)})`)
-      return
-    }
-
-    const valorMensalDevido = Number(pessoa?.valor_mensal_normal || 0)
-
-    // Buscar competência existente para acumular
-    const { data: compExiste } = await supabase.from('competencias_mensais')
-      .select('*').eq('pessoa_id', parseInt(pessoa_id)).eq('competencia', competencia).single()
-
-    const jaPageMensal = Number(compExiste?.valor_pago_mensal || 0)
-    const jaAbateu = Number(compExiste?.valor_abatido_divida || 0)
-
-    const totalPagoMensal = jaPageMensal + valMensal
-    const totalAbatido = jaAbateu + valAbat
-    const valorNaoPago = Math.max(0, valorMensalDevido - totalPagoMensal)
-
-    // Buscar saldo atual (antes de qualquer mudança neste mês)
-    const { data: todasMovs } = await supabase.from('divida_movimentacoes')
-      .select('tipo,valor,competencia').eq('pessoa_id', parseInt(pessoa_id))
-    
-    // Saldo desconsiderando acréscimos deste mês (serão recalculados)
-    const saldoBase = (todasMovs||[]).reduce((acc, m) => {
-      if (m.competencia === competencia && m.tipo === 'acrescimo') return acc // ignora este mês
-      if (m.tipo === 'divida_inicial' || m.tipo === 'acrescimo') return acc + Number(m.valor)
-      if (m.tipo === 'abatimento') return acc - Number(m.valor)
-      return acc
-    }, 0)
-
-    const saldoInicio = Math.max(0, saldoBase)
-    const saldoFim = Math.max(0, saldoBase + valorNaoPago - totalAbatido)
-
-    // Atualizar competência acumulando valores
-    if (compExiste) {
-      await supabase.from('competencias_mensais').update({
-        valor_pago_mensal: totalPagoMensal,
-        valor_nao_pago: valorNaoPago,
-        valor_abatido_divida: totalAbatido,
-        saldo_divida_inicio: saldoInicio,
-        saldo_divida_fim: saldoFim,
-        extrato_mov_id: movId,
-        status: valorNaoPago === 0 ? 'pago' : 'parcial',
-      }).eq('id', compExiste.id)
-    }
-
-    // Remover acréscimo automático deste mês e recriar com valor correto
-    await supabase.from('divida_movimentacoes')
-      .delete()
-      .eq('pessoa_id', parseInt(pessoa_id))
-      .eq('competencia', competencia)
-      .eq('tipo', 'acrescimo')
-
-    // Inserir abatimento deste pagamento
-    if (valAbat > 0) {
-      await supabase.from('divida_movimentacoes').insert({
-        pessoa_id: parseInt(pessoa_id), tipo: 'abatimento',
-        valor: valAbat, data_movimentacao: mov.data, competencia,
-        descricao: `Abatimento de dívida — ${competencia}`,
-        extrato_mov_id: movId,
-      })
-    }
-
-    // Inserir acréscimo com o saldo correto que ficou em aberto no mês
-    if (valorNaoPago > 0) {
-      await supabase.from('divida_movimentacoes').insert({
-        pessoa_id: parseInt(pessoa_id), tipo: 'acrescimo',
-        valor: valorNaoPago, data_movimentacao: mov.data, competencia,
-        descricao: `${competencia} — pago R$ ${totalPagoMensal.toFixed(2)} de R$ ${valorMensalDevido.toFixed(2)}`,
-        extrato_mov_id: movId,
-      })
-    }
-
-    await supabase.from('extrato_movs').update({
-      fornecedor: pessoa?.nome,
-      obs_prestacao: `Pgto ${competencia} — mensal: R$${valMensal.toFixed(2)}${valAbat>0?`, abat: R$${valAbat.toFixed(2)}`:''}${valorNaoPago>0?` (faltam R$${valorNaoPago.toFixed(2)})`:''}`,
-    }).eq('id', movId)
-
-    setMovs(prev => prev.map(m => m.id === movId ? { ...m, fornecedor: pessoa?.nome } : m))
-    setPagFuncAberto(null)
-    setFormPagFunc({})
-    const msg = valorNaoPago === 0
-      ? `✅ ${pessoa?.nome} — ${competencia} quitado!`
-      : `✅ ${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos em ${competencia}. Faltam R$ ${valorNaoPago.toFixed(2)}.`
-    setMsg(msg)
-    setTimeout(() => setMsg(''), 5000)
+  async function conciliarTodos() {
+    const ids = movsFiltradas.filter(m=>!m.conciliado).map(m=>m.id)
+    await supabase.from('extrato_movs').update({ conciliado:true }).in('id', ids)
+    const lancIds = movsFiltradas.filter(m=>!m.conciliado&&m.lancamento_id).map(m=>m.lancamento_id)
+    if (lancIds.length>0) await supabase.from('lancamentos').update({ status_lanc:'conciliado' }).in('id', lancIds)
+    setMovs(prev => prev.map(m => ids.includes(m.id) ? { ...m, conciliado:true } : m))
+    setMsg('Tudo conciliado! ✓')
+    setTimeout(() => setMsg(''), 3000)
   }
 
   async function salvarComplementar(movId) {
@@ -236,7 +228,7 @@ export default function Conciliacao() {
     if (dados.percentual_rateio) dados.percentual_rateio = parseFloat(dados.percentual_rateio)
     if (!dados.data_documento) delete dados.data_documento
     await supabase.from('extrato_movs').update(dados).eq('id', movId)
-    setMovs(prev => prev.map(m => m.id === movId ? { ...m, ...dados } : m))
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...dados } : m))
     setComplementarAberto(null)
     setFormCompl({})
     setMsg('Dados complementares salvos! ✓')
@@ -246,691 +238,591 @@ export default function Conciliacao() {
   function abrirComplementar(m) {
     setComplementarAberto(m.id)
     setFormCompl({
-      fornecedor_id: m.fornecedor_id || '',
-      fornecedor: m.fornecedor || '',
-      cpf_cnpj: m.cpf_cnpj || '',
-      num_nota: m.num_nota || '',
-      data_documento: m.data_documento || '',
-      descricao_produto: m.descricao_produto || '',
-      local_comprovante: m.local_comprovante || '',
-      link_externo: m.link_externo || '',
-      bem_permanente: m.bem_permanente || false,
-      local_guarda_bem: m.local_guarda_bem || '',
-      despesa_rateada: m.despesa_rateada || false,
-      percentual_rateio: m.percentual_rateio || '',
-      fonte_restante: m.fonte_restante || '',
-      justificativa_rateio: m.justificativa_rateio || '',
-      obs_prestacao: m.obs_prestacao || '',
-      tipo_receita: m.tipo_receita || '',
-      evento_id: m.evento_id || '',
-      campanha_id: m.campanha_id || '',
+      fornecedor_id: m.fornecedor_id||'', fornecedor: m.fornecedor||'', cpf_cnpj: m.cpf_cnpj||'',
+      num_nota: m.num_nota||'', data_documento: m.data_documento||'', descricao_produto: m.descricao_produto||'',
+      local_comprovante: m.local_comprovante||'', link_externo: m.link_externo||'',
+      bem_permanente: m.bem_permanente||false, local_guarda_bem: m.local_guarda_bem||'',
+      despesa_rateada: m.despesa_rateada||false, percentual_rateio: m.percentual_rateio||'',
+      fonte_restante: m.fonte_restante||'', justificativa_rateio: m.justificativa_rateio||'',
+      obs_prestacao: m.obs_prestacao||'', tipo_receita: m.tipo_receita||'',
+      evento_id: m.evento_id||'', campanha_id: m.campanha_id||'',
     })
   }
 
-  async function conciliarMov(movId, valor) {
-    await supabase.from('extrato_movs').update({ conciliado: valor }).eq('id', movId)
-    const mov = movs.find(m => m.id === movId)
-    if (mov?.lancamento_id) {
-      await supabase.from('lancamentos').update({ status_lanc: valor ? 'conciliado' : 'lancado' }).eq('id', mov.lancamento_id)
+  async function salvarPagamentoFuncionario(movId, mov) {
+    const { pessoa_id, competencia, valor_mensal, valor_abatimento } = formPagFunc
+    if (!pessoa_id||!competencia) { alert('Selecione a pessoa e a competência.'); return }
+    const pessoa = pessoasRecorrentes.find(p => String(p.id)===String(pessoa_id))
+    const valMensal = parseFloat(valor_mensal)||0
+    const valAbat = parseFloat(valor_abatimento)||0
+    const totalMov = Math.abs(Number(mov.valor))
+    if (valMensal+valAbat > totalMov+0.01) { alert(`Mensal + Abatimento não pode exceder R$ ${totalMov.toFixed(2)}`); return }
+    const valorMensalDevido = Number(pessoa?.valor_mensal_normal||0)
+    const { data: compExiste } = await supabase.from('competencias_mensais').select('*').eq('pessoa_id', parseInt(pessoa_id)).eq('competencia', competencia).single()
+    const jaPageMensal = Number(compExiste?.valor_pago_mensal||0)
+    const jaAbateu = Number(compExiste?.valor_abatido_divida||0)
+    const totalPagoMensal = jaPageMensal+valMensal
+    const totalAbatido = jaAbateu+valAbat
+    const valorNaoPago = Math.max(0, valorMensalDevido-totalPagoMensal)
+    const { data: todasMovs } = await supabase.from('divida_movimentacoes').select('tipo,valor,competencia').eq('pessoa_id', parseInt(pessoa_id))
+    const saldoBase = (todasMovs||[]).reduce((acc,m) => {
+      if (m.competencia===competencia&&m.tipo==='acrescimo') return acc
+      if (m.tipo==='divida_inicial'||m.tipo==='acrescimo') return acc+Number(m.valor)
+      if (m.tipo==='abatimento') return acc-Number(m.valor)
+      return acc
+    }, 0)
+    if (compExiste) {
+      await supabase.from('competencias_mensais').update({
+        valor_pago_mensal: totalPagoMensal, valor_nao_pago: valorNaoPago, valor_abatido_divida: totalAbatido,
+        saldo_divida_inicio: Math.max(0,saldoBase), saldo_divida_fim: Math.max(0,saldoBase+valorNaoPago-totalAbatido),
+        extrato_mov_id: movId, status: valorNaoPago===0?'pago':'parcial',
+      }).eq('id', compExiste.id)
     }
-    setMovs(prev => prev.map(m => m.id === movId ? { ...m, conciliado: valor } : m))
+    await supabase.from('divida_movimentacoes').delete().eq('pessoa_id', parseInt(pessoa_id)).eq('competencia', competencia).eq('tipo', 'acrescimo')
+    if (valAbat>0) await supabase.from('divida_movimentacoes').insert({ pessoa_id:parseInt(pessoa_id), tipo:'abatimento', valor:valAbat, data_movimentacao:mov.data, competencia, descricao:`Abatimento de dívida — ${competencia}`, extrato_mov_id:movId })
+    if (valorNaoPago>0) await supabase.from('divida_movimentacoes').insert({ pessoa_id:parseInt(pessoa_id), tipo:'acrescimo', valor:valorNaoPago, data_movimentacao:mov.data, competencia, descricao:`${competencia} — pago R$ ${totalPagoMensal.toFixed(2)} de R$ ${valorMensalDevido.toFixed(2)}`, extrato_mov_id:movId })
+    await supabase.from('extrato_movs').update({ fornecedor:pessoa?.nome, obs_prestacao:`Pgto ${competencia} — mensal: R$${valMensal.toFixed(2)}${valAbat>0?`, abat: R$${valAbat.toFixed(2)}`:''}${valorNaoPago>0?` (faltam R$${valorNaoPago.toFixed(2)})`:''}` }).eq('id', movId)
+    setMovs(prev => prev.map(m => m.id===movId ? { ...m, fornecedor:pessoa?.nome } : m))
+    setPagFuncAberto(null); setFormPagFunc({})
+    setMsg(valorNaoPago===0 ? `✅ ${pessoa?.nome} — ${competencia} quitado!` : `✅ ${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos. Faltam R$ ${valorNaoPago.toFixed(2)}.`)
+    setTimeout(() => setMsg(''), 5000)
   }
 
-  async function conciliarTodos() {
-    const ids = movsFiltradas.map(m => m.id)
-    await supabase.from('extrato_movs').update({ conciliado: true }).in('id', ids)
-    const lancIds = movsFiltradas.filter(m => m.lancamento_id).map(m => m.lancamento_id)
-    if (lancIds.length > 0) {
-      await supabase.from('lancamentos').update({ status_lanc: 'conciliado' }).in('id', lancIds)
-    }
-    setMovs(prev => prev.map(m => ids.includes(m.id) ? { ...m, conciliado: true } : m))
-    setMsg('Tudo conciliado! ✓')
-    setTimeout(() => setMsg(''), 3000)
+  function temDadosCompl(m) {
+    return !!(m.fornecedor_id||m.num_nota||m.data_documento||m.descricao_produto||m.local_comprovante||m.link_externo||m.bem_permanente||m.despesa_rateada||m.obs_prestacao||m.tipo_receita||m.evento_id||m.campanha_id)
   }
 
-  const subcatsDa = (catId) => subcategorias.filter(s => String(s.categoria_id) === String(catId))
-  const planosDaConta = (contaId) => planos.filter(p => String(p.conta_id) === String(contaId))
+  const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2})
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const fmtDataHora = d => d ? new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'
+  const subcatsDa = catId => subcategorias.filter(s => String(s.categoria_id)===String(catId))
+  const planosDaConta = contaId => planos.filter(p => String(p.conta_id)===String(contaId))
+
+  const isRateio = extratoSel?.conta?.preponderancia === 'mista'
+  const isEmenda = extratoSel?.conta?.tipo_conta === 'emenda' || extratoSel?.conta?.tipo_conta === 'convenio'
+  const planosDisponiveis = extratoSel ? planosDaConta(extratoSel.conta?.id) : []
 
   const movsFiltradas = movs.filter(m => {
-    if (filtro === 'pendentes') return !m.conciliado
-    if (filtro === 'conciliados') return m.conciliado
-    if (filtro === 'sem_dados') return !m.categoria_id
+    if (filtro==='pendentes') return !m.conciliado
+    if (filtro==='conciliados') return m.conciliado
+    if (filtro==='sem_dados') return !m.categoria_id
     return true
   })
 
-  const totalConciliados = movs.filter(m => m.conciliado).length
-  const totalPendentes = movs.filter(m => !m.conciliado).length
-  const totalSemCategoria = movs.filter(m => !m.categoria_id).length
-
-  const fmt = v => {
-    const abs = Math.abs(v)
-    return (v >= 0 ? '+' : '-') + 'R$ ' + abs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-  }
-
-  const fmtDataHora = d => d ? new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—'
-  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
-
-  const temDadosCompl = (m) => m.fornecedor || m.fornecedor_id || m.num_nota || m.local_comprovante || m.evento_id || m.campanha_id
+  const totalConciliados = movs.filter(m=>m.conciliado).length
+  const totalPendentes = movs.filter(m=>!m.conciliado).length
+  const autoCount = Object.values(matchMap).filter(v=>v.auto).length
+  const possivelCount = Object.values(matchMap).filter(v=>!v.auto).length
 
   const s = {
-    card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
-    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', fontWeight: 500, borderBottom: '0.5px solid #E0DDD5', whiteSpace: 'nowrap' },
-    td: { padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5', verticalAlign: 'middle', fontSize: 12 },
-    badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
-    btn: (bg, cor = '#fff') => ({ padding: '5px 12px', fontSize: 11, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer', whiteSpace: 'nowrap' }),
-    select: { fontSize: 11, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 8, background: '#fff', width: '100%' },
-    input: { fontSize: 11, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 8, background: '#fff', width: '52px' },
-    tab: ativo => ({ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: ativo ? VERDE : 'transparent', color: ativo ? '#fff' : '#5F5E5A', cursor: 'pointer' }),
-    label: { fontSize: 11, color: '#5F5E5A', display: 'block', marginBottom: 2 },
-    inputCompl: { width: '100%', fontSize: 12, padding: '5px 8px', border: '0.5px solid #D3D1C7', borderRadius: 8 },
+    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    th: { textAlign:'left', padding:'6px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', whiteSpace:'nowrap' },
+    td: { padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    badge: (bg,cor) => ({ display:'inline-block', padding:'2px 7px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
+    btn: (bg,cor='#fff') => ({ padding:'5px 10px', fontSize:11, borderRadius:7, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
+    select: { fontSize:11, padding:'4px 6px', border:'0.5px solid #D3D1C7', borderRadius:6, width:'100%' },
+    input: { fontSize:11, padding:'4px 6px', border:'0.5px solid #D3D1C7', borderRadius:6, width:60 },
+    inputCompl: { fontSize:12, padding:'6px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, width:'100%', boxSizing:'border-box' },
+    label: { fontSize:11, color:'#5F5E5A', display:'block', marginBottom:3 },
   }
 
-  // ===== LISTA DE EXTRATOS =====
+  // ===== TELA DE LISTA DE EXTRATOS =====
   if (!extratoSel) return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
-        <button onClick={() => setAbaConcil('manual')}
-          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='manual'?VERDE:'#D3D1C7'}`, background:abaConcil==='manual'?VERDE:'#fff', color:abaConcil==='manual'?'#fff':'#5F5E5A', cursor:'pointer' }}>
-          Conciliação manual
-        </button>
-        <button onClick={() => setAbaConcil('inteligente')}
-          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='inteligente'?'#8B2FC9':'#D3D1C7'}`, background:abaConcil==='inteligente'?'#8B2FC9':'#fff', color:abaConcil==='inteligente'?'#fff':'#5F5E5A', cursor:'pointer' }}>
-          ✨ Conciliação inteligente
-        </button>
+    <div style={{ padding:'1.25rem 1.5rem' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem' }}>
+        <div>
+          <div style={{ fontSize:15, fontWeight:500 }}>Conciliação bancária</div>
+          <div style={{ fontSize:12, color:'#888780' }}>Selecione um extrato para conciliar</div>
+        </div>
+        <button onClick={() => navigate('/importar')} style={s.btn(AZUL)}>↑ Importar extrato</button>
       </div>
-
-      {abaConcil === 'inteligente' && <ConciliacaoInteligente />}
-
-      {abaConcil === 'manual' && (
-        <>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
-            <div style={{ fontSize:15, fontWeight:500 }}>Conciliação bancária</div>
-            <button onClick={() => navigate('/importar')} style={{ fontSize:12, padding:'7px 14px', borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer', fontWeight:500 }}>
-              ↑ Importar extrato
-            </button>
-          </div>
-          {extratos.length === 0 ? (
-            <div style={{ ...s.card, textAlign: 'center', padding: '3rem', color: '#888780' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
-              <div style={{ fontSize: 13 }}>Nenhum extrato importado ainda.</div>
-              <div style={{ fontSize: 12, marginTop: 8 }}>
-                <button onClick={() => navigate('/importar')} style={{ fontSize:12, padding:'7px 16px', borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>
-                  Importar primeiro extrato →
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div style={s.card}>
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>
-                Extratos importados ({extratos.length}) — clique para abrir e conciliar
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead><tr>
-                  {['Competência','Período','Conta','Movimentações','Saldo final','Importado em','Arquivo',''].map(h => (
-                    <th key={h} style={s.th}>{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>
-                  {extratos.map(e => {
-                    const stats = e._stats || { total: e.total_movs, conciliados: 0 }
-                    const fechado = stats.total > 0 && stats.conciliados === stats.total
-                    return (
-                    <tr key={e.id} style={{ cursor:'pointer', background: fechado ? '#F8F7F2' : '#fff', opacity: fechado ? 0.75 : 1 }} onClick={() => abrirExtrato(e)}>
-                      <td style={s.td}>
-                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                          {fechado && <span title="Totalmente conciliado">🔒</span>}
-                          <strong style={{ color: fechado ? '#888780' : '#2C2C2A' }}>{e.competencia}</strong>
+      {extratos.length === 0 ? (
+        <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
+          <div style={{ fontSize:32, marginBottom:8 }}>📄</div>
+          <div style={{ fontSize:13 }}>Nenhum extrato importado ainda.</div>
+          <button onClick={() => navigate('/importar')} style={{ ...s.btn(AZUL), marginTop:12 }}>Importar primeiro extrato →</button>
+        </div>
+      ) : (
+        <div style={s.card}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+            <thead><tr>{['Competência','Período','Conta','Progresso','Saldo final','Importado em','Arquivo',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {extratos.map(e => {
+                const stats = e._stats || { total:e.total_movs, conciliados:0 }
+                const fechado = stats.total>0 && stats.conciliados===stats.total
+                const pct = stats.total>0 ? Math.round(stats.conciliados/stats.total*100) : 0
+                return (
+                  <tr key={e.id} style={{ cursor:'pointer', background:fechado?'#F8F7F2':'#fff' }} onClick={() => abrirExtrato(e)}>
+                    <td style={s.td}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        {fechado && <span>🔒</span>}
+                        <strong style={{ color:fechado?'#888780':'#2C2C2A' }}>{e.competencia}</strong>
+                      </div>
+                    </td>
+                    <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{e.data_inicio&&e.data_fim ? `${fmtData(e.data_inicio)} a ${fmtData(e.data_fim)}` : '—'}</td>
+                    <td style={s.td}>{e.conta?.nome||'—'}</td>
+                    <td style={s.td}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ width:60, height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:pct+'%', background:fechado?VERDE:AZUL, borderRadius:99 }} />
                         </div>
-                      </td>
-                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>
-                        {e.data_inicio && e.data_fim
-                          ? `${fmtData(e.data_inicio)} a ${fmtData(e.data_fim)}`
-                          : '—'}
-                      </td>
-                      <td style={s.td}>{e.conta?.nome || '—'}</td>
-                      <td style={s.td}>
-                        {fechado ? (
-                          <span style={s.badge('#EAF3DE','#3B6D11')}>✓ {stats.conciliados}/{stats.total}</span>
-                        ) : (
-                          <span style={s.badge('#E6F1FB','#185FA5')}>{stats.conciliados}/{stats.total} concil.</span>
-                        )}
-                      </td>
-                      <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>
-                        R$ {Number(e.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td style={{ ...s.td, color: '#888780', fontSize:11 }}>{fmtDataHora(e.importado_em)}</td>
-                      <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
-                      <td style={s.td}>
-                        <button onClick={ev => { ev.stopPropagation(); abrirExtrato(e) }}
-                          style={s.btn(fechado ? '#F1EFE8' : VERDE, fechado ? '#5F5E5A' : '#fff')}>
-                          {fechado ? '🔒 Ver' : 'Abrir →'}
-                        </button>
-                      </td>
-                    </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
+                        <span style={s.badge(fechado?'#EAF3DE':'#E6F1FB', fechado?'#3B6D11':'#185FA5')}>
+                          {fechado?'✓ ':''}{stats.conciliados}/{stats.total}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ ...s.td, color:VERDE, fontWeight:500 }}>{fmt(e.saldo_final||0)}</td>
+                    <td style={{ ...s.td, color:'#888780', fontSize:11 }}>{fmtDataHora(e.importado_em)}</td>
+                    <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
+                    <td style={s.td}>
+                      <button onClick={ev=>{ev.stopPropagation();abrirExtrato(e)}} style={s.btn(fechado?'#F1EFE8':VERDE, fechado?'#5F5E5A':'#fff')}>
+                        {fechado?'🔒 Ver':'Abrir →'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )
 
-  const contaPrep = extratoSel.conta?.preponderancia
-  const contaTipo = extratoSel.conta?.tipo_conta
-  const isRateio = contaPrep === 'rateio'
-  const isEmenda = contaTipo && contaTipo !== 'principal'
-  const planosDisponiveis = planosDaConta(extratoSel.conta?.id)
-
-  // ===== TELA DE CONCILIAÇÃO =====
+  // ===== TELA DO EXTRATO =====
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
-        <button onClick={() => setAbaConcil('manual')}
-          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='manual'?VERDE:'#D3D1C7'}`, background:abaConcil==='manual'?VERDE:'#fff', color:abaConcil==='manual'?'#fff':'#5F5E5A', cursor:'pointer' }}>
-          Conciliação manual
-        </button>
-        <button onClick={() => setAbaConcil('inteligente')}
-          style={{ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${abaConcil==='inteligente'?'#8B2FC9':'#D3D1C7'}`, background:abaConcil==='inteligente'?'#8B2FC9':'#fff', color:abaConcil==='inteligente'?'#fff':'#5F5E5A', cursor:'pointer' }}>
-          ✨ Conciliação inteligente
-        </button>
-      </div>
-      {abaConcil === 'inteligente' && <ConciliacaoInteligente />}
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <button onClick={() => { setExtratoSel(null); setMovs([]) }}
-          style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
-          ← Voltar
-        </button>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 500 }}>
-            {extratoSel.competencia} · {extratoSel.conta?.nome}
-          </div>
-          <div style={{ fontSize:11, color:'#888780' }}>
-            {extratoSel.data_inicio && extratoSel.data_fim
-              ? `Período: ${fmtData(extratoSel.data_inicio)} a ${fmtData(extratoSel.data_fim)}`
-              : ''}
-            {extratoSel.importado_em ? ` · Importado em ${fmtDataHora(extratoSel.importado_em)}` : ''}
-            {extratoSel.arquivo_nome ? ` · ${extratoSel.arquivo_nome}` : ''}
+    <div style={{ padding:'1.25rem 1.5rem' }}>
+      {/* Cabeçalho */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:8 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <button onClick={() => { setExtratoSel(null); setMovs([]); setMatchMap({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>← Voltar</button>
+          <div>
+            <span style={{ fontWeight:500, fontSize:13 }}>{extratoSel.competencia} · {extratoSel.conta?.nome}</span>
+            <span style={{ fontSize:11, color:'#888780', marginLeft:8 }}>Período: {fmtData(extratoSel.data_inicio)} a {fmtData(extratoSel.data_fim)}</span>
           </div>
         </div>
-        {isRateio && <span style={s.badge('#FAEEDA', '#854F0B')}>Conta Principal — informar preponderância</span>}
-        {isEmenda && <span style={s.badge('#E6F1FB', '#185FA5')}>Emenda/Edital — informar plano e dados complementares</span>}
-        {totalPendentes === 0 && movs.length > 0 && <span style={s.badge('#EAF3DE', '#3B6D11')}>✓ Tudo conciliado</span>}
-      </div>
-
-      {msg && (
-        <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.5rem 1rem', marginBottom: '1rem', fontSize: 12, color: '#3B6D11' }}>
-          {msg}
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+          <button onClick={cruzarAutomatico} disabled={cruzando} style={s.btn(ROXO)}>
+            {cruzando ? '⏳ Cruzando...' : '🤖 Cruzar com lançamentos'}
+          </button>
+          {autoCount>0 && (
+            <button onClick={confirmarTodosAuto} style={s.btn(VERDE)}>
+              ✓ Confirmar {autoCount} automáticos
+            </button>
+          )}
+          {totalPendentes>0 && <button onClick={conciliarTodos} style={s.btn('#EAF3DE','#3B6D11')}>✓ Conciliar todos ({totalPendentes})</button>}
         </div>
-      )}
+      </div>
 
       {/* Métricas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: '1.25rem' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))', gap:8, marginBottom:'1rem' }}>
         {[
-          { label: 'Total', val: movs.length, cor: AZUL },
-          { label: 'Conciliados', val: totalConciliados, cor: VERDE },
-          { label: 'Pendentes', val: totalPendentes, cor: totalPendentes > 0 ? '#BA7517' : VERDE },
-          { label: 'Sem categoria', val: totalSemCategoria, cor: totalSemCategoria > 0 ? VERMELHO : VERDE },
-          { label: 'Saldo final', val: 'R$ ' + Number(extratoSel.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }), cor: VERDE },
-        ].map(m => (
-          <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.75rem 1rem', border: '0.5px solid #E0DDD5' }}>
-            <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.6rem' }} />
-            <div style={{ fontSize: 10, color: '#888780', marginBottom: 3 }}>{m.label}</div>
-            <div style={{ fontSize: 16, fontWeight: 500, color: m.cor }}>{m.val}</div>
+          ['Total', movs.length, '#5F5E5A'],
+          ['Conciliados', totalConciliados, VERDE],
+          ['Pendentes', totalPendentes, totalPendentes>0?LARANJA:'#888780'],
+          ['Sem categoria', movs.filter(m=>!m.categoria_id).length, movs.filter(m=>!m.categoria_id).length>0?VERMELHO:'#888780'],
+          ...(autoCount>0||possivelCount>0 ? [['🤖 Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
+        ].map(([l,v,c]) => (
+          <div key={l} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+            <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
+            <div style={{ fontSize:16, fontWeight:600, color:c }}>{v}</div>
           </div>
         ))}
+        <div style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>Saldo final</div>
+          <div style={{ fontSize:14, fontWeight:600, color:VERDE }}>{fmt(extratoSel.saldo_final||0)}</div>
+        </div>
       </div>
 
-      {/* Progresso */}
-      {movs.length > 0 && (
-        <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#888780', marginBottom: 4 }}>
-            <span>Progresso da conciliação</span>
-            <span>{totalConciliados} de {movs.length} ({Math.round(totalConciliados / movs.length * 100)}%)</span>
-          </div>
-          <div style={{ height: 8, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.round(totalConciliados / movs.length * 100)}%`, background: VERDE, borderRadius: 99, transition: 'width .3s' }} />
-          </div>
-        </div>
-      )}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')||msg.includes('✓')?'#F2FAE8':'#E6F1FB', color:msg.includes('✅')||msg.includes('✓')?'#3B6D11':'#185FA5' }}>{msg}</div>}
 
-      {isEmenda && planosDisponiveis.length === 0 && (
-        <div style={{ background: '#FEF2F2', borderLeft: '3px solid #E8212A', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#A32D2D', marginBottom: '1rem' }}>
-          <strong>Nenhum plano de trabalho cadastrado para esta conta.</strong>
-        </div>
-      )}
+      {/* Filtros */}
+      <div style={{ display:'flex', gap:6, marginBottom:'.85rem', flexWrap:'wrap', alignItems:'center' }}>
+        {[['todos','Todos'],['pendentes','Pendentes'],['conciliados','Conciliados'],['sem_dados','Sem categoria']].map(([v,l]) => (
+          <button key={v} onClick={() => setFiltro(v)}
+            style={{ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${filtro===v?VERDE:'#D3D1C7'}`, background:filtro===v?VERDE:'transparent', color:filtro===v?'#fff':'#5F5E5A', cursor:'pointer' }}>
+            {l}
+          </button>
+        ))}
+        {isRateio && <span style={s.badge('#E6F1FB','#185FA5')}>Preponderância ativa</span>}
+        {isEmenda && <span style={s.badge('#F0EAFA','#8B2FC9')}>Conta emenda</span>}
+      </div>
 
-      <div style={s.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.85rem', flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {[['todos','Todos'], ['pendentes','Pendentes'], ['conciliados','Conciliados'], ['sem_dados','Sem categoria']].map(([v, l]) => (
-              <button key={v} onClick={() => setFiltro(v)} style={s.tab(filtro === v)}>{l}</button>
-            ))}
-          </div>
-          {totalPendentes > 0 && (
-            <button onClick={conciliarTodos} style={s.btn(VERDE)}>✓ Conciliar todos ({totalPendentes})</button>
-          )}
-        </div>
+      {/* Tabela */}
+      <div style={{ ...s.card, padding:0, overflowX:'auto' }}>
+        <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+          <thead>
+            <tr style={{ background:'#FAFAF8' }}>
+              <th style={s.th}>Data</th>
+              <th style={s.th}>Descrição</th>
+              <th style={s.th}>Categoria</th>
+              <th style={s.th}>Subcategoria</th>
+              {isRateio && <><th style={s.th}>Educ%</th><th style={s.th}>Social%</th></>}
+              {isEmenda && <th style={s.th}>Plano trabalho</th>}
+              <th style={s.th}>Lançamento</th>
+              <th style={s.th}>Ações</th>
+              <th style={{ ...s.th, textAlign:'right' }}>Valor</th>
+              <th style={s.th}>Situação</th>
+              <th style={s.th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {movsFiltradas.map(m => {
+              const subcats = subcatsDa(m.categoria_id)
+              const totalPrep = (parseFloat(m.prep_educacao)||0)+(parseFloat(m.prep_social)||0)
+              const prepOk = !isRateio || totalPrep===100 || totalPrep===0
+              const temCompl = temDadosCompl(m)
+              const isAberto = complementarAberto===m.id
+              const match = matchMap[m.id]
+              const lancVinc = m.lancamento_id ? lancamentos.find(l=>l.id===m.lancamento_id) : null
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#888780', fontSize: 12 }}>Carregando...</div>
-        ) : (
-          <div style={{ maxHeight: 600, overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
-                <tr>
-                  <th style={s.th}>Data</th>
-                  <th style={s.th}>Descrição</th>
-                  <th style={s.th}>Categoria</th>
-                  <th style={s.th}>Subcategoria</th>
-                  {isRateio && <th style={s.th}>Educ%</th>}
-                  {isRateio && <th style={s.th}>Social%</th>}
-                  {isEmenda && <th style={s.th}>Plano de trabalho</th>}
-                  <th style={s.th}>Dados compl.</th>
-                  <th style={s.th}>Valor</th>
-                  <th style={s.th}>Situação</th>
-                  <th style={s.th}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {movsFiltradas.length === 0 && (
-                  <tr><td colSpan={13} style={{ padding: '2rem', textAlign: 'center', color: '#888780' }}>Nenhum item.</td></tr>
-                )}
-                {movsFiltradas.map(m => {
-                  const subcats = m.categoria_id ? subcatsDa(m.categoria_id) : []
-                  const totalPrep = (parseFloat(m.prep_educacao)||0) + (parseFloat(m.prep_social)||0)
-                  const prepOk = !isRateio || totalPrep === 100 || totalPrep === 0
-                  const temCompl = temDadosCompl(m)
-                  const isAberto = complementarAberto === m.id
+              return (
+                <React.Fragment key={m.id}>
+                  <tr style={{ background: m.conciliado?'#F2FAE8': match?.auto?'#F2FAE8': match?'#FFFBF0':'#fff' }}>
+                    <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(m.data)}</td>
 
-                  return (
-                    <React.Fragment key={m.id}>
-                      <tr style={{ background: m.conciliado ? '#F2FAE8' : '#fff' }}>
-                        <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{new Date(m.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
-
-                        <td style={{ ...s.td, maxWidth: 160 }}>
-                          <div onClick={() => setDescExpandida(descExpandida === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
-                            {descExpandida === m.id ? (
-                              <div style={{ whiteSpace: 'normal', wordBreak: 'break-all', background: '#F8F7F2', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
-                                {m.descricao}
-                                <div style={{ marginTop: 4, fontSize: 10, color: VERDE }}>▲ recolher</div>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{m.descricao}</span>
-                                {m.descricao?.length > 20 && <span style={{ fontSize: 10, color: AZUL, flexShrink: 0 }}>▼</span>}
-                              </div>
-                            )}
+                    <td style={{ ...s.td, maxWidth:160 }}>
+                      <div onClick={() => setDescExpandida(descExpandida===m.id?null:m.id)} style={{ cursor:'pointer' }}>
+                        {descExpandida===m.id ? (
+                          <div style={{ whiteSpace:'normal', wordBreak:'break-all', background:'#F8F7F2', borderRadius:6, padding:'4px 6px', fontSize:11 }}>
+                            {m.descricao}<div style={{ marginTop:4, fontSize:10, color:VERDE }}>▲ recolher</div>
                           </div>
-                        </td>
-
-                        <td style={{ ...s.td, minWidth: 140 }}>
-                          <select value={m.categoria_id || ''} onChange={e => salvarCategoria(m.id, e.target.value)}
-                            style={{ ...s.select, borderColor: !m.categoria_id ? VERMELHO : '#D3D1C7' }}>
-                            <option value="">Selecione...</option>
-                            {categorias.filter(c => {
-                              const tipoMov = m.valor >= 0 ? 'entrada' : 'despesa'
-                              return !c.tipo || c.tipo === tipoMov
-                            }).map(c => (
-                              <option key={c.id} value={c.id}>{c.nome}</option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td style={{ ...s.td, minWidth: 120 }}>
-                          {subcats.length > 0 ? (
-                            <select value={m.subcategoria_id || ''} onChange={e => salvarSubcategoria(m.id, e.target.value)} style={s.select}>
-                              <option value="">Selecione...</option>
-                              {subcats.map(sc => <option key={sc.id} value={sc.id}>{sc.nome}</option>)}
-                            </select>
-                          ) : <span style={{ fontSize: 11, color: '#B4B2A9' }}>—</span>}
-                        </td>
-
-                        {isRateio && (
-                          <>
-                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_educacao || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_educacao', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
-                            <td style={s.td}><input type="number" min="0" max="100" value={m.prep_social || ''} placeholder="0" onChange={e => salvarPreponderancia(m.id, 'prep_social', e.target.value)} style={{ ...s.input, borderColor: !prepOk ? VERMELHO : '#D3D1C7' }} /></td>
-                          </>
-                        )}
-
-                        {isEmenda && (
-                          <td style={{ ...s.td, minWidth: 150 }}>
-                            <select value={m.plano_trabalho_id || ''} onChange={e => salvarPlanoTrabalho(m.id, e.target.value)} style={{ ...s.select, borderColor: isEmenda && m.valor < 0 && !m.plano_trabalho_id ? VERMELHO : '#D3D1C7' }}>
-                              <option value="">Selecione...</option>
-                              {planosDisponiveis.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                            </select>
-                          </td>
-                        )}
-
-                        <td style={s.td}>
-                          <div style={{ position:'relative' }}>
-                            <button onClick={() => setMenuAberto(menuAberto === m.id ? null : m.id)}
-                              style={{ ...s.btn(temCompl||m.fornecedor?'#EAF3DE':'#F1EFE8', temCompl||m.fornecedor?'#3B6D11':'#5F5E5A'), fontSize:10 }}>
-                              {temCompl||m.fornecedor ? '✓' : '⋯'} Ações {movsDivida[m.id] ? '👤' : ''}
-                            </button>
-                            {menuAberto === m.id && (
-                              <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
-                                <button onClick={() => { setMenuAberto(null); isAberto ? setComplementarAberto(null) : abrirComplementar(m) }}
-                                  style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color: temCompl?'#3B6D11':'#2C2C2A' }}>
-                                  📋 {temCompl ? 'Dados complementares ✓' : 'Dados complementares'}
-                                </button>
-                                {m.valor < 0 && pessoasRecorrentes.length > 0 && (
-                                  <button onClick={() => {
-                                    setMenuAberto(null)
-                                    if (pagFuncAberto === m.id) { setPagFuncAberto(null); return }
-                                    setPagFuncAberto(m.id)
-                                    setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal:'', valor_abatimento:'' })
-                                  }} style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', background:'transparent', cursor:'pointer', color:'#8B2FC9' }}>
-                                  👤 Pagamento de funcionário
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                        ) : (
+                          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                            <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:140 }}>{m.descricao}</span>
+                            {m.descricao?.length>20 && <span style={{ fontSize:10, color:AZUL, flexShrink:0 }}>▼</span>}
                           </div>
-                        </td>
+                        )}
+                      </div>
+                    </td>
 
-                        <td style={{ ...s.td, fontWeight: 500, color: m.valor >= 0 ? VERDE : VERMELHO, whiteSpace: 'nowrap' }}>
-                          {fmt(m.valor)}
-                        </td>
+                    <td style={{ ...s.td, minWidth:140 }}>
+                      <select value={m.categoria_id||''} onChange={e=>salvarCategoria(m.id, e.target.value)}
+                        style={{ ...s.select, borderColor:!m.categoria_id?VERMELHO:'#D3D1C7' }}>
+                        <option value="">Selecione...</option>
+                        {categorias.filter(c => !c.tipo || c.tipo===(m.valor>=0?'entrada':'despesa')).map(c=>(
+                          <option key={c.id} value={c.id}>{c.nome}</option>
+                        ))}
+                      </select>
+                    </td>
 
-                        <td style={s.td}>
-                          <span style={s.badge(m.conciliado ? '#EAF3DE' : '#FAEEDA', m.conciliado ? '#3B6D11' : '#854F0B')}>
-                            {m.conciliado ? '✓ OK' : 'Pendente'}
-                          </span>
-                        </td>
+                    <td style={{ ...s.td, minWidth:120 }}>
+                      {subcats.length>0 ? (
+                        <select value={m.subcategoria_id||''} onChange={e=>salvarSubcategoria(m.id, e.target.value)} style={s.select}>
+                          <option value="">Selecione...</option>
+                          {subcats.map(sc=><option key={sc.id} value={sc.id}>{sc.nome}</option>)}
+                        </select>
+                      ) : <span style={{ fontSize:11, color:'#B4B2A9' }}>—</span>}
+                    </td>
 
-                        <td style={s.td}>
-                          <button
-                            onClick={() => {
-                              if (!m.conciliado && !m.categoria_id) {
-                                setMsg('⚠ Selecione uma categoria antes de conciliar.')
-                                setTimeout(() => setMsg(''), 3000)
-                                return
-                              }
-                              conciliarMov(m.id, !m.conciliado)
-                            }}
-                            style={s.btn(m.conciliado ? '#F1EFE8' : !m.categoria_id ? '#D3D1C7' : VERDE, m.conciliado ? '#5F5E5A' : '#fff')}>
-                            {m.conciliado ? 'Desfazer' : 'OK ✓'}
+                    {isRateio && (
+                      <>
+                        <td style={s.td}><input type="number" min="0" max="100" value={m.prep_educacao||''} placeholder="0" onChange={e=>salvarPreponderancia(m.id,'prep_educacao',e.target.value)} style={{ ...s.input, borderColor:!prepOk?VERMELHO:'#D3D1C7' }} /></td>
+                        <td style={s.td}><input type="number" min="0" max="100" value={m.prep_social||''} placeholder="0" onChange={e=>salvarPreponderancia(m.id,'prep_social',e.target.value)} style={{ ...s.input, borderColor:!prepOk?VERMELHO:'#D3D1C7' }} /></td>
+                      </>
+                    )}
+
+                    {isEmenda && (
+                      <td style={{ ...s.td, minWidth:150 }}>
+                        <select value={m.plano_trabalho_id||''} onChange={e=>salvarPlanoTrabalho(m.id, e.target.value)} style={{ ...s.select, borderColor:isEmenda&&m.valor<0&&!m.plano_trabalho_id?VERMELHO:'#D3D1C7' }}>
+                          <option value="">Selecione...</option>
+                          {planosDisponiveis.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                        </select>
+                      </td>
+                    )}
+
+                    {/* Coluna Lançamento vinculado */}
+                    <td style={{ ...s.td, minWidth:140 }}>
+                      {match && !m.conciliado ? (
+                        <div style={{ background:match.auto?'#EAF3DE':'#FAEEDA', borderRadius:6, padding:'4px 8px', fontSize:10 }}>
+                          <div style={{ color:match.auto?'#3B6D11':'#854F0B', fontWeight:600, marginBottom:2 }}>
+                            {match.auto?'🤖 Auto':'? Possível'} ({match.score}pts)
+                          </div>
+                          <div style={{ color:'#5F5E5A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>
+                            {match.lancamento.descricao}
+                          </div>
+                          <div style={{ color:'#888780', marginTop:2 }}>{match.lancamento.categoria?.nome||'sem cat.'}</div>
+                          <div style={{ display:'flex', gap:4, marginTop:4 }}>
+                            <button onClick={() => confirmarMatch(m.id)} style={{ ...s.btn(match.auto?VERDE:LARANJA), fontSize:9, padding:'2px 6px' }}>✓ Confirmar</button>
+                            <button onClick={() => rejeitarMatch(m.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:9, padding:'2px 6px' }}>✗</button>
+                          </div>
+                        </div>
+                      ) : lancVinc ? (
+                        <div style={{ fontSize:10 }}>
+                          <button onClick={() => setLancVinculadoAberto(lancVinculadoAberto===m.id?null:m.id)}
+                            style={{ ...s.btn('#EAF3DE','#3B6D11'), fontSize:10, padding:'3px 8px' }}>
+                            🔗 Ver lançamento
                           </button>
-                        </td>
-                      </tr>
-
-                      {isAberto && (
-                        <tr>
-                          <td colSpan={13} style={{ padding: 0, borderBottom: '0.5px solid #E0DDD5' }}>
-                            <div style={{ background: '#F8F7F2', padding: '12px 16px', borderLeft: `3px solid ${AZUL}` }}>
-                              <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 10, color: AZUL }}>
-                                Dados complementares — {m.descricao?.slice(0,50)}
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
-                                <div>
-                                  <label style={s.label}>Fornecedor cadastrado</label>
-                                  <select value={formCompl.fornecedor_id||''} onChange={e => {
-                                    const f = fornecedores.find(f => String(f.id) === e.target.value)
-                                    setFormCompl(fc => ({ ...fc, fornecedor_id: e.target.value, fornecedor: f?.nome||fc.fornecedor, cpf_cnpj: f?.cpf_cnpj||fc.cpf_cnpj }))
-                                  }} style={s.inputCompl}>
-                                    <option value="">Selecione ou preencha abaixo</option>
-                                    {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}</option>)}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label style={s.label}>Fornecedor / Pagador (texto)</label>
-                                  <input value={formCompl.fornecedor||''} onChange={e=>setFormCompl(f=>({...f,fornecedor:e.target.value}))} placeholder="Nome" style={s.inputCompl} />
-                                </div>
-                                <div>
-                                  <label style={s.label}>CPF / CNPJ</label>
-                                  <input value={formCompl.cpf_cnpj||''} onChange={e=>setFormCompl(f=>({...f,cpf_cnpj:e.target.value}))} placeholder="000.000.000-00" style={s.inputCompl} />
-                                </div>
-                                <div>
-                                  <label style={s.label}>Nº Nota / Recibo</label>
-                                  <input value={formCompl.num_nota||''} onChange={e=>setFormCompl(f=>({...f,num_nota:e.target.value}))} placeholder="NF 123" style={s.inputCompl} />
-                                </div>
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
-                                <div>
-                                  <label style={s.label}>Data do documento</label>
-                                  <input type="date" value={formCompl.data_documento||''} onChange={e=>setFormCompl(f=>({...f,data_documento:e.target.value}))} style={s.inputCompl} />
-                                </div>
-                                <div>
-                                  <label style={s.label}>Local do comprovante</label>
-                                  <input value={formCompl.local_comprovante||''} onChange={e=>setFormCompl(f=>({...f,local_comprovante:e.target.value}))} placeholder="Ex: Drive > Emendas 2026" style={s.inputCompl} />
-                                </div>
-                                <div>
-                                  <label style={s.label}>Link externo</label>
-                                  <input value={formCompl.link_externo||''} onChange={e=>setFormCompl(f=>({...f,link_externo:e.target.value}))} placeholder="https://..." style={s.inputCompl} />
-                                </div>
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
-                                {m.valor >= 0 && (
-                                  <div>
-                                    <label style={s.label}>Tipo de receita</label>
-                                    <select value={formCompl.tipo_receita||''} onChange={e=>setFormCompl(f=>({...f,tipo_receita:e.target.value}))} style={s.inputCompl}>
-                                      <option value="">Selecione...</option>
-                                      {TIPOS_RECEITA.map(t=><option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                  </div>
-                                )}
-                                <div>
-                                  <label style={s.label}>Evento vinculado</label>
-                                  <select value={formCompl.evento_id||''} onChange={e=>setFormCompl(f=>({...f,evento_id:e.target.value}))} style={s.inputCompl}>
-                                    <option value="">Nenhum</option>
-                                    {eventos.map(ev=><option key={ev.id} value={ev.id}>{ev.nome}</option>)}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label style={s.label}>Campanha vinculada</label>
-                                  <select value={formCompl.campanha_id||''} onChange={e=>setFormCompl(f=>({...f,campanha_id:e.target.value}))} style={s.inputCompl}>
-                                    <option value="">Nenhuma</option>
-                                    {campanhas.map(cp=><option key={cp.id} value={cp.id}>{cp.nome}</option>)}
-                                  </select>
-                                </div>
-                                <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingTop: 16 }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
-                                    <input type="checkbox" checked={formCompl.bem_permanente||false} onChange={e=>setFormCompl(f=>({...f,bem_permanente:e.target.checked}))} />
-                                    Bem permanente
-                                  </label>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
-                                    <input type="checkbox" checked={formCompl.despesa_rateada||false} onChange={e=>setFormCompl(f=>({...f,despesa_rateada:e.target.checked}))} />
-                                    Rateada
-                                  </label>
-                                </div>
-                              </div>
-
-                              {formCompl.bem_permanente && (
-                                <div style={{ marginBottom: 8 }}>
-                                  <label style={s.label}>Local de guarda / uso do bem</label>
-                                  <input value={formCompl.local_guarda_bem||''} onChange={e=>setFormCompl(f=>({...f,local_guarda_bem:e.target.value}))} placeholder="Ex: Sala da diretoria" style={s.inputCompl} />
-                                </div>
-                              )}
-
-                              {formCompl.despesa_rateada && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 8, marginBottom: 8 }}>
-                                  <div>
-                                    <label style={s.label}>% pago com este recurso</label>
-                                    <input type="number" min="0" max="100" value={formCompl.percentual_rateio||''} onChange={e=>setFormCompl(f=>({...f,percentual_rateio:e.target.value}))} placeholder="50" style={s.inputCompl} />
-                                  </div>
-                                  <div>
-                                    <label style={s.label}>Fonte do restante</label>
-                                    <input value={formCompl.fonte_restante||''} onChange={e=>setFormCompl(f=>({...f,fonte_restante:e.target.value}))} placeholder="Recursos próprios" style={s.inputCompl} />
-                                  </div>
-                                  <div>
-                                    <label style={s.label}>Justificativa do rateio</label>
-                                    <input value={formCompl.justificativa_rateio||''} onChange={e=>setFormCompl(f=>({...f,justificativa_rateio:e.target.value}))} placeholder="Motivo" style={s.inputCompl} />
-                                  </div>
-                                </div>
-                              )}
-
-                              <div style={{ marginBottom: 10 }}>
-                                <label style={s.label}>Observações de prestação de contas</label>
-                                <input value={formCompl.obs_prestacao||''} onChange={e=>setFormCompl(f=>({...f,obs_prestacao:e.target.value}))} placeholder="Observações para o relatório de prestação de contas" style={s.inputCompl} />
-                              </div>
-
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>Salvar dados complementares</button>
-                                <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize:10, color:'#D3D1C7' }}>—</span>
                       )}
-                      {pagFuncAberto === m.id && (
-                        <tr>
-                          <td colSpan={13} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
-                            <div style={{ background:'#F5F0FF', padding:'12px 16px', borderLeft:`3px solid #8B2FC9` }}>
-                              <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:'#8B2FC9' }}>
-                                👤 Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
-                              </div>
+                    </td>
 
-                              {/* Resumo se já foi lançado */}
-                              {movsDivida[m.id] && (
-                                <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
-                                  <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}>✅ Pagamento já registrado</div>
-                                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8, fontSize:11 }}>
-                                    <div><span style={{ color:'#888780' }}>Pessoa:</span> <strong>{movsDivida[m.id].pessoa?.nome||'—'}</strong></div>
-                                    <div><span style={{ color:'#888780' }}>Competência:</span> <strong>{movsDivida[m.id].competencia ? new Date(movsDivida[m.id].competencia+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'}</strong></div>
-                                    <div><span style={{ color:'#888780' }}>💼 Ano corrente:</span> <strong style={{ color:'#185FA5' }}>R$ {Number(movsDivida[m.id].valor_pago_mensal||0).toFixed(2)}</strong></div>
-                                    <div><span style={{ color:'#888780' }}>📅 Abatimento:</span> <strong style={{ color:'#854F0B' }}>R$ {Number(movsDivida[m.id].abatimento||0).toFixed(2)}</strong></div>
-                                  </div>
-                                  <div style={{ marginTop:8, fontSize:11, color:'#888780' }}>
-                                    Quer corrigir? Preencha os campos abaixo e registre novamente — os valores serão atualizados.
-                                  </div>
-                                </div>
-                              )}
-                              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-                                <div>
-                                  <label style={s.label}>Pessoa *</label>
-                                  <select value={formPagFunc.pessoa_id||''} onChange={e => {
-                                    const pessoaId = e.target.value
-                                    const pe = pessoasRecorrentes.find(p => String(p.id) === pessoaId)
-                                    const comp = formPagFunc.competencia || m.data?.slice(0,7) || ''
-                                    const mensal = Number(pe?.valor_mensal_normal || 0)
-                                    const totalMov = Math.abs(Number(m.valor))
-                                    const valorMensal = Math.min(totalMov, mensal)
-                                    const valorAbat = Math.round(Math.max(0, totalMov - valorMensal) * 100) / 100
-                                    setFormPagFunc(f => ({ 
-                                      ...f, 
-                                      pessoa_id: pessoaId,
-                                      competencia: comp,
-                                      valor_mensal: valorMensal > 0 ? valorMensal : '',
-                                      valor_abatimento: valorAbat > 0 ? valorAbat : '',
-                                      ja_pago_mensal: 0,
-                                    }))
-                                    // Buscar quanto já foi pago de forma separada
-                                    if (pe && comp) {
-                                      supabase.from('competencias_mensais')
-                                        .select('valor_pago_mensal').eq('pessoa_id', pe.id).eq('competencia', comp).single()
-                                        .then(({ data: compData }) => {
-                                          const jaPago = Number(compData?.valor_pago_mensal || 0)
-                                          if (jaPago > 0) {
-                                            const faltaMensal = Math.max(0, mensal - jaPago)
-                                            const vMensal = Math.min(totalMov, faltaMensal)
-                                            const vAbat = Math.round(Math.max(0, totalMov - vMensal) * 100) / 100
-                                            setFormPagFunc(f => ({ 
-                                              ...f, 
-                                              valor_mensal: vMensal > 0 ? vMensal : '',
-                                              valor_abatimento: vAbat > 0 ? vAbat : '',
-                                              ja_pago_mensal: jaPago,
-                                            }))
-                                          }
-                                        })
-                                    }
-                                  }} style={s.inputCompl}>
-                                    <option value="">Selecione...</option>
-                                    {pessoasRecorrentes.map(pe => <option key={pe.id} value={pe.id}>{pe.nome} — Mensal: R$ {Number(pe.valor_mensal_normal||0).toFixed(2)}</option>)}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label style={s.label}>Competência (mês de referência) *</label>
-                                  <input type="month" value={formPagFunc.competencia||''} onChange={e => {
-                                    const comp = e.target.value
-                                    const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
-                                    const mensal = Number(pe?.valor_mensal_normal || 0)
-                                    const totalMov = Math.abs(Number(m.valor))
-                                    setFormPagFunc(f => ({ ...f, competencia: comp }))
-                                    if (pe && comp) {
-                                      supabase.from('competencias_mensais')
-                                        .select('valor_pago_mensal').eq('pessoa_id', pe.id).eq('competencia', comp).single()
-                                        .then(({ data: compData }) => {
-                                          const jaPago = Number(compData?.valor_pago_mensal || 0)
-                                          const faltaMensal = Math.max(0, mensal - jaPago)
-                                          const vMensal = Math.min(totalMov, faltaMensal)
-                                          const vAbat = Math.round(Math.max(0, totalMov - vMensal) * 100) / 100
-                                          setFormPagFunc(f => ({
-                                            ...f,
-                                            valor_mensal: vMensal > 0 ? vMensal : '',
-                                            valor_abatimento: vAbat > 0 ? vAbat : '',
-                                            ja_pago_mensal: jaPago,
-                                          }))
-                                        })
-                                    }
-                                  }} style={s.inputCompl} />
-                                </div>
-                              </div>
+                    {/* Ações */}
+                    <td style={s.td}>
+                      <div style={{ position:'relative' }}>
+                        <button onClick={() => setMenuAberto(menuAberto===m.id?null:m.id)}
+                          style={{ ...s.btn(temCompl||movsDivida[m.id]?'#EAF3DE':'#F1EFE8', temCompl||movsDivida[m.id]?'#3B6D11':'#5F5E5A'), fontSize:10 }}>
+                          {temCompl||movsDivida[m.id]?'✓':'⋯'} Ações {movsDivida[m.id]?'👤':''}
+                        </button>
+                        {menuAberto===m.id && (
+                          <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
+                            <button onClick={() => { setMenuAberto(null); isAberto?setComplementarAberto(null):abrirComplementar(m) }}
+                              style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:temCompl?'#3B6D11':'#2C2C2A' }}>
+                              📋 {temCompl?'Dados complementares ✓':'Dados complementares'}
+                            </button>
+                            {m.valor<0 && pessoasRecorrentes.length>0 && (
+                              <button onClick={() => {
+                                setMenuAberto(null)
+                                if (pagFuncAberto===m.id) { setPagFuncAberto(null); return }
+                                setPagFuncAberto(m.id)
+                                setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal:'', valor_abatimento:'' })
+                              }} style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', background:'transparent', cursor:'pointer', color:ROXO }}>
+                                👤 Pagamento de funcionário
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
 
-                              {/* Info do que já foi pago no mês */}
-                              {formPagFunc.pessoa_id && formPagFunc.competencia && (
-                                (() => {
-                                  const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
-                                  const mensal = Number(pe?.valor_mensal_normal || 0)
-                                  const jaPago = Number(formPagFunc.ja_pago_mensal || 0)
-                                  const falta = Math.max(0, mensal - jaPago)
-                                  return jaPago > 0 ? (
-                                    <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:8, background:'#E6F1FB', color:'#185FA5' }}>
-                                      📊 Já pago neste mês: <strong>R$ {jaPago.toFixed(2)}</strong> de R$ {mensal.toFixed(2)} · Falta: <strong>R$ {falta.toFixed(2)}</strong>
-                                    </div>
-                                  ) : null
-                                })()
-                              )}
+                    <td style={{ ...s.td, fontWeight:500, color:m.valor>=0?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
 
-                              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-                                <div>
-                                  <label style={s.label}>💼 Ano corrente — salário/serviço mensal (R$)</label>
-                                  <input type="number" step="0.01" value={formPagFunc.valor_mensal||''} onChange={e=>setFormPagFunc(f=>({...f,valor_mensal:e.target.value}))} style={s.inputCompl} placeholder="Valor pago referente ao mês atual" />
-                                </div>
-                                <div>
-                                  <label style={s.label}>📅 Dívidas anteriores — abatimento (R$)</label>
-                                  <input type="number" step="0.01" value={formPagFunc.valor_abatimento||''} onChange={e=>setFormPagFunc(f=>({...f,valor_abatimento:e.target.value}))} style={s.inputCompl} placeholder="Valor usado para abater dívidas de anos anteriores" />
-                                </div>
+                    <td style={s.td}>
+                      <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
+                        {m.conciliado?'✓ OK':'Pendente'}
+                      </span>
+                    </td>
+
+                    <td style={s.td}>
+                      <button onClick={() => {
+                        if (!m.conciliado && !m.categoria_id) {
+                          setMsg('⚠ Selecione uma categoria antes de conciliar.')
+                          setTimeout(() => setMsg(''), 3000)
+                          return
+                        }
+                        conciliarMov(m.id, !m.conciliado)
+                      }} style={s.btn(m.conciliado?'#F1EFE8':!m.categoria_id?'#D3D1C7':VERDE, m.conciliado?'#5F5E5A':'#fff')}>
+                        {m.conciliado?'Desfazer':'OK ✓'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Lançamento vinculado expandido */}
+                  {lancVinculadoAberto===m.id && lancVinc && (
+                    <tr>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                        <div style={{ background:'#F2FAE8', padding:'10px 16px', borderLeft:`3px solid ${VERDE}` }}>
+                          <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}>🔗 Lançamento vinculado</div>
+                          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:8, fontSize:11 }}>
+                            <div><span style={{ color:'#888780' }}>Data:</span> <strong>{fmtData(lancVinc.data)}</strong></div>
+                            <div><span style={{ color:'#888780' }}>Descrição:</span> <strong>{lancVinc.descricao}</strong></div>
+                            <div><span style={{ color:'#888780' }}>Categoria:</span> <strong>{lancVinc.categoria?.nome||'—'}</strong></div>
+                            <div><span style={{ color:'#888780' }}>Valor:</span> <strong style={{ color:lancVinc.tipo==='entrada'?VERDE:VERMELHO }}>{fmt(lancVinc.valor)}</strong></div>
+                            {lancVinc.fornecedor && <div><span style={{ color:'#888780' }}>Fornecedor:</span> <strong>{lancVinc.fornecedor}</strong></div>}
+                            {lancVinc.num_nota && <div><span style={{ color:'#888780' }}>NF:</span> <strong>{lancVinc.num_nota}</strong></div>}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Dados complementares */}
+                  {isAberto && (
+                    <tr>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                        <div style={{ background:'#F8F7F2', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
+                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>📋 Dados complementares</div>
+                          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
+                            <div>
+                              <label style={s.label}>Fornecedor</label>
+                              <select value={formCompl.fornecedor_id||''} onChange={e => { const f=fornecedores.find(x=>String(x.id)===e.target.value); setFormCompl(prev=>({...prev, fornecedor_id:e.target.value, fornecedor:f?.nome||prev.fornecedor, cpf_cnpj:f?.cpf_cnpj||prev.cpf_cnpj})) }} style={s.inputCompl}>
+                                <option value="">Selecione ou digite abaixo...</option>
+                                {fornecedores.map(f=><option key={f.id} value={f.id}>{f.nome}</option>)}
+                              </select>
+                            </div>
+                            <div><label style={s.label}>Nome fornecedor (manual)</label><input value={formCompl.fornecedor||''} onChange={e=>setFormCompl(p=>({...p,fornecedor:e.target.value}))} style={s.inputCompl} /></div>
+                            <div><label style={s.label}>CPF/CNPJ</label><input value={formCompl.cpf_cnpj||''} onChange={e=>setFormCompl(p=>({...p,cpf_cnpj:e.target.value}))} style={s.inputCompl} /></div>
+                            <div><label style={s.label}>Nº Nota</label><input value={formCompl.num_nota||''} onChange={e=>setFormCompl(p=>({...p,num_nota:e.target.value}))} style={s.inputCompl} /></div>
+                            <div><label style={s.label}>Data documento</label><input type="date" value={formCompl.data_documento||''} onChange={e=>setFormCompl(p=>({...p,data_documento:e.target.value}))} style={s.inputCompl} /></div>
+                            <div><label style={s.label}>Descrição do produto/serviço</label><input value={formCompl.descricao_produto||''} onChange={e=>setFormCompl(p=>({...p,descricao_produto:e.target.value}))} style={s.inputCompl} /></div>
+                            <div><label style={s.label}>Local do comprovante</label><input value={formCompl.local_comprovante||''} onChange={e=>setFormCompl(p=>({...p,local_comprovante:e.target.value}))} style={s.inputCompl} /></div>
+                            <div><label style={s.label}>Link externo</label><input value={formCompl.link_externo||''} onChange={e=>setFormCompl(p=>({...p,link_externo:e.target.value}))} style={s.inputCompl} /></div>
+                            {m.valor<0 && (
+                              <div>
+                                <label style={s.label}>Tipo de receita (se for entrada)</label>
+                                <select value={formCompl.tipo_receita||''} onChange={e=>setFormCompl(p=>({...p,tipo_receita:e.target.value}))} style={s.inputCompl}>
+                                  <option value="">—</option>
+                                  {TIPOS_RECEITA.map(t=><option key={t} value={t}>{t}</option>)}
+                                </select>
                               </div>
-                              {(() => {
-                                const totalMov = Math.abs(Number(m.valor))
-                                const valMens = parseFloat(formPagFunc.valor_mensal)||0
-                                const valAbat = parseFloat(formPagFunc.valor_abatimento)||0
-                                const pe = pessoasRecorrentes.find(p => String(p.id) === String(formPagFunc.pessoa_id))
+                            )}
+                            <div>
+                              <label style={s.label}>Evento</label>
+                              <select value={formCompl.evento_id||''} onChange={e=>setFormCompl(p=>({...p,evento_id:e.target.value}))} style={s.inputCompl}>
+                                <option value="">—</option>
+                                {eventos.map(ev=><option key={ev.id} value={ev.id}>{ev.nome}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label style={s.label}>Campanha</label>
+                              <select value={formCompl.campanha_id||''} onChange={e=>setFormCompl(p=>({...p,campanha_id:e.target.value}))} style={s.inputCompl}>
+                                <option value="">—</option>
+                                {campanhas.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <input type="checkbox" checked={formCompl.bem_permanente||false} onChange={e=>setFormCompl(p=>({...p,bem_permanente:e.target.checked}))} id={`bp${m.id}`} />
+                              <label htmlFor={`bp${m.id}`} style={{ fontSize:12 }}>Bem permanente</label>
+                            </div>
+                            {formCompl.bem_permanente && <div><label style={s.label}>Local de guarda do bem</label><input value={formCompl.local_guarda_bem||''} onChange={e=>setFormCompl(p=>({...p,local_guarda_bem:e.target.value}))} style={s.inputCompl} /></div>}
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <input type="checkbox" checked={formCompl.despesa_rateada||false} onChange={e=>setFormCompl(p=>({...p,despesa_rateada:e.target.checked}))} id={`dr${m.id}`} />
+                              <label htmlFor={`dr${m.id}`} style={{ fontSize:12 }}>Despesa rateada</label>
+                            </div>
+                            {formCompl.despesa_rateada && (
+                              <>
+                                <div><label style={s.label}>% Rateio</label><input type="number" value={formCompl.percentual_rateio||''} onChange={e=>setFormCompl(p=>({...p,percentual_rateio:e.target.value}))} style={s.inputCompl} /></div>
+                                <div><label style={s.label}>Fonte restante</label><input value={formCompl.fonte_restante||''} onChange={e=>setFormCompl(p=>({...p,fonte_restante:e.target.value}))} style={s.inputCompl} /></div>
+                                <div><label style={s.label}>Justificativa rateio</label><input value={formCompl.justificativa_rateio||''} onChange={e=>setFormCompl(p=>({...p,justificativa_rateio:e.target.value}))} style={s.inputCompl} /></div>
+                              </>
+                            )}
+                          </div>
+                          <div style={{ marginBottom:10 }}><label style={s.label}>Observações para prestação de contas</label><input value={formCompl.obs_prestacao||''} onChange={e=>setFormCompl(p=>({...p,obs_prestacao:e.target.value}))} style={s.inputCompl} /></div>
+                          <div style={{ display:'flex', gap:8 }}>
+                            <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>💾 Salvar</button>
+                            <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Pagamento de funcionário */}
+                  {pagFuncAberto===m.id && (
+                    <tr>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                        <div style={{ background:'#F5F0FF', padding:'12px 16px', borderLeft:`3px solid ${ROXO}` }}>
+                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:ROXO }}>
+                            👤 Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
+                          </div>
+                          {movsDivida[m.id] && (
+                            <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
+                              <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}>✅ Pagamento já registrado</div>
+                              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8, fontSize:11 }}>
+                                <div><span style={{ color:'#888780' }}>Pessoa:</span> <strong>{movsDivida[m.id].pessoa?.nome||'—'}</strong></div>
+                                <div><span style={{ color:'#888780' }}>Competência:</span> <strong>{movsDivida[m.id].competencia ? new Date(movsDivida[m.id].competencia+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'}</strong></div>
+                                <div><span style={{ color:'#888780' }}>💼 Ano corrente:</span> <strong style={{ color:'#185FA5' }}>R$ {Number(movsDivida[m.id].valor_pago_mensal||0).toFixed(2)}</strong></div>
+                                <div><span style={{ color:'#888780' }}>📅 Abatimento:</span> <strong style={{ color:'#854F0B' }}>R$ {Number(movsDivida[m.id].abatimento||0).toFixed(2)}</strong></div>
+                              </div>
+                              <div style={{ marginTop:8, fontSize:11, color:'#888780' }}>Quer corrigir? Preencha abaixo e registre novamente.</div>
+                            </div>
+                          )}
+                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                            <div>
+                              <label style={s.label}>Pessoa *</label>
+                              <select value={formPagFunc.pessoa_id||''} onChange={e => {
+                                const pessoaId = e.target.value
+                                const pe = pessoasRecorrentes.find(p => String(p.id)===pessoaId)
+                                const comp = formPagFunc.competencia || m.data?.slice(0,7) || ''
                                 const mensal = Number(pe?.valor_mensal_normal||0)
-                                const jaPago = Number(formPagFunc.ja_pago_mensal||0)
-                                const naoPago = Math.max(0, mensal - jaPago - valMens)
-                                const excede = valMens + valAbat > totalMov + 0.01
-                                return (
-                                  <div style={{ fontSize:11, padding:'8px 12px', borderRadius:6, marginBottom:10, background:excede?'#FEF2F2':'#E6F1FB', color:excede?'#A32D2D':'#185FA5' }}>
-                                    <div>Valor do extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Mensal: <strong>R$ {valMens.toFixed(2)}</strong> · Abatimento: <strong>R$ {valAbat.toFixed(2)}</strong></div>
-                                    {pe && !excede && <div style={{ marginTop:4, color:naoPago>0?'#854F0B':'#3B6D11', fontWeight:500 }}>
-                                      {naoPago > 0
-                                        ? `⚠ Após este pagamento ainda faltam R$ ${naoPago.toFixed(2)} no mês`
-                                        : '✓ Mês integralmente pago'}
-                                    </div>}
-                                    {excede && <div style={{ marginTop:4, fontWeight:600 }}>⛔ Soma excede o valor do extrato</div>}
-                                  </div>
-                                )
-                              })()}
-                              <div style={{ display:'flex', gap:8 }}>
-                                <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn('#8B2FC9')}>✅ Registrar pagamento</button>
-                                <button onClick={() => { setPagFuncAberto(null); setFormPagFunc({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
-                              </div>
+                                const totalMov = Math.abs(Number(m.valor))
+                                const valorMensal = Math.min(totalMov, mensal)
+                                const valorAbat = Math.round(Math.max(0, totalMov-valorMensal)*100)/100
+                                setFormPagFunc(f => ({ ...f, pessoa_id:pessoaId, competencia:comp, valor_mensal:valorMensal>0?valorMensal:'', valor_abatimento:valorAbat>0?valorAbat:'', ja_pago_mensal:0 }))
+                                if (pe && comp) {
+                                  supabase.from('competencias_mensais').select('valor_pago_mensal').eq('pessoa_id', pe.id).eq('competencia', comp).single()
+                                    .then(({ data: compData }) => {
+                                      const jaPago = Number(compData?.valor_pago_mensal||0)
+                                      if (jaPago>0) {
+                                        const falta = Math.max(0, mensal-jaPago)
+                                        const vM = Math.min(totalMov, falta)
+                                        const vA = Math.round(Math.max(0, totalMov-vM)*100)/100
+                                        setFormPagFunc(f => ({ ...f, valor_mensal:vM>0?vM:'', valor_abatimento:vA>0?vA:'', ja_pago_mensal:jaPago }))
+                                      }
+                                    })
+                                }
+                              }} style={s.inputCompl}>
+                                <option value="">Selecione...</option>
+                                {pessoasRecorrentes.map(pe=><option key={pe.id} value={pe.id}>{pe.nome} — Mensal: R$ {Number(pe.valor_mensal_normal||0).toFixed(2)}</option>)}
+                              </select>
                             </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                            <div>
+                              <label style={s.label}>Competência *</label>
+                              <input type="month" value={formPagFunc.competencia||''} onChange={e => {
+                                const comp = e.target.value
+                                const pe = pessoasRecorrentes.find(p=>String(p.id)===String(formPagFunc.pessoa_id))
+                                const mensal = Number(pe?.valor_mensal_normal||0)
+                                const totalMov = Math.abs(Number(m.valor))
+                                setFormPagFunc(f=>({...f, competencia:comp}))
+                                if (pe && comp) {
+                                  supabase.from('competencias_mensais').select('valor_pago_mensal').eq('pessoa_id', pe.id).eq('competencia', comp).single()
+                                    .then(({ data: compData }) => {
+                                      const jaPago = Number(compData?.valor_pago_mensal||0)
+                                      const falta = Math.max(0, mensal-jaPago)
+                                      const vM = Math.min(totalMov, falta)
+                                      const vA = Math.round(Math.max(0, totalMov-vM)*100)/100
+                                      setFormPagFunc(f=>({...f, valor_mensal:vM>0?vM:'', valor_abatimento:vA>0?vA:'', ja_pago_mensal:jaPago}))
+                                    })
+                                }
+                              }} style={s.inputCompl} />
+                            </div>
+                          </div>
+                          {formPagFunc.pessoa_id && formPagFunc.competencia && (() => {
+                            const pe = pessoasRecorrentes.find(p=>String(p.id)===String(formPagFunc.pessoa_id))
+                            const mensal = Number(pe?.valor_mensal_normal||0)
+                            const jaPago = Number(formPagFunc.ja_pago_mensal||0)
+                            return jaPago>0 ? (
+                              <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:8, background:'#E6F1FB', color:'#185FA5' }}>
+                                📊 Já pago neste mês: <strong>R$ {jaPago.toFixed(2)}</strong> de R$ {mensal.toFixed(2)} · Falta: <strong>R$ {Math.max(0,mensal-jaPago).toFixed(2)}</strong>
+                              </div>
+                            ) : null
+                          })()}
+                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                            <div>
+                              <label style={s.label}>💼 Ano corrente — salário/serviço mensal (R$)</label>
+                              <input type="number" step="0.01" value={formPagFunc.valor_mensal||''} onChange={e=>setFormPagFunc(f=>({...f,valor_mensal:e.target.value}))} style={s.inputCompl} placeholder="0,00" />
+                            </div>
+                            <div>
+                              <label style={s.label}>📅 Dívidas anteriores — abatimento (R$)</label>
+                              <input type="number" step="0.01" value={formPagFunc.valor_abatimento||''} onChange={e=>setFormPagFunc(f=>({...f,valor_abatimento:e.target.value}))} style={s.inputCompl} placeholder="0,00" />
+                            </div>
+                          </div>
+                          {(() => {
+                            const totalMov = Math.abs(Number(m.valor))
+                            const valMens = parseFloat(formPagFunc.valor_mensal)||0
+                            const valAbat = parseFloat(formPagFunc.valor_abatimento)||0
+                            const pe = pessoasRecorrentes.find(p=>String(p.id)===String(formPagFunc.pessoa_id))
+                            const mensal = Number(pe?.valor_mensal_normal||0)
+                            const jaPago = Number(formPagFunc.ja_pago_mensal||0)
+                            const naoPago = Math.max(0, mensal-jaPago-valMens)
+                            const excede = valMens+valAbat > totalMov+0.01
+                            return (
+                              <div style={{ fontSize:11, padding:'8px 12px', borderRadius:6, marginBottom:10, background:excede?'#FEF2F2':'#E6F1FB', color:excede?'#A32D2D':'#185FA5' }}>
+                                <div>Extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Mensal: <strong>R$ {valMens.toFixed(2)}</strong> · Abatimento: <strong>R$ {valAbat.toFixed(2)}</strong></div>
+                                {pe && !excede && <div style={{ marginTop:4, color:naoPago>0?'#854F0B':'#3B6D11', fontWeight:500 }}>
+                                  {naoPago>0 ? `⚠ Após este pagamento faltam R$ ${naoPago.toFixed(2)} no mês` : '✓ Mês integralmente pago'}
+                                </div>}
+                                {excede && <div style={{ marginTop:4, fontWeight:600 }}>⛔ Soma excede o valor do extrato</div>}
+                              </div>
+                            )
+                          })()}
+                          <div style={{ display:'flex', gap:8 }}>
+                            <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn(ROXO)}>✅ Registrar pagamento</button>
+                            <button onClick={() => { setPagFuncAberto(null); setFormPagFunc({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
