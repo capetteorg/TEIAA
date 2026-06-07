@@ -124,20 +124,29 @@ export default function Conciliacao() {
       }).eq('id', compExiste.id)
     }
 
-    // Lançar movimentações
+    // Remover TODOS os acréscimos desta competência antes de inserir o correto
+    await supabase.from('divida_movimentacoes')
+      .delete()
+      .eq('pessoa_id', parseInt(pessoa_id))
+      .eq('competencia', competencia)
+      .eq('tipo', 'acrescimo')
+
+    // Lançar abatimento se houver
     if (valAbat > 0) {
       await supabase.from('divida_movimentacoes').insert({
         pessoa_id: parseInt(pessoa_id), tipo: 'abatimento',
         valor: valAbat, data_movimentacao: mov.data, competencia,
-        descricao: `Abatimento de dívida — ${competencia} — extrato`,
+        descricao: `Abatimento de dívida — ${competencia}`,
         extrato_mov_id: movId,
       })
     }
+
+    // Lançar apenas o que ficou em aberto
     if (valorNaoPago > 0) {
       await supabase.from('divida_movimentacoes').insert({
         pessoa_id: parseInt(pessoa_id), tipo: 'acrescimo',
         valor: valorNaoPago, data_movimentacao: mov.data, competencia,
-        descricao: `Valor não pago em ${competencia} — acréscimo de dívida`,
+        descricao: `Pagamento parcial ${competencia} — faltaram R$ ${valorNaoPago.toFixed(2)}`,
         extrato_mov_id: movId,
       })
     }
