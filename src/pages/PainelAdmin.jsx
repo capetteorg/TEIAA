@@ -280,7 +280,7 @@ export default function PainelAdmin() {
             {[
               ['Presidente', presidente?.nome?.split(' ').slice(0,2).join(' ')||'—', LARANJA],
               ['Mandato até', presidente ? fmtData(presidente.mandato_fim) : '—', '#5F5E5A'],
-              ['Parcerias ativas', parcerias.filter(p=>p.situacao==='em execução').length, LARANJA],
+              ['Instrumentos ativos', parcerias.filter(p=>p.situacao==='em execução').length, LARANJA],
               ['CNPJ', instituicao?.cnpj||'—', '#5F5E5A'],
             ].map(([l,v,c])=>(
               <div key={l} style={s.mini}><div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div><div style={{ fontSize:12, fontWeight:500, color:c, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v}</div></div>
@@ -301,7 +301,7 @@ export default function PainelAdmin() {
             </div>
           )}
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-            <button onClick={e=>{e.stopPropagation();navigate('/parcerias')}} style={s.btn(LARANJA)}>Parcerias →</button>
+            <button onClick={e=>{e.stopPropagation();navigate('/parcerias')}} style={s.btn(LARANJA)}>Instrumentos →</button>
             <button onClick={e=>{e.stopPropagation();navigate('/instituicao')}} style={s.btn('transparent',LARANJA,LARANJA)}>Instituição</button>
             <button onClick={e=>{e.stopPropagation();navigate('/documentos')}} style={s.btn('transparent','#5F5E5A','#D3D1C7')}>Documentos</button>
           </div>
@@ -318,7 +318,7 @@ export default function PainelAdmin() {
             { icon:'📊', label:'Relatórios',        rota:'/relatorios',       cor:'#E6F1FB' },
             { icon:'📁', label:'Projetos',          rota:'/projetos',         cor:'#F0EAFA' },
             { icon:'📋', label:'Plano de Ação',     rota:'/planos-execucao',  cor:'#F0EAFA' },
-            { icon:'🤝', label:'Parcerias',         rota:'/parcerias',        cor:'#FEF4E8' },
+            { icon:'🤝', label:'Instrumentos',      rota:'/parcerias',        cor:'#FEF4E8' },
             { icon:'👥', label:'Equipe',            rota:'/equipe',           cor:'#EEEDFE' },
             { icon:'💳', label:'Controle Dívidas',  rota:'/controle-dividas', cor:'#FAEEDA', badge: dividasAbertas > 0 ? dividasAbertas : null },
             { icon:'🧾', label:'Cobranças',         rota:'/cobrancas',        cor:'#FEF2F2', badge: cobrancasPendentes > 0 ? cobrancasPendentes : null },
