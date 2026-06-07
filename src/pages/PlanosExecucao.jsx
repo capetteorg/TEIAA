@@ -88,6 +88,11 @@ export default function PlanosExecucao() {
   const [projetosVinculados, setProjetosVinculados] = useState([])
   const [projetoParaVincular, setProjetoParaVincular] = useState('')
   const [msgProjetos, setMsgProjetos] = useState('')
+  const [orcamento, setOrcamento] = useState([])
+  const [formOrc, setFormOrc] = useState({ descricao: '', tipo: 'saida', valor_previsto: '', valor_realizado: '', categoria: '', observacoes: '' })
+  const [editandoOrc, setEditandoOrc] = useState(null)
+  const [salvandoOrc, setSalvandoOrc] = useState(false)
+  const [msgOrc, setMsgOrc] = useState('')
 
   useEffect(() => {
     carregar()
@@ -146,16 +151,50 @@ export default function PlanosExecucao() {
   }
 
   async function carregarDetalhe(p) {
-    const [metasRes, ativsRes, atendRes, usersRes] = await Promise.all([
+    const [metasRes, ativsRes, atendRes, usersRes, orcRes] = await Promise.all([
       supabase.from('metas_plano').select('*, projeto:projetos(nome)').eq('plano_id', p.id).order('id'),
       supabase.from('atividades_previstas').select('*, projeto:projetos(nome)').eq('plano_id', p.id).order('id'),
       p.projeto_id ? supabase.from('atendimentos').select('*, projeto:projetos(nome), profissional:equipe(nome)').eq('projeto_id', p.projeto_id).order('data_atend', { ascending: false }).limit(50) : { data: [] },
       p.projeto_id ? supabase.from('usuarios_atendidos').select('*').eq('projeto_id', p.projeto_id).eq('situacao', 'ativo') : { data: [] },
+      supabase.from('plano_orcamento').select('*').eq('plano_id', p.id).order('tipo').order('id'),
     ])
     setMetas(metasRes.data || [])
     setAtividades(ativsRes.data || [])
     setAtendimentos(atendRes.data || [])
     setUsuarios(usersRes.data || [])
+    setOrcamento(orcRes.data || [])
+  }
+
+  async function salvarOrcamento(e) {
+    e.preventDefault()
+    setSalvandoOrc(true)
+    const dados = {
+      ...formOrc,
+      plano_id: planoSel.id,
+      valor_previsto: formOrc.valor_previsto ? parseFloat(formOrc.valor_previsto) : null,
+      valor_realizado: formOrc.valor_realizado ? parseFloat(formOrc.valor_realizado) : null,
+    }
+    let error
+    if (editandoOrc) {
+      ;({ error } = await supabase.from('plano_orcamento').update(dados).eq('id', editandoOrc))
+    } else {
+      ;({ error } = await supabase.from('plano_orcamento').insert(dados))
+    }
+    if (!error) {
+      setFormOrc({ descricao: '', tipo: 'saida', valor_previsto: '', valor_realizado: '', categoria: '', observacoes: '' })
+      setEditandoOrc(null)
+      carregarDetalhe(planoSel)
+      setMsgOrc('✅ Salvo!')
+      setTimeout(() => setMsgOrc(''), 3000)
+    } else {
+      setMsgOrc('Erro: ' + error.message)
+    }
+    setSalvandoOrc(false)
+  }
+
+  async function excluirOrcamento(id) {
+    await supabase.from('plano_orcamento').delete().eq('id', id)
+    carregarDetalhe(planoSel)
   }
 
   function novoPlanoAcao() {
@@ -654,6 +693,7 @@ export default function PlanosExecucao() {
           <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
             {[
               ['projetos','📁 Projetos e Serviços'],
+              ['orcamento','💰 Orçamento'],
               ['metas','Metas'],
               ['atividades','Atividades previstas'],
               ['execucao','Execução realizada'],
@@ -745,6 +785,155 @@ export default function PlanosExecucao() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Orçamento */}
+          {abaDetalhe === 'orcamento' && (
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Orçamento do plano</div>
+
+              {msgOrc && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msgOrc.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgOrc.includes('✅')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
+
+              <form onSubmit={salvarOrcamento} style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
+                <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoOrc ? 'Editar linha' : 'Adicionar linha'}</div>
+                <div style={s.grupo('2fr 1fr 1fr')}>
+                  <div><label style={s.label}>Descrição *</label><input value={formOrc.descricao} onChange={e=>setFormOrc(f=>({...f,descricao:e.target.value}))} style={s.input} required /></div>
+                  <div><label style={s.label}>Tipo</label>
+                    <select value={formOrc.tipo} onChange={e=>setFormOrc(f=>({...f,tipo:e.target.value}))} style={s.input}>
+                      <option value="entrada">Entrada (receita)</option>
+                      <option value="saida">Saída (despesa)</option>
+                    </select>
+                  </div>
+                  <div><label style={s.label}>Categoria</label><input value={formOrc.categoria} onChange={e=>setFormOrc(f=>({...f,categoria:e.target.value}))} style={s.input} placeholder="Ex: Recursos humanos" /></div>
+                </div>
+                <div style={s.grupo('1fr 1fr 2fr')}>
+                  <div><label style={s.label}>Valor previsto (R$)</label><input type="number" step="0.01" value={formOrc.valor_previsto} onChange={e=>setFormOrc(f=>({...f,valor_previsto:e.target.value}))} style={s.input} /></div>
+                  <div><label style={s.label}>Valor realizado (R$)</label><input type="number" step="0.01" value={formOrc.valor_realizado} onChange={e=>setFormOrc(f=>({...f,valor_realizado:e.target.value}))} style={s.input} /></div>
+                  <div><label style={s.label}>Observações</label><input value={formOrc.observacoes} onChange={e=>setFormOrc(f=>({...f,observacoes:e.target.value}))} style={s.input} /></div>
+                </div>
+                <div style={{ display:'flex', gap:6 }}>
+                  <button type="submit" disabled={salvandoOrc} style={s.btn(VERDE)}>{editandoOrc?'💾 Salvar':'+ Adicionar'}</button>
+                  {editandoOrc && <button type="button" onClick={() => { setFormOrc({ descricao:'', tipo:'saida', valor_previsto:'', valor_realizado:'', categoria:'', observacoes:'' }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
+                </div>
+              </form>
+
+              {orcamento.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:12 }}>Nenhuma linha de orçamento cadastrada.</div>
+              ) : (() => {
+                const entradas = orcamento.filter(o => o.tipo === 'entrada')
+                const saidas = orcamento.filter(o => o.tipo === 'saida')
+                const totalPrevEntradas = entradas.reduce((s,o) => s + Number(o.valor_previsto||0), 0)
+                const totalPrevSaidas = saidas.reduce((s,o) => s + Number(o.valor_previsto||0), 0)
+                const totalRealEntradas = entradas.reduce((s,o) => s + Number(o.valor_realizado||0), 0)
+                const totalRealSaidas = saidas.reduce((s,o) => s + Number(o.valor_realizado||0), 0)
+                return (
+                  <div>
+                    {/* Resumo */}
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:8, marginBottom:'1rem' }}>
+                      {[
+                        ['Entradas previstas', fmt(totalPrevEntradas), VERDE],
+                        ['Saídas previstas', fmt(totalPrevSaidas), VERMELHO],
+                        ['Saldo previsto', fmt(totalPrevEntradas - totalPrevSaidas), totalPrevEntradas >= totalPrevSaidas ? VERDE : VERMELHO],
+                        ['Entradas realizadas', fmt(totalRealEntradas), VERDE],
+                        ['Saídas realizadas', fmt(totalRealSaidas), VERMELHO],
+                        ['Saldo realizado', fmt(totalRealEntradas - totalRealSaidas), totalRealEntradas >= totalRealSaidas ? VERDE : VERMELHO],
+                      ].map(([l,v,cor]) => (
+                        <div key={l} style={{ background:'#F8F7F2', borderRadius:8, padding:'8px 10px' }}>
+                          <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
+                          <div style={{ fontSize:13, fontWeight:600, color:cor }}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Entradas */}
+                    {entradas.length > 0 && (
+                      <div style={{ marginBottom:'1rem' }}>
+                        <div style={{ fontSize:12, fontWeight:600, color:VERDE, marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
+                          <span style={{ display:'inline-block', width:10, height:10, borderRadius:99, background:VERDE }} /> Receitas / Entradas
+                        </div>
+                        <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                          <thead><tr>{['Descrição','Categoria','Previsto','Realizado','% Exec.',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                          <tbody>
+                            {entradas.map(o => {
+                              const pct = o.valor_previsto > 0 ? Math.round((Number(o.valor_realizado||0)/Number(o.valor_previsto))*100) : 0
+                              return (
+                                <tr key={o.id}>
+                                  <td style={{ ...s.td, fontWeight:500 }}>{o.descricao}</td>
+                                  <td style={{ ...s.td, color:'#888780' }}>{o.categoria||'—'}</td>
+                                  <td style={{ ...s.td, color:VERDE, fontWeight:500 }}>{fmt(o.valor_previsto)}</td>
+                                  <td style={s.td}>{fmt(o.valor_realizado)}</td>
+                                  <td style={s.td}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                      <div style={{ width:50, height:5, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                                        <div style={{ height:'100%', width:Math.min(pct,100)+'%', background:pct>=100?VERDE:pct>=50?LARANJA:AZUL, borderRadius:99 }} />
+                                      </div>
+                                      <span>{pct}%</span>
+                                    </div>
+                                  </td>
+                                  <td style={s.td}>
+                                    <button onClick={() => { setFormOrc({...o, valor_previsto:o.valor_previsto||'', valor_realizado:o.valor_realizado||''}); setEditandoOrc(o.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                                    <button onClick={() => excluirOrcamento(o.id)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                            <tr style={{ background:'#F2FAE8' }}>
+                              <td colSpan={2} style={{ ...s.td, fontWeight:600, color:VERDE }}>Total entradas</td>
+                              <td style={{ ...s.td, fontWeight:700, color:VERDE }}>{fmt(totalPrevEntradas)}</td>
+                              <td style={{ ...s.td, fontWeight:700, color:VERDE }}>{fmt(totalRealEntradas)}</td>
+                              <td colSpan={2} />
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Saídas */}
+                    {saidas.length > 0 && (
+                      <div>
+                        <div style={{ fontSize:12, fontWeight:600, color:VERMELHO, marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
+                          <span style={{ display:'inline-block', width:10, height:10, borderRadius:99, background:VERMELHO }} /> Despesas / Saídas
+                        </div>
+                        <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                          <thead><tr>{['Descrição','Categoria','Previsto','Realizado','% Exec.',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                          <tbody>
+                            {saidas.map(o => {
+                              const pct = o.valor_previsto > 0 ? Math.round((Number(o.valor_realizado||0)/Number(o.valor_previsto))*100) : 0
+                              return (
+                                <tr key={o.id}>
+                                  <td style={{ ...s.td, fontWeight:500 }}>{o.descricao}</td>
+                                  <td style={{ ...s.td, color:'#888780' }}>{o.categoria||'—'}</td>
+                                  <td style={{ ...s.td, color:VERMELHO, fontWeight:500 }}>{fmt(o.valor_previsto)}</td>
+                                  <td style={s.td}>{fmt(o.valor_realizado)}</td>
+                                  <td style={s.td}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                      <div style={{ width:50, height:5, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                                        <div style={{ height:'100%', width:Math.min(pct,100)+'%', background:pct>=100?VERDE:pct>=50?LARANJA:VERMELHO, borderRadius:99 }} />
+                                      </div>
+                                      <span>{pct}%</span>
+                                    </div>
+                                  </td>
+                                  <td style={s.td}>
+                                    <button onClick={() => { setFormOrc({...o, valor_previsto:o.valor_previsto||'', valor_realizado:o.valor_realizado||''}); setEditandoOrc(o.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                                    <button onClick={() => excluirOrcamento(o.id)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                            <tr style={{ background:'#FEF2F2' }}>
+                              <td colSpan={2} style={{ ...s.td, fontWeight:600, color:VERMELHO }}>Total saídas</td>
+                              <td style={{ ...s.td, fontWeight:700, color:VERMELHO }}>{fmt(totalPrevSaidas)}</td>
+                              <td style={{ ...s.td, fontWeight:700, color:VERMELHO }}>{fmt(totalRealSaidas)}</td>
+                              <td colSpan={2} />
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           )}
 
