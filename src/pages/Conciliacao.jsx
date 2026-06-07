@@ -726,12 +726,12 @@ export default function Conciliacao() {
                               </div>
                               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
                                 <div>
-                                  <label style={s.label}>Valor referente ao mensal normal (R$)</label>
-                                  <input type="number" step="0.01" value={formPagFunc.valor_mensal||''} onChange={e=>setFormPagFunc(f=>({...f,valor_mensal:e.target.value}))} style={s.inputCompl} />
+                                  <label style={s.label}>💼 Ano corrente — salário/serviço mensal (R$)</label>
+                                  <input type="number" step="0.01" value={formPagFunc.valor_mensal||''} onChange={e=>setFormPagFunc(f=>({...f,valor_mensal:e.target.value}))} style={s.inputCompl} placeholder="Valor pago referente ao mês atual" />
                                 </div>
                                 <div>
-                                  <label style={s.label}>Valor para abater dívida antiga (R$)</label>
-                                  <input type="number" step="0.01" value={formPagFunc.valor_abatimento||''} onChange={e=>setFormPagFunc(f=>({...f,valor_abatimento:e.target.value}))} style={s.inputCompl} />
+                                  <label style={s.label}>📅 Dívidas anteriores — abatimento (R$)</label>
+                                  <input type="number" step="0.01" value={formPagFunc.valor_abatimento||''} onChange={e=>setFormPagFunc(f=>({...f,valor_abatimento:e.target.value}))} style={s.inputCompl} placeholder="Valor usado para abater dívidas de anos anteriores" />
                                 </div>
                               </div>
                               {(() => {

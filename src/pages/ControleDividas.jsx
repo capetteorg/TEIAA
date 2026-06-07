@@ -430,10 +430,10 @@ export default function ControleDividas() {
                 <div style={{ padding:'10px 14px' }}>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:10 }}>
                     {[
-                      ['Dívida inicial', fmt(pe.divida_inicial||0), LARANJA],
-                      ['Total abatido', fmt(totalAbatimentos), VERDE],
+                      ['Mensal devido/mês', fmt(pe.valor_mensal_normal||0), AZUL],
+                      ['Dívida anterior (até 31/12/2024)', fmt(pe.divida_inicial||0), LARANJA],
+                      ['Total pago (abatimentos)', fmt(totalAbatimentos), VERDE],
                       ['Competências pendentes', compPend, compPend>0?LARANJA:VERDE],
-                      ['Total competências', compPessoa.length, '#888780'],
                     ].map(([l,v,c]) => (
                       <div key={l} style={{ background:'#F8F7F2', borderRadius:8, padding:'6px 8px' }}>
                         <div style={{ fontSize:9, color:'#888780', marginBottom:2 }}>{l}</div>
@@ -473,17 +473,31 @@ export default function ControleDividas() {
             if (lista.length === 0) return <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Nenhuma competência encontrada.</div>
             return (
               <div style={{ overflowX:'auto' }}>
+                <div style={{ display:'flex', gap:16, marginBottom:10, fontSize:11 }}>
+                  <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <span style={{ width:12, height:12, borderRadius:3, background:AZUL, display:'inline-block' }} />
+                    Ano corrente (salário/serviço mensal)
+                  </span>
+                  <span style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <span style={{ width:12, height:12, borderRadius:3, background:LARANJA, display:'inline-block' }} />
+                    Dívida anterior (exercícios anteriores a 2025)
+                  </span>
+                </div>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead><tr>{['Pessoa','Competência','Mensal devido','Pago mensal','Não pago','Abatido dívida','Saldo início','Saldo fim','Status'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <thead><tr>
+                    {['Pessoa','Competência','Mensal devido\n(ano corrente)','Pago\n(ano corrente)','Não pago\n(ano corrente)','Abatido\n(dívida anterior)','Saldo início','Saldo fim','Status'].map(h=>(
+                      <th key={h} style={{ ...s.th, whiteSpace:'pre-line', lineHeight:1.3 }}>{h}</th>
+                    ))}
+                  </tr></thead>
                   <tbody>
                     {lista.map((c,i) => (
                       <tr key={c.id} style={{ background:c.status==='pendente'?'#FFFBF0':i%2===0?'#fff':'#FAFAF8' }}>
                         <td style={{ ...s.td, fontWeight:500 }}>{c.pessoa?.nome||'—'}</td>
                         <td style={s.td}>{fmtComp(c.competencia)}</td>
-                        <td style={s.td}>{fmt(c.valor_mensal_devido)}</td>
+                        <td style={{ ...s.td, color:AZUL, fontWeight:500 }}>{fmt(c.valor_mensal_devido)}</td>
                         <td style={{ ...s.td, color:VERDE }}>{fmt(c.valor_pago_mensal)}</td>
                         <td style={{ ...s.td, color:Number(c.valor_nao_pago)>0?VERMELHO:'#888780' }}>{fmt(c.valor_nao_pago)}</td>
-                        <td style={{ ...s.td, color:VERDE }}>{fmt(c.valor_abatido_divida)}</td>
+                        <td style={{ ...s.td, color:LARANJA, fontWeight:Number(c.valor_abatido_divida)>0?600:400 }}>{fmt(c.valor_abatido_divida)}</td>
                         <td style={{ ...s.td, color:'#888780' }}>{fmt(c.saldo_divida_inicio)}</td>
                         <td style={{ ...s.td, fontWeight:600, color:Number(c.saldo_divida_fim)>0?VERMELHO:VERDE }}>{fmt(c.saldo_divida_fim)}</td>
                         <td style={s.td}>
