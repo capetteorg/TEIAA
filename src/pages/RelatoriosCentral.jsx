@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { gerarPDFRelatorio } from '../lib/pdf'
+import { gerarPDFRelatorio, gerarPDFConciliacao } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
 const ABAS = [
   { id: 'financeiro',    label: 'Financeiro',          icon: 'chart-bar' },
+  { id: 'conciliacao',   label: 'Conciliação',          icon: 'checks' },
   { id: 'execucao',      label: 'Execução do Objeto',   icon: 'report' },
   { id: 'plano_acao',    label: 'Plano de Ação',        icon: 'clipboard-check' },
   { id: 'relat_anual',   label: 'Relatório Anual',      icon: 'file-analytics' },
@@ -45,6 +46,7 @@ export default function RelatoriosCentral() {
       const pId = projetoSel ? parseInt(projetoSel) : null
       const plId = planoSel ? parseInt(planoSel) : null
       if (aba === 'financeiro') await gerarFinanceiro(pId)
+      else if (aba === 'conciliacao') await gerarConciliacao(pId)
       else if (aba === 'execucao') await gerarExecucao(pId, plId)
       else if (aba === 'plano_acao') await gerarPlanoAcao(plId)
       else if (aba === 'relat_anual') await gerarRelatAnual(plId)
@@ -54,6 +56,25 @@ export default function RelatoriosCentral() {
       else if (aba === 'doacoes') await gerarDoacoes(pId)
     } catch(e) { console.error(e) }
     setLoading(false)
+  }
+
+  async function gerarConciliacao(pId) {
+    let q = supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome,banco,agencia,conta_num))')
+      .gte('data', dataInicio).lte('data', dataFim).order('data')
+    const { data: movs } = await q
+    let lista = movs || []
+    if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
+    let contaDados = null
+    if (contaSel !== 'todas') {
+      const { data: c } = await supabase.from('contas').select('*').eq('id', parseInt(contaSel)).single()
+      contaDados = c
+    }
+    const entradas = lista.filter(m => Number(m.valor) > 0)
+    const saidas = lista.filter(m => Number(m.valor) < 0)
+    const totalEnt = entradas.reduce((a,m) => a+Number(m.valor), 0)
+    const totalSai = Math.abs(saidas.reduce((a,m) => a+Number(m.valor), 0))
+    setDados({ tipo: 'conciliacao', lista, entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, contaDados })
   }
 
   async function gerarFinanceiro(pId) {
@@ -278,6 +299,7 @@ export default function RelatoriosCentral() {
   function exportarPDF() {
     if (!dados) return
     if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim)
+    else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, dataInicio, dataFim)
     else alert('PDF para este relatório em breve!')
   }
 
@@ -619,6 +641,61 @@ export default function RelatoriosCentral() {
           </div>
         )
       })()}
+
+      {/* ===== CONCILIAÇÃO ===== */}
+      {dados?.tipo === 'conciliacao' && (
+        <>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:8, marginBottom:'1.25rem' }}>
+            {[
+              { label:'Entradas', val:fmt(dados.totalEnt), cor:VERDE },
+              { label:'Saídas', val:fmt(dados.totalSai), cor:VERMELHO },
+              { label:'Saldo', val:fmt(dados.saldo), cor:dados.saldo>=0?AZUL:VERMELHO },
+              { label:'Movimentações', val:dados.lista.length, cor:'#5F5E5A' },
+              { label:'Conciliadas', val:dados.lista.filter(m=>m.conciliado).length, cor:VERDE },
+              { label:'Pendentes', val:dados.lista.filter(m=>!m.conciliado).length, cor:LARANJA },
+            ].map(m => (
+              <div key={m.label} style={s.metric()}>
+                <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
+                <div style={{ fontSize:16, fontWeight:600, color:m.cor }}>{m.val}</div>
+              </div>
+            ))}
+          </div>
+          <div style={s.card}>
+            <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>
+              Extrato conciliado — {dados.lista.length} movimentações
+            </div>
+            <div style={{ overflowX:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                <thead>
+                  <tr>
+                    {['Data','Descrição','Categoria','Subcategoria','Fornecedor','Nº Nota','Valor','Situação'].map(h => (
+                      <th key={h} style={s.th}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {dados.lista.map((m,i) => (
+                    <tr key={m.id} style={{ background: m.conciliado ? '#F2FAE8' : i%2===0?'#fff':'#FAFAF8' }}>
+                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(m.data)}</td>
+                      <td style={{ ...s.td, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.descricao}</td>
+                      <td style={{ ...s.td, fontSize:11 }}>{m.categoria?.nome||'—'}</td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.subcategoria?.nome||'—'}</td>
+                      <td style={{ ...s.td, fontSize:11 }}>{m.fornecedor||'—'}</td>
+                      <td style={{ ...s.td, fontSize:11, fontFamily:'monospace' }}>{m.num_nota||'—'}</td>
+                      <td style={{ ...s.td, fontWeight:500, color:Number(m.valor)>=0?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
+                      <td style={s.td}>
+                        <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
+                          {m.conciliado ? '✓ OK' : 'Pendente'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ===== FINANCEIRO ===== */}
       {dados?.tipo === 'financeiro' && (

@@ -170,6 +170,85 @@ ${paisagem ? '@page { size: A4 landscape; margin: 10mm; }' : ''}
 }
 
 // =============================================
+// RELATÓRIO DE CONCILIAÇÃO
+// =============================================
+export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
+  const { lista, totalEnt, totalSai, saldo, contaDados } = dados
+
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const periodoLabel = `${fmtData(dataInicio)} a ${fmtData(dataFim)}`
+
+  const infoConta = contaDados ? `
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+    <div class="info-item"><div class="info-label">Conta</div><div class="info-valor">${contaDados.nome||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Banco</div><div class="info-valor">${contaDados.banco||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Agência</div><div class="info-valor">${contaDados.agencia||'—'}</div></div>
+    <div class="info-item"><div class="info-label">Número da conta</div><div class="info-valor">${contaDados.conta_num||'—'}</div></div>
+  </div>` : ''
+
+  const conciliadas = lista.filter(m => m.conciliado).length
+  const pendentes = lista.filter(m => !m.conciliado).length
+
+  const linhas = lista.map((m,i) => {
+    const isEnt = Number(m.valor) > 0
+    return `<tr>
+      <td style="white-space:nowrap">${fmtData(m.data)}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}</td>
+      <td>${m.categoria?.nome||'—'}</td>
+      <td style="color:#888;font-size:9px">${m.subcategoria?.nome||'—'}</td>
+      <td style="font-size:9px">${m.fornecedor||'—'}</td>
+      <td style="font-family:monospace;font-size:9px">${m.num_nota||'—'}</td>
+      <td class="num" style="font-weight:600;color:${isEnt?'#3B6D11':'#A32D2D'}">${isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
+      <td class="center"><span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${m.conciliado?'#EAF3DE':'#FAEEDA'};color:${m.conciliado?'#3B6D11':'#854F0B'}">${m.conciliado?'✓ OK':'Pendente'}</span></td>
+    </tr>`
+  }).join('')
+
+  const html = `
+  ${htmlCabecalho()}
+  <div class="titulo-bloco">
+    <div class="titulo-principal">Relatório de Conciliação Bancária</div>
+    <div class="titulo-sub">Período: ${periodoLabel}</div>
+  </div>
+
+  ${infoConta}
+
+  <div class="resumo-box">
+    <div class="resumo-titulo">Resumo do Período</div>
+    <div class="resumo-grid" style="grid-template-columns:repeat(6,1fr)">
+      <div class="resumo-item"><div class="resumo-label">Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Saídas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Saldo</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${fmt(saldo)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor azul">${lista.length}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Conciliadas</div><div class="resumo-valor verde">${conciliadas}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Pendentes</div><div class="resumo-valor" style="color:${pendentes>0?'#854F0B':'#3B6D11'}">${pendentes}</div></div>
+    </div>
+  </div>
+
+  <div class="secao">
+    <div class="secao-titulo secao-titulo-azul">⇅ Movimentações (${lista.length})</div>
+    <table>
+      <thead><tr>
+        <th>Data</th><th>Descrição</th><th>Categoria</th><th>Subcategoria</th>
+        <th>Fornecedor</th><th>Nº Nota</th><th class="num">Valor</th><th class="center">Situação</th>
+      </tr></thead>
+      <tbody>
+        ${linhas}
+        <tr class="total-row">
+          <td colspan="6"><strong>SALDO DO PERÍODO</strong></td>
+          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':''}${fmt(saldo)}</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  ${htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal'])}
+  ${htmlRodape()}`
+
+  abrirImpressao(html, 'Relatório de Conciliação', true)
+}
+
+// =============================================
 // RELATÓRIO FINANCEIRO GERAL
 // =============================================
 export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
