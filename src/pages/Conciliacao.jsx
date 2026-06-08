@@ -56,23 +56,14 @@ export default function Conciliacao() {
   }, [])
 
   async function carregarExtratos() {
-    const { data } = await supabase.from('extratos')
-      .select('*, conta:contas(id,nome,banco,preponderancia,tipo_conta)')
-      .order('importado_em', { ascending: false })
-    const ext = data || []
-    if (ext.length > 0) {
-      const { data: concilData } = await supabase.from('extrato_movs')
-        .select('extrato_id, conciliado')
-        .in('extrato_id', ext.map(e => e.id))
-        .limit(10000)
-      const mapa = {}
-      ;(concilData||[]).forEach(m => {
-        if (!mapa[m.extrato_id]) mapa[m.extrato_id] = { total:0, conciliados:0 }
-        mapa[m.extrato_id].total++
-        if (m.conciliado) mapa[m.extrato_id].conciliados++
-      })
-      setExtratos(ext.map(e => ({ ...e, _stats: mapa[e.id] || { total: e.total_movs, conciliados: 0 } })))
-    } else setExtratos([])
+    const [extRes, progRes] = await Promise.all([
+      supabase.from('extratos').select('*, conta:contas(id,nome,banco,preponderancia,tipo_conta)').order('importado_em', { ascending: false }),
+      supabase.from('extrato_progresso').select('*'),
+    ])
+    const ext = extRes.data || []
+    const progMapa = {}
+    ;(progRes.data || []).forEach(p => { progMapa[p.extrato_id] = { total: p.total, conciliados: p.conciliados } })
+    setExtratos(ext.map(e => ({ ...e, _stats: progMapa[e.id] || { total: e.total_movs, conciliados: 0 } })))
   }
 
   async function abrirExtrato(ext) {
