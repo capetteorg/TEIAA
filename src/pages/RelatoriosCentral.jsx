@@ -76,10 +76,20 @@ export default function RelatoriosCentral() {
     }
 
     const { data: movs } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), lancamento:lancamentos(fornecedor,num_nota,cpf_cnpj,descricao_produto)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .in('extrato_id', extratosIds).order('data')
 
-    let todasMovs = movs || []
+    // Buscar lançamentos vinculados
+    const movIds = (movs||[]).map(m => m.id)
+    let lancMap = {}
+    if (movIds.length > 0) {
+      const { data: lancs } = await supabase.from('lancamentos')
+        .select('extrato_mov_id, fornecedor, num_nota, cpf_cnpj')
+        .in('extrato_mov_id', movIds)
+      ;(lancs||[]).forEach(l => { lancMap[l.extrato_mov_id] = l })
+    }
+
+    let todasMovs = (movs||[]).map(m => ({ ...m, lancamento: lancMap[m.id] || null }))
     const partes = todasMovs.filter(m => m.parent_id)
     const lista = todasMovs.filter(m => !m.dividida)
     const partesMap = {}
