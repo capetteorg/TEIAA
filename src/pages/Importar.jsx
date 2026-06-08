@@ -70,8 +70,23 @@ export default function Importar() {
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false })
         const resultado = parsearExtratoSicredi(rows)
+
+        // Detectar competência automaticamente pelo mês mais frequente
+        const contaMes = {}
+        resultado.movs.forEach(m => {
+          if (m.dataISO) {
+            const mes = m.dataISO.slice(0, 7)
+            contaMes[mes] = (contaMes[mes] || 0) + 1
+          }
+        })
+        const mesPredominante = Object.entries(contaMes).sort((a,b) => b[1]-a[1])[0]?.[0]
+        if (mesPredominante) setCompetencia(mesPredominante)
+
+        // Filtrar movimentações fora do mês predominante
+        const movsDoMes = resultado.movs.filter(m => m.dataISO && m.dataISO.slice(0,7) === mesPredominante)
+
         setExtrato({ ...resultado, arquivo: file.name })
-        setMovs(resultado.movs)
+        setMovs(movsDoMes)
         setStep(2)
       } catch { alert('Erro ao ler o arquivo. Verifique se é o extrato XLS do Sicredi.') }
     }
@@ -188,9 +203,10 @@ export default function Importar() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 }}>Competência</label>
+                  <label style={{ fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 }}>Competência <span style={{ color:'#888780', fontWeight:400 }}>(detectada automaticamente)</span></label>
                   <input type="month" value={competencia} onChange={e => setCompetencia(e.target.value)}
-                    style={{ width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 }} />
+                    style={{ width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, background:'#F8F7F2' }}
+                    readOnly />
                 </div>
               </div>
               <label style={{ display: 'block', border: '1.5px dashed #D3D1C7', borderRadius: 12, padding: '2.5rem', textAlign: 'center', cursor: 'pointer', color: '#888780', fontSize: 13 }}>
