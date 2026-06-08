@@ -62,7 +62,9 @@ export default function Conciliacao() {
     const ext = data || []
     if (ext.length > 0) {
       const { data: concilData } = await supabase.from('extrato_movs')
-        .select('extrato_id, conciliado').in('extrato_id', ext.map(e => e.id))
+        .select('extrato_id, conciliado')
+        .in('extrato_id', ext.map(e => e.id))
+        .limit(10000)
       const mapa = {}
       ;(concilData||[]).forEach(m => {
         if (!mapa[m.extrato_id]) mapa[m.extrato_id] = { total:0, conciliados:0 }
