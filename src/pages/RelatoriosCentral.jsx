@@ -65,7 +65,7 @@ export default function RelatoriosCentral() {
     let qExt = supabase.from('extratos')
       .select('id, competencia, conta_id, conta:contas(nome,banco,agencia,conta_num)')
       .eq('competencia', competencia)
-    if (contaSel !== 'todas') qExt = qExt.eq('conta_id', parseInt(contaSel))
+    if (contaSel && contaSel !== 'todas') qExt = qExt.eq('conta_id', parseInt(contaSel))
     const { data: extratosPeriodo } = await qExt
     const extratosIds = (extratosPeriodo || []).map(e => e.id)
 
@@ -89,7 +89,7 @@ export default function RelatoriosCentral() {
     })
 
     let contaDados = null
-    if (contaSel !== 'todas') {
+    if (contaSel && contaSel !== 'todas') {
       const { data: c } = await supabase.from('contas').select('*').eq('id', parseInt(contaSel)).single()
       contaDados = c
     }
