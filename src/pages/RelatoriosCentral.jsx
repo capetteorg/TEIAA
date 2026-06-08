@@ -59,27 +59,43 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarConciliacao(pId) {
-    let q = supabase.from('extrato_movs')
+    // Buscar extratos do período selecionado
+    let qExt = supabase.from('extratos')
+      .select('id, competencia, conta_id, conta:contas(nome,banco,agencia,conta_num)')
+      .gte('data_inicio', dataInicio).lte('data_fim', dataFim)
+    if (contaSel !== 'todas') qExt = qExt.eq('conta_id', parseInt(contaSel))
+    const { data: extratosPeriodo } = await qExt
+
+    // Se não achou pelo período exato, tenta pelo mês da competência
+    let extratosIds = (extratosPeriodo || []).map(e => e.id)
+    if (extratosIds.length === 0) {
+      const competenciaInicio = dataInicio.slice(0,7)
+      const competenciaFim = dataFim.slice(0,7)
+      let qExt2 = supabase.from('extratos')
+        .select('id, competencia, conta_id, conta:contas(nome,banco,agencia,conta_num)')
+        .gte('competencia', competenciaInicio).lte('competencia', competenciaFim)
+      if (contaSel !== 'todas') qExt2 = qExt2.eq('conta_id', parseInt(contaSel))
+      const { data: extratos2 } = await qExt2
+      extratosIds = (extratos2 || []).map(e => e.id)
+    }
+
+    if (extratosIds.length === 0) {
+      setDados({ tipo: 'conciliacao', lista: [], entradas: [], saidas: [], totalEnt: 0, totalSai: 0, saldo: 0, contaDados: null })
+      return
+    }
+
+    const { data: movs } = await supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome,banco,agencia,conta_num)), lancamento:lancamentos(fornecedor,num_nota,cpf_cnpj,descricao_produto)')
-      .gte('data', dataInicio).lte('data', dataFim).order('data')
-    const { data: movs } = await q
+      .in('extrato_id', extratosIds).order('data')
+
     let todasMovs = movs || []
-    if (contaSel !== 'todas') todasMovs = todasMovs.filter(m => String(m.extrato?.conta_id) === String(contaSel))
-
-    // Separar originais divididas, partes e normais
     const partes = todasMovs.filter(m => m.parent_id)
-    const lista = todasMovs.filter(m => !m.dividida) // normais + partes (parent_id não null)
-
-    // Mapa de partes por parent_id
+    const lista = todasMovs.filter(m => !m.dividida)
     const partesMap = {}
     partes.forEach(p => {
       if (!partesMap[p.parent_id]) partesMap[p.parent_id] = []
       partesMap[p.parent_id].push(p)
     })
-
-    // Reconstruir lista: para cada item dividido (parent), mostrar o original + sub-linhas
-    // Como filtramos dividida=true, os originais não aparecem — as partes já estão na lista
-    // Mas precisamos agrupar as partes sob o pai para o PDF
 
     let contaDados = null
     if (contaSel !== 'todas') {
@@ -87,15 +103,11 @@ export default function RelatoriosCentral() {
       contaDados = c
     }
 
-    // Para o PDF, reconstruir com originais divididas agrupadas com suas partes
     const listaPDF = []
-    const partesUsadas = new Set()
     todasMovs.filter(m => !m.parent_id).forEach(m => {
       if (m.dividida) {
-        // Adiciona o original com suas partes
         const filhas = partesMap[m.id] || []
         listaPDF.push({ ...m, _partes: filhas })
-        filhas.forEach(f => partesUsadas.add(f.id))
       } else {
         listaPDF.push(m)
       }
@@ -406,6 +418,17 @@ export default function RelatoriosCentral() {
                 {aba==='conciliacao' && <option value="">Selecione a conta...</option>}
                 {contas.map(c => <option key={c.id} value={c.id}>{c.nome} — {c.banco}</option>)}
               </select>
+            </div>
+          )}
+          {aba==='conciliacao' && (
+            <div>
+              <label style={s.label}>Competência (mês) *</label>
+              <input type="month" value={dataInicio.slice(0,7)} onChange={e => {
+                const [ano, mes] = e.target.value.split('-')
+                const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
+                setDataInicio(`${e.target.value}-01`)
+                setDataFim(`${e.target.value}-${ultimoDia}`)
+              }} style={s.input} />
             </div>
           )}
         </div>
