@@ -77,7 +77,7 @@ export default function RelatoriosCentral() {
 
     const { data: movs } = await supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
-      .in('extrato_id', extratosIds).order('data').limit(2000)
+      .in('extrato_id', extratosIds).order('data').limit(10000)
 
     // Buscar lançamentos vinculados
     const movIds = (movs||[]).map(m => m.id)
@@ -123,7 +123,7 @@ export default function RelatoriosCentral() {
   async function gerarFinanceiro(pId) {
     let q = supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome))')
-      .gte('data', dataInicio).lte('data', dataFim).order('data').limit(5000)
+      .gte('data', dataInicio).lte('data', dataFim).order('data').limit(10000)
     const { data: movs } = await q
     let lista = movs || []
     if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
