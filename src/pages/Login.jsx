@@ -31,31 +31,19 @@ export default function Login() {
       overflow: 'hidden',
     }}>
 
-      {/* Marca d'água Agendo no fundo */}
+      {/* Logo Agendo canto inferior esquerdo — fora do conteúdo */}
       <div style={{
         position: 'fixed',
-        inset: 0,
+        bottom: 24,
+        left: 32,
+        zIndex: 2,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        pointerEvents: 'none',
-        zIndex: 0,
+        gap: 8,
+        opacity: 0.3,
       }}>
-        {/* Logo símbolo grande centralizado */}
-        <img src="/agendo-logo.png" alt=""
-          style={{ width: '55vw', maxWidth: 600, opacity: 0.06, filter: 'grayscale(100%)' }} />
-      </div>
-
-      {/* Texto Agendo canto inferior direito */}
-      <div style={{
-        position: 'fixed',
-        bottom: 32,
-        right: 40,
-        pointerEvents: 'none',
-        zIndex: 0,
-        opacity: 0.12,
-      }}>
-        <img src="/agendo-texto.png" alt="" style={{ height: 36, filter: 'grayscale(100%)' }} />
+        <img src="/agendo-logo.png" alt="" style={{ height: 32 }} />
+        <img src="/agendo-texto.png" alt="" style={{ height: 14 }} />
       </div>
 
       {/* Conteúdo */}
