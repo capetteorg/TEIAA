@@ -131,7 +131,7 @@ export default function Login() {
             background: 'linear-gradient(135deg, rgba(234,243,222,0.95) 0%, rgba(230,241,251,0.95) 100%)',
             borderRadius: 16,
             border: '0.5px solid #C0DD97',
-            padding: '1.5rem',,
+            padding: '1.5rem',
             boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
             display: 'flex',
             flexDirection: 'column',
