@@ -796,9 +796,11 @@ export default function Conciliacao() {
                           </div>
                           {(() => {
                             const tipoMov = m.valor >= 0 ? 'entrada' : 'despesa'
+                            const mes = m.data?.slice(0,7)
                             const candidatos = lancamentos.filter(l =>
                               !l.extrato_mov_id &&
-                              l.tipo === tipoMov
+                              l.tipo === tipoMov &&
+                              l.data?.slice(0,7) === mes
                             ).sort((a,b) => {
                               const da = Math.abs(new Date(a.data) - new Date(m.data))
                               const db = Math.abs(new Date(b.data) - new Date(m.data))
@@ -806,7 +808,7 @@ export default function Conciliacao() {
                             })
                             if (!candidatos.length) return (
                               <div style={{ fontSize:12, color:'#888780', padding:'8px 0' }}>
-                                Nenhum lançamento não conciliado encontrado.
+                                Nenhum lançamento não conciliado encontrado neste mês.
                               </div>
                             )
                             return (
