@@ -40,6 +40,17 @@ export default function RelatoriosCentral() {
     supabase.from('planos').select('id,nome_plano,projeto_id,tipo_plano').order('nome_plano').then(({ data }) => setPlanos(data || []))
     supabase.from('contas').select('id,nome,banco').order('nome').then(({ data }) => setContas(data || []))
     supabase.from('instituicao').select('*').limit(1).single().then(({ data }) => setInstituicao(data))
+    // Buscar primeiro mês com extrato importado
+    supabase.from('extratos').select('data_inicio').order('data_inicio', { ascending: true }).limit(1)
+      .then(({ data }) => {
+        if (data?.[0]?.data_inicio) {
+          const primeiro = data[0].data_inicio.slice(0,7)
+          const [ano, mes] = primeiro.split('-')
+          const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
+          setDataInicio(`${primeiro}-01`)
+          setDataFim(`${primeiro}-${ultimoDia}`)
+        }
+      })
   }, [])
 
   async function gerar() {
