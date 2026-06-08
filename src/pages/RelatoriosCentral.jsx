@@ -121,20 +121,27 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarFinanceiro(pId) {
-    let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome))')
-      .gte('data', dataInicio).lte('data', dataFim).order('data').limit(10000)
-    const { data: movs } = await q
-    let lista = movs || []
-    if (contaSel !== 'todas') lista = lista.filter(m => String(m.extrato?.conta_id) === String(contaSel))
-    lista = lista.filter(m => !m.dividida) // excluir originais divididas
-
-    // Buscar dados completos da conta selecionada
+    // Buscar extrato_ids da conta selecionada no período
+    let extratosIds = null
     let contaDados = null
-    if (contaSel !== 'todas') {
+    if (contaSel && contaSel !== 'todas') {
+      const { data: exts } = await supabase.from('extratos')
+        .select('id').eq('conta_id', parseInt(contaSel))
+        .gte('data_inicio', dataInicio.slice(0,7)+'-01')
+        .lte('data_fim', dataFim)
+      extratosIds = (exts||[]).map(e => e.id)
       const { data: c } = await supabase.from('contas').select('*').eq('id', parseInt(contaSel)).single()
       contaDados = c
     }
+
+    let q = supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .gte('data', dataInicio).lte('data', dataFim).order('data').limit(10000)
+
+    if (extratosIds) q = q.in('extrato_id', extratosIds)
+
+    const { data: movs } = await q
+    let lista = (movs || []).filter(m => !m.dividida)
 
     const entradas = lista.filter(m => Number(m.valor) > 0)
     const saidas = lista.filter(m => Number(m.valor) < 0)
