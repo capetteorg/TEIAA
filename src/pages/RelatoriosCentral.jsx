@@ -77,7 +77,7 @@ export default function RelatoriosCentral() {
 
     const { data: movs } = await supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
-      .in('extrato_id', extratosIds).order('data')
+      .in('extrato_id', extratosIds).order('data').limit(2000)
 
     // Buscar lançamentos vinculados
     const movIds = (movs||[]).map(m => m.id)
