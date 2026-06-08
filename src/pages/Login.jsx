@@ -31,10 +31,10 @@ export default function Login() {
       overflow: 'hidden',
     }}>
 
-      {/* Marca d'água Agendo — canto direito */}
+      {/* Marca d'água Agendo — canto esquerdo */}
       <div style={{
         position: 'fixed',
-        right: '-10vw',
+        left: '-8vw',
         top: '50%',
         transform: 'translateY(-50%)',
         pointerEvents: 'none',
@@ -42,7 +42,7 @@ export default function Login() {
         opacity: 0.07,
         filter: 'grayscale(100%)',
       }}>
-        <img src="/agendo-logo.png" alt="" style={{ width: '50vw', maxWidth: 550 }} />
+        <img src="/agendo-logo.png" alt="" style={{ width: '38vw', maxWidth: 420 }} />
       </div>
 
       {/* Conteúdo */}
@@ -182,9 +182,12 @@ export default function Login() {
 
         {/* Rodapé */}
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#B4B2A9' }}>
+          <div style={{ fontSize: 11, color: '#B4B2A9', marginBottom: 8 }}>
             AGENDO Integra · Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro
           </div>
+          <img src="/agendo-texto.png" alt="Agendo"
+            style={{ height: 18, opacity: 0.3, filter: 'grayscale(100%)' }}
+            onError={e => e.target.style.display='none'} />
         </div>
       </div>
     </div>
