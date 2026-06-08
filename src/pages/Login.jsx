@@ -49,7 +49,7 @@ export default function Login() {
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 740 }}>
 
         {/* Cabeçalho institucional */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
           <div style={{ fontSize: 12, color: '#888780', letterSpacing: '.05em', textTransform: 'uppercase' }}>
             Casa do Pequeno Trabalhador de Teresópolis
           </div>
@@ -70,16 +70,16 @@ export default function Login() {
             background: 'rgba(255,255,255,0.92)',
             borderRadius: 16,
             border: '0.5px solid #E0DDD5',
-            padding: '2rem',
+            padding: '1.5rem',
             boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
             display: 'flex',
             flexDirection: 'column',
             backdropFilter: 'blur(8px)',
           }}>
             {/* Logo CAPETTE */}
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '.85rem' }}>
               <img src="/logo.png" alt="CAPETTE"
-                style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 8px' }}
+                style={{ height: 44, width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 6px' }}
                 onError={e => { e.target.style.display='none'; document.getElementById('login-logo-letras').style.display='flex' }} />
               <div id="login-logo-letras" style={{ display: 'none', gap: 2, justifyContent: 'center', marginBottom: 8 }}>
                 {LOGO_LETRAS.map(([l,c]) => (
@@ -131,7 +131,7 @@ export default function Login() {
             background: 'linear-gradient(135deg, rgba(234,243,222,0.95) 0%, rgba(230,241,251,0.95) 100%)',
             borderRadius: 16,
             border: '0.5px solid #C0DD97',
-            padding: '2rem',
+            padding: '1.5rem',,
             boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
             display: 'flex',
             flexDirection: 'column',
@@ -181,7 +181,7 @@ export default function Login() {
         </div>
 
         {/* Rodapé */}
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
           <div style={{ fontSize: 11, color: '#B4B2A9', marginBottom: 8 }}>
             AGENDO Integra · Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro
           </div>
