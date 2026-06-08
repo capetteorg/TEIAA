@@ -31,19 +31,18 @@ export default function Login() {
       overflow: 'hidden',
     }}>
 
-      {/* Logo Agendo canto inferior esquerdo — fora do conteúdo */}
+      {/* Marca d'água Agendo — fundo centralizado */}
       <div style={{
         position: 'fixed',
-        bottom: 24,
-        left: 32,
-        zIndex: 2,
+        inset: 0,
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
-        opacity: 0.3,
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        zIndex: 0,
       }}>
-        <img src="/agendo-logo.png" alt="" style={{ height: 32 }} />
-        <img src="/agendo-texto.png" alt="" style={{ height: 14 }} />
+        <img src="/agendo-logo.png" alt=""
+          style={{ width: '55vw', maxWidth: 600, opacity: 0.06, filter: 'grayscale(100%)' }} />
       </div>
 
       {/* Conteúdo */}
@@ -183,12 +182,9 @@ export default function Login() {
 
         {/* Rodapé */}
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#B4B2A9', marginBottom: 8 }}>
-            AGENDO Integra · Sistema de gestão para OSCs · Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro
+          <div style={{ fontSize: 11, color: '#B4B2A9' }}>
+            AGENDO Integra · Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro
           </div>
-          <img src="/agendo-texto.png" alt="Agendo"
-            style={{ height: 20, opacity: 0.35, filter: 'grayscale(100%)' }}
-            onError={e => e.target.style.display='none'} />
         </div>
       </div>
     </div>
