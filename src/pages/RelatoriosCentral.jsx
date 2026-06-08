@@ -59,33 +59,24 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarConciliacao(pId) {
-    // Buscar extratos do período selecionado
+    const competencia = dataInicio.slice(0,7)
+
+    // Buscar extrato pela competência
     let qExt = supabase.from('extratos')
       .select('id, competencia, conta_id, conta:contas(nome,banco,agencia,conta_num)')
-      .gte('data_inicio', dataInicio).lte('data_fim', dataFim)
+      .eq('competencia', competencia)
     if (contaSel !== 'todas') qExt = qExt.eq('conta_id', parseInt(contaSel))
     const { data: extratosPeriodo } = await qExt
-
-    // Se não achou pelo período exato, tenta pelo mês da competência
-    let extratosIds = (extratosPeriodo || []).map(e => e.id)
-    if (extratosIds.length === 0) {
-      const competenciaInicio = dataInicio.slice(0,7)
-      const competenciaFim = dataFim.slice(0,7)
-      let qExt2 = supabase.from('extratos')
-        .select('id, competencia, conta_id, conta:contas(nome,banco,agencia,conta_num)')
-        .gte('competencia', competenciaInicio).lte('competencia', competenciaFim)
-      if (contaSel !== 'todas') qExt2 = qExt2.eq('conta_id', parseInt(contaSel))
-      const { data: extratos2 } = await qExt2
-      extratosIds = (extratos2 || []).map(e => e.id)
-    }
+    const extratosIds = (extratosPeriodo || []).map(e => e.id)
 
     if (extratosIds.length === 0) {
+      setMsg('Nenhum extrato encontrado para esta competência e conta.')
       setDados({ tipo: 'conciliacao', lista: [], entradas: [], saidas: [], totalEnt: 0, totalSai: 0, saldo: 0, contaDados: null })
       return
     }
 
     const { data: movs } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), extrato:extratos(conta_id, competencia, conta:contas(nome,banco,agencia,conta_num)), lancamento:lancamentos(fornecedor,num_nota,cpf_cnpj,descricao_produto)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), lancamento:lancamentos(fornecedor,num_nota,cpf_cnpj,descricao_produto)')
       .in('extrato_id', extratosIds).order('data')
 
     let todasMovs = movs || []
@@ -106,8 +97,7 @@ export default function RelatoriosCentral() {
     const listaPDF = []
     todasMovs.filter(m => !m.parent_id).forEach(m => {
       if (m.dividida) {
-        const filhas = partesMap[m.id] || []
-        listaPDF.push({ ...m, _partes: filhas })
+        listaPDF.push({ ...m, _partes: partesMap[m.id] || [] })
       } else {
         listaPDF.push(m)
       }
@@ -382,7 +372,7 @@ export default function RelatoriosCentral() {
       {/* Filtros */}
       <div style={s.card}>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:10, marginBottom:10 }}>
-          {(aba !== 'plano_acao' && aba !== 'relat_anual') && (<>
+          {(aba !== 'plano_acao' && aba !== 'relat_anual' && aba !== 'conciliacao') && (<>
             <div>
               <label style={s.label}>Data início</label>
               <input type="date" value={dataInicio} onChange={e=>setDataInicio(e.target.value)} style={s.input} />
