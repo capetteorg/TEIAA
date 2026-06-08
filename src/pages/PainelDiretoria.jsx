@@ -54,7 +54,7 @@ export default function PainelDiretoria() {
     // Busca movimentações do mês selecionado
     const { data: movsData } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .in('extrato_id', extratoIds)
       .gte('data', mes + '-01')
       .lte('data', fimMes(mes))
@@ -192,23 +192,20 @@ export default function PainelDiretoria() {
                 <div style={{ maxHeight: 480, overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead style={{ position: 'sticky', top: 0 }}>
-                      <tr>{['Data','Descrição completa','Documento','Categoria','Conta','Valor'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+                      <tr>{['Categoria','Subcategoria','Valor'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {entradas.map((m, i) => (
                         <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
-                          <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{fmtData(m.data)}</td>
-                          <td style={{ ...s.td, maxWidth: 280 }}>{m.descricao}</td>
-                          <td style={{ ...s.td, fontFamily: 'monospace', fontSize: 10, color: '#888780' }}>{m.doc || '—'}</td>
                           <td style={s.td}>{m.categoria?.nome || <span style={{ color: '#B4B2A9' }}>Não categorizado</span>}</td>
-                          <td style={{ ...s.td, fontSize: 11, color: '#888780' }}>{m.extrato?.conta?.nome || '—'}</td>
+                          <td style={{ ...s.td, color: '#888780' }}>{m.subcategoria?.nome || '—'}</td>
                           <td style={{ ...s.td, fontWeight: 600, color: VERDE, whiteSpace: 'nowrap' }}>{fmt(m.valor)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr style={{ background: '#F2FAE8' }}>
-                        <td colSpan={5} style={{ ...s.td, fontWeight: 700, fontSize: 13 }}>TOTAL ENTRADAS</td>
+                        <td colSpan={2} style={{ ...s.td, fontWeight: 700, fontSize: 13 }}>TOTAL ENTRADAS</td>
                         <td style={{ ...s.td, fontWeight: 700, fontSize: 13, color: VERDE }}>{fmt(resumo.entradas)}</td>
                       </tr>
                     </tfoot>
@@ -230,24 +227,20 @@ export default function PainelDiretoria() {
                 <div style={{ maxHeight: 480, overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead style={{ position: 'sticky', top: 0 }}>
-                      <tr>{['Data','Descrição completa','Fornecedor','CPF/CNPJ','Categoria','Conta','Valor'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+                      <tr>{['Categoria','Subcategoria','Valor'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {saidas.map((m, i) => (
                         <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
-                          <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{fmtData(m.data)}</td>
-                          <td style={{ ...s.td, maxWidth: 220 }}>{m.descricao}</td>
-                          <td style={{ ...s.td, fontWeight: 500 }}>{m.fornecedor || '—'}</td>
-                          <td style={{ ...s.td, fontFamily: 'monospace', fontSize: 11 }}>{m.cpf_cnpj || '—'}</td>
                           <td style={s.td}>{m.categoria?.nome || <span style={{ color: '#B4B2A9' }}>Não categorizado</span>}</td>
-                          <td style={{ ...s.td, fontSize: 11, color: '#888780' }}>{m.extrato?.conta?.nome || '—'}</td>
+                          <td style={{ ...s.td, color: '#888780' }}>{m.subcategoria?.nome || '—'}</td>
                           <td style={{ ...s.td, fontWeight: 600, color: VERMELHO, whiteSpace: 'nowrap' }}>{fmt(Math.abs(m.valor))}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr style={{ background: '#FEF2F2' }}>
-                        <td colSpan={6} style={{ ...s.td, fontWeight: 700, fontSize: 13 }}>TOTAL SAÍDAS</td>
+                        <td colSpan={2} style={{ ...s.td, fontWeight: 700, fontSize: 13 }}>TOTAL SAÍDAS</td>
                         <td style={{ ...s.td, fontWeight: 700, fontSize: 13, color: VERMELHO }}>{fmt(resumo.saidas)}</td>
                       </tr>
                     </tfoot>
