@@ -736,8 +736,8 @@ export default function RelatoriosCentral() {
                       <td style={{ ...s.td, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.descricao}</td>
                       <td style={{ ...s.td, fontSize:11 }}>{m.categoria?.nome||'—'}</td>
                       <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{m.subcategoria?.nome||'—'}</td>
-                      <td style={{ ...s.td, fontSize:11 }}>{m.fornecedor||'—'}</td>
-                      <td style={{ ...s.td, fontSize:11, fontFamily:'monospace' }}>{m.num_nota||'—'}</td>
+                      <td style={{ ...s.td, fontSize:11 }}>{m.fornecedor || m.lancamento?.fornecedor || '—'}</td>
+                      <td style={{ ...s.td, fontSize:11, fontFamily:'monospace' }}>{m.num_nota || m.lancamento?.num_nota || '—'}</td>
                       <td style={{ ...s.td, fontWeight:500, color:Number(m.valor)>=0?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
                       <td style={s.td}>
                         <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
