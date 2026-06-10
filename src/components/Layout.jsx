@@ -137,6 +137,8 @@ export default function Layout() {
         <NavItem to="/instituicao"        icon="building"          label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/parcerias"          icon="file-invoice"      label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/documentos"         icon="files"             label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/documentos-fiscais" icon="file-certificate"  label="Docs. Fiscais"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Configurações */}
         <NavSecao label="Configurações" />

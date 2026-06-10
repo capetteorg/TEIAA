@@ -39,6 +39,8 @@ import Fornecedores from './pages/Fornecedores'
 import FornecedorHistorico from './pages/FornecedorHistorico'
 import LancamentosLista from './pages/LancamentosLista'
 import Pendencias from './pages/Pendencias'
+import DocumentosFiscais from './pages/DocumentosFiscais'
+import Patrimonio from './pages/Patrimonio'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -80,6 +82,8 @@ export default function App() {
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
         <Route path="instituicao" element={<RotaProtegida perfisPermitidos={['admin']}><Instituicao /></RotaProtegida>} />
         <Route path="documentos" element={<RotaProtegida perfisPermitidos={['admin']}><Documentos /></RotaProtegida>} />
+        <Route path="documentos-fiscais" element={<RotaProtegida perfisPermitidos={['admin']}><DocumentosFiscais /></RotaProtegida>} />
+        <Route path="patrimonio" element={<RotaProtegida perfisPermitidos={['admin']}><Patrimonio /></RotaProtegida>} />
         <Route path="pendencias" element={<RotaProtegida perfisPermitidos={['admin']}><Pendencias /></RotaProtegida>} />
         <Route path="lancamentos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><LancamentosLista /></RotaProtegida>} />
         <Route path="fornecedores" element={<RotaProtegida perfisPermitidos={['admin']}><Fornecedores /></RotaProtegida>} />
