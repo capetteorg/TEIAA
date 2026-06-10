@@ -70,22 +70,49 @@ export default function Fechamento() {
 
   async function fecharMes(competencia) {
     if (!window.confirm(`Fechar o mês ${competencia}? Isso indica que a conciliação foi revisada e está pronta para aprovação do Conselho Fiscal.`)) return
-    const { data } = await supabase.from('fechamentos').upsert({
-      competencia,
-      status: 'fechado',
-      fechado_em: new Date().toISOString(),
-      fechado_por: perfil?.nome || 'Admin',
-    }, { onConflict: 'competencia' }).select().single()
+    // Verificar se já existe fechamento para essa competência
+    const { data: existe } = await supabase.from('fechamentos').select('id').eq('competencia', competencia).single()
+    let erro
+    if (existe) {
+      const { error } = await supabase.from('fechamentos').update({
+        status: 'fechado',
+        fechado_em: new Date().toISOString(),
+        fechado_por: perfil?.nome || 'Admin',
+      }).eq('competencia', competencia)
+      erro = error
+    } else {
+      const { error } = await supabase.from('fechamentos').insert({
+        competencia,
+        status: 'fechado',
+        fechado_em: new Date().toISOString(),
+        fechado_por: perfil?.nome || 'Admin',
+      })
+      erro = error
+    }
+    if (erro) { setMsg(`⚠ Erro: ${erro.message}`); return }
     setMsg(`✅ Mês ${competencia} fechado e aguardando aprovação!`)
-    carregar()
+    await carregar()
     setTimeout(() => setMsg(''), 4000)
   }
 
   async function reabrirMes(competencia) {
     if (!window.confirm(`Reabrir o mês ${competencia}?`)) return
-    await supabase.from('fechamentos').update({ status:'aberto', fechado_em:null }).eq('competencia', competencia)
+    const { error } = await supabase.from('fechamentos').update({
+      status: 'aberto',
+      fechado_em: null,
+      fechado_por: null,
+      aprovado_em: null,
+      aprovado_por: null,
+      tipo_aprovacao: null,
+      ressalvas: null,
+      reuniao_data: null,
+      reuniao_local: null,
+      reuniao_modalidade: null,
+      membros_presentes: null,
+    }).eq('competencia', competencia)
+    if (error) { setMsg(`⚠ Erro: ${error.message}`); return }
     setMsg('Mês reaberto.')
-    carregar()
+    await carregar()
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -94,7 +121,7 @@ export default function Fechamento() {
     const { tipo_aprovacao, ressalvas, reuniao_data, reuniao_local, membros_presentes, observacoes, modalidade } = formAprov
     if (!tipo_aprovacao) { setMsg('⚠ Selecione o tipo de aprovação.'); setSalvando(false); return }
     if (!reuniao_data) { setMsg('⚠ Informe a data da reunião.'); setSalvando(false); return }
-    await supabase.from('fechamentos').update({
+    const { error } = await supabase.from('fechamentos').update({
       status: tipo_aprovacao,
       tipo_aprovacao,
       aprovado_em: new Date().toISOString(),
@@ -106,10 +133,11 @@ export default function Fechamento() {
       membros_presentes: membros_presentes || null,
       observacoes: observacoes || null,
     }).eq('competencia', competencia)
+    if (error) { setMsg(`⚠ Erro: ${error.message}`); setSalvando(false); return }
     setAprovacaoAberta(null)
     setFormAprov({})
     setMsg(`✅ Aprovação registrada para ${competencia}!`)
-    carregar()
+    await carregar()
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
