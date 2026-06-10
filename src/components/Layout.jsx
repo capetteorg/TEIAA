@@ -102,36 +102,40 @@ export default function Layout() {
 
         {/* Principal */}
         <NavSecao label="Principal" />
-        <NavItem to="/painel-admin"       icon="layout-dashboard"  label="Painel"           visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/painel-operacional" icon="layout-dashboard"  label="Painel"           visivel={p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"   visivel={p==='diretoria'} onClick={fecharMenu} />
+        <NavItem to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/painel-operacional" icon="layout-dashboard"  label="Painel"              visivel={p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
 
-        {/* Financeiro */}
-        <NavSecao label="Financeiro" />
-        <NavItem to="/lancamentos"        icon="list-details"      label="Lançamentos"      visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/pendencias"         icon="alert-triangle"    label="Pendências"       visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
-        <NavItem to="/conciliacao"        icon="checks"            label="Conciliação"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/cobrancas"          icon="receipt-2"         label="Cobranças"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
-        <NavItem to="/fornecedores"       icon="building-store"    label="Fornecedores"     visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/aplicacoes"         icon="chart-line"        label="Aplicações"       visivel={p==='admin'} onClick={fecharMenu} />
+        {/* Operação diária */}
+        <NavSecao label="Operação diária" />
+        <NavItem to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/cobrancas"          icon="receipt-2"         label="Cobranças"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
+        <NavItem to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
+
+        {/* Gestão financeira */}
+        <NavSecao label="Gestão financeira" />
+        <NavItem to="/fornecedores"       icon="building-store"    label="Fornecedores"        visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/controle-dividas"   icon="credit-card-off"   label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
+        <NavItem to="/aplicacoes"         icon="chart-line"        label="Aplicações"          visivel={p==='admin'} onClick={fecharMenu} />
 
-        {/* Programas e Projetos */}
-        <NavSecao label="Programas e Projetos" />
-        <NavItem to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/projetos"           icon="folder"            label="Projetos"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"     visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos" visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/equipe"             icon="users-group"       label="Equipe"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem to="/doacoes"            icon="gift"              label="Doações"          visivel={p==='admin'} onClick={fecharMenu} />
+        {/* Programas e projetos */}
+        <NavSecao label="Programas e projetos" />
+        <NavItem to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Relatórios */}
         <NavSecao label="Relatórios" />
-        <NavItem to="/relatorios"         icon="report-analytics"  label="Central de Relatórios" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
-        <NavItem to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"   visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/transparencia"      icon="world"             label="Transparência Pública" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+        <NavItem to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho"  visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/transparencia"      icon="world"             label="Transparência Pública"  visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Institucional */}
         <NavSecao label="Institucional" />
@@ -145,7 +149,7 @@ export default function Layout() {
         <NavItem to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/usuarios"           icon="user-cog"          label="Usuários do sistema" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/configuracoes"      icon="settings"          label="Configurações"       visivel={p==='admin'} onClick={fecharMenu} />
 
