@@ -44,7 +44,7 @@ export default function Pendencias() {
     await supabase.rpc('gerar_pendencias')
     await carregar()
     setAtualizando(false)
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pendências atualizadas!')
+    setMsg('Pendências atualizadas!')
     setTimeout(() => setMsg(''), 3000)
   }
 

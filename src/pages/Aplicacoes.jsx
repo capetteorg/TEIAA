@@ -33,7 +33,7 @@ export default function Aplicacoes() {
     const dados = { nome: form.nome, conta_id: parseInt(form.conta_id), saldo_atual: parseFloat(form.saldo_atual)||0 }
     const { error } = await supabase.from('aplicacoes').insert(dados)
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Aplicação cadastrada!'); setForm({ nome:'', conta_id:'', saldo_atual:'' }); setMostrarForm(false); carregar() }
+    else { setMsg('Aplicação cadastrada!'); setForm({ nome:'', conta_id:'', saldo_atual:'' }); setMostrarForm(false); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 3000)
   }
@@ -54,7 +54,7 @@ export default function Aplicacoes() {
     if (aplic) {
       await supabase.from('aplicacoes').update({ saldo_atual: (Number(aplic.saldo_atual)||0) + dados.valor }).eq('id', dados.aplicacao_id)
     }
-    setMsgRend('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Rendimento registrado!')
+    setMsgRend('Rendimento registrado!')
     setFormRend({ aplicacao_id:'', competencia:'', valor:'' })
     carregar()
     setSalvando(false)
@@ -84,7 +84,7 @@ export default function Aplicacoes() {
         </button>
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {mostrarForm && (
         <div style={{ ...s.card, borderColor:AZUL+'60' }}>
@@ -150,7 +150,7 @@ export default function Aplicacoes() {
               <div><label style={s.label}>Valor do rendimento (R$) *</label>
                 <input type="number" step="0.01" value={formRend.valor} onChange={e=>setFormRend(f=>({...f,valor:e.target.value}))} placeholder="0,00" required style={s.input} /></div>
             </div>
-            {msgRend && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:10, background:msgRend.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgRend.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msgRend}</div>}
+            {msgRend && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:10, background:!msgRend.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgRend.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgRend}</div>}
             <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
               {salvando ? 'Salvando...' : 'Salvar rendimento'}
             </button>

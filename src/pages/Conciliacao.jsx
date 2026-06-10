@@ -144,7 +144,7 @@ export default function Conciliacao() {
     setCruzando(false)
     const auto = Object.values(novoMap).filter(v=>v.auto).length
     const possivel = Object.values(novoMap).filter(v=>!v.auto).length
-    setMsg(`<i className="ti ti-robot" style={{marginRight:4}} /> Cruzamento concluído! ${auto} automáticos, ${possivel} possíveis. Confirme abaixo.`)
+    setMsg(`Cruzamento concluído! ${auto} automáticos, ${possivel} possíveis. Confirme abaixo.`)
     setTimeout(() => setMsg(''), 6000)
   }
 
@@ -161,7 +161,7 @@ export default function Conciliacao() {
     await supabase.from('lancamentos').update({ status_lanc:'conciliado', extrato_mov_id: movId }).eq('id', match.lancamento.id)
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
     setMatchMap(prev => { const n={...prev}; delete n[movId]; return n })
-    setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Conciliado!')
+    setMsg('Conciliado!')
     setTimeout(() => setMsg(''), 2000)
   }
 
@@ -172,7 +172,7 @@ export default function Conciliacao() {
   async function confirmarTodosAuto() {
     const autoIds = Object.entries(matchMap).filter(([,v])=>v.auto).map(([k])=>parseInt(k))
     for (const movId of autoIds) await confirmarMatch(movId)
-    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${autoIds.length} conciliações automáticas confirmadas!`)
+    setMsg(`${autoIds.length} conciliações automáticas confirmadas!`)
     setTimeout(() => setMsg(''), 4000)
   }
 
@@ -209,7 +209,7 @@ export default function Conciliacao() {
     const lancIds = movsFiltradas.filter(m=>!m.conciliado&&m.lancamento_id).map(m=>m.lancamento_id)
     if (lancIds.length>0) await supabase.from('lancamentos').update({ status_lanc:'conciliado' }).in('id', lancIds)
     setMovs(prev => prev.map(m => ids.includes(m.id) ? { ...m, conciliado:true } : m))
-    setMsg('Tudo conciliado! <i className="ti ti-check" style={{fontSize:14}} />')
+    setMsg('Tudo conciliado! ')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -224,7 +224,7 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...dados } : m))
     setComplementarAberto(null)
     setFormCompl({})
-    setMsg('Dados complementares salvos! <i className="ti ti-check" style={{fontSize:14}} />')
+    setMsg('Dados complementares salvos! ')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -277,7 +277,7 @@ export default function Conciliacao() {
     await supabase.from('extrato_movs').update({ fornecedor:pessoa?.nome, obs_prestacao:`Pgto ${competencia} — mensal: R$${valMensal.toFixed(2)}${valAbat>0?`, abat: R$${valAbat.toFixed(2)}`:''}${valorNaoPago>0?` (faltam R$${valorNaoPago.toFixed(2)})`:''}` }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, fornecedor:pessoa?.nome } : m))
     setPagFuncAberto(null); setFormPagFunc({})
-    setMsg(valorNaoPago===0 ? `<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${pessoa?.nome} — ${competencia} quitado!` : `<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos. Faltam R$ ${valorNaoPago.toFixed(2)}.`)
+    setMsg(valorNaoPago===0 ? `${pessoa?.nome} — ${competencia} quitado!` : `${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos. Faltam R$ ${valorNaoPago.toFixed(2)}.`)
     setTimeout(() => setMsg(''), 5000)
   }
 
@@ -302,7 +302,7 @@ export default function Conciliacao() {
       if (!ok) return
     }
     if (partesDivisao.some(p => !p.categoria_id)) {
-      setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Todas as partes precisam ter categoria.')
+      setMsg('Todas as partes precisam ter categoria.')
       setTimeout(() => setMsg(''), 3000)
       return
     }
@@ -334,7 +334,7 @@ export default function Conciliacao() {
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .eq('extrato_id', extratoSel.id).order('data')
     setMovs(data || [])
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Movimentação dividida com sucesso!')
+    setMsg('Movimentação dividida com sucesso!')
     setTimeout(() => setMsg(''), 4000)
   }
 
@@ -354,7 +354,7 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
     setLancamentos(prev => prev.map(l => l.id===lancId ? { ...l, extrato_mov_id: movId } : l))
     setVincularAberto(null)
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento vinculado!')
+    setMsg('Lançamento vinculado!')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -439,7 +439,7 @@ export default function Conciliacao() {
                           <div style={{ height:'100%', width:pct+'%', background:fechado?VERDE:AZUL, borderRadius:99 }} />
                         </div>
                         <span style={s.badge(fechado?'#EAF3DE':'#E6F1FB', fechado?'#3B6D11':'#185FA5')}>
-                          {fechado?'<i className="ti ti-check" style={{marginRight:4}} /> ':''}{stats.conciliados}/{stats.total}
+                          {fechado?'✓ ':''}{stats.conciliados}/{stats.total}
                         </span>
                       </div>
                     </td>
@@ -506,7 +506,7 @@ export default function Conciliacao() {
         </div>
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')||msg.includes('<i className="ti ti-check" style={{fontSize:14}} />')?'#F2FAE8':'#E6F1FB', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')||msg.includes('<i className="ti ti-check" style={{fontSize:14}} />')?'#3B6D11':'#185FA5' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')||!msg.includes('Erro')?'#F2FAE8':'#E6F1FB', color:!msg.includes('Erro')||!msg.includes('Erro')?'#3B6D11':'#185FA5' }}>{msg}</div>}
 
       {/* Filtros */}
       <div style={{ display:'flex', gap:6, marginBottom:'.85rem', flexWrap:'wrap', alignItems:'center' }}>
@@ -683,7 +683,7 @@ export default function Conciliacao() {
                     <td style={s.td}>
                       <button onClick={() => {
                         if (!m.conciliado && !m.categoria_id) {
-                          setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Selecione uma categoria antes de conciliar.')
+                          setMsg('Selecione uma categoria antes de conciliar.')
                           setTimeout(() => setMsg(''), 3000)
                           return
                         }
@@ -1052,7 +1052,7 @@ export default function Conciliacao() {
                               <div style={{ fontSize:11, padding:'8px 12px', borderRadius:6, marginBottom:10, background:excede?'#FEF2F2':'#E6F1FB', color:excede?'#A32D2D':'#185FA5' }}>
                                 <div>Extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Mensal: <strong>R$ {valMens.toFixed(2)}</strong> · Abatimento: <strong>R$ {valAbat.toFixed(2)}</strong></div>
                                 {pe && !excede && <div style={{ marginTop:4, color:naoPago>0?'#854F0B':'#3B6D11', fontWeight:500 }}>
-                                  {naoPago>0 ? `<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Após este pagamento faltam R$ ${naoPago.toFixed(2)} no mês` : '<i className="ti ti-check" style={{marginRight:4}} /> Mês integralmente pago'}
+                                  {naoPago>0 ? `Após este pagamento faltam R$ ${naoPago.toFixed(2)} no mês` : 'Mês integralmente pago'}
                                 </div>}
                                 {excede && <div style={{ marginTop:4, fontWeight:600 }}><i className="ti ti-ban" style={{marginRight:4}} /> Soma excede o valor do extrato</div>}
                               </div>

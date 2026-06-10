@@ -74,7 +74,7 @@ export default function UsuariosAtendidos() {
       ;({ error } = await supabase.from('usuarios_atendidos').insert(dados))
     }
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Usuário salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
+    else { setMsg('Usuário salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -149,7 +149,7 @@ export default function UsuariosAtendidos() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}

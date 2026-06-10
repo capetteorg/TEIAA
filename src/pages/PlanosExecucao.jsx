@@ -152,7 +152,7 @@ export default function PlanosExecucao() {
     })
     if (error) setMsgProjetos('Erro: ' + error.message)
     else {
-      setMsgProjetos('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Projeto vinculado!')
+      setMsgProjetos('Projeto vinculado!')
       setProjetoParaVincular('')
       carregarProjetosVinculados(planoSel.id)
     }
@@ -198,7 +198,7 @@ export default function PlanosExecucao() {
       setFormOrc({ descricao: '', tipo: 'saida', valor_previsto: '', valor_realizado: '', categoria: '', observacoes: '' })
       setEditandoOrc(null)
       carregarDetalhe(planoSel)
-      setMsgOrc('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Salvo!')
+      setMsgOrc('Salvo!')
       setTimeout(() => setMsgOrc(''), 3000)
     } else {
       setMsgOrc('Erro: ' + error.message)
@@ -255,7 +255,7 @@ export default function PlanosExecucao() {
 
     if (editando) {
       // Edição: volta para lista normalmente
-      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Plano salvo!')
+      setMsg('Plano salvo!')
       setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false)
       carregar()
       setTimeout(() => setMsg(''), 4000)
@@ -270,7 +270,7 @@ export default function PlanosExecucao() {
         setPlanoSel(novo)
         setAbaDetalhe('projetos')
         setAba('detalhe')
-        setMsgProjetos('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Plano criado com sucesso! Agora vincule os projetos e serviços que fazem parte deste plano.')
+        setMsgProjetos('Plano criado com sucesso! Agora vincule os projetos e serviços que fazem parte deste plano.')
         setTimeout(() => setMsgProjetos(''), 6000)
       }
     }
@@ -421,7 +421,7 @@ export default function PlanosExecucao() {
         )}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         <button onClick={() => setAba('lista')} style={s.tab(aba==='lista')}>Lista de planos</button>
@@ -545,7 +545,7 @@ export default function PlanosExecucao() {
                       {ORIGENS_RECURSOS_OPCOES.map(origem => (
                         <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
                           style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff', color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
-                          {form.origens_recursos.includes(origem)?'<i className="ti ti-check" style={{marginRight:4}} /> ':''}{origem}
+                          {form.origens_recursos.includes(origem)?'✓ ':''}{origem}
                         </button>
                       ))}
                     </div>
@@ -597,7 +597,7 @@ export default function PlanosExecucao() {
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                   <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':isPlanoAcao?ROXO:VERDE)}>
-                    {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : `<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Salvar e vincular projetos →`}
+                    {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Salvar e vincular projetos →'}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                 </div>
@@ -722,7 +722,7 @@ export default function PlanosExecucao() {
           {abaDetalhe === 'projetos' && (
             <div>
               {msgProjetos && (
-                <div style={{ fontSize:12, padding:'10px 14px', borderRadius:8, marginBottom:'1rem', background:msgProjetos.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgProjetos.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D', fontWeight:500 }}>
+                <div style={{ fontSize:12, padding:'10px 14px', borderRadius:8, marginBottom:'1rem', background:!msgProjetos.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgProjetos.includes('Erro')?'#3B6D11':'#A32D2D', fontWeight:500 }}>
                   {msgProjetos}
                 </div>
               )}
@@ -807,7 +807,7 @@ export default function PlanosExecucao() {
             <div style={s.card}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Orçamento do plano</div>
 
-              {msgOrc && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msgOrc.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgOrc.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
+              {msgOrc && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msgOrc.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgOrc.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
 
               <form onSubmit={salvarOrcamento} style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
                 <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoOrc ? 'Editar linha' : 'Adicionar linha'}</div>

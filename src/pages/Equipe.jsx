@@ -162,7 +162,7 @@ export default function Equipe() {
       }
     }
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pessoa salva com sucesso!'); setForm(FORM_VAZIO); setEditando(null); setAba('lista'); carregar() }
+    else { setMsg('Pessoa salva com sucesso!'); setForm(FORM_VAZIO); setEditando(null); setAba('lista'); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -177,7 +177,7 @@ export default function Equipe() {
     if (!error) {
       setFormMov({ data_mov:'', tipo_mov:'Observação administrativa', descricao:'' })
       carregarHistorico(pessoaSel.id)
-      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Movimentação registrada!')
+      setMsg('Movimentação registrada!')
       setTimeout(() => setMsg(''), 3000)
     }
   }
@@ -267,7 +267,7 @@ export default function Equipe() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -460,7 +460,7 @@ export default function Equipe() {
               {todosProjetos.map(proj => (
                 <button key={proj} type="button" onClick={() => toggleProjeto(proj)}
                   style={{ fontSize:11, padding:'5px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.projetos.includes(proj)?VERDE:'#D3D1C7'}`, background:form.projetos.includes(proj)?'#EAF3DE':'#fff', color:form.projetos.includes(proj)?'#3B6D11':'#5F5E5A' }}>
-                  {form.projetos.includes(proj) ? '<i className="ti ti-check" style={{marginRight:4}} /> ' : ''}{proj}
+                  {form.projetos.includes(proj) ? '✓ ' : ''}{proj}
                 </button>
               ))}
             </div>

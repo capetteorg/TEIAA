@@ -210,7 +210,7 @@ export default function ControleDividas() {
       }
     }
 
-    setMsg(editandoId ? '<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Atualizado!' : '<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Cadastrado! Competências geradas automaticamente.')
+    setMsg(editandoId ? 'Atualizado!' : 'Cadastrado! Competências geradas automaticamente.')
     setForm({ equipe_id:'', tipo_vinculo:'CLT', valor_mensal_normal:'', divida_inicial:'', data_base_divida:'2024-12-31', observacoes:'', ativo:true })
     setEditandoId(null)
     setMostrarForm(false)
@@ -234,7 +234,7 @@ export default function ControleDividas() {
       usuario_id: user?.id || null,
     })
     await recalcularSaldo(parseInt(formAdj.pessoa_id))
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento registrado!')
+    setMsg('Lançamento registrado!')
     setFormAdj({ pessoa_id:'', tipo:'ajuste', valor:'', data_movimentacao:new Date().toISOString().slice(0,10), competencia:new Date().toISOString().slice(0,7), descricao:'', observacoes:'' })
     carregar()
     setSalvando(false)
@@ -247,7 +247,7 @@ export default function ControleDividas() {
     await supabase.from('divida_movimentacoes').delete().eq('pessoa_id', pe.id)
     await supabase.from('pessoas_recorrentes').delete().eq('id', pe.id)
     carregar()
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pessoa excluída.')
+    setMsg('Pessoa excluída.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -385,7 +385,7 @@ export default function ControleDividas() {
         </div>
       )}
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:4, marginBottom:'1.25rem', flexWrap:'wrap' }}>
@@ -424,7 +424,7 @@ export default function ControleDividas() {
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ fontSize:10, color:'#888780' }}>Saldo devedor</div>
-                    <div style={{ fontSize:16, fontWeight:700, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Quitado'}</div>
+                    <div style={{ fontSize:16, fontWeight:700, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'Quitado'#3B6D11'}} /> Quitado'}</div>
                   </div>
                 </div>
                 <div style={{ padding:'10px 14px' }}>
@@ -572,7 +572,7 @@ export default function ControleDividas() {
                       <td style={s.td}><span style={s.badge('#F8F7F2','#5F5E5A')}>{TIPO_VINCULO_LABEL[pe.tipo_vinculo]}</span></td>
                       <td style={{ ...s.td, color:AZUL, fontWeight:500 }}>{fmt(pe.valor_mensal_normal||0)}</td>
                       <td style={{ ...s.td, color:'#888780' }}>{fmt(pe.divida_inicial||0)}</td>
-                      <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Quitado'}</td>
+                      <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'Quitado'#3B6D11'}} /> Quitado'}</td>
                       <td style={s.td}><span style={s.badge(pe.ativo?'#EAF3DE':'#F1EFE8', pe.ativo?'#3B6D11':'#888780')}>{pe.ativo?'Sim':'Não'}</span></td>
                       <td style={s.td}>
                         {isAdmin && <button onClick={() => editarPessoa(pe)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}

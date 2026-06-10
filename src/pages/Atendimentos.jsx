@@ -95,7 +95,7 @@ export default function Atendimentos() {
       ;({ error } = await supabase.from('atendimentos').insert(dados))
     }
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registro salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
+    else { setMsg('Registro salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -165,7 +165,7 @@ export default function Atendimentos() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -236,7 +236,7 @@ export default function Atendimentos() {
                   {PUBLICOS.map(pub => (
                     <button key={pub} type="button" onClick={() => togglePublico(pub)}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.publico_participante.includes(pub)?AZUL:'#D3D1C7'}`, background:form.publico_participante.includes(pub)?'#E6F1FB':'#fff', color:form.publico_participante.includes(pub)?'#185FA5':'#5F5E5A' }}>
-                      {form.publico_participante.includes(pub) ? '<i className="ti ti-check" style={{marginRight:4}} /> ' : ''}{pub}
+                      {form.publico_participante.includes(pub) ? '✓ ' : ''}{pub}
                     </button>
                   ))}
                 </div>
@@ -257,7 +257,7 @@ export default function Atendimentos() {
                   {equipe.map(e => (
                     <button key={e.id} type="button" onClick={() => toggleEquipe(String(e.id))}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.equipe_ids.includes(String(e.id))?VERDE:'#D3D1C7'}`, background:form.equipe_ids.includes(String(e.id))?'#EAF3DE':'#fff', color:form.equipe_ids.includes(String(e.id))?'#3B6D11':'#5F5E5A' }}>
-                      {form.equipe_ids.includes(String(e.id)) ? '<i className="ti ti-check" style={{marginRight:4}} /> ' : ''}{e.nome.split(' ')[0]}
+                      {form.equipe_ids.includes(String(e.id)) ? '✓ ' : ''}{e.nome.split(' ')[0]}
                     </button>
                   ))}
                 </div>

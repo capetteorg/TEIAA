@@ -132,7 +132,7 @@ export default function Projetos() {
     }
     if (error) setMsg('Erro: ' + error.message)
     else {
-      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Projeto salvo!')
+      setMsg('Projeto salvo!')
       setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); setAbaForm('geral')
       carregar()
     }
@@ -186,7 +186,7 @@ export default function Projetos() {
     }
     if (error) setMsgOrc('Erro: ' + error.message)
     else {
-      setMsgOrc('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Salvo!')
+      setMsgOrc('Salvo!')
       setFormOrc({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 })
       setEditandoOrc(null)
       carregarFinanceiro(projetoDetalhe.id)
@@ -223,7 +223,7 @@ export default function Projetos() {
     }
     if (error) setMsgEquipe('Erro: ' + error.message)
     else {
-      setMsgEquipe('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Membro vinculado!')
+      setMsgEquipe('Membro vinculado!')
       setFormEquipe(FORM_EQUIPE_VAZIO)
       setEditandoEquipe(null)
       carregarEquipeProjeto(projetoDetalhe.id)
@@ -435,7 +435,7 @@ export default function Projetos() {
                     <label style={s.label}>Observações</label>
                     <input value={formEquipe.observacoes} onChange={e=>setFormEquipe(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                   </div>
-                  {msgEquipe && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:msgEquipe.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgEquipe.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msgEquipe}</div>}
+                  {msgEquipe && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:!msgEquipe.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgEquipe.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgEquipe}</div>}
                   <div style={{ display:'flex', gap:6 }}>
                     <button type="submit" disabled={salvandoEquipe} style={s.btn(salvandoEquipe?'#D3D1C7':VERDE)}>
                       {salvandoEquipe ? 'Salvando...' : editandoEquipe ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Vincular'}
@@ -563,7 +563,7 @@ export default function Projetos() {
                     <label style={s.label}>Observações</label>
                     <input value={formOrc.observacoes} onChange={e=>setFormOrc(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                   </div>
-                  {msgOrc && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:msgOrc.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgOrc.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
+                  {msgOrc && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:!msgOrc.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgOrc.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
                   <div style={{ display:'flex', gap:6 }}>
                     <button type="submit" disabled={salvandoOrc} style={s.btn(salvandoOrc?'#D3D1C7':VERDE)}>{salvandoOrc?'Salvando...':editandoOrc?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar'}</button>
                     {editandoOrc && <button type="button" onClick={() => { setFormOrc({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
@@ -688,7 +688,7 @@ export default function Projetos() {
         </button>
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {mostrarForm && (
         <div style={{ ...s.card, borderColor:'#C0DD97' }}>
@@ -734,7 +734,7 @@ export default function Projetos() {
                   {ORIGENS_RECURSOS_OPCOES.map(origem => (
                     <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
                       style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff', color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
-                      {form.origens_recursos.includes(origem)?'<i className="ti ti-check" style={{marginRight:4}} /> ':''}{origem}
+                      {form.origens_recursos.includes(origem)?'✓ ':''}{origem}
                     </button>
                   ))}
                 </div>

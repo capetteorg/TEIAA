@@ -21,32 +21,32 @@ export default function Configuracoes() {
         // Limpa movimentações primeiro (FK), depois extratos
         await supabase.from('extrato_movs').delete().neq('id', 0)
         await supabase.from('extratos').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Extratos e movimentações excluídos.')
+        setMsg('Extratos e movimentações excluídos.')
 
       } else if (tipo === 'lancamentos') {
         await supabase.from('rateios').delete().neq('id', 0)
         await supabase.from('lancamentos').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Lançamentos excluídos.')
+        setMsg('Lançamentos excluídos.')
 
       } else if (tipo === 'cobrancas') {
         await supabase.from('historico_cobrancas').delete().neq('id', 0)
         await supabase.from('cobrancas').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Cobranças excluídas.')
+        setMsg('Cobranças excluídas.')
 
       } else if (tipo === 'eventos_campanhas') {
         await supabase.from('eventos').delete().neq('id', 0)
         await supabase.from('campanhas').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Eventos e campanhas excluídos.')
+        setMsg('Eventos e campanhas excluídos.')
 
       } else if (tipo === 'funcionarios') {
         await supabase.from('pagamentos_divida').delete().neq('id', 0)
         await supabase.from('dividas').delete().neq('id', 0)
         await supabase.from('funcionarios').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Funcionários e dívidas excluídos.')
+        setMsg('Funcionários e dívidas excluídos.')
 
       } else if (tipo === 'fechamentos') {
         await supabase.from('fechamentos').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Fechamentos excluídos.')
+        setMsg('Fechamentos excluídos.')
 
       } else if (tipo === 'tudo') {
         // Ordem correta respeitando FKs
@@ -63,7 +63,7 @@ export default function Configuracoes() {
         await supabase.from('lancamentos').delete().neq('id', 0)
         await supabase.from('eventos').delete().neq('id', 0)
         await supabase.from('campanhas').delete().neq('id', 0)
-        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Todos os dados de teste foram excluídos. Sistema pronto para uso real!')
+        setMsg('Todos os dados de teste foram excluídos. Sistema pronto para uso real!')
       }
     } catch(err) {
       setMsg('Erro: ' + err.message)

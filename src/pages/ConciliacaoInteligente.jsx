@@ -171,7 +171,7 @@ export default function ConciliacaoInteligente() {
     setResultado(prev => prev.map(r =>
       r.mov?.id === item.mov?.id ? { ...r, status: 'confirmado' } : r
     ))
-    setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Conciliação confirmada!')
+    setMsg('Conciliação confirmada!')
     setTimeout(() => setMsg(''), 2000)
   }
 
@@ -186,7 +186,7 @@ export default function ConciliacaoInteligente() {
     for (const item of autoItems) {
       await confirmarConciliacao(item)
     }
-    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${autoItems.length} conciliações confirmadas!`)
+    setMsg(`${autoItems.length} conciliações confirmadas!`)
     setTimeout(() => setMsg(''), 3000)
   }
 

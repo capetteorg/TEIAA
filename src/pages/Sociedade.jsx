@@ -174,9 +174,9 @@ export default function Sociedade() {
                   </div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                     {[
-                      instituicao?.endereco && `<i className="ti ti-map-pin" style={{marginRight:4}} /> ${instituicao.endereco}`,
-                      instituicao?.telefone && `<i className="ti ti-phone" style={{marginRight:4}} /> ${instituicao.telefone}`,
-                      instituicao?.email && `<i className="ti ti-mail" style={{marginRight:4}} /> ${instituicao.email}`,
+                      instituicao?.endereco && `${instituicao.endereco}`,
+                      instituicao?.telefone && `${instituicao.telefone}`,
+                      instituicao?.email && `${instituicao.email}`,
                     ].filter(Boolean).map((info,i) => (
                       <span key={i} style={{ fontSize:11, color:'#5F5E5A', padding:'3px 10px', background:'rgba(255,255,255,0.8)', borderRadius:99, border:'0.5px solid #E0DDD5' }}>{info}</span>
                     ))}

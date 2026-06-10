@@ -8,11 +8,11 @@ const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F48
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 const STATUS_CONFIG = {
-  aberto:            { label:'Aberto',               bg:'#F1EFE8', cor:'#5F5E5A',  icon:'<i className="ti ti-folder-open" style={{fontSize:14}} />' },
-  fechado:           { label:'Aguardando aprovação', bg:'#E6F1FB', cor:'#185FA5',  icon:'<i className="ti ti-lock" style={{fontSize:14}} />' },
-  aprovado:          { label:'Aprovado',             bg:'#EAF3DE', cor:'#3B6D11',  icon:'<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />' },
-  aprovado_ressalva: { label:'Aprovado c/ ressalva', bg:'#FAEEDA', cor:'#854F0B',  icon:'<i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️' },
-  reprovado:         { label:'Reprovado',            bg:'#FEF2F2', cor:'#A32D2D',  icon:'<i className="ti ti-circle-x" style={{fontSize:14, color:'#A32D2D'}} />' },
+  aberto:            { label:'Aberto',               bg:'#F1EFE8', cor:'#5F5E5A',  icon:'ti-folder-open' },
+  fechado:           { label:'Aguardando aprovação', bg:'#E6F1FB', cor:'#185FA5',  icon:'ti-lock' },
+  aprovado:          { label:'Aprovado',             bg:'#EAF3DE', cor:'#3B6D11',  icon:'ti-circle-check'#3B6D11'}} />' },
+  aprovado_ressalva: { label:'Aprovado c/ ressalva', bg:'#FAEEDA', cor:'#854F0B',  icon:'ti-alert-triangle'#E67814'}} />️' },
+  reprovado:         { label:'Reprovado',            bg:'#FEF2F2', cor:'#A32D2D',  icon:'ti-circle-x'#A32D2D'}} />' },
 }
 
 function badgeStatus(status) {
@@ -101,8 +101,8 @@ export default function Fechamento() {
       })
       erro = error
     }
-    if (erro) { setMsg(`<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Erro: ${erro.message}`); return }
-    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Mês ${competencia} fechado e aguardando aprovação!`)
+    if (erro) { setMsg(`Erro: ${erro.message}`); return }
+    setMsg(`Mês ${competencia} fechado e aguardando aprovação!`)
     await carregar()
     setTimeout(() => setMsg(''), 4000)
   }
@@ -122,7 +122,7 @@ export default function Fechamento() {
       reuniao_modalidade: null,
       membros_presentes: null,
     }).eq('competencia', competencia)
-    if (error) { setMsg(`<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Erro: ${error.message}`); return }
+    if (error) { setMsg(`Erro: ${error.message}`); return }
     setMsg('Mês reaberto.')
     await carregar()
     setTimeout(() => setMsg(''), 3000)
@@ -131,8 +131,8 @@ export default function Fechamento() {
   async function salvarAprovacao(competencia) {
     setSalvando(true)
     const { tipo_aprovacao, ressalvas, reuniao_data, reuniao_local, membros_presentes, observacoes, modalidade } = formAprov
-    if (!tipo_aprovacao) { setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Selecione o tipo de aprovação.'); setSalvando(false); return }
-    if (!reuniao_data) { setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Informe a data da reunião.'); setSalvando(false); return }
+    if (!tipo_aprovacao) { setMsg('Selecione o tipo de aprovação.'); setSalvando(false); return }
+    if (!reuniao_data) { setMsg('Informe a data da reunião.'); setSalvando(false); return }
     const { error } = await supabase.from('fechamentos').update({
       status: tipo_aprovacao,
       tipo_aprovacao,
@@ -145,10 +145,10 @@ export default function Fechamento() {
       membros_presentes: membros_presentes || null,
       observacoes: observacoes || null,
     }).eq('competencia', competencia)
-    if (error) { setMsg(`<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Erro: ${error.message}`); setSalvando(false); return }
+    if (error) { setMsg(`Erro: ${error.message}`); setSalvando(false); return }
     setAprovacaoAberta(null)
     setFormAprov({})
-    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Aprovação registrada para ${competencia}!`)
+    setMsg(`Aprovação registrada para ${competencia}!`)
     await carregar()
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
@@ -198,7 +198,7 @@ export default function Fechamento() {
         ))}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':msg.includes('<i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />')?'#FAEEDA':'#E6F1FB', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':msg.includes('<i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />')?'#854F0B':'#185FA5' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':msg.includes('Aviso')?'#FAEEDA':'#E6F1FB', color:!msg.includes('Erro')?'#3B6D11':msg.includes('Aviso')?'#854F0B':'#185FA5' }}>{msg}</div>}
 
       {/* Tabela */}
       <div style={{ ...s.card, padding:0, overflowX:'auto' }}>

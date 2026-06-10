@@ -229,7 +229,7 @@ export default function DocumentosFiscais() {
       }
     }
     await supabase.from('documentos_fiscais').insert({ ...form, aba, arquivo_url })
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Documento salvo!')
+    setMsg('Documento salvo!')
     setMostrarForm(false)
     setForm({ titulo:'', tipo:'', aba:'institucional', vencimento:'', emitido_em:'', observacoes:'', publico:false })
     setArquivo(null)
@@ -263,7 +263,7 @@ export default function DocumentosFiscais() {
         tamanho_kb: Math.round(arquivoUpload.size / 1024),
         publico: formArquivo.publico,
       })
-      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Arquivo publicado!')
+      setMsg('Arquivo publicado!')
       setFormArquivo({ titulo:'', descricao:'', categoria: CATEGORIAS_ARQUIVO[0], publico:true })
       setArquivoUpload(null)
       setMostrarFormArquivo(false)
@@ -349,7 +349,7 @@ export default function DocumentosFiscais() {
         )}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {/* Form adicionar */}
       {isAdmin && mostrarForm && (
@@ -473,8 +473,8 @@ export default function DocumentosFiscais() {
                       {d.vencimento ? (
                         <span style={{ color: vencido?VERMELHO: venceEm30?LARANJA:'inherit', fontWeight: (vencido||venceEm30)?600:400 }}>
                           {new Date(d.vencimento+'T12:00:00').toLocaleDateString('pt-BR')}
-                          {vencido && ' <i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Vencido'}
-                          {venceEm30 && ' <i className="ti ti-bolt" style={{marginRight:4}} /> Vence em breve'}
+                          {vencido && ' Vencido'}
+                          {venceEm30 && ' Vence em breve'}
                         </span>
                       ) : '—'}
                     </td>

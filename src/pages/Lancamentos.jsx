@@ -151,7 +151,7 @@ export default function Lancamentos({ tipo = 'despesa' }) {
         setPdfBase64(base64)
         setMsgIA('')
       } catch(err) {
-        setMsgIA('<i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Erro ao converter PDF. Tente uma imagem ou texto.')
+        setMsgIA('Erro ao converter PDF. Tente uma imagem ou texto.')
         console.error(err)
       }
     }
@@ -190,7 +190,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
           { type: 'text', text: `${PROMPT_NF}\n\nTexto da nota fiscal:\n${textoNota}` }
         ]
       } else {
-        setMsgIA('<i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Nenhum documento fornecido.')
+        setMsgIA('Nenhum documento fornecido.')
         setAnalisando(false)
         return
       }
@@ -226,10 +226,10 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
         if (forn) setFornecedorId(String(forn.id))
       }
 
-      setMsgIA(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Dados extraídos! Confira e ajuste se necessário.${resultado.fornecedor ? ` Fornecedor: ${resultado.fornecedor}` : ''}`)
+      setMsgIA(`Dados extraídos! Confira e ajuste se necessário.${resultado.fornecedor ? ` Fornecedor: ${resultado.fornecedor}` : ''}`)
       setModoIA(false)
     } catch(e) {
-      setMsgIA('<i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Não foi possível extrair os dados. Preencha manualmente.')
+      setMsgIA('Não foi possível extrair os dados. Preencha manualmente.')
       console.error(e)
     }
     setAnalisando(false)
@@ -307,7 +307,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
       }
     }
 
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
+    setMsg('Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
     setForm(f => ({ ...f, nf: '', valor: '', descricao: '', categoria_id: '', projeto_id: '' }))
     setSubcategoriaId('')
     setSubcategorias([])
@@ -440,7 +440,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
               )}
 
               {msgIA && (
-                <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginTop:10, background:msgIA.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgIA.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
+                <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginTop:10, background:!msgIA.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgIA.includes('Erro')?'#3B6D11':'#A32D2D' }}>
                   {msgIA}
                 </div>
               )}
@@ -449,12 +449,12 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
         </div>
       )}
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       <form onSubmit={salvar}>
         <div style={s.card}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-            {fotoBase64 && msgIA.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Dados extraídos — confira e ajuste' : `Nova ${tipo}`}
+            {fotoBase64 && !msgIA.includes('Erro') ? 'Dados extraídos — confira e ajuste' : `Nova ${tipo}`}
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'1fr 1fr 1fr 1fr', gap:10, marginBottom:10 }}>

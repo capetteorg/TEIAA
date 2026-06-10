@@ -29,7 +29,7 @@ export default function Classificacoes() {
     }
     const { error } = await dbClass.criar(dados)
     if (error) { setMsg('Erro: ' + error.message); return }
-    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Regra criada!')
+    setMsg('Regra criada!')
     dbClass.listar().then(({ data }) => setLista(data || []))
     setForm({ tipo_doc: '', direcao: 'entrada', categoria_id: '', categoria: '', subcategoria: '' })
     setTimeout(() => setMsg(''), 3000)
