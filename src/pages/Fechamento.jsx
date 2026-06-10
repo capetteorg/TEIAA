@@ -19,7 +19,7 @@ function badgeStatus(status) {
   const c = STATUS_CONFIG[status] || STATUS_CONFIG.aberto
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:99, fontSize:11, fontWeight:600, background:c.bg, color:c.cor }}>
-      {c.icon} {c.label}
+      <i className={`ti ${c.icon}`} style={{fontSize:12}} /> {c.label}
     </span>
   )
 }

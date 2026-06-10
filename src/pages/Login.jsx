@@ -151,12 +151,12 @@ export default function Login() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
                 {[
-                  { icon: '', texto: 'Receitas e despesas por período' },
-                  { icon: '', texto: 'Relatórios e documentos de prestação de contas' },
-                  { icon: '', texto: 'Consulta pública, livre e sem cadastro' },
+                  { icon: 'ti-chart-bar', texto: 'Receitas e despesas por período' },
+                  { icon: 'ti-file', texto: 'Relatórios e documentos de prestação de contas' },
+                  { icon: 'ti-search', texto: 'Consulta pública, livre e sem cadastro' },
                 ].map(item => (
                   <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#3B6D11' }}>
-                    <span style={{ fontSize: 14 }}>{item.icon}</span>
+                    <i className={`ti ${item.icon}`} style={{ fontSize: 14 }} />
                     {item.texto}
                   </div>
                 ))}

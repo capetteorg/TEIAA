@@ -356,7 +356,7 @@ export default function ConciliacaoInteligente() {
                     return (
                       <tr key={i} style={{ background: item.status === 'confirmado' ? '#F2FAE8' : '#fff' }}>
                         <td style={s.td}>
-                          <span style={s.badge(info.bg, info.cor)}>{info.icon} {info.label}</span>
+                          <span style={s.badge(info.bg, info.cor)}><i className={`ti ${info.icon}`} style={{fontSize:11}} /> {info.label}</span>
                           {item.dias !== undefined && item.dias > 0 && (
                             <div style={{ fontSize: 10, color: '#888780', marginTop: 2 }}>{item.dias} dia(s) de diferença</div>
                           )}

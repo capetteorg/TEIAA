@@ -100,7 +100,7 @@ export default function PainelOperacional() {
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.link)}
               style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', padding:'12px', borderRadius:10, border:`0.5px solid ${a.cor}30`, background:`${a.cor}08`, cursor:'pointer', textAlign:'left' }}>
-              <div style={{ fontSize:22, marginBottom:4 }}>{a.icon}</div>
+              <div style={{ fontSize:22, marginBottom:4 }}><i className={`ti ${a.icon}`} style={{fontSize:22}} /></div>
               <div style={{ fontSize:12, fontWeight:600, color:a.cor }}>{a.label}</div>
             </button>
           ))}

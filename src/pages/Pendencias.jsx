@@ -116,7 +116,7 @@ export default function Pendencias() {
         <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)}
           style={{ fontSize:12, padding:'5px 9px', border:'0.5px solid #D3D1C7', borderRadius:8 }}>
           <option value="todos">Todos os tipos</option>
-          {Object.entries(TIPO).map(([k,v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
+          {Object.entries(TIPO).map(([k,v]) => <option key={k} value={k}><i className={`ti ${v.icon}`} style={{fontSize:12, marginRight:4}} /> {v.label}</option>)}
         </select>
         <select value={filtroGravidade} onChange={e=>setFiltroGravidade(e.target.value)}
           style={{ fontSize:12, padding:'5px 9px', border:'0.5px solid #D3D1C7', borderRadius:8 }}>
@@ -157,7 +157,7 @@ export default function Pendencias() {
                       <span style={s.badge(grav.bg, grav.cor)}>{grav.label}</span>
                     </td>
                     <td style={s.td}>
-                      <span style={{ fontSize:12 }}>{tipo.icon} {tipo.label}</span>
+                      <span style={{ fontSize:12 }}><i className={`ti ${tipo.icon}`} style={{fontSize:12, marginRight:4}} /> {tipo.label}</span>
                     </td>
                     <td style={{ ...s.td, fontWeight:500, maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                       {p.titulo}
