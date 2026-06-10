@@ -124,28 +124,26 @@ export default function Sociedade() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:'#F4F3EE' }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)' }}>
 
       {/* Cabeçalho */}
-      <div style={{ background:'#1A1F1C', borderBottom:'0.5px solid rgba(255,255,255,0.08)', padding:'1rem 1.5rem' }}>
+      <div style={{ background: 'rgba(255,255,255,0.92)', borderBottom: '0.5px solid #E8E6DE', padding: '1rem 1.5rem', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <div style={{ maxWidth:1000, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
           <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-            {/* Logo da OSC em pill branco */}
-            <div style={{ background:'#fff', borderRadius:10, padding:'5px 10px', display:'flex', alignItems:'center', justifyContent:'center', minHeight:36 }}>
-              <img src="/logo.png" alt="Logo" style={{ height:26, width:'auto', objectFit:'contain', maxWidth:120 }}
-                onError={e=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
-              <div style={{ display:'none', gap:2, alignItems:'center' }}>
-                {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize:14, fontWeight:700, color:c }}>{l}</span>)}
-              </div>
+            <img src="/logo.png" alt="Logo" style={{ height:36, width:'auto', objectFit:'contain', maxWidth:160 }}
+              onError={e=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+            <div style={{ display:'none', gap:2, alignItems:'center' }}>
+              {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize:18, fontWeight:700, color:c }}>{l}</span>)}
             </div>
+            <div style={{ height:28, width:'0.5px', background:'#E8E6DE' }} />
             <div>
-              <div style={{ fontSize:14, fontWeight:500, color:'#fff' }}>Portal de Transparência</div>
-              <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)' }}>
+              <div style={{ fontSize:13, fontWeight:500, color:'#2C2C2A' }}>Portal de Transparência</div>
+              <div style={{ fontSize:11, color:'#888780' }}>
                 {instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'} · CNPJ {instituicao?.cnpj || '29.213.717/0001-01'}
               </div>
             </div>
           </div>
-          <a href="/login" style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textDecoration:'none', padding:'5px 12px', border:'0.5px solid rgba(255,255,255,0.15)', borderRadius:7 }}>← Área interna</a>
+          <a href="/login" style={{ fontSize:11, color:'#888780', textDecoration:'none', padding:'5px 12px', border:'0.5px solid #E8E6DE', borderRadius:7, background:'#F8F7F2' }}>← Área interna</a>
         </div>
       </div>
 
@@ -599,22 +597,20 @@ export default function Sociedade() {
       </div>
 
       {/* Rodapé */}
-      <div style={{ background:'#1A1F1C', padding:'1.25rem 1.5rem', marginTop:'2rem' }}>
+      <div style={{ background:'rgba(255,255,255,0.85)', borderTop:'0.5px solid #E8E6DE', padding:'1rem 1.5rem', marginTop:'2rem' }}>
         <div style={{ maxWidth:1000, margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ background:'#fff', borderRadius:7, padding:'3px 8px' }}>
-              <img src="/logo.png" alt="Logo" style={{ height:20, width:'auto', objectFit:'contain', maxWidth:80, display:'block' }}
-                onError={e=>{ e.target.style.display='none' }} />
-            </div>
-            <div style={{ display:'flex', gap:2, alignItems:'center' }}>
+            <img src="/logo.png" alt="Logo" style={{ height:22, width:'auto', objectFit:'contain', maxWidth:100 }}
+              onError={e=>{ e.target.style.display='none' }} />
+            <div style={{ display:'flex', gap:2 }}>
               {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize:13, fontWeight:700, color:c }}>{l}</span>)}
             </div>
           </div>
-          <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', textAlign:'center' }}>
+          <div style={{ fontSize:11, color:'#B4B2A9', textAlign:'center' }}>
             {instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}<br />
             CNPJ {instituicao?.cnpj || '29.213.717/0001-01'} · Teresópolis — RJ
           </div>
-          <div style={{ fontSize:10, color:'rgba(255,255,255,0.25)' }}>
+          <div style={{ fontSize:10, color:'#C8C6BC' }}>
             Desenvolvido por Agendo · CNPJ 56.059.476/0001-52
           </div>
         </div>

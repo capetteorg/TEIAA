@@ -3,23 +3,9 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
-// Cores Agendo oficiais
 const AG_BLUE  = '#0E7EA8'
 const AG_GREEN = '#96C11F'
 const AG_RED   = '#E63214'
-const AG_DARK  = '#1A1F1C'
-
-// Sidebar escura — tokens
-const S = {
-  bg:         AG_DARK,
-  border:     'rgba(255,255,255,0.08)',
-  text:       'rgba(255,255,255,0.55)',
-  textHover:  'rgba(255,255,255,0.80)',
-  textActive: '#ffffff',
-  secao:      'rgba(255,255,255,0.30)',
-  activeBg:   'rgba(14,126,168,0.18)',
-  activeBord: AG_BLUE,
-}
 
 function NavItem({ to, icon, label, visivel = true, onClick, badge }) {
   if (!visivel) return null
@@ -28,9 +14,9 @@ function NavItem({ to, icon, label, visivel = true, onClick, badge }) {
       display: 'flex', alignItems: 'center', gap: 9,
       padding: '8px 1.1rem',
       fontSize: 12.5,
-      color: isActive ? S.textActive : S.text,
-      background: isActive ? S.activeBg : 'transparent',
-      borderRight: isActive ? `2px solid ${S.activeBord}` : '2px solid transparent',
+      color: isActive ? '#1A1F1C' : '#888780',
+      background: isActive ? 'rgba(150,193,31,0.10)' : 'transparent',
+      borderRight: isActive ? `2px solid ${AG_GREEN}` : '2px solid transparent',
       textDecoration: 'none',
       transition: 'background .12s, color .12s',
       fontWeight: isActive ? 500 : 400,
@@ -48,7 +34,7 @@ function NavItem({ to, icon, label, visivel = true, onClick, badge }) {
 
 function NavSecao({ label }) {
   return (
-    <div style={{ fontSize: 9.5, color: S.secao, padding: '10px 1.1rem 2px', textTransform: 'uppercase', letterSpacing: '.09em', fontWeight: 500 }}>
+    <div style={{ fontSize: 9.5, color: '#C8C6BC', padding: '10px 1.1rem 2px', textTransform: 'uppercase', letterSpacing: '.09em', fontWeight: 500 }}>
       {label}
     </div>
   )
@@ -94,28 +80,32 @@ export default function Layout() {
   }
 
   const fecharMenu = () => isMobile && setMenuAberto(false)
-
   const perfilLabel = p === 'admin' ? 'Admin' : p === 'diretoria' ? 'Diretoria' : 'Operacional'
-  const perfilCor   = p === 'admin' ? AG_BLUE : p === 'diretoria' ? AG_GREEN : AG_GREEN
+  const perfilCor   = p === 'admin' ? AG_BLUE : AG_GREEN
 
   const sidebar = (
-    <div style={{ width: 228, background: S.bg, display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%' }}>
+    <div style={{
+      width: 228,
+      background: 'rgba(255,255,255,0.92)',
+      borderRight: '0.5px solid #E8E6DE',
+      display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%',
+      boxShadow: '2px 0 16px rgba(0,0,0,0.04)',
+    }}>
 
-      {/* Cabeçalho — logo da OSC em pill branco */}
-      <div style={{ padding: '1rem 1.1rem', borderBottom: `0.5px solid ${S.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 60 }}>
-        <div style={{ background: '#fff', borderRadius: 10, padding: '5px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: 160, minHeight: 36 }}>
-          <img
-            src="/logo.png" alt="Logo"
-            style={{ height: 28, width: 'auto', objectFit: 'contain', maxWidth: 140, display: 'block' }}
-            onError={e => {
-              e.target.style.display = 'none'
-              e.target.nextSibling.style.display = 'block'
-            }}
-          />
-          <span style={{ display: 'none', fontSize: 13, fontWeight: 500, color: AG_DARK }}>AGENDO Integra</span>
+      {/* Logo da OSC */}
+      <div style={{ padding: '1rem 1.1rem', borderBottom: '0.5px solid #E8E6DE', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 60 }}>
+        <img
+          src="/logo.png" alt="Logo"
+          style={{ height: 36, width: 'auto', objectFit: 'contain', maxWidth: 160, display: 'block' }}
+          onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+        />
+        <div style={{ display:'none', gap:2, alignItems:'center' }}>
+          {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']].map(([l,c])=>(
+            <span key={l+c} style={{ fontSize:16, fontWeight:700, color:c }}>{l}</span>
+          ))}
         </div>
         {isMobile && (
-          <button onClick={() => setMenuAberto(false)} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: S.text, padding: '4px', lineHeight: 1 }}>✕</button>
+          <button onClick={() => setMenuAberto(false)} style={{ border:'none', background:'none', fontSize:18, cursor:'pointer', color:'#888780', padding:'4px', lineHeight:1 }}>✕</button>
         )}
       </div>
 
@@ -170,21 +160,21 @@ export default function Layout() {
 
       </div>
 
-      {/* Rodapé — usuário */}
-      <div style={{ padding: '.7rem 1.1rem', borderTop: `0.5px solid ${S.border}`, display: 'flex', alignItems: 'center', gap: 9 }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: AG_BLUE + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {/* Rodapé usuário */}
+      <div style={{ padding: '.7rem 1.1rem', borderTop: '0.5px solid #E8E6DE', display: 'flex', alignItems: 'center', gap: 9 }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: `${AG_BLUE}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 11, fontWeight: 500, color: AG_BLUE }}>
             {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
           </span>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, color: S.textHover, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 11, color: '#2C2C2A', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {perfil?.nome || 'Usuário'}
           </div>
           <div style={{ fontSize: 10, color: perfilCor }}>{perfilLabel}</div>
         </div>
         <button onClick={handleLogout} title="Sair"
-          style={{ border: 'none', background: 'none', cursor: 'pointer', color: S.text, padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#B4B2A9', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
           <i className="ti ti-logout" style={{ fontSize: 15 }} />
         </button>
       </div>
@@ -194,11 +184,12 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden' }}>
+
       {!isMobile && sidebar}
 
       {isMobile && menuAberto && (
         <>
-          <div onClick={() => setMenuAberto(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 99 }} />
+          <div onClick={() => setMenuAberto(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 99 }} />
           <div style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 240, overflowY: 'auto' }}>
             {sidebar}
           </div>
@@ -207,30 +198,25 @@ export default function Layout() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* Topbar mobile */}
         {isMobile && (
-          <div style={{ background: S.bg, padding: '.6rem 1rem', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <button onClick={() => setMenuAberto(true)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', color: S.text, padding: '2px 4px', lineHeight: 1 }}>
-              <i className="ti ti-menu-2" style={{ fontSize: 20, color: S.text }} />
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderBottom: '0.5px solid #E8E6DE', padding: '.6rem 1rem', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <button onClick={() => setMenuAberto(true)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', color: '#888780', padding: '2px 4px', lineHeight: 1 }}>
+              <i className="ti ti-menu-2" style={{ fontSize: 20 }} />
             </button>
-            <div style={{ background: '#fff', borderRadius: 7, padding: '3px 8px' }}>
-              <img src="/logo.png" alt="Logo" style={{ height: 22, width: 'auto', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none' }} />
-            </div>
+            <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none' }} />
             <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, fontWeight: 500, color: AG_DARK, background: perfilCor }}>
+            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, fontWeight: 500, color: '#fff', background: perfilCor }}>
               {perfilLabel}
             </span>
           </div>
         )}
 
-        {/* Conteúdo */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <Outlet />
         </div>
 
-        {/* Rodapé */}
-        <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E0DDD5', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra</span>
+        <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 10, color: '#C8C6BC' }}>AGENDO Integra</span>
           <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
         </div>
 
