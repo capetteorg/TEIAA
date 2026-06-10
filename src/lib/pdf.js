@@ -932,3 +932,157 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo) {
 
   abrirImpressao(html, `Prestação de Conta — ${conta.nome}`, true)
 }
+
+// =============================================
+// RELATÓRIO DE PARECER DO CONSELHO FISCAL
+// =============================================
+export function gerarPDFParecer({ fechamento, movs, instituicao }) {
+  const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) : '—'
+  const fmtMes = comp => {
+    if (!comp) return '—'
+    const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']
+    const [y,m] = comp.split('-')
+    return `${meses[parseInt(m)-1]} de ${y}`
+  }
+
+  const tipoLabel = { aprovado:'APROVADO', aprovado_ressalva:'APROVADO COM RESSALVA', reprovado:'REPROVADO' }
+  const tipoCor = { aprovado:'#3B6D11', aprovado_ressalva:'#854F0B', reprovado:'#A32D2D' }
+  const tipoBg = { aprovado:'#EAF3DE', aprovado_ressalva:'#FAEEDA', reprovado:'#FEF2F2' }
+  const modalLabel = { presencial:'Presencial', online:'Online (videoconferência)', hibrida:'Híbrida' }
+
+  const entradas = movs.filter(m=>Number(m.valor)>0).reduce((a,m)=>a+Number(m.valor),0)
+  const saidas = Math.abs(movs.filter(m=>Number(m.valor)<0).reduce((a,m)=>a+Number(m.valor),0))
+  const saldo = entradas - saidas
+
+  const membros = (fechamento.membros_presentes||'').split(',').map(s=>s.trim()).filter(Boolean)
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family: Arial, sans-serif; font-size:11px; color:#2C2C2A; padding:24px; background:#fff; }
+    .cab { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; padding-bottom:14px; border-bottom:3px solid #6BBF2B; }
+    .cab-dir { text-align:right; font-size:9px; color:#666; max-width:380px; }
+    .cab-dir strong { font-size:13px; color:#2C2C2A; display:block; margin-bottom:3px; }
+    .titulo { text-align:center; margin-bottom:20px; padding:14px; background:linear-gradient(135deg,#F2FAE8,#E6F1FB); border-radius:8px; border:1px solid #C0DD97; }
+    .titulo h1 { font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:1px; }
+    .titulo p { font-size:11px; color:#5F5E5A; margin-top:4px; }
+    .secao { margin-bottom:20px; }
+    .secao-titulo { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#5F5E5A; border-bottom:1.5px solid #E0DDD5; padding-bottom:5px; margin-bottom:10px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    .card { background:#F8F7F2; border-radius:6px; padding:8px 12px; }
+    .card-label { font-size:9px; color:#888; margin-bottom:2px; }
+    .card-val { font-size:13px; font-weight:700; }
+    .parecer-box { border:2px solid; border-radius:8px; padding:16px; text-align:center; margin-bottom:20px; }
+    .parecer-tipo { font-size:20px; font-weight:900; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px; }
+    .parecer-desc { font-size:12px; line-height:1.7; }
+    .ressalva { background:#FAEEDA; border:1px solid #F4C07A; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:11px; line-height:1.7; }
+    .assinatura { break-inside:avoid; }
+    .assinatura-linha { border-top:1px solid #2C2C2A; margin-top:40px; padding-top:6px; text-align:center; }
+    .assinatura-nome { font-size:11px; font-weight:600; }
+    .assinatura-cargo { font-size:10px; color:#888; }
+    .rodape { border-top:0.5px solid #E0DDD5; padding-top:8px; font-size:8px; color:#aaa; text-align:center; margin-top:24px; }
+    @media print { body { padding:16px; } }
+  </style></head><body>
+
+  <!-- Cabeçalho -->
+  <div class="cab">
+    <div>
+      <div style="display:flex;gap:1px;align-items:center;margin-bottom:3px">
+        ${[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']].map(([l,c])=>`<span style="font-size:20px;font-weight:900;color:${c}">${l}</span>`).join('')}
+      </div>
+      <div style="font-size:9px;color:#888">${CAPETTE_INFO.nome}</div>
+    </div>
+    <div class="cab-dir">
+      <strong>CNPJ ${CAPETTE_INFO.cnpj}</strong>
+      <div class="cab-registros">${CAPETTE_INFO.registros.slice(-1)[0]}</div>
+    </div>
+  </div>
+
+  <!-- Título -->
+  <div class="titulo">
+    <h1>Relatório de Aprovação de Contas</h1>
+    <p>Parecer do Conselho Fiscal — ${fmtMes(fechamento.competencia)}</p>
+  </div>
+
+  <!-- Resumo financeiro -->
+  <div class="secao">
+    <div class="secao-titulo">1. Resumo Financeiro — ${fmtMes(fechamento.competencia)}</div>
+    <div class="grid3">
+      <div class="card">
+        <div class="card-label">Entradas</div>
+        <div class="card-val" style="color:#3B6D11">${fmt(entradas)}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Saídas</div>
+        <div class="card-val" style="color:#A32D2D">${fmt(saidas)}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Resultado</div>
+        <div class="card-val" style="color:${saldo>=0?'#185FA5':'#A32D2D'}">${fmt(saldo)}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dados da reunião -->
+  <div class="secao">
+    <div class="secao-titulo">2. Reunião do Conselho Fiscal</div>
+    <div class="grid2" style="margin-bottom:10px">
+      <div class="card">
+        <div class="card-label">Data da reunião</div>
+        <div style="font-size:12px;font-weight:600">${fmtData(fechamento.reuniao_data)}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Modalidade</div>
+        <div style="font-size:12px;font-weight:600">${modalLabel[fechamento.reuniao_modalidade]||'Presencial'}</div>
+      </div>
+    </div>
+    ${fechamento.reuniao_local ? `<div class="card" style="margin-bottom:10px">
+      <div class="card-label">Local / Plataforma</div>
+      <div style="font-size:12px">${fechamento.reuniao_local}</div>
+    </div>` : ''}
+  </div>
+
+  <!-- Parecer -->
+  <div class="secao">
+    <div class="secao-titulo">3. Parecer do Conselho Fiscal</div>
+    <div class="parecer-box" style="border-color:${tipoCor[fechamento.tipo_aprovacao]};background:${tipoBg[fechamento.tipo_aprovacao]}">
+      <div class="parecer-tipo" style="color:${tipoCor[fechamento.tipo_aprovacao]}">${tipoLabel[fechamento.tipo_aprovacao]||'—'}</div>
+      <div class="parecer-desc">
+        Reunidos em ${fmtData(fechamento.reuniao_data)}, o Conselho Fiscal da ${CAPETTE_INFO.nome}
+        examinou as contas referentes ao mês de <strong>${fmtMes(fechamento.competencia)}</strong>
+        e deliberou pela <strong>${(tipoLabel[fechamento.tipo_aprovacao]||'—').toLowerCase()}</strong>
+        das contas apresentadas.
+      </div>
+    </div>
+    ${fechamento.ressalvas ? `<div class="ressalva">
+      <strong>Ressalvas / Observações:</strong><br/>${fechamento.ressalvas}
+    </div>` : ''}
+    ${fechamento.observacoes ? `<div style="font-size:11px;margin-bottom:12px;color:#5F5E5A">${fechamento.observacoes}</div>` : ''}
+  </div>
+
+  <!-- Assinaturas -->
+  <div class="secao assinatura">
+    <div class="secao-titulo">4. Assinaturas</div>
+    <div style="font-size:11px;color:#5F5E5A;margin-bottom:16px">
+      Teresópolis, ${fmtData(fechamento.reuniao_data)}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(membros.length||3,3)},1fr);gap:24px">
+      ${(membros.length > 0 ? membros : ['Membro do Conselho Fiscal','Membro do Conselho Fiscal','Membro do Conselho Fiscal']).map(nome => `
+        <div class="assinatura-linha">
+          <div class="assinatura-nome">${nome}</div>
+          <div class="assinatura-cargo">Conselho Fiscal — ${CAPETTE_INFO.nome}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <div class="rodape">
+    ${CAPETTE_INFO.nome} · CNPJ ${CAPETTE_INFO.cnpj} · ${CAPETTE_INFO.endereco}<br/>
+    Documento gerado pelo AGENDO Integra em ${new Date().toLocaleString('pt-BR')}
+  </div>
+  </body></html>`
+
+  abrirImpressao(html, `Parecer Conselho Fiscal — ${fechamento.competencia}`, true)
+}

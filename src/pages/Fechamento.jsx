@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { gerarPDFParecer } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
@@ -35,7 +36,18 @@ export default function Fechamento() {
   const [salvando, setSalvando] = useState(false)
   const [expandido, setExpandido] = useState(null)
 
-  const [membrosCF, setMembrosCF] = useState([])
+  const [gerandoPDF, setGerandoPDF] = useState(null)
+
+  async function gerarParecer(competencia, fechamento) {
+    setGerandoPDF(competencia)
+    const [y,m] = competencia.split('-')
+    const ult = new Date(parseInt(y),parseInt(m),0).getDate()
+    const { data: movData } = await supabase.from('extrato_movs')
+      .select('valor').gte('data', `${competencia}-01`).lte('data', `${competencia}-${String(ult).padStart(2,'0')}`)
+    const { data: inst } = await supabase.from('instituicao').select('*').limit(1).single()
+    gerarPDFParecer({ fechamento, movs: movData||[], instituicao: inst||{} })
+    setGerandoPDF(null)
+  }
 
   useEffect(() => { carregar(); carregarMembrosCF() }, [])
 
@@ -259,7 +271,12 @@ export default function Fechamento() {
                           </>
                         )}
                         {isAdmin && (status === 'aprovado' || status === 'aprovado_ressalva' || status === 'reprovado') && (
-                          <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}>✏ Editar</button>
+                          <>
+                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}>✏ Editar</button>
+                            <button onClick={() => gerarParecer(competencia, fechamento)} disabled={gerandoPDF===competencia} style={s.btn(VERDE)}>
+                              {gerandoPDF===competencia ? '⏳' : '🖨️'} Imprimir parecer
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
