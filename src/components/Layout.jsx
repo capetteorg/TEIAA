@@ -193,7 +193,7 @@ export default function Layout() {
   )
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#F4F3EE', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden' }}>
       {!isMobile && sidebar}
 
       {isMobile && menuAberto && (
