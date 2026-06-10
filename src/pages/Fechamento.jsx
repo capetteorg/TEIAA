@@ -10,9 +10,9 @@ const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Ag
 const STATUS_CONFIG = {
   aberto:            { label:'Aberto',               bg:'#F1EFE8', cor:'#5F5E5A',  icon:'ti-folder-open' },
   fechado:           { label:'Aguardando aprovação', bg:'#E6F1FB', cor:'#185FA5',  icon:'ti-lock' },
-  aprovado:          { label:'Aprovado',             bg:'#EAF3DE', cor:'#3B6D11',  icon:'ti-circle-check'#3B6D11'}} />' },
-  aprovado_ressalva: { label:'Aprovado c/ ressalva', bg:'#FAEEDA', cor:'#854F0B',  icon:'ti-alert-triangle'#E67814'}} />️' },
-  reprovado:         { label:'Reprovado',            bg:'#FEF2F2', cor:'#A32D2D',  icon:'ti-circle-x'#A32D2D'}} />' },
+  aprovado:          { label:'Aprovado',             bg:'#EAF3DE', cor:'#3B6D11',  icon:'ti-circle-check' },
+  aprovado_ressalva: { label:'Aprovado c/ ressalva', bg:'#FAEEDA', cor:'#854F0B',  icon:'ti-alert-triangle' },
+  reprovado:         { label:'Reprovado',            bg:'#FEF2F2', cor:'#A32D2D',  icon:'ti-circle-x' },
 }
 
 function badgeStatus(status) {

@@ -424,7 +424,7 @@ export default function ControleDividas() {
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ fontSize:10, color:'#888780' }}>Saldo devedor</div>
-                    <div style={{ fontSize:16, fontWeight:700, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'Quitado'#3B6D11'}} /> Quitado'}</div>
+                    <div style={{ fontSize:16, fontWeight:700, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'Quitado'}</div>
                   </div>
                 </div>
                 <div style={{ padding:'10px 14px' }}>
@@ -572,7 +572,7 @@ export default function ControleDividas() {
                       <td style={s.td}><span style={s.badge('#F8F7F2','#5F5E5A')}>{TIPO_VINCULO_LABEL[pe.tipo_vinculo]}</span></td>
                       <td style={{ ...s.td, color:AZUL, fontWeight:500 }}>{fmt(pe.valor_mensal_normal||0)}</td>
                       <td style={{ ...s.td, color:'#888780' }}>{fmt(pe.divida_inicial||0)}</td>
-                      <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'Quitado'#3B6D11'}} /> Quitado'}</td>
+                      <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'Quitado'}</td>
                       <td style={s.td}><span style={s.badge(pe.ativo?'#EAF3DE':'#F1EFE8', pe.ativo?'#3B6D11':'#888780')}>{pe.ativo?'Sim':'Não'}</span></td>
                       <td style={s.td}>
                         {isAdmin && <button onClick={() => editarPessoa(pe)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}
