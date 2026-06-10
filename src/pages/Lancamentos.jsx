@@ -520,7 +520,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       <option value="">Sem fornecedor</option>
                       {fornecedoresFiltrados.map(f => (
                         <option key={f.id} value={f.id}>
-                          {f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}{f.cadastro_rapido?' <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️':''}
+                          {f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}{f.cadastro_rapido?' (novo)':''}
                         </option>
                       ))}
                     </select>
