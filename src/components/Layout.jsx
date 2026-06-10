@@ -129,6 +129,7 @@ export default function Layout() {
         {/* Relatórios */}
         <NavSecao label="Relatórios" />
         <NavItem to="/relatorios"         icon="report-analytics"  label="Central de Relatórios" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+        <NavItem to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho" visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"   visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/transparencia"      icon="world"             label="Transparência Pública" visivel={p==='admin'} onClick={fecharMenu} />
 
@@ -137,8 +138,6 @@ export default function Layout() {
         <NavItem to="/instituicao"        icon="building"          label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/parcerias"          icon="file-invoice"      label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/documentos"         icon="files"             label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/documentos-fiscais" icon="file-certificate"  label="Docs. Fiscais"       visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
 
         {/* Configurações */}
         <NavSecao label="Configurações" />
@@ -146,7 +145,6 @@ export default function Layout() {
         <NavItem to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/usuarios"           icon="user-cog"          label="Usuários do sistema" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem to="/fechamento"         icon="lock"              label="Fechamento"          visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem to="/configuracoes"      icon="settings"          label="Configurações"       visivel={p==='admin'} onClick={fecharMenu} />
 

@@ -30,12 +30,19 @@ export default function Sociedade() {
   const [projetos, setProjetos] = useState([])
   const [totalUsuarios, setTotalUsuarios] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [mesesAprovados, setMesesAprovados] = useState([])
 
   const anos = []
   for (let y = new Date().getFullYear(); y >= 2023; y--) anos.push(String(y))
 
-  useEffect(() => { carregarEstaticos() }, [])
-  useEffect(() => { carregarFinanceiro() }, [periodo, mesSel, anoSel])
+  useEffect(() => { carregarEstaticos(); carregarAprovados() }, [])
+  useEffect(() => { carregarFinanceiro() }, [periodo, mesSel, anoSel, mesesAprovados])
+
+  async function carregarAprovados() {
+    const { data } = await supabase.from('fechamentos')
+      .select('competencia').in('status', ['aprovado','aprovado_ressalva'])
+    setMesesAprovados((data||[]).map(f => f.competencia))
+  }
 
   async function carregarEstaticos() {
     const [inst, dir, parc, proj, users, docs] = await Promise.all([
@@ -69,10 +76,29 @@ export default function Sociedade() {
     } else {
       inicio = `${anoSel}-01-01`; fim = `${anoSel}-12-31`
     }
-    const { data: movData } = await supabase.from('extrato_movs')
+
+    // Buscar extratos dos meses aprovados apenas
+    let extratosIds = null
+    if (mesesAprovados.length > 0) {
+      const { data: exts } = await supabase.from('extratos')
+        .select('id, competencia').in('competencia', mesesAprovados)
+      extratosIds = (exts||[]).map(e => e.id)
+    }
+
+    if (extratosIds !== null && extratosIds.length === 0) {
+      setResumo({ ent:0, sai:0, saldo:0 })
+      setMovs([])
+      setLoading(false)
+      return
+    }
+
+    let q = supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo)')
       .gte('data', inicio).lte('data', fim).order('data', { ascending:false })
-    const lista = movData || []
+    if (extratosIds) q = q.in('extrato_id', extratosIds)
+
+    const { data: movData } = await q
+    const lista = (movData || []).filter(m => !m.dividida)
     const ent = lista.filter(m=>Number(m.valor)>0).reduce((a,m)=>a+Number(m.valor),0)
     const sai = Math.abs(lista.filter(m=>Number(m.valor)<0).reduce((a,m)=>a+Number(m.valor),0))
     setResumo({ ent, sai, saldo: ent-sai })
