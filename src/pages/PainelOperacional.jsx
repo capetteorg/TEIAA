@@ -45,11 +45,18 @@ export default function PainelOperacional() {
   const mesAtual = new Date().toLocaleDateString('pt-BR', { month:'long' })
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem', marginBottom:10 },
   }
 
   return (
-    <div style={{ padding:'1rem', maxWidth:560, margin:'0 auto' }}>
+    <div style={{ padding:'1rem', maxWidth:560, margin:'0 auto', position:'relative' }}>
+
+      {/* Marca d'água Agendo */}
+      <div style={{ position:'fixed', right:'-6vw', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', zIndex:0, opacity:0.04, filter:'grayscale(100%)' }}>
+        <img src="/agendo-logo.png" alt="" style={{ width:'30vw', maxWidth:360 }} />
+      </div>
+
+      <div style={{ position:'relative', zIndex:1 }}>
 
       {/* Saudação */}
       <div style={{ marginBottom:'1.25rem' }}>
@@ -61,19 +68,19 @@ export default function PainelOperacional() {
 
       {/* Métricas */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:'1.25rem' }}>
-        <div style={{ background:'#fff', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+        <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Atendimentos em {mesAtual}</div>
           <div style={{ fontSize:24, fontWeight:700, color:AZUL }}>{loading?'...':resumo.atendimentos}</div>
         </div>
-        <div style={{ background:'#fff', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+        <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Usuários ativos</div>
           <div style={{ fontSize:24, fontWeight:700, color:VERDE }}>{loading?'...':resumo.usuarios}</div>
         </div>
-        <div style={{ background:'#fff', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+        <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Equipe ativa</div>
           <div style={{ fontSize:24, fontWeight:700, color:LARANJA }}>{loading?'...':resumo.equipeAtiva}</div>
         </div>
-        <div style={{ background:'#fff', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+        <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Cobranças pendentes</div>
           <div style={{ fontSize:24, fontWeight:700, color:resumo.cobrancas>0?VERMELHO:'#888780' }}>{loading?'...':resumo.cobrancas}</div>
         </div>
@@ -125,5 +132,6 @@ export default function PainelOperacional() {
         </div>
       )}
     </div>
+      </div>
   )
 }

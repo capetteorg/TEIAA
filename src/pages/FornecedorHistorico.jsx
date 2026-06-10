@@ -61,7 +61,7 @@ export default function FornecedorHistorico() {
   )
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
@@ -112,7 +112,7 @@ export default function FornecedorHistorico() {
               { label:'Lançamentos', val:lancamentos.length, cor:AZUL },
               { label:'Última transação', val:lancamentos[0] ? fmtData(lancamentos[0].data) : '—', cor:'#5F5E5A' },
             ].map(m => (
-              <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+              <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
                 <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
                 <div style={{ fontSize:15, fontWeight:600, color:m.cor }}>{m.val}</div>
               </div>

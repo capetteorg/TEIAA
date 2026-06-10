@@ -85,7 +85,7 @@ export default function PainelDiretoria() {
   for (let y = new Date().getFullYear(); y >= 2023; y--) anos.push(String(y))
 
   const s = {
-    card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
     th: { textAlign: 'left', padding: '7px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5', background: '#FAFAF8', whiteSpace: 'nowrap' },
     td: { padding: '8px 10px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12, verticalAlign: 'middle' },
     tab: ativo => ({
@@ -105,7 +105,14 @@ export default function PainelDiretoria() {
   }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div style={{ padding: '1.25rem 1.5rem', position: 'relative' }}>
+
+      {/* Marca d'água Agendo */}
+      <div style={{ position:'fixed', right:'-6vw', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', zIndex:0, opacity:0.04, filter:'grayscale(100%)' }}>
+        <img src="/agendo-logo.png" alt="" style={{ width:'30vw', maxWidth:360 }} />
+      </div>
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>
         Acompanhamento Financeiro — Diretoria
       </div>
@@ -144,7 +151,7 @@ export default function PainelDiretoria() {
           { label: 'Total saiu', val: fmt(resumo.saidas), cor: VERMELHO, icon: '↑', sub: mesLabel },
           { label: 'Resultado', val: fmt(resumo.entradas - resumo.saidas), cor: (resumo.entradas - resumo.saidas) >= 0 ? AZUL : VERMELHO, icon: '=', sub: (resumo.entradas - resumo.saidas) >= 0 ? 'Superávit' : 'Déficit' },
         ].map(m => (
-          <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.85rem 1rem', border: '0.5px solid #E0DDD5' }}>
+          <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.85rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.7rem' }} />
             <div style={{ fontSize: 11, color: '#888780', marginBottom: 4 }}>{m.label}</div>
             <div style={{ fontSize: 20, fontWeight: 600, color: m.cor }}>{m.val}</div>
@@ -301,5 +308,6 @@ export default function PainelDiretoria() {
         </>
       )}
     </div>
+      </div>
   )
 }

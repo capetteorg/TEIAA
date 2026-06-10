@@ -263,7 +263,7 @@ export default function Projetos() {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
     textarea: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', resize:'vertical' },
@@ -515,7 +515,7 @@ export default function Projetos() {
                     ['Entradas reais', fmt(totalEntradas), VERDE],
                     ['Saldo', fmt(totalEntradas - totalExecutado), totalEntradas >= totalExecutado ? VERDE : VERMELHO],
                   ].map(([l,v,cor]) => (
-                    <div key={l} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:10, padding:'.85rem 1rem' }}>
+                    <div key={l} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:12, boxShadow:'0 1px 8px rgba(0,0,0,0.04)', padding:'.85rem 1rem' }}>
                       <div style={{ height:3, borderRadius:99, background:cor, marginBottom:'.7rem' }} />
                       <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{l}</div>
                       <div style={{ fontSize:14, fontWeight:600, color:cor }}>{v}</div>
@@ -795,7 +795,7 @@ export default function Projetos() {
             const [bg,cor] = SITUACAO_COR[p.situacao]||['#F1EFE8','#888780']
             const temCnas = p.atividades_previstas || p.recursos_humanos || p.participacao_usuarios
             return (
-              <div key={p.id} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden' }}>
+              <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
                 <div style={{ background:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo}</div>

@@ -55,7 +55,7 @@ export default function Classificacoes() {
         Regras aplicadas automaticamente ao importar o extrato. Quando o tipo do documento bater com uma regra, o lançamento é classificado automaticamente.
       </div>
 
-      <div style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
+      <div style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 }}>
         <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Regras ativas ({lista.length})</div>
         {lista.length === 0 ? (
           <div style={{ fontSize:12, color:'#888780', textAlign:'center', padding:'1rem' }}>Nenhuma regra cadastrada ainda.</div>
@@ -84,7 +84,7 @@ export default function Classificacoes() {
         )}
       </div>
 
-      <div style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem' }}>
+      <div style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem' }}>
         <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Nova regra</div>
         <form onSubmit={salvar}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:10, marginBottom:10 }}>

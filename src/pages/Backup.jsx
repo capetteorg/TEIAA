@@ -111,7 +111,7 @@ export default function Backup() {
   }
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1.25rem', marginBottom:10 },
     btn: (bg, cor='#fff') => ({ padding:'10px 20px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer' }),
   }
 

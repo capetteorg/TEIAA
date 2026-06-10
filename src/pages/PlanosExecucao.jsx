@@ -616,7 +616,7 @@ export default function PlanosExecucao() {
                 const [bg,cor] = SITUACAO_COR[p.situacao]||['#F1EFE8','#888780']
                 const isPai = p.tipo_plano === 'Plano de Ação Institucional'
                 return (
-                  <div key={p.id} style={{ background:'#fff', border:`0.5px solid ${isPai?'#C9B3E8':'#E0DDD5'}`, borderRadius:12, overflow:'hidden', cursor:'pointer' }}
+                  <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:`0.5px solid ${isPai?'#C9B3E8':'#E8E6DE'}`, borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                     onClick={() => abrirDetalhe(p)}>
                     <div style={{ background:isPai?`${ROXO}10`:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                       <div style={{ flex:1 }}>

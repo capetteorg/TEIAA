@@ -52,7 +52,7 @@ export default function Eventos() {
   const statusCor = { 'planejado': ['#E6F1FB','#185FA5'], 'em andamento': ['#EAF3DE','#3B6D11'], 'concluído': ['#F1EFE8','#5F5E5A'], 'cancelado': ['#FCEBEB','#A32D2D'] }
 
   const s = {
-    card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 },
     th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' },
@@ -84,7 +84,7 @@ export default function Eventos() {
             { label: 'Total despesas', val: fmt(totalSai), cor: VERMELHO },
             { label: 'Saldo do evento', val: fmt(totalEnt-totalSai), cor: totalEnt-totalSai>=0?VERDE:VERMELHO },
           ].map(m => (
-            <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.85rem 1rem', border: '0.5px solid #E0DDD5' }}>
+            <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.85rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.7rem' }} />
               <div style={{ fontSize: 11, color: '#888780', marginBottom: 4 }}>{m.label}</div>
               <div style={{ fontSize: 18, fontWeight: 500, color: m.cor }}>{m.val}</div>

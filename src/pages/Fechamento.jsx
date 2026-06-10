@@ -190,7 +190,7 @@ export default function Fechamento() {
           { label:'Em aberto', val:abertos, cor:LARANJA },
           { label:'Total de meses', val:fechamentos.length, cor:'#5F5E5A' },
         ].map(m => (
-          <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ height:3, borderRadius:99, background:m.cor, marginBottom:'.7rem' }} />
             <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{m.label}</div>
             <div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div>

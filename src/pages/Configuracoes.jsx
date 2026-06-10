@@ -93,7 +93,7 @@ export default function Configuracoes() {
       </div>
 
       {!senhaOk ? (
-        <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1.5rem', maxWidth: 400 }}>
+        <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1.5rem', maxWidth: 400 }}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Digite <strong>confirmar</strong> para continuar</div>
           <form onSubmit={verificarSenha}>
             <input type="password" value={senha} onChange={e => setSenha(e.target.value)}
@@ -118,7 +118,7 @@ export default function Configuracoes() {
           )}
 
           {acoes.map(a => (
-            <div key={a.id} style={{ background: '#fff', border: `0.5px solid ${a.destaque ? '#F7C1C1' : '#E0DDD5'}`, borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 }}>
+            <div key={a.id} style={{ background: 'rgba(255,255,255,0.92)', border: `0.5px solid ${a.destaque ? '#F7C1C1' : '#E8E6DE'}`, borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 500, color: a.cor, marginBottom: 4 }}>{a.titulo}</div>

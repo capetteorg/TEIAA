@@ -67,7 +67,7 @@ export default function Usuarios() {
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Usuários do sistema</div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 }}>
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Usuários ativos ({lista.length})</div>
         {lista.length === 0
           ? <div style={{ fontSize: 12, color: '#888780' }}>Nenhum usuário cadastrado.</div>
@@ -88,7 +88,7 @@ export default function Usuarios() {
         }
       </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem' }}>
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem' }}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Adicionar usuário</div>
         <div style={{ background: '#F8F7F2', borderLeft: '3px solid #4A8FD4', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
           O usuário receberá um e-mail de confirmação. Após confirmar, poderá fazer login com a senha definida aqui.
@@ -127,7 +127,7 @@ export default function Usuarios() {
         </form>
       </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginTop: 10 }}>
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginTop: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Permissões por perfil</div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>

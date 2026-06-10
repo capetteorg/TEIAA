@@ -311,7 +311,7 @@ export default function ControleDividas() {
           { label:'Saldo total devedor', val:fmt(totalSaldo), cor:totalSaldo>0?VERMELHO:VERDE },
           { label:'Competências pendentes', val:compPendentes, cor:compPendentes>0?LARANJA:VERDE },
         ].map(m => (
-          <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ height:3, borderRadius:99, background:m.cor, marginBottom:'.7rem' }} />
             <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{m.label}</div>
             <div style={{ fontSize:16, fontWeight:600, color:m.cor }}>{m.val}</div>
@@ -416,7 +416,7 @@ export default function ControleDividas() {
             const compPend = compPessoa.filter(c => c.status === 'pendente').length
             const ultimaMov = movPessoa[0]
             return (
-              <div key={pe.id} style={{ background:'#fff', border:`1.5px solid ${saldo>0?VERMELHO+'40':'#E0DDD5'}`, borderRadius:12, overflow:'hidden' }}>
+              <div key={pe.id} style={{ background:'rgba(255,255,255,0.92)', border:`1.5px solid ${saldo>0?VERMELHO+'40':'#E8E6DE'}`, borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
                 <div style={{ background:saldo>0?`${VERMELHO}08`:`${VERDE}08`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                   <div>
                     <div style={{ fontSize:13, fontWeight:600 }}>{pe.nome}</div>

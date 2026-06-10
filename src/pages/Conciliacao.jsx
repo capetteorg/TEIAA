@@ -495,12 +495,12 @@ export default function Conciliacao() {
           ['Sem categoria', movs.filter(m=>!m.categoria_id&&!m.dividida).length, movs.filter(m=>!m.categoria_id&&!m.dividida).length>0?VERMELHO:'#888780'],
           ...(autoCount>0||possivelCount>0 ? [['🤖 Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
         ].map(([l,v,c]) => (
-          <div key={l} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div key={l} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
             <div style={{ fontSize:16, fontWeight:600, color:c }}>{v}</div>
           </div>
         ))}
-        <div style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+        <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>Saldo final</div>
           <div style={{ fontSize:14, fontWeight:600, color:VERDE }}>{fmt(extratoSel.saldo_final||0)}</div>
         </div>

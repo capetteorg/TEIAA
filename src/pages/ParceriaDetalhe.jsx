@@ -61,7 +61,7 @@ export default function ParceriaDetalhe() {
   const saldoFin = resumoFin.entradas - resumoFin.saidas
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
     td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?LARANJA:'#D3D1C7'}`, background:ativo?LARANJA:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
@@ -92,7 +92,7 @@ export default function ParceriaDetalhe() {
           { label:'Saídas na conta', val:fmt(resumoFin.saidas), cor:VERMELHO },
           { label:'Saldo atual', val:fmt(saldoFin), cor:saldoFin>=0?AZUL:VERMELHO },
         ].map(m => (
-          <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ height:3, borderRadius:99, background:m.cor, marginBottom:'.5rem' }} />
             <div style={{ fontSize:10, color:'#888780', marginBottom:3 }}>{m.label}</div>
             <div style={{ fontSize:14, fontWeight:600, color:m.cor }}>{m.val}</div>

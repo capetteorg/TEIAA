@@ -157,7 +157,7 @@ export default function Parcerias() {
   const lista = filtro === 'todas' ? parcerias : parcerias.filter(p => p.situacao === filtro)
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
     textarea: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', resize:'vertical' },
@@ -317,13 +317,13 @@ export default function Parcerias() {
           const count = parcerias.filter(p => sits.includes(p.situacao)).length
           if (count === 0) return null
           return (
-            <div key={grupo} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+            <div key={grupo} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{grupo}</div>
               <div style={{ fontSize:18, fontWeight:600, color:grupo==='Ativa'?LARANJA:grupo==='Encerrada'?'#888780':AZUL }}>{count}</div>
             </div>
           )
         })}
-        <div style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+        <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>Total</div>
           <div style={{ fontSize:18, fontWeight:600, color:'#2C2C2A' }}>{parcerias.length}</div>
         </div>
@@ -352,7 +352,7 @@ export default function Parcerias() {
             const temExec = SITUACAO_EXECUCAO.includes(p.situacao)
             const pctExec = p.valor_aprovado && p.valor_recebido ? Math.round(Number(p.valor_recebido)/Number(p.valor_aprovado)*100) : 0
             return (
-              <div key={p.id} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden', cursor:'pointer' }}
+              <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                 onClick={() => navigate(`/parcerias/${p.id}`)}>
                 <div style={{ background:`${LARANJA}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                   <div>

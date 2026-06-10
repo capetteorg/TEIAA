@@ -126,7 +126,7 @@ export default function LancamentosLista() {
           { label:'Resultado', val:fmt(totalEntradas - totalDespesas), cor: totalEntradas >= totalDespesas ? AZUL : VERMELHO },
           { label:'Total', val:lista.length, cor:'#5F5E5A' },
         ].map(m => (
-          <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
             <div style={{ fontSize:15, fontWeight:600, color:m.cor }}>{m.val}</div>
           </div>

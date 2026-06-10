@@ -122,7 +122,7 @@ export default function Relatorios() {
               { label: 'Total gastos',   val: fmt(dados.totalSai), sub: Object.values(dados.grupoSai).reduce((a,v)=>a+v.qtd,0)+' pagamentos',   cor: '#E8212A' },
               { label: 'Resultado',      val: (dados.resultado>=0?'+':'')+fmt(dados.resultado), sub: dados.resultado>=0?'Superávit':'Déficit', cor: dados.resultado>=0?'#6BBF2B':'#E8212A' },
             ].map(m => (
-              <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.85rem 1rem', border: '0.5px solid #E0DDD5' }}>
+              <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.85rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
                 <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.7rem' }} />
                 <div style={{ fontSize: 11, color: '#888780', marginBottom: 4 }}>{m.label}</div>
                 <div style={{ fontSize: 18, fontWeight: 500, color: m.cor }}>{m.val}</div>
@@ -136,7 +136,7 @@ export default function Relatorios() {
               { titulo: 'Entradas por categoria', grupo: dados.grupoEnt, cor: '#6BBF2B', isEnt: true },
               { titulo: 'Gastos por categoria',   grupo: dados.grupoSai, cor: '#E8212A', isEnt: false },
             ].map(bloco => (
-              <div key={bloco.titulo} style={{ background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem' }}>
+              <div key={bloco.titulo} style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem' }}>
                 <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>{bloco.titulo}</div>
                 {Object.keys(bloco.grupo).length === 0
                   ? <div style={{ fontSize: 12, color: '#888780' }}>Sem dados para o período.</div>

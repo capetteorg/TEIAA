@@ -141,7 +141,7 @@ export default function PrestacaoContas() {
   const podeGerarFinal = pendCriticas === 0
 
   const s = {
-    card: { background: '#fff', border: '0.5px solid #E0DDD5', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
     th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' },
     td: { padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12 },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
@@ -240,7 +240,7 @@ export default function PrestacaoContas() {
                 { label: 'Total disponível', val: fmt(dados.totalDisponivel), cor: '#4A8FD4' },
                 { label: 'Total despesas', val: fmt(dados.totalDespesas), cor: VERMELHO },
               ].map(m => (
-                <div key={m.label} style={{ background: '#fff', borderRadius: 10, padding: '.85rem 1rem', border: '0.5px solid #E0DDD5' }}>
+                <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.85rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
                   <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.7rem' }} />
                   <div style={{ fontSize: 10, color: '#888780', marginBottom: 4 }}>{m.label}</div>
                   <div style={{ fontSize: 16, fontWeight: 500, color: m.cor }}>{m.val}</div>

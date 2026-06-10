@@ -138,7 +138,7 @@ export default function EventosCampanhas() {
   const totalSaidas = Math.abs(movs.filter(m => Number(m.valor) < 0).reduce((a,m) => a + Number(m.valor), 0))
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
@@ -318,7 +318,7 @@ export default function EventosCampanhas() {
           {listaFiltrada.map(item => {
             const [bg,cor] = STATUS_COR[item.status]||['#F1EFE8','#888780']
             return (
-              <div key={`${item.tipo}-${item.id}`} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden', cursor:'pointer' }}
+              <div key={`${item.tipo}-${item.id}`} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                 onClick={() => abrirDetalhe(item)}>
                 <div style={{ background:item.tipo==='evento'?`${LARANJA}15`:`${ROXO}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                   <div>

@@ -116,7 +116,7 @@ export default function Sociedade() {
   ]
 
   const s = {
-    card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8' },
     td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
@@ -148,7 +148,7 @@ export default function Sociedade() {
       </div>
 
       {/* Navegação */}
-      <div style={{ background:'#fff', borderBottom:'0.5px solid #E0DDD5', padding:'.5rem 1.5rem' }}>
+      <div style={{ background:'rgba(255,255,255,0.92)', borderBottom:'0.5px solid #E8E6DE', padding:'.5rem 1.5rem' }}>
         <div style={{ maxWidth:1000, margin:'0 auto', display:'flex', gap:6, flexWrap:'wrap' }}>
           {ABAS.map(a => (
             <button key={a.id} onClick={() => setAba(a.id)} style={s.tab(aba===a.id)}>{a.label}</button>
@@ -224,7 +224,7 @@ export default function Sociedade() {
                 { label:`Saídas — ${ano}`, val:fmt(resumo.saiAno), cor:VERMELHO },
                 { label:'Saldo geral', val:fmt(resumo.saldoGeral), cor:Number(resumo.saldoGeral)>=0?AZUL:VERMELHO },
               ].map(m => (
-                <div key={m.label} style={{ background:'#fff', borderRadius:10, padding:'.85rem 1rem', border:'0.5px solid #E0DDD5' }}>
+                <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
                   <div style={{ height:3, borderRadius:99, background:m.cor, marginBottom:'.6rem' }} />
                   <div style={{ fontSize:10, color:'#888780', marginBottom:3 }}>{m.label}</div>
                   <div style={{ fontSize:15, fontWeight:600, color:m.cor }}>{m.val}</div>
@@ -277,7 +277,7 @@ export default function Sociedade() {
             ) : (
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'1rem' }}>
                 {projetos.map(p => (
-                  <div key={p.id} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden' }}>
+                  <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
                     <div style={{ background:`linear-gradient(135deg, ${VERDE}15, ${AZUL}08)`, padding:'14px 16px', borderBottom:'0.5px solid #E0DDD5' }}>
                       <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo||'Projeto institucional'}</div>
                       <div style={{ fontSize:14, fontWeight:600, color:'#2C2C2A' }}>{p.nome}</div>
@@ -322,7 +322,7 @@ export default function Sociedade() {
                 {parcerias.map(p => {
                   const [bg,cor] = SIT_COR[p.situacao]||['#F1EFE8','#888780']
                   return (
-                    <div key={p.id} style={{ background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, overflow:'hidden' }}>
+                    <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
                       <div style={{ background:`${LARANJA}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                         <div>
                           <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{TIPO_LABEL[p.tipo]||p.tipo}</div>
@@ -525,7 +525,7 @@ export default function Sociedade() {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:10 }}>
                 {documentos.map(doc => (
                   <a key={doc.id} href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                    style={{ display:'block', background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:10, padding:'1rem', textDecoration:'none' }}>
+                    style={{ display:'block', background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:12, boxShadow:'0 1px 8px rgba(0,0,0,0.04)', padding:'1rem', textDecoration:'none' }}>
                     <div style={{ fontSize:28, marginBottom:8 }}>📄</div>
                     <div style={{ fontSize:12, fontWeight:500, color:'#2C2C2A', marginBottom:3 }}>{doc.titulo}</div>
                     {doc.descricao && <div style={{ fontSize:11, color:'#888780', marginBottom:8 }}>{doc.descricao}</div>}
