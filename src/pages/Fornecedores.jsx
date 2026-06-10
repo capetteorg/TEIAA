@@ -21,6 +21,7 @@ export default function Fornecedores() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [busca, setBusca] = useState('')
   const [filtroIncompleto, setFiltroIncompleto] = useState(false)
+  const [duplicatas, setDuplicatas] = useState([])
   const [msg, setMsg] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
@@ -85,13 +86,13 @@ export default function Fornecedores() {
     return f.cadastro_rapido || !f.cpf_cnpj || !f.telefone || !f.email
   }
 
-  const fmtData = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—'
-
   const listaFiltrada = lista.filter(f => {
     const ok = !busca || f.nome.toLowerCase().includes(busca.toLowerCase()) ||
       (f.cpf_cnpj||'').includes(busca) || (f.nome_fantasia||'').toLowerCase().includes(busca.toLowerCase())
     return ok && (!filtroIncompleto || incompleto(f))
   })
+
+  const incompletos = lista.filter(incompleto).length
 
   const s = {
     card: { background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 },
@@ -104,14 +105,15 @@ export default function Fornecedores() {
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
   }
 
-  const incompletos = lista.filter(incompleto).length
-
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:15, fontWeight:500 }}>Fornecedores</div>
-          <div style={{ fontSize:12, color:'#888780' }}>{lista.length} cadastrado{lista.length!==1?'s':''} · {incompletos > 0 && <span style={{ color:LARANJA }}>{incompletos} incompleto{incompletos>1?'s':''}</span>}</div>
+          <div style={{ fontSize:12, color:'#888780' }}>
+            {lista.length} cadastrado{lista.length!==1?'s':''} 
+            {incompletos > 0 && <span style={{ color:LARANJA }}> · {incompletos} incompleto{incompletos>1?'s':''}</span>}
+          </div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setDuplicatas([]) }}
           style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
@@ -121,14 +123,12 @@ export default function Fornecedores() {
 
       {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
-      {/* Formulário */}
       {mostrarForm && (
         <div style={s.card}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
             {editando ? 'Editar fornecedor' : 'Novo fornecedor'}
           </div>
 
-          {/* Alerta de duplicata */}
           {duplicatas.length > 0 && (
             <div style={{ background:'#FAEEDA', border:'0.5px solid #F5C99A', borderRadius:8, padding:'10px 12px', marginBottom:10, fontSize:12, color:'#854F0B' }}>
               ⚠️ Possível duplicata encontrada:
@@ -220,7 +220,6 @@ export default function Fornecedores() {
         </div>
       )}
 
-      {/* Filtros */}
       <div style={{ display:'flex', gap:8, marginBottom:10, flexWrap:'wrap', alignItems:'center' }}>
         <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar por nome ou CPF/CNPJ..."
           style={{ flex:1, minWidth:200, fontSize:12, padding:'7px 10px', border:'0.5px solid #D3D1C7', borderRadius:8 }} />
@@ -233,7 +232,6 @@ export default function Fornecedores() {
         <span style={{ fontSize:12, color:'#888780' }}>{listaFiltrada.length} resultado{listaFiltrada.length!==1?'s':''}</span>
       </div>
 
-      {/* Lista */}
       {listaFiltrada.length === 0 ? (
         <div style={{ ...s.card, textAlign:'center', padding:'2.5rem', color:'#888780' }}>
           <div style={{ fontSize:28, marginBottom:8 }}>🏪</div>
@@ -278,7 +276,6 @@ export default function Fornecedores() {
         </div>
       )}
 
-      {/* Modal excluir */}
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>

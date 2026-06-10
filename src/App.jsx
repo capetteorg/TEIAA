@@ -10,7 +10,6 @@ import Conciliacao from './pages/Conciliacao'
 import Entradas from './pages/Entradas'
 import Aplicacoes from './pages/Aplicacoes'
 import Sociedade from './pages/Sociedade'
-import Documentos from './pages/Documentos'
 import Instituicao from './pages/Instituicao'
 import Categorias from './pages/Categorias'
 import Contas from './pages/Contas'
@@ -70,9 +69,9 @@ export default function App() {
         <Route path="painel" element={<Painel />} />
         <Route path="painel-admin" element={<RotaProtegida perfisPermitidos={['admin']}><PainelAdmin /></RotaProtegida>} />
         <Route path="painel-operacional" element={<RotaProtegida perfisPermitidos={['operacional']}><PainelOperacional /></RotaProtegida>} />
+        <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="parcerias" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
         <Route path="parcerias/:id" element={<RotaProtegida perfisPermitidos={['admin']}><ParceriaDetalhe /></RotaProtegida>} />
-        <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="despesas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Lancamentos tipo="despesa" /></RotaProtegida>} />
         <Route path="entradas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Entradas /></RotaProtegida>} />
         <Route path="importar" element={<RotaProtegida perfisPermitidos={['admin']}><Importar /></RotaProtegida>} />
@@ -81,7 +80,8 @@ export default function App() {
         <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><RelatoriosCentral /></RotaProtegida>} />
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
         <Route path="instituicao" element={<RotaProtegida perfisPermitidos={['admin']}><Instituicao /></RotaProtegida>} />
-        <Route path="documentos" element={<RotaProtegida perfisPermitidos={['admin']}><Documentos /></RotaProtegida>} />
+        {/* /documentos redireciona para documentos-fiscais (aba arquivos) */}
+        <Route path="documentos" element={<Navigate to="/documentos-fiscais" replace />} />
         <Route path="documentos-fiscais" element={<RotaProtegida perfisPermitidos={['admin']}><DocumentosFiscais /></RotaProtegida>} />
         <Route path="patrimonio" element={<RotaProtegida perfisPermitidos={['admin']}><Patrimonio /></RotaProtegida>} />
         <Route path="pendencias" element={<RotaProtegida perfisPermitidos={['admin']}><Pendencias /></RotaProtegida>} />

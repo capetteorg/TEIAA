@@ -10,6 +10,12 @@ const ABAS = [
   { id:'declaracoes', label:'📝 Declarações', desc:'Declarações exigidas em parcerias' },
   { id:'parcerias', label:'🤝 Parcerias', desc:'Documentos por parceria/convênio' },
   { id:'resolucoes', label:'📜 Resoluções', desc:'Resoluções e deliberações' },
+  { id:'arquivos', label:'📂 Arquivos', desc:'Relatórios anuais, balanços e outros documentos públicos' },
+]
+
+const CATEGORIAS_ARQUIVO = [
+  'Documentos institucionais', 'Relatórios anuais', 'Prestações de contas',
+  'Planos de trabalho', 'Balanços financeiros', 'Certidões e registros', 'Outros documentos',
 ]
 
 const TIPOS_INSTITUCIONAL = [
@@ -185,19 +191,27 @@ export default function DocumentosFiscais() {
   const [declaracoesSel, setDeclaracoesSel] = useState([])
   const inputFileRef = useRef()
   const [arquivo, setArquivo] = useState(null)
+  // Aba Arquivos (antigo Documentos)
+  const [docsArquivo, setDocsArquivo] = useState([])
+  const [mostrarFormArquivo, setMostrarFormArquivo] = useState(false)
+  const [formArquivo, setFormArquivo] = useState({ titulo:'', descricao:'', categoria: CATEGORIAS_ARQUIVO[0], publico:true })
+  const [arquivoUpload, setArquivoUpload] = useState(null)
+  const [uploadando, setUploadando] = useState(false)
 
   useEffect(() => { carregar() }, [])
 
   async function carregar() {
     setLoading(true)
-    const [docsRes, instRes, dirRes] = await Promise.all([
+    const [docsRes, instRes, dirRes, arqRes] = await Promise.all([
       supabase.from('documentos_fiscais').select('*').order('criado_em', { ascending:false }),
       supabase.from('instituicao').select('*').limit(1).single(),
       supabase.from('diretoria').select('*').eq('cargo', 'Presidente').eq('ativo', true).limit(1).single(),
+      supabase.from('documentos').select('*').order('criado_em', { ascending:false }),
     ])
     setDocs(docsRes.data || [])
     setInstituicao(instRes.data || {})
     setRepresentante(dirRes.data || null)
+    setDocsArquivo(arqRes.data || [])
     setLoading(false)
   }
 
@@ -229,6 +243,50 @@ export default function DocumentosFiscais() {
     await supabase.from('documentos_fiscais').delete().eq('id', id)
     setDocs(prev => prev.filter(d => d.id !== id))
   }
+
+  async function uploadArquivo(e) {
+    e.preventDefault()
+    if (!arquivoUpload) { setMsg('Selecione um arquivo.'); return }
+    setUploadando(true)
+    try {
+      const ext = arquivoUpload.name.split('.').pop()
+      const nomeArq = `${Date.now()}-${arquivoUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      const { error: upErr } = await supabase.storage.from('documentos').upload(nomeArq, arquivoUpload, { upsert:false })
+      if (upErr) throw upErr
+      const { data: urlData } = supabase.storage.from('documentos').getPublicUrl(nomeArq)
+      await supabase.from('documentos').insert({
+        titulo: formArquivo.titulo,
+        descricao: formArquivo.descricao || null,
+        categoria: formArquivo.categoria,
+        arquivo_url: urlData.publicUrl,
+        arquivo_nome: arquivoUpload.name,
+        tamanho_kb: Math.round(arquivoUpload.size / 1024),
+        publico: formArquivo.publico,
+      })
+      setMsg('✅ Arquivo publicado!')
+      setFormArquivo({ titulo:'', descricao:'', categoria: CATEGORIAS_ARQUIVO[0], publico:true })
+      setArquivoUpload(null)
+      setMostrarFormArquivo(false)
+      carregar()
+    } catch(err) { setMsg('Erro: ' + err.message) }
+    setUploadando(false)
+    setTimeout(() => setMsg(''), 5000)
+  }
+
+  async function excluirArquivo(doc) {
+    if (!window.confirm(`Excluir "${doc.titulo}"?`)) return
+    const nomeArq = doc.arquivo_url?.split('/').pop()
+    if (nomeArq) await supabase.storage.from('documentos').remove([nomeArq])
+    await supabase.from('documentos').delete().eq('id', doc.id)
+    carregar()
+  }
+
+  async function alternarPublico(doc) {
+    await supabase.from('documentos').update({ publico: !doc.publico }).eq('id', doc.id)
+    carregar()
+  }
+
+  const fmtTamanho = n => n >= 1024 ? (n/1024).toFixed(1) + ' MB' : n + ' KB'
 
   function gerarDeclaracoesPDF() {
     if (declaracoesSel.length === 0) { setMsg('Selecione ao menos uma declaração.'); return }
@@ -382,6 +440,7 @@ export default function DocumentosFiscais() {
       )}
 
       {/* Lista de documentos */}
+      {aba !== 'arquivos' && (
       <div style={s.card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.85rem' }}>
           <div style={{ fontSize:13, fontWeight:500 }}>{ABAS.find(a=>a.id===aba)?.label} ({docsDaAba.length})</div>
@@ -435,6 +494,91 @@ export default function DocumentosFiscais() {
           </table>
         )}
       </div>
+      )}
+
+      {/* Aba Arquivos */}
+      {aba === 'arquivos' && (
+        <div>
+          <div style={{ background:'#E6F1FB', border:'0.5px solid #B3D1F0', borderRadius:10, padding:'.75rem 1rem', marginBottom:'1.25rem', fontSize:12, color:'#185FA5' }}>
+            <strong>ℹ</strong> Documentos marcados como <strong>Públicos</strong> aparecem no Portal de Transparência.
+          </div>
+          {isAdmin && (
+            <div style={{ marginBottom:'1.25rem' }}>
+              <button onClick={() => setMostrarFormArquivo(!mostrarFormArquivo)} style={s.btn(mostrarFormArquivo?'#F1EFE8':AZUL, mostrarFormArquivo?'#5F5E5A':'#fff')}>
+                {mostrarFormArquivo ? 'Cancelar' : '+ Publicar arquivo'}
+              </button>
+            </div>
+          )}
+          {isAdmin && mostrarFormArquivo && (
+            <div style={{ ...s.card, borderColor:AZUL+'60', marginBottom:'1.25rem' }}>
+              <form onSubmit={uploadArquivo}>
+                <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:10, marginBottom:10 }}>
+                  <div><label style={s.label}>Título *</label>
+                    <input value={formArquivo.titulo} onChange={e=>setFormArquivo(f=>({...f,titulo:e.target.value}))} required style={s.input} placeholder="Ex: Relatório Anual 2025" /></div>
+                  <div><label style={s.label}>Categoria</label>
+                    <select value={formArquivo.categoria} onChange={e=>setFormArquivo(f=>({...f,categoria:e.target.value}))} style={s.input}>
+                      {CATEGORIAS_ARQUIVO.map(c=><option key={c} value={c}>{c}</option>)}
+                    </select></div>
+                </div>
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Descrição</label>
+                  <input value={formArquivo.descricao} onChange={e=>setFormArquivo(f=>({...f,descricao:e.target.value}))} style={s.input} placeholder="Breve descrição..." />
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:10, marginBottom:12 }}>
+                  <div><label style={s.label}>Arquivo (PDF, DOCX, XLSX, imagem) *</label>
+                    <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={e=>setArquivoUpload(e.target.files[0])} style={{ ...s.input, padding:'5px 9px' }} required />
+                    {arquivoUpload && <div style={{ fontSize:11, color:'#888780', marginTop:3 }}>{arquivoUpload.name} · {fmtTamanho(Math.round(arquivoUpload.size/1024))}</div>}
+                  </div>
+                  <div style={{ display:'flex', alignItems:'flex-end', paddingBottom:2 }}>
+                    <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, cursor:'pointer' }}>
+                      <input type="checkbox" checked={formArquivo.publico} onChange={e=>setFormArquivo(f=>({...f,publico:e.target.checked}))} />
+                      Visível na transparência
+                    </label>
+                  </div>
+                </div>
+                <button type="submit" disabled={uploadando} style={s.btn(uploadando?'#D3D1C7':AZUL)}>
+                  {uploadando ? 'Publicando...' : '⬆ Publicar'}
+                </button>
+              </form>
+            </div>
+          )}
+          <div style={s.card}>
+            <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Arquivos publicados ({docsArquivo.length})</div>
+            {docsArquivo.length === 0 ? (
+              <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Nenhum arquivo publicado ainda.</div>
+            ) : (
+              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                <thead><tr>{['Título','Categoria','Arquivo','Tamanho','Visibilidade','Data',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {docsArquivo.map(doc => (
+                    <tr key={doc.id}>
+                      <td style={{ ...s.td, fontWeight:500 }}>
+                        <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer" style={{ color:AZUL, textDecoration:'none' }}>📄 {doc.titulo}</a>
+                      </td>
+                      <td style={s.td}><span style={s.badge('#E6F1FB','#185FA5')}>{doc.categoria}</span></td>
+                      <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{doc.arquivo_nome}</td>
+                      <td style={{ ...s.td, color:'#888780' }}>{doc.tamanho_kb ? fmtTamanho(doc.tamanho_kb) : '—'}</td>
+                      <td style={s.td}>
+                        {isAdmin ? (
+                          <button onClick={() => alternarPublico(doc)} style={{ ...s.badge(doc.publico?'#EAF3DE':'#F1EFE8', doc.publico?'#3B6D11':'#5F5E5A'), border:'none', cursor:'pointer' }}>
+                            {doc.publico ? '🌐 Público' : '🔒 Privado'}
+                          </button>
+                        ) : (
+                          <span style={s.badge(doc.publico?'#EAF3DE':'#F1EFE8', doc.publico?'#3B6D11':'#5F5E5A')}>{doc.publico?'Público':'Privado'}</span>
+                        )}
+                      </td>
+                      <td style={{ ...s.td, color:'#888780', fontSize:11 }}>{new Date(doc.criado_em).toLocaleDateString('pt-BR')}</td>
+                      <td style={s.td}>
+                        {isAdmin && <button onClick={() => excluirArquivo(doc)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
