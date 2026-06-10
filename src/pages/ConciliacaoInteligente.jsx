@@ -194,12 +194,12 @@ export default function ConciliacaoInteligente() {
   const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
   const STATUS_INFO = {
-    conciliado_auto: { label: 'Conciliado automaticamente', bg: '#EAF3DE', cor: '#3B6D11', icon: '<i className="ti ti-check" style={{fontSize:14}} />' },
+    conciliado_auto: { label: 'Conciliado automaticamente', bg: '#EAF3DE', cor: '#3B6D11', icon: '' },
     possivel:        { label: 'Possível correspondência',   bg: '#FAEEDA', cor: '#854F0B', icon: '?' },
     duplicidade:     { label: 'Duplicidade',                bg: '#FCEBEB', cor: '#A32D2D', icon: '!' },
     sem_lancamento:  { label: 'Sem lançamento operacional', bg: '#F1EFE8', cor: '#5F5E5A', icon: '—' },
     sem_extrato:     { label: 'Sem extrato bancário',       bg: '#E6F1FB', cor: '#185FA5', icon: '↑' },
-    confirmado:      { label: 'Confirmado',                  bg: '#EAF3DE', cor: '#3B6D11', icon: '<i className="ti ti-check" style={{fontSize:14}} /><i className="ti ti-check" style={{fontSize:14}} />' },
+    confirmado:      { label: 'Confirmado',                  bg: '#EAF3DE', cor: '#3B6D11', icon: '' },
   }
 
   const listaFiltrada = resultado.filter(r => {
@@ -263,7 +263,7 @@ export default function ConciliacaoInteligente() {
         {resultado.length === 0 && !loading && (
           <button onClick={cruzarAutomatico} disabled={cruzando}
             style={{ ...s.btn(AZUL), fontSize: 12, padding: '6px 16px', marginLeft: 'auto' }}>
-            {cruzando ? 'Cruzando...' : '<i className="ti ti-bolt" style={{marginRight:4}} /> Cruzar automaticamente'}
+            {cruzando ? 'Cruzando...' : 'Cruzar automaticamente'}
           </button>
         )}
       </div>
@@ -291,7 +291,7 @@ export default function ConciliacaoInteligente() {
           </div>
           <button onClick={cruzarAutomatico} disabled={cruzando}
             style={{ padding: '8px 20px', fontSize: 13, borderRadius: 8, border: 'none', background: AZUL, color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
-            {cruzando ? 'Cruzando dados...' : '<i className="ti ti-bolt" style={{marginRight:4}} /> Iniciar cruzamento automático'}
+            {cruzando ? 'Cruzando dados...' : 'Iniciar cruzamento automático'}
           </button>
         </div>
       )}

@@ -195,7 +195,7 @@ export default function Patrimonio() {
               <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
             </div>
             <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':editandoId?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Cadastrar'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':editandoId?'Salvar':'+ Cadastrar'}</button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditandoId(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>

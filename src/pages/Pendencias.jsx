@@ -11,10 +11,10 @@ const GRAVIDADE = {
 }
 
 const TIPO = {
-  financeira: { label:'Financeiro', icon:'<i className="ti ti-cash" style={{fontSize:14}} />' },
-  cobranca:   { label:'Cobrança',   icon:'<i className="ti ti-clipboard-list" style={{fontSize:14}} />' },
-  projeto:    { label:'Projeto',    icon:'<i className="ti ti-folder" style={{fontSize:14}} />' },
-  documental: { label:'Documento',  icon:'<i className="ti ti-file" style={{fontSize:14}} />' },
+  financeira: { label:'Financeiro', icon:'' },
+  cobranca:   { label:'Cobrança',   icon:'' },
+  projeto:    { label:'Projeto',    icon:'' },
+  documental: { label:'Documento',  icon:'' },
 }
 
 export default function Pendencias() {
@@ -85,7 +85,7 @@ export default function Pendencias() {
           <div style={{ fontSize:12, color:'#888780' }}>Itens que precisam de atenção</div>
         </div>
         <button onClick={atualizar} disabled={atualizando} style={s.btn(AZUL)}>
-          {atualizando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Atualizando...' : '↻ Atualizar pendências'}
+          {atualizando ? 'Atualizando...' : '↻ Atualizar pendências'}
         </button>
       </div>
 
@@ -150,7 +150,7 @@ export default function Pendencias() {
             <tbody>
               {lista.map((p,i) => {
                 const grav = GRAVIDADE[p.gravidade] || GRAVIDADE.informativa
-                const tipo = TIPO[p.tipo] || { label:p.tipo, icon:'<i className="ti ti-pin" style={{fontSize:14}} />' }
+                const tipo = TIPO[p.tipo] || { label:p.tipo, icon:'' }
                 return (
                   <tr key={p.id} style={{ background:p.resolvida?'#F8F7F2':i%2===0?'#fff':'#FAFAF8', opacity:p.resolvida?0.7:1 }}>
                     <td style={s.td}>

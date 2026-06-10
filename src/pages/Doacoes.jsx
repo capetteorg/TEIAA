@@ -296,7 +296,7 @@ export default function Doacoes() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
-                {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : '+ Registrar doação'}
+                {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Registrar doação'}
               </button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>
                 Cancelar

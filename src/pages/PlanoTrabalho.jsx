@@ -341,7 +341,7 @@ export default function PlanoTrabalho() {
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                   <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
-                    {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Criar plano'}
+                    {salvando ? 'Salvando...' : editando ? 'Salvar' : '+ Criar plano'}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                 </div>
@@ -494,7 +494,7 @@ export default function PlanoTrabalho() {
                     <input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} />
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Adicionar meta'}</button>
+                    <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? 'Salvar' : '+ Adicionar meta'}</button>
                     {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                   </div>
                 </form>
@@ -573,7 +573,7 @@ export default function PlanoTrabalho() {
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Adicionar'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv ? 'Salvar' : '+ Adicionar'}</button>
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>

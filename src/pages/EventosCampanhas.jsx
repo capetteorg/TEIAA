@@ -220,7 +220,7 @@ export default function EventosCampanhas() {
               </div>
             </div>
             <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':ROXO)}>{salvando?'Salvando...':editando?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Cadastrar'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':ROXO)}>{salvando?'Salvando...':editando?'Salvar':'+ Cadastrar'}</button>
               <button type="button" onClick={()=>{setMostrarForm(false);setEditando(null)}} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>

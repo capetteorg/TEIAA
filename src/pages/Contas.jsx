@@ -165,7 +165,7 @@ export default function Contas() {
       {/* Formulário */}
       <div style={s.card}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>
-          {editando ? '<i className="ti ti-pencil" style={{fontSize:14}} />️ Editando conta' : 'Adicionar nova conta'}
+          {editando ? 'Editando conta' : 'Adicionar nova conta'}
         </div>
 
         <form onSubmit={salvar}>

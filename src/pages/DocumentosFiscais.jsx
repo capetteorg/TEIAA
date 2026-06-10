@@ -5,12 +5,12 @@ import { useAuth } from '../hooks/useAuth'
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
 const ABAS = [
-  { id:'institucional', label:'<i className="ti ti-clipboard-list" style={{marginRight:4}} /> Institucional', desc:'Estatuto, atas, CNPJ, certidões' },
-  { id:'mrosc', label:'<i className="ti ti-scale" style={{fontSize:14}} />️ MROSC / Habilitação', desc:'Documentos exigidos pelo art. 34 da Lei 13.019/2014' },
-  { id:'declaracoes', label:'<i className="ti ti-file-text" style={{marginRight:4}} /> Declarações', desc:'Declarações exigidas em parcerias' },
-  { id:'parcerias', label:'<i className="ti ti-handshake" style={{marginRight:4}} /> Parcerias', desc:'Documentos por parceria/convênio' },
-  { id:'resolucoes', label:'<i className="ti ti-scroll" style={{marginRight:4}} /> Resoluções', desc:'Resoluções e deliberações' },
-  { id:'arquivos', label:'<i className="ti ti-folder-open" style={{marginRight:4}} /> Arquivos', desc:'Relatórios anuais, balanços e outros documentos públicos' },
+  { id:'institucional', label:'Institucional', desc:'Estatuto, atas, CNPJ, certidões' },
+  { id:'mrosc', label:'MROSC / Habilitação', desc:'Documentos exigidos pelo art. 34 da Lei 13.019/2014' },
+  { id:'declaracoes', label:'Declarações', desc:'Declarações exigidas em parcerias' },
+  { id:'parcerias', label:'Parcerias', desc:'Documentos por parceria/convênio' },
+  { id:'resolucoes', label:'Resoluções', desc:'Resoluções e deliberações' },
+  { id:'arquivos', label:'Arquivos', desc:'Relatórios anuais, balanços e outros documentos públicos' },
 ]
 
 const CATEGORIAS_ARQUIVO = [
@@ -398,7 +398,7 @@ export default function DocumentosFiscais() {
               <input type="checkbox" checked={form.publico} onChange={e=>setForm(f=>({...f,publico:e.target.checked}))} id="publico" />
               <label htmlFor="publico" style={{ fontSize:12 }}>Exibir no Portal de Transparência</label>
             </div>
-            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar'}</button>
+            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':'Salvar'}</button>
           </form>
         </div>
       )}
@@ -561,7 +561,7 @@ export default function DocumentosFiscais() {
                       <td style={s.td}>
                         {isAdmin ? (
                           <button onClick={() => alternarPublico(doc)} style={{ ...s.badge(doc.publico?'#EAF3DE':'#F1EFE8', doc.publico?'#3B6D11':'#5F5E5A'), border:'none', cursor:'pointer' }}>
-                            {doc.publico ? '<i className="ti ti-world" style={{marginRight:4}} /> Público' : '<i className="ti ti-lock" style={{marginRight:4}} /> Privado'}
+                            {doc.publico ? 'Público' : 'Privado'}
                           </button>
                         ) : (
                           <span style={s.badge(doc.publico?'#EAF3DE':'#F1EFE8', doc.publico?'#3B6D11':'#5F5E5A')}>{doc.publico?'Público':'Privado'}</span>

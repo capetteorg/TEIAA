@@ -769,7 +769,7 @@ export default function RelatoriosCentral() {
                       <td style={{ ...s.td, fontWeight:500, color:Number(m.valor)>=0?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
                       <td style={s.td}>
                         <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
-                          {m.conciliado ? '<i className="ti ti-check" style={{marginRight:4}} /> OK' : 'Pendente'}
+                          {m.conciliado ? 'OK' : 'Pendente'}
                         </span>
                       </td>
                     </tr>

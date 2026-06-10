@@ -91,12 +91,12 @@ export default function PainelOperacional() {
         <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Ações rápidas</div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
-            { label:'Registrar atendimento', icon:'<i className="ti ti-clipboard-list" style={{fontSize:14}} />', cor:AZUL, link:'/atendimentos' },
-            { label:'Lançar despesa', icon:'<i className="ti ti-receipt" style={{fontSize:14}} />', cor:VERMELHO, link:'/despesas' },
-            { label:'Lançar entrada', icon:'<i className="ti ti-cash" style={{fontSize:14}} />', cor:VERDE, link:'/entradas' },
-            { label:'Cadastrar usuário', icon:'<i className="ti ti-user" style={{fontSize:14}} />', cor:LARANJA, link:'/usuarios-atendidos' },
-            { label:'Equipe', icon:'<i className="ti ti-users" style={{fontSize:14}} />', cor:'#8B2FC9', link:'/equipe' },
-            { label:'Cobranças', icon:'<i className="ti ti-file" style={{fontSize:14}} />', cor:'#5F5E5A', link:'/cobrancas' },
+            { label:'Registrar atendimento', icon:'', cor:AZUL, link:'/atendimentos' },
+            { label:'Lançar despesa', icon:'', cor:VERMELHO, link:'/despesas' },
+            { label:'Lançar entrada', icon:'', cor:VERDE, link:'/entradas' },
+            { label:'Cadastrar usuário', icon:'', cor:LARANJA, link:'/usuarios-atendidos' },
+            { label:'Equipe', icon:'', cor:'#8B2FC9', link:'/equipe' },
+            { label:'Cobranças', icon:'', cor:'#5F5E5A', link:'/cobrancas' },
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.link)}
               style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', padding:'12px', borderRadius:10, border:`0.5px solid ${a.cor}30`, background:`${a.cor}08`, cursor:'pointer', textAlign:'left' }}>

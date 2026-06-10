@@ -193,7 +193,7 @@ export default function LancamentosLista() {
                           const isLancado = l.status_lanc === 'lancado'
                           const bg = isConciliado ? '#EAF3DE' : isLancado ? '#E6F1FB' : '#F1EFE8'
                           const cor = isConciliado ? '#3B6D11' : isLancado ? '#185FA5' : '#888780'
-                          const label = isConciliado ? '<i className="ti ti-check" style={{marginRight:4}} /> Conciliado' : isLancado ? 'Lançado' : 'Pendente'
+                          const label = isConciliado ? 'Conciliado' : isLancado ? 'Lançado' : 'Pendente'
                           return <span style={s.badge(bg, cor)}>{label}</span>
                         })()}
                       </td>
@@ -326,7 +326,7 @@ export default function LancamentosLista() {
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={salvarEdicao} disabled={salvando}
                 style={{ padding:'8px 20px', borderRadius:8, border:'none', background:AZUL, color:'#fff', fontWeight:600, cursor:'pointer' }}>
-                {salvando ? 'Salvando...' : '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar'}
+                {salvando ? 'Salvando...' : 'Salvar'}
               </button>
               <button onClick={() => { setEditando(null); setFormEdit({}) }}
                 style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>

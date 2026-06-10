@@ -62,7 +62,7 @@ const FORM_EQUIPE_VAZIO = {
 const ABAS_FORM = [
   { id:'geral', label:'Dados gerais' },
   { id:'socioassistencial', label:'Socioassistencial' },
-  { id:'cnas', label:'<i className="ti ti-clipboard-list" style={{marginRight:4}} /> CNAS' },
+  { id:'cnas', label:'CNAS' },
   { id:'config', label:'Configurações' },
 ]
 
@@ -321,7 +321,7 @@ export default function Projetos() {
 
         {/* Abas detalhe */}
         <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
-          {[['geral','Dados gerais'],['equipe','<i className="ti ti-users" style={{marginRight:4}} /> Equipe'],['financeiro','<i className="ti ti-cash" style={{marginRight:4}} /> Financeiro'],['socioassistencial','Socioassistencial'],['cnas','<i className="ti ti-clipboard-list" style={{marginRight:4}} /> CNAS']].map(([id,label]) => (
+          {[['geral','Dados gerais'],['equipe','Equipe'],['financeiro','Financeiro'],['socioassistencial','Socioassistencial'],['cnas','CNAS']].map(([id,label]) => (
             <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabDet(abaDetalhe===id)}>{label}</button>
           ))}
         </div>
@@ -438,7 +438,7 @@ export default function Projetos() {
                   {msgEquipe && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:!msgEquipe.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgEquipe.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgEquipe}</div>}
                   <div style={{ display:'flex', gap:6 }}>
                     <button type="submit" disabled={salvandoEquipe} style={s.btn(salvandoEquipe?'#D3D1C7':VERDE)}>
-                      {salvandoEquipe ? 'Salvando...' : editandoEquipe ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Vincular'}
+                      {salvandoEquipe ? 'Salvando...' : editandoEquipe ? 'Salvar' : '+ Vincular'}
                     </button>
                     {editandoEquipe && <button type="button" onClick={() => { setFormEquipe(FORM_EQUIPE_VAZIO); setEditandoEquipe(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                   </div>
@@ -565,7 +565,7 @@ export default function Projetos() {
                   </div>
                   {msgOrc && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:!msgOrc.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgOrc.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
                   <div style={{ display:'flex', gap:6 }}>
-                    <button type="submit" disabled={salvandoOrc} style={s.btn(salvandoOrc?'#D3D1C7':VERDE)}>{salvandoOrc?'Salvando...':editandoOrc?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar'}</button>
+                    <button type="submit" disabled={salvandoOrc} style={s.btn(salvandoOrc?'#D3D1C7':VERDE)}>{salvandoOrc?'Salvando...':editandoOrc?'Salvar':'+ Adicionar'}</button>
                     {editandoOrc && <button type="button" onClick={() => { setFormOrc({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                   </div>
                 </form>
@@ -775,7 +775,7 @@ export default function Projetos() {
               </div>
             </>)}
             <div style={{ display:'flex', gap:8, marginTop:14 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':editando?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações':'+ Cadastrar projeto'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':editando?'Salvar alterações':'+ Cadastrar projeto'}</button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>

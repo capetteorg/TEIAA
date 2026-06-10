@@ -149,7 +149,7 @@ export default function Backup() {
           {[
             'Financeiro (contas, extratos, lançamentos)',
             'Planos de trabalho e metas',
-            '<i className="ti ti-building-community" style={{fontSize:14}} />️ Parcerias e emendas',
+            'Parcerias e emendas',
             'Projetos e serviços',
             'Atendimentos e atividades',
             'Usuários atendidos',

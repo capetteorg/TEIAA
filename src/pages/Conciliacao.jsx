@@ -448,7 +448,7 @@ export default function Conciliacao() {
                     <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
                     <td style={s.td}>
                       <button onClick={ev=>{ev.stopPropagation();abrirExtrato(e)}} style={s.btn(fechado?'#F1EFE8':VERDE, fechado?'#5F5E5A':'#fff')}>
-                        {fechado?'<i className="ti ti-lock" style={{marginRight:4}} /> Ver':'Abrir →'}
+                        {fechado?'Ver':'Abrir →'}
                       </button>
                     </td>
                   </tr>
@@ -475,7 +475,7 @@ export default function Conciliacao() {
         </div>
         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
           <button onClick={cruzarAutomatico} disabled={cruzando} style={s.btn(ROXO)}>
-            {cruzando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Cruzando...' : '<i className="ti ti-robot" style={{marginRight:4}} /> Cruzar com lançamentos'}
+            {cruzando ? 'Cruzando...' : 'Cruzar com lançamentos'}
           </button>
           {autoCount>0 && (
             <button onClick={confirmarTodosAuto} style={s.btn(VERDE)}>
@@ -493,7 +493,7 @@ export default function Conciliacao() {
           ['Conciliados', totalConciliados, VERDE],
           ['Pendentes', totalPendentes, totalPendentes>0?LARANJA:'#888780'],
           ['Sem categoria', movs.filter(m=>!m.categoria_id&&!m.dividida).length, movs.filter(m=>!m.categoria_id&&!m.dividida).length>0?VERMELHO:'#888780'],
-          ...(autoCount>0||possivelCount>0 ? [['<i className="ti ti-robot" style={{marginRight:4}} /> Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
+          ...(autoCount>0||possivelCount>0 ? [['Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
         ].map(([l,v,c]) => (
           <div key={l} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
@@ -609,7 +609,7 @@ export default function Conciliacao() {
                       {match && !m.conciliado ? (
                         <div style={{ background:match.auto?'#EAF3DE':'#FAEEDA', borderRadius:6, padding:'4px 8px', fontSize:10 }}>
                           <div style={{ color:match.auto?'#3B6D11':'#854F0B', fontWeight:600, marginBottom:2 }}>
-                            {match.auto?'<i className="ti ti-robot" style={{marginRight:4}} /> Auto':'? Possível'} ({match.score}pts)
+                            {match.auto?'Auto':'? Possível'} ({match.score}pts)
                           </div>
                           <div style={{ color:'#5F5E5A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>
                             {match.lancamento.descricao}
@@ -637,13 +637,13 @@ export default function Conciliacao() {
                       <div style={{ position:'relative' }}>
                         <button onClick={() => setMenuAberto(menuAberto===m.id?null:m.id)}
                           style={{ ...s.btn(temCompl||movsDivida[m.id]?'#EAF3DE':'#F1EFE8', temCompl||movsDivida[m.id]?'#3B6D11':'#5F5E5A'), fontSize:10 }}>
-                          {temCompl||movsDivida[m.id]?'<i className="ti ti-check" style={{fontSize:14}} />':'⋯'} Ações {movsDivida[m.id]?'<i className="ti ti-user" style={{fontSize:14}} />':''}
+                          {temCompl||movsDivida[m.id]?'':'⋯'} Ações {movsDivida[m.id]?'':''}
                         </button>
                         {menuAberto===m.id && (
                           <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
                             <button onClick={() => { setMenuAberto(null); isAberto?setComplementarAberto(null):abrirComplementar(m) }}
                               style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:temCompl?'#3B6D11':'#2C2C2A' }}>
-                              <i className="ti ti-clipboard-list" style={{marginRight:4}} /> {temCompl?'Dados complementares <i className="ti ti-check" style={{fontSize:14}} />':'Dados complementares'}
+                              <i className="ti ti-clipboard-list" style={{marginRight:4}} /> {temCompl?'Dados complementares ✓':'Dados complementares'}
                             </button>
                             {!m.dividida && (
                               <button onClick={() => { setMenuAberto(null); abrirDivisao(m) }}
@@ -676,7 +676,7 @@ export default function Conciliacao() {
 
                     <td style={s.td}>
                       <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
-                        {m.conciliado?'<i className="ti ti-check" style={{marginRight:4}} /> OK':'Pendente'}
+                        {m.conciliado?'OK':'Pendente'}
                       </span>
                     </td>
 
@@ -689,7 +689,7 @@ export default function Conciliacao() {
                         }
                         conciliarMov(m.id, !m.conciliado)
                       }} style={s.btn(m.conciliado?'#F1EFE8':!m.categoria_id?'#D3D1C7':VERDE, m.conciliado?'#5F5E5A':'#fff')}>
-                        {m.conciliado?'Desfazer':'OK <i className="ti ti-check" style={{fontSize:14}} />'}
+                        {m.conciliado?'Desfazer':'OK ✓'}
                       </button>
                     </td>
                   </tr>
@@ -894,7 +894,7 @@ export default function Conciliacao() {
                               <div key={i} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:8, border: parte.lancamento_id ? `1px solid ${VERDE}` : '0.5px solid #D3D1C7' }}>
                                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                                   <span style={{ fontSize:11, fontWeight:600, color:parte.lancamento_id?VERDE:AZUL }}>
-                                    Parte {i+1} {parte.lancamento_id ? '<i className="ti ti-link" style={{marginRight:4}} /> vinculado ao lançamento' : ''}
+                                    Parte {i+1} {parte.lancamento_id ? 'vinculado ao lançamento' : ''}
                                   </span>
                                   {partesDivisao.length > 2 && (
                                     <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'2px 8px', fontSize:10 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
@@ -935,7 +935,7 @@ export default function Conciliacao() {
                             return (
                               <div style={{ fontSize:11, padding:'6px 12px', borderRadius:6, marginBottom:10, background:ok?'#EAF3DE':'#FEF2F2', color:ok?'#3B6D11':'#A32D2D' }}>
                                 Valor original: <strong>{fmt(m.valor)}</strong> · Soma das partes: <strong>R$ {soma.toFixed(2)}</strong>
-                                {ok ? ' <i className="ti ti-check" style={{marginRight:4}} /> OK' : ` · Diferença: R$ ${Math.abs(soma-original).toFixed(2)}`}
+                                {ok ? ' ✓ OK' : ` · Diferença: R$ ${Math.abs(soma-original).toFixed(2)}`}
                               </div>
                             )
                           })()}

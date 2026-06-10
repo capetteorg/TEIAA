@@ -362,7 +362,7 @@ export default function PrestacaoContas() {
                       <td style={{ ...s.td, color: VERMELHO, fontWeight: 500, whiteSpace: 'nowrap' }}>{fmt(Math.abs(m.valor))}</td>
                       <td style={s.td}>
                         <span style={s.badge(m.conciliado ? '#EAF3DE' : '#FAEEDA', m.conciliado ? '#3B6D11' : '#854F0B')}>
-                          {m.conciliado ? '<i className="ti ti-check" style={{fontSize:14}} />' : 'Pend.'}
+                          {m.conciliado ? '' : 'Pend.'}
                         </span>
                       </td>
                     </tr>

@@ -213,7 +213,7 @@ export default function Documentos() {
                   <td style={s.td}>
                     <button onClick={() => alternarPublico(doc)}
                       style={{ ...s.badge(doc.publico ? '#EAF3DE' : '#F1EFE8', doc.publico ? '#3B6D11' : '#5F5E5A'), border: 'none', cursor: 'pointer' }}>
-                      {doc.publico ? '<i className="ti ti-world" style={{marginRight:4}} /> Público' : '<i className="ti ti-lock" style={{marginRight:4}} /> Privado'}
+                      {doc.publico ? 'Público' : 'Privado'}
                     </button>
                   </td>
                   <td style={{ ...s.td, color: '#888780', fontSize: 11 }}>

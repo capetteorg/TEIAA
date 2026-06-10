@@ -274,7 +274,7 @@ export default function Fechamento() {
                           <>
                             <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}><i className="ti ti-pencil" style={{marginRight:4}} /> Editar</button>
                             <button onClick={() => gerarParecer(competencia, fechamento)} disabled={gerandoPDF===competencia} style={s.btn(VERDE)}>
-                              {gerandoPDF===competencia ? '<i className="ti ti-loader" style={{fontSize:14}} />' : '<i className="ti ti-printer" style={{fontSize:14}} />️'} Imprimir parecer
+                              {gerandoPDF===competencia ? '' : ''} Imprimir parecer
                             </button>
                           </>
                         )}
@@ -356,7 +356,7 @@ export default function Fechamento() {
                             <input value={formAprov.observacoes||''} onChange={e=>setFormAprov(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                           </div>
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => salvarAprovacao(competencia)} disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar aprovação'}</button>
+                            <button onClick={() => salvarAprovacao(competencia)} disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':'Salvar aprovação'}</button>
                             <button onClick={() => { setAprovacaoAberta(null); setFormAprov({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>

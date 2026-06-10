@@ -180,7 +180,7 @@ export default function ParceriaDetalhe() {
                       <td style={s.td}>{m.categoria?.nome||'—'}</td>
                       <td style={s.td}>{m.plano?.nome||'—'}</td>
                       <td style={{ ...s.td, fontWeight:500, color:Number(m.valor)>=0?VERDE:VERMELHO, whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
-                      <td style={s.td}><span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>{m.conciliado?'<i className="ti ti-check" style={{marginRight:4}} /> OK':'Pendente'}</span></td>
+                      <td style={s.td}><span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>{m.conciliado?'OK':'Pendente'}</span></td>
                     </tr>
                   ))}
                 </tbody>

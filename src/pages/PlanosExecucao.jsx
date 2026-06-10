@@ -436,7 +436,7 @@ export default function PlanosExecucao() {
           {mostrarForm && (
             <div style={{ ...s.card, borderColor: isPlanoAcao ? '#C9B3E8' : '#C0DD97' }}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-                {editando ? 'Editar plano' : isPlanoAcao ? '<i className="ti ti-clipboard-list" style={{marginRight:4}} /> Plano de Ação Institucional' : 'Novo Plano de Trabalho'}
+                {editando ? 'Editar plano' : isPlanoAcao ? 'Plano de Ação Institucional' : 'Novo Plano de Trabalho'}
               </div>
 
               {/* Banner orientação novo plano */}
@@ -706,13 +706,13 @@ export default function PlanosExecucao() {
 
           <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
             {[
-              ['projetos','<i className="ti ti-folder" style={{marginRight:4}} /> Projetos e Serviços'],
-              ['orcamento','<i className="ti ti-cash" style={{marginRight:4}} /> Orçamento'],
+              ['projetos','Projetos e Serviços'],
+              ['orcamento','Orçamento'],
               ['metas','Metas'],
               ['atividades','Atividades previstas'],
               ['execucao','Execução realizada'],
               ['usuarios','Usuários'],
-              ...(planoSel.tipo_plano === 'Plano de Ação Institucional' ? [['cnas','<i className="ti ti-clipboard-list" style={{marginRight:4}} /> CNAS']] : []),
+              ...(planoSel.tipo_plano === 'Plano de Ação Institucional' ? [['cnas','CNAS']] : []),
             ].map(([id,label]) => (
               <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabSec(abaDetalhe===id)}>{label}</button>
             ))}
@@ -827,7 +827,7 @@ export default function PlanosExecucao() {
                   <div><label style={s.label}>Observações</label><input value={formOrc.observacoes} onChange={e=>setFormOrc(f=>({...f,observacoes:e.target.value}))} style={s.input} /></div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvandoOrc} style={s.btn(VERDE)}>{editandoOrc?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar'}</button>
+                  <button type="submit" disabled={salvandoOrc} style={s.btn(VERDE)}>{editandoOrc?'Salvar':'+ Adicionar'}</button>
                   {editandoOrc && <button type="button" onClick={() => { setFormOrc({ descricao:'', tipo:'saida', valor_previsto:'', valor_realizado:'', categoria:'', observacoes:'' }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -970,7 +970,7 @@ export default function PlanosExecucao() {
                 </div>
                 <div style={{ marginBottom:8 }}><label style={s.label}>Justificativa / Observação</label><input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} /></div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar meta'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta?'Salvar':'+ Adicionar meta'}</button>
                   {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -1032,7 +1032,7 @@ export default function PlanosExecucao() {
                   <div><label style={s.label}>Responsável / Equipe prevista</label><input value={formAtiv.responsavel_equipe} onChange={e=>setFormAtiv(f=>({...f,responsavel_equipe:e.target.value}))} style={s.input} /></div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv?'Salvar':'+ Adicionar'}</button>
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>

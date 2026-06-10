@@ -356,7 +356,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
             <div>
               {/* Seletor de modo */}
               <div style={{ display:'flex', gap:6, marginBottom:'1rem' }}>
-                {[['foto','<i className="ti ti-camera" style={{marginRight:4}} /> Foto/Imagem'],['pdf','<i className="ti ti-file" style={{marginRight:4}} /> PDF'],['texto','<i className="ti ti-file-text" style={{marginRight:4}} /> Texto']].map(([m,l]) => (
+                {[['foto','Foto/Imagem'],['pdf','PDF'],['texto','Texto']].map(([m,l]) => (
                   <button key={m} type="button" onClick={() => { setModoEntrada(m); setFotoBase64(null); setFotoPreview(null); setPdfBase64(null); setTextoNota(''); setMsgIA('') }}
                     style={{ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${modoEntrada===m?VERDE:'#D3D1C7'}`, background:modoEntrada===m?VERDE:'#fff', color:modoEntrada===m?'#fff':'#5F5E5A', cursor:'pointer' }}>
                     {l}
@@ -384,7 +384,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       <div style={{ display:'flex', gap:8, marginBottom:10 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':VERDE, color:'#fff', cursor:'pointer' }}>
-                          {analisando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Analisando...' : '<i className="ti ti-sparkles" style={{marginRight:4}} /> Extrair dados com IA'}
+                          {analisando ? 'Analisando...' : 'Extrair dados com IA'}
                         </button>
                         <button type="button" onClick={() => inputFotoRef.current?.click()}
                           style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
@@ -413,7 +413,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       <div style={{ display:'flex', gap:8 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':AZUL, color:'#fff', cursor:'pointer' }}>
-                          {analisando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Analisando...' : '<i className="ti ti-sparkles" style={{marginRight:4}} /> Extrair dados com IA'}
+                          {analisando ? 'Analisando...' : 'Extrair dados com IA'}
                         </button>
                         <button type="button" onClick={() => { setPdfBase64(null); setFotoPreview(null); setFotoBase64(null); inputPdfRef.current?.click() }}
                           style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
@@ -434,7 +434,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                     style={{ width:'100%', fontSize:12, padding:'8px 10px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', resize:'vertical', marginBottom:10 }} />
                   <button type="button" onClick={analisarNota} disabled={analisando||!textoNota}
                     style={{ width:'100%', padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando||!textoNota?'#D3D1C7':LARANJA, color:'#fff', cursor:'pointer' }}>
-                    {analisando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Analisando...' : '<i className="ti ti-sparkles" style={{marginRight:4}} /> Extrair dados com IA'}
+                    {analisando ? 'Analisando...' : 'Extrair dados com IA'}
                   </button>
                 </div>
               )}
@@ -649,7 +649,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
 
           <button type="submit" disabled={salvando}
             style={{ width:'100%', padding:'12px', fontSize:14, fontWeight:600, borderRadius:10, border:'none', background:salvando?'#D3D1C7':tipo==='despesa'?VERMELHO:VERDE, color:'#fff', cursor:'pointer' }}>
-            {salvando ? 'Salvando...' : tipo==='despesa' ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar despesa' : '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar entrada'}
+            {salvando ? 'Salvando...' : tipo==='despesa' ? 'Salvar despesa' : 'Salvar entrada'}
           </button>
         </div>
       </form>
