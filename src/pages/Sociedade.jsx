@@ -199,6 +199,7 @@ export default function Sociedade() {
 
             {/* Resumo financeiro rápido */}
             <FiltroPeriodo />
+            {(resumo.ent > 0 || resumo.sai > 0) && (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:'1.5rem' }}>
               {[
                 { label:'Entradas', val:fmt(resumo.ent), cor:VERDE, icon:'↑' },
@@ -211,6 +212,7 @@ export default function Sociedade() {
                 </div>
               ))}
             </div>
+            )}
 
             {/* Atalhos */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:10, marginBottom:'1.5rem' }}>
