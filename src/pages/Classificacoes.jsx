@@ -29,7 +29,7 @@ export default function Classificacoes() {
     }
     const { error } = await dbClass.criar(dados)
     if (error) { setMsg('Erro: ' + error.message); return }
-    setMsg('✅ Regra criada!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Regra criada!')
     dbClass.listar().then(({ data }) => setLista(data || []))
     setForm({ tipo_doc: '', direcao: 'entrada', categoria_id: '', categoria: '', subcategoria: '' })
     setTimeout(() => setMsg(''), 3000)
@@ -75,7 +75,7 @@ export default function Classificacoes() {
                   </td>
                   <td style={s.td}>
                     <button onClick={() => { if(confirm('Excluir esta regra?')) dbClass.excluir(r.id).then(() => dbClass.listar().then(({data}) => setLista(data||[]))) }}
-                      style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #E8212A', background:'transparent', color:'#E8212A', cursor:'pointer' }}>✕</button>
+                      style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #E8212A', background:'transparent', color:'#E8212A', cursor:'pointer' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                   </td>
                 </tr>
               ))}

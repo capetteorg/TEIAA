@@ -149,8 +149,8 @@ export default function Campanhas() {
                   <span style={s.badge(bg, cor)}>{camp.status}</span>
                 </div>
                 {camp.objetivo && <div style={{ fontSize: 11, color: '#888780', marginBottom: 4 }}>{camp.objetivo}</div>}
-                {camp.meta_financeira > 0 && <div style={{ fontSize: 11, color: '#5F5E5A', marginBottom: 4 }}>🎯 Meta: {fmt(camp.meta_financeira)}</div>}
-                {camp.data_inicio && <div style={{ fontSize: 11, color: '#5F5E5A' }}>📅 {new Date(camp.data_inicio+'T12:00:00').toLocaleDateString('pt-BR')}{camp.data_fim?' → '+new Date(camp.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):''}</div>}
+                {camp.meta_financeira > 0 && <div style={{ fontSize: 11, color: '#5F5E5A', marginBottom: 4 }}><i className="ti ti-target" style={{marginRight:4}} /> Meta: {fmt(camp.meta_financeira)}</div>}
+                {camp.data_inicio && <div style={{ fontSize: 11, color: '#5F5E5A' }}><i className="ti ti-calendar" style={{marginRight:4}} /> {new Date(camp.data_inicio+'T12:00:00').toLocaleDateString('pt-BR')}{camp.data_fim?' → '+new Date(camp.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):''}</div>}
                 <button onClick={() => abrirCampanha(camp)}
                   style={{ marginTop: 8, width: '100%', padding: '5px', fontSize: 11, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>
                   Ver movimentações →

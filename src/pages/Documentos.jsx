@@ -69,7 +69,7 @@ export default function Documentos() {
 
       if (dbError) throw dbError
 
-      setMsg('✅ Documento publicado com sucesso!')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Documento publicado com sucesso!')
       setForm({ titulo: '', descricao: '', categoria: CATEGORIAS[0], publico: true })
       setArquivo(null)
       setMostrarForm(false)
@@ -123,7 +123,7 @@ export default function Documentos() {
       </div>
 
       {msg && (
-        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, marginBottom: '1rem', background: msg.includes('✅') ? '#F2FAE8' : '#FEF2F2', color: msg.includes('✅') ? '#3B6D11' : '#A32D2D' }}>
+        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, marginBottom: '1rem', background: msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '#F2FAE8' : '#FEF2F2', color: msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '#3B6D11' : '#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -204,7 +204,7 @@ export default function Documentos() {
                   <td style={{ ...s.td, fontWeight: 500 }}>
                     <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
                       style={{ color: '#4A8FD4', textDecoration: 'none' }}>
-                      📄 {doc.titulo}
+                      <i className="ti ti-file" style={{marginRight:4}} /> {doc.titulo}
                     </a>
                   </td>
                   <td style={s.td}><span style={s.badge('#E6F1FB','#185FA5')}>{doc.categoria}</span></td>
@@ -213,7 +213,7 @@ export default function Documentos() {
                   <td style={s.td}>
                     <button onClick={() => alternarPublico(doc)}
                       style={{ ...s.badge(doc.publico ? '#EAF3DE' : '#F1EFE8', doc.publico ? '#3B6D11' : '#5F5E5A'), border: 'none', cursor: 'pointer' }}>
-                      {doc.publico ? '🌐 Público' : '🔒 Privado'}
+                      {doc.publico ? '<i className="ti ti-world" style={{marginRight:4}} /> Público' : '<i className="ti ti-lock" style={{marginRight:4}} /> Privado'}
                     </button>
                   </td>
                   <td style={{ ...s.td, color: '#888780', fontSize: 11 }}>

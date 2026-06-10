@@ -97,7 +97,7 @@ export default function Instituicao() {
       ({ error } = await supabase.from('instituicao').insert(dados))
     }
     if (error) { setMsg('Erro: ' + error.message) }
-    else { setMsg('✅ Dados institucionais salvos!'); carregar() }
+    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Dados institucionais salvos!'); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -135,7 +135,7 @@ export default function Instituicao() {
       }
       if (error) throw error
 
-      setMsg('✅ Membro da diretoria salvo!')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Membro da diretoria salvo!')
       setFormDir(FORM_DIR_VAZIO)
       setAta(null)
       setEditandoDir(null)
@@ -204,7 +204,7 @@ export default function Instituicao() {
 
       {presidenteAtual && (
         <div style={{ background: '#EAF3DE', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 20 }}>👤</div>
+          <div style={{ fontSize: 20 }}><i className="ti ti-user" style={{fontSize:14}} /></div>
           <div>
             <div style={{ fontSize: 11, color: '#3B6D11', marginBottom: 2 }}>Presidente atual — mandato vigente</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#2C2C2A' }}>{presidenteAtual.nome}</div>
@@ -216,14 +216,14 @@ export default function Instituicao() {
           {presidenteAtual.ata_url && (
             <a href={presidenteAtual.ata_url} target="_blank" rel="noopener noreferrer"
               style={{ ...s.badge('#fff', AZUL), border: `0.5px solid ${AZUL}`, textDecoration: 'none', marginLeft: 'auto' }}>
-              📄 Ata de eleição
+              <i className="ti ti-file" style={{marginRight:4}} /> Ata de eleição
             </a>
           )}
         </div>
       )}
 
       {msg && (
-        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, marginBottom: '1rem', background: msg.includes('✅') ? '#F2FAE8' : '#FEF2F2', color: msg.includes('✅') ? '#3B6D11' : '#A32D2D' }}>
+        <div style={{ fontSize: 12, padding: '8px 12px', borderRadius: 8, marginBottom: '1rem', background: msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '#F2FAE8' : '#FEF2F2', color: msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '#3B6D11' : '#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -366,7 +366,7 @@ export default function Instituicao() {
           </div>
 
           <button type="submit" disabled={salvando} style={{ ...s.btn(salvando ? '#D3D1C7' : VERDE), fontWeight: 500, padding: '8px 20px' }}>
-            {salvando ? 'Salvando...' : '💾 Salvar dados institucionais'}
+            {salvando ? 'Salvando...' : '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar dados institucionais'}
           </button>
         </form>
       )}
@@ -459,7 +459,7 @@ export default function Instituicao() {
                   <input value={formDir.observacoes} onChange={e=>setFormDir(f=>({...f,observacoes:e.target.value}))} style={s.input} placeholder="Observações sobre o mandato" />
                 </div>
                 <button type="submit" disabled={salvando} style={{ ...s.btn(salvando ? '#D3D1C7' : VERDE), fontWeight: 500 }}>
-                  {salvando ? 'Salvando...' : editandoDir ? '💾 Salvar alterações' : '+ Adicionar'}
+                  {salvando ? 'Salvando...' : editandoDir ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : '+ Adicionar'}
                 </button>
               </form>
             </div>
@@ -495,7 +495,7 @@ export default function Instituicao() {
                       </td>
                       <td style={s.td}>
                         {d.ata_url
-                          ? <a href={d.ata_url} target="_blank" rel="noopener noreferrer" style={{ color: AZUL, fontSize: 11 }}>📄 Ver ata</a>
+                          ? <a href={d.ata_url} target="_blank" rel="noopener noreferrer" style={{ color: AZUL, fontSize: 11 }}><i className="ti ti-file" style={{marginRight:4}} /> Ver ata</a>
                           : <span style={{ color: '#B4B2A9', fontSize: 11 }}>—</span>}
                       </td>
                       <td style={s.td}>
@@ -536,7 +536,7 @@ export default function Instituicao() {
                     <td style={{ ...s.td, fontSize: 11, color: '#888780' }}>{fmtData(d.mandato_inicio)} a {fmtData(d.mandato_fim)}</td>
                     <td style={s.td}>
                       {d.ata_url
-                        ? <a href={d.ata_url} target="_blank" rel="noopener noreferrer" style={{ color: AZUL, fontSize: 11 }}>📄 Ver</a>
+                        ? <a href={d.ata_url} target="_blank" rel="noopener noreferrer" style={{ color: AZUL, fontSize: 11 }}><i className="ti ti-file" style={{marginRight:4}} /> Ver</a>
                         : <span style={{ color: '#B4B2A9', fontSize: 11 }}>—</span>}
                     </td>
                   </tr>

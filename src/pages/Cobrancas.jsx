@@ -171,7 +171,7 @@ export default function Cobrancas() {
     setSalvando(false)
     setPreview([])
     setTab('lista')
-    setMsg(`✅ ${novos} boletos importados. ${duplicatas > 0 ? duplicatas + ' duplicatas ignoradas.' : ''}`)
+    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${novos} boletos importados. ${duplicatas > 0 ? duplicatas + ' duplicatas ignoradas.' : ''}`)
     carregar()
     carregarUltimoLote()
     setTimeout(() => setMsg(''), 5000)
@@ -253,7 +253,7 @@ export default function Cobrancas() {
       </div>
 
       {msg && (
-        <div style={{ background: msg.includes('✅') ? '#F2FAE8' : '#FEF2F2', border: `0.5px solid ${msg.includes('✅')?'#C0DD97':'#F7C1C1'}`, borderRadius: 10, padding: '.6rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: msg.includes('✅') ? '#3B6D11' : '#A32D2D' }}>
+        <div style={{ background: msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '#F2FAE8' : '#FEF2F2', border: `0.5px solid ${msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#C0DD97':'#F7C1C1'}`, borderRadius: 10, padding: '.6rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '#3B6D11' : '#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -262,7 +262,7 @@ export default function Cobrancas() {
       {resumoImportacao && (
         <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-            <div style={{ fontSize:13, fontWeight:500, color:'#3B6D11' }}>✅ Importação concluída</div>
+            <div style={{ fontSize:13, fontWeight:500, color:'#3B6D11' }}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Importação concluída</div>
             <button onClick={() => setResumoImportacao(null)} style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #3B6D11', background:'transparent', color:'#3B6D11', cursor:'pointer' }}>Fechar</button>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:8 }}>
@@ -386,7 +386,7 @@ export default function Cobrancas() {
                         <td style={s.td}>
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button onClick={salvarEdicao} style={s.btn(VERDE)}>Salvar</button>
-                            <button onClick={() => { setEditando(null); setFormEdit({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>✕</button>
+                            <button onClick={() => { setEditando(null); setFormEdit({}) }} style={s.btn('#F1EFE8','#5F5E5A')}><i className="ti ti-x" style={{fontSize:14}} /></button>
                           </div>
                         </td>
                       </tr>
@@ -410,7 +410,7 @@ export default function Cobrancas() {
                                 style={s.btn('#4A8FD4')}>Atualizar</button>
                             )}
                             {isAdmin && c.pago_informado && !c.pago_confirmado && (
-                              <button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}>✓ Confirmar extrato</button>
+                              <button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar extrato</button>
                             )}
                           </div>
                         </td>
@@ -445,7 +445,7 @@ export default function Cobrancas() {
                         <td style={{ ...s.td, color: VERMELHO, fontWeight: 500 }}>{fmt(c.valor)}</td>
                         <td style={{ ...s.td, color: vencida ? VERMELHO : VERDE, fontWeight: 500 }}>
                           {new Date(c.data_promessa+'T12:00:00').toLocaleDateString('pt-BR')}
-                          {vencida ? ' ⚠ vencida' : ''}
+                          {vencida ? ' <i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> vencida' : ''}
                         </td>
                         <td style={s.td}><span style={s.badge(bg, cor)}>{c.status}</span></td>
                         <td style={{ ...s.td, color: '#888780' }}>{c.ultima_obs||'—'}</td>
@@ -474,7 +474,7 @@ export default function Cobrancas() {
                     <td style={s.td}>{c.data_vencimento ? new Date(c.data_vencimento+'T12:00:00').toLocaleDateString('pt-BR') : '—'}</td>
                     <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>{fmt(c.valor)}</td>
                     <td style={{ ...s.td, color: '#888780' }}>{c.ultima_obs||'—'}</td>
-                    <td style={s.td}><button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}>✓ Confirmar no extrato</button></td>
+                    <td style={s.td}><button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar no extrato</button></td>
                   </tr>
                 ))}
               </tbody>

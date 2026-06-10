@@ -98,9 +98,9 @@ export default function FornecedorHistorico() {
             <div style={{ fontSize:13, fontWeight:600 }}>{fornecedor.nome}</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginTop:4, display:'flex', gap:16, flexWrap:'wrap' }}>
               {fornecedor.cpf_cnpj && <span style={{ fontFamily:'monospace' }}>{fornecedor.cpf_cnpj}</span>}
-              {fornecedor.telefone && <span>📞 {fornecedor.telefone}</span>}
-              {fornecedor.email && <span>✉️ {fornecedor.email}</span>}
-              {fornecedor.area_atuacao && <span>🏷️ {fornecedor.area_atuacao}</span>}
+              {fornecedor.telefone && <span><i className="ti ti-phone" style={{marginRight:4}} /> {fornecedor.telefone}</span>}
+              {fornecedor.email && <span><i className="ti ti-mail" style={{fontSize:14}} />️ {fornecedor.email}</span>}
+              {fornecedor.area_atuacao && <span><i className="ti ti-tag" style={{fontSize:14}} />️ {fornecedor.area_atuacao}</span>}
             </div>
           </div>
 
@@ -134,7 +134,7 @@ export default function FornecedorHistorico() {
             {(filtroPeriodo || filtroTipo !== 'todos' || filtroCategoria) && (
               <button onClick={() => { setFiltroPeriodo(''); setFiltroTipo('todos'); setFiltroCategoria('') }}
                 style={{ fontSize:11, padding:'5px 10px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', cursor:'pointer' }}>
-                ✕ Limpar
+                <i className="ti ti-x" style={{marginRight:4}} /> Limpar
               </button>
             )}
             <span style={{ fontSize:12, color:'#888780', marginLeft:'auto' }}>{lancamentos.length} lançamento{lancamentos.length!==1?'s':''}</span>
@@ -146,7 +146,7 @@ export default function FornecedorHistorico() {
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
             ) : lancamentos.length === 0 ? (
               <div style={{ textAlign:'center', padding:'3rem', color:'#888780' }}>
-                <div style={{ fontSize:32, marginBottom:8 }}>📭</div>
+                <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-mail-opened" style={{fontSize:14}} /></div>
                 <div style={{ fontSize:13 }}>Nenhum lançamento encontrado.</div>
               </div>
             ) : (

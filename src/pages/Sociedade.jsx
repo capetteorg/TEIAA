@@ -174,9 +174,9 @@ export default function Sociedade() {
                   </div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                     {[
-                      instituicao?.endereco && `📍 ${instituicao.endereco}`,
-                      instituicao?.telefone && `📞 ${instituicao.telefone}`,
-                      instituicao?.email && `✉ ${instituicao.email}`,
+                      instituicao?.endereco && `<i className="ti ti-map-pin" style={{marginRight:4}} /> ${instituicao.endereco}`,
+                      instituicao?.telefone && `<i className="ti ti-phone" style={{marginRight:4}} /> ${instituicao.telefone}`,
+                      instituicao?.email && `<i className="ti ti-mail" style={{marginRight:4}} /> ${instituicao.email}`,
                     ].filter(Boolean).map((info,i) => (
                       <span key={i} style={{ fontSize:11, color:'#5F5E5A', padding:'3px 10px', background:'rgba(255,255,255,0.8)', borderRadius:99, border:'0.5px solid #E0DDD5' }}>{info}</span>
                     ))}
@@ -518,7 +518,7 @@ export default function Sociedade() {
             </div>
             {documentos.length === 0 ? (
               <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-                <div style={{ fontSize:32, marginBottom:8 }}>📄</div>
+                <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                 <div>Nenhum documento publicado ainda.</div>
               </div>
             ) : (
@@ -526,7 +526,7 @@ export default function Sociedade() {
                 {documentos.map(doc => (
                   <a key={doc.id} href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
                     style={{ display:'block', background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:12, boxShadow:'0 1px 8px rgba(0,0,0,0.04)', padding:'1rem', textDecoration:'none' }}>
-                    <div style={{ fontSize:28, marginBottom:8 }}>📄</div>
+                    <div style={{ fontSize:28, marginBottom:8 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                     <div style={{ fontSize:12, fontWeight:500, color:'#2C2C2A', marginBottom:3 }}>{doc.titulo}</div>
                     {doc.descricao && <div style={{ fontSize:11, color:'#888780', marginBottom:8 }}>{doc.descricao}</div>}
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>

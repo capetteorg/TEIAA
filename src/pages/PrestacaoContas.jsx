@@ -265,7 +265,7 @@ export default function PrestacaoContas() {
           {pendencias.length > 0 && (
             <div style={{ background: pendCriticas > 0 ? '#FEF2F2' : '#FAEEDA', border: `0.5px solid ${pendCriticas > 0 ? '#F7C1C1' : '#F4C88A'}`, borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 10 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: pendCriticas > 0 ? '#A32D2D' : '#854F0B', marginBottom: '.75rem' }}>
-                ⚠ {pendencias.length} movimentações com pendências — {pendCriticas} críticas
+                <i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> {pendencias.length} movimentações com pendências — {pendCriticas} críticas
               </div>
               <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
@@ -362,7 +362,7 @@ export default function PrestacaoContas() {
                       <td style={{ ...s.td, color: VERMELHO, fontWeight: 500, whiteSpace: 'nowrap' }}>{fmt(Math.abs(m.valor))}</td>
                       <td style={s.td}>
                         <span style={s.badge(m.conciliado ? '#EAF3DE' : '#FAEEDA', m.conciliado ? '#3B6D11' : '#854F0B')}>
-                          {m.conciliado ? '✓' : 'Pend.'}
+                          {m.conciliado ? '<i className="ti ti-check" style={{fontSize:14}} />' : 'Pend.'}
                         </span>
                       </td>
                     </tr>
@@ -404,7 +404,7 @@ export default function PrestacaoContas() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10 }}>
             {!podeGerarFinal && (
               <div style={{ fontSize: 12, color: '#A32D2D', background: '#FEF2F2', padding: '8px 12px', borderRadius: 8 }}>
-                ⚠ Existem {pendCriticas} pendências críticas. O relatório final não pode ser emitido.
+                <i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Existem {pendCriticas} pendências críticas. O relatório final não pode ser emitido.
               </div>
             )}
             <button onClick={() => gerarPDFPrestacaoContas(dados, pendencias, 'preliminar')}

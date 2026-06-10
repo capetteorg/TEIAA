@@ -162,7 +162,7 @@ export default function Equipe() {
       }
     }
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('✅ Pessoa salva com sucesso!'); setForm(FORM_VAZIO); setEditando(null); setAba('lista'); carregar() }
+    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pessoa salva com sucesso!'); setForm(FORM_VAZIO); setEditando(null); setAba('lista'); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -177,7 +177,7 @@ export default function Equipe() {
     if (!error) {
       setFormMov({ data_mov:'', tipo_mov:'Observação administrativa', descricao:'' })
       carregarHistorico(pessoaSel.id)
-      setMsg('✅ Movimentação registrada!')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Movimentação registrada!')
       setTimeout(() => setMsg(''), 3000)
     }
   }
@@ -267,7 +267,7 @@ export default function Equipe() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -311,7 +311,7 @@ export default function Equipe() {
 
           {lista.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}>👥</div>
+              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-users" style={{fontSize:14}} /></div>
               <div style={{ fontSize:13 }}>Nenhuma pessoa cadastrada ainda.</div>
             </div>
           ) : (
@@ -460,7 +460,7 @@ export default function Equipe() {
               {todosProjetos.map(proj => (
                 <button key={proj} type="button" onClick={() => toggleProjeto(proj)}
                   style={{ fontSize:11, padding:'5px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.projetos.includes(proj)?VERDE:'#D3D1C7'}`, background:form.projetos.includes(proj)?'#EAF3DE':'#fff', color:form.projetos.includes(proj)?'#3B6D11':'#5F5E5A' }}>
-                  {form.projetos.includes(proj) ? '✓ ' : ''}{proj}
+                  {form.projetos.includes(proj) ? '<i className="ti ti-check" style={{marginRight:4}} /> ' : ''}{proj}
                 </button>
               ))}
             </div>
@@ -511,7 +511,7 @@ export default function Equipe() {
 
           <div style={{ display:'flex', gap:8 }}>
             <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
-              {salvando ? 'Salvando...' : editando ? '💾 Salvar alterações' : '+ Cadastrar pessoa'}
+              {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : '+ Cadastrar pessoa'}
             </button>
             <button type="button" onClick={() => { setAba('lista'); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
               Cancelar
@@ -623,7 +623,7 @@ export default function Equipe() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>

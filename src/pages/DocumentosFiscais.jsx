@@ -5,12 +5,12 @@ import { useAuth } from '../hooks/useAuth'
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
 const ABAS = [
-  { id:'institucional', label:'📋 Institucional', desc:'Estatuto, atas, CNPJ, certidões' },
-  { id:'mrosc', label:'⚖️ MROSC / Habilitação', desc:'Documentos exigidos pelo art. 34 da Lei 13.019/2014' },
-  { id:'declaracoes', label:'📝 Declarações', desc:'Declarações exigidas em parcerias' },
-  { id:'parcerias', label:'🤝 Parcerias', desc:'Documentos por parceria/convênio' },
-  { id:'resolucoes', label:'📜 Resoluções', desc:'Resoluções e deliberações' },
-  { id:'arquivos', label:'📂 Arquivos', desc:'Relatórios anuais, balanços e outros documentos públicos' },
+  { id:'institucional', label:'<i className="ti ti-clipboard-list" style={{marginRight:4}} /> Institucional', desc:'Estatuto, atas, CNPJ, certidões' },
+  { id:'mrosc', label:'<i className="ti ti-scale" style={{fontSize:14}} />️ MROSC / Habilitação', desc:'Documentos exigidos pelo art. 34 da Lei 13.019/2014' },
+  { id:'declaracoes', label:'<i className="ti ti-file-text" style={{marginRight:4}} /> Declarações', desc:'Declarações exigidas em parcerias' },
+  { id:'parcerias', label:'<i className="ti ti-handshake" style={{marginRight:4}} /> Parcerias', desc:'Documentos por parceria/convênio' },
+  { id:'resolucoes', label:'<i className="ti ti-scroll" style={{marginRight:4}} /> Resoluções', desc:'Resoluções e deliberações' },
+  { id:'arquivos', label:'<i className="ti ti-folder-open" style={{marginRight:4}} /> Arquivos', desc:'Relatórios anuais, balanços e outros documentos públicos' },
 ]
 
 const CATEGORIAS_ARQUIVO = [
@@ -229,7 +229,7 @@ export default function DocumentosFiscais() {
       }
     }
     await supabase.from('documentos_fiscais').insert({ ...form, aba, arquivo_url })
-    setMsg('✅ Documento salvo!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Documento salvo!')
     setMostrarForm(false)
     setForm({ titulo:'', tipo:'', aba:'institucional', vencimento:'', emitido_em:'', observacoes:'', publico:false })
     setArquivo(null)
@@ -263,7 +263,7 @@ export default function DocumentosFiscais() {
         tamanho_kb: Math.round(arquivoUpload.size / 1024),
         publico: formArquivo.publico,
       })
-      setMsg('✅ Arquivo publicado!')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Arquivo publicado!')
       setFormArquivo({ titulo:'', descricao:'', categoria: CATEGORIAS_ARQUIVO[0], publico:true })
       setArquivoUpload(null)
       setMostrarFormArquivo(false)
@@ -349,7 +349,7 @@ export default function DocumentosFiscais() {
         )}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {/* Form adicionar */}
       {isAdmin && mostrarForm && (
@@ -398,7 +398,7 @@ export default function DocumentosFiscais() {
               <input type="checkbox" checked={form.publico} onChange={e=>setForm(f=>({...f,publico:e.target.checked}))} id="publico" />
               <label htmlFor="publico" style={{ fontSize:12 }}>Exibir no Portal de Transparência</label>
             </div>
-            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':'💾 Salvar'}</button>
+            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar'}</button>
           </form>
         </div>
       )}
@@ -416,7 +416,7 @@ export default function DocumentosFiscais() {
       {/* Gerador de declarações */}
       {aba === 'declaracoes' && (
         <div style={{ ...s.card, borderColor:LARANJA+'60', marginBottom:'1.25rem' }}>
-          <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}>📄 Gerador de Declarações</div>
+          <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}><i className="ti ti-file" style={{marginRight:4}} /> Gerador de Declarações</div>
           <div style={{ fontSize:12, color:'#888780', marginBottom:12 }}>
             Selecione as declarações e gere um PDF — uma folha por declaração, pronta para impressão e assinatura.
           </div>
@@ -431,7 +431,7 @@ export default function DocumentosFiscais() {
           </div>
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
             <button onClick={gerarDeclaracoesPDF} style={s.btn(declaracoesSel.length>0?LARANJA:'#D3D1C7')}>
-              🖨️ Gerar PDF ({declaracoesSel.length} declarações)
+              <i className="ti ti-printer" style={{fontSize:14}} />️ Gerar PDF ({declaracoesSel.length} declarações)
             </button>
             <button onClick={() => setDeclaracoesSel(Object.keys(TEXTOS_DECLARACOES))} style={s.btn('#F1EFE8','#5F5E5A')}>Todas</button>
             <button onClick={() => setDeclaracoesSel([])} style={s.btn('#F1EFE8','#5F5E5A')}>Limpar</button>
@@ -449,7 +449,7 @@ export default function DocumentosFiscais() {
         {loading ? <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div> :
         docsDaAba.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2.5rem', color:'#888780' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>📁</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-folder" style={{fontSize:14}} /></div>
             <div style={{ fontSize:13 }}>Nenhum documento cadastrado nesta aba.</div>
             {isAdmin && <div style={{ fontSize:12, marginTop:4 }}>Clique em "+ Adicionar documento" para começar.</div>}
           </div>
@@ -464,7 +464,7 @@ export default function DocumentosFiscais() {
                   <tr key={d.id} style={{ background: vencido?'#FEF2F2': venceEm30?'#FFFBF0': i%2===0?'#fff':'#FAFAF8' }}>
                     <td style={{ ...s.td, fontWeight:500 }}>
                       {d.arquivo_url ? (
-                        <a href={d.arquivo_url} target="_blank" rel="noopener noreferrer" style={{ color:AZUL, textDecoration:'none' }}>📎 {d.titulo}</a>
+                        <a href={d.arquivo_url} target="_blank" rel="noopener noreferrer" style={{ color:AZUL, textDecoration:'none' }}><i className="ti ti-paperclip" style={{marginRight:4}} /> {d.titulo}</a>
                       ) : d.titulo}
                     </td>
                     <td style={{ ...s.td, color:'#888780' }}>{d.tipo||'—'}</td>
@@ -473,8 +473,8 @@ export default function DocumentosFiscais() {
                       {d.vencimento ? (
                         <span style={{ color: vencido?VERMELHO: venceEm30?LARANJA:'inherit', fontWeight: (vencido||venceEm30)?600:400 }}>
                           {new Date(d.vencimento+'T12:00:00').toLocaleDateString('pt-BR')}
-                          {vencido && ' ⚠ Vencido'}
-                          {venceEm30 && ' ⚡ Vence em breve'}
+                          {vencido && ' <i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Vencido'}
+                          {venceEm30 && ' <i className="ti ti-bolt" style={{marginRight:4}} /> Vence em breve'}
                         </span>
                       ) : '—'}
                     </td>
@@ -553,7 +553,7 @@ export default function DocumentosFiscais() {
                   {docsArquivo.map(doc => (
                     <tr key={doc.id}>
                       <td style={{ ...s.td, fontWeight:500 }}>
-                        <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer" style={{ color:AZUL, textDecoration:'none' }}>📄 {doc.titulo}</a>
+                        <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer" style={{ color:AZUL, textDecoration:'none' }}><i className="ti ti-file" style={{marginRight:4}} /> {doc.titulo}</a>
                       </td>
                       <td style={s.td}><span style={s.badge('#E6F1FB','#185FA5')}>{doc.categoria}</span></td>
                       <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{doc.arquivo_nome}</td>
@@ -561,7 +561,7 @@ export default function DocumentosFiscais() {
                       <td style={s.td}>
                         {isAdmin ? (
                           <button onClick={() => alternarPublico(doc)} style={{ ...s.badge(doc.publico?'#EAF3DE':'#F1EFE8', doc.publico?'#3B6D11':'#5F5E5A'), border:'none', cursor:'pointer' }}>
-                            {doc.publico ? '🌐 Público' : '🔒 Privado'}
+                            {doc.publico ? '<i className="ti ti-world" style={{marginRight:4}} /> Público' : '<i className="ti ti-lock" style={{marginRight:4}} /> Privado'}
                           </button>
                         ) : (
                           <span style={s.badge(doc.publico?'#EAF3DE':'#F1EFE8', doc.publico?'#3B6D11':'#5F5E5A')}>{doc.publico?'Público':'Privado'}</span>

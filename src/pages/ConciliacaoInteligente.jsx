@@ -171,7 +171,7 @@ export default function ConciliacaoInteligente() {
     setResultado(prev => prev.map(r =>
       r.mov?.id === item.mov?.id ? { ...r, status: 'confirmado' } : r
     ))
-    setMsg('✓ Conciliação confirmada!')
+    setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Conciliação confirmada!')
     setTimeout(() => setMsg(''), 2000)
   }
 
@@ -186,7 +186,7 @@ export default function ConciliacaoInteligente() {
     for (const item of autoItems) {
       await confirmarConciliacao(item)
     }
-    setMsg(`✅ ${autoItems.length} conciliações confirmadas!`)
+    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${autoItems.length} conciliações confirmadas!`)
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -194,12 +194,12 @@ export default function ConciliacaoInteligente() {
   const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
   const STATUS_INFO = {
-    conciliado_auto: { label: 'Conciliado automaticamente', bg: '#EAF3DE', cor: '#3B6D11', icon: '✓' },
+    conciliado_auto: { label: 'Conciliado automaticamente', bg: '#EAF3DE', cor: '#3B6D11', icon: '<i className="ti ti-check" style={{fontSize:14}} />' },
     possivel:        { label: 'Possível correspondência',   bg: '#FAEEDA', cor: '#854F0B', icon: '?' },
     duplicidade:     { label: 'Duplicidade',                bg: '#FCEBEB', cor: '#A32D2D', icon: '!' },
     sem_lancamento:  { label: 'Sem lançamento operacional', bg: '#F1EFE8', cor: '#5F5E5A', icon: '—' },
     sem_extrato:     { label: 'Sem extrato bancário',       bg: '#E6F1FB', cor: '#185FA5', icon: '↑' },
-    confirmado:      { label: 'Confirmado',                  bg: '#EAF3DE', cor: '#3B6D11', icon: '✓✓' },
+    confirmado:      { label: 'Confirmado',                  bg: '#EAF3DE', cor: '#3B6D11', icon: '<i className="ti ti-check" style={{fontSize:14}} /><i className="ti ti-check" style={{fontSize:14}} />' },
   }
 
   const listaFiltrada = resultado.filter(r => {
@@ -263,7 +263,7 @@ export default function ConciliacaoInteligente() {
         {resultado.length === 0 && !loading && (
           <button onClick={cruzarAutomatico} disabled={cruzando}
             style={{ ...s.btn(AZUL), fontSize: 12, padding: '6px 16px', marginLeft: 'auto' }}>
-            {cruzando ? 'Cruzando...' : '⚡ Cruzar automaticamente'}
+            {cruzando ? 'Cruzando...' : '<i className="ti ti-bolt" style={{marginRight:4}} /> Cruzar automaticamente'}
           </button>
         )}
       </div>
@@ -291,7 +291,7 @@ export default function ConciliacaoInteligente() {
           </div>
           <button onClick={cruzarAutomatico} disabled={cruzando}
             style={{ padding: '8px 20px', fontSize: 13, borderRadius: 8, border: 'none', background: AZUL, color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
-            {cruzando ? 'Cruzando dados...' : '⚡ Iniciar cruzamento automático'}
+            {cruzando ? 'Cruzando dados...' : '<i className="ti ti-bolt" style={{marginRight:4}} /> Iniciar cruzamento automático'}
           </button>
         </div>
       )}
@@ -331,7 +331,7 @@ export default function ConciliacaoInteligente() {
               <button onClick={() => setFiltro('sem_extrato')} style={s.tab(filtro==='sem_extrato')}>Sem extrato ({stats.semExtrato})</button>
               {stats.autoMatched > 0 && (
                 <button onClick={confirmarTodosAuto} style={{ ...s.btn(VERDE), marginLeft: 'auto', fontSize: 12, padding: '5px 14px' }}>
-                  ✓ Confirmar todos automáticos ({stats.autoMatched})
+                  <i className="ti ti-check" style={{marginRight:4}} /> Confirmar todos automáticos ({stats.autoMatched})
                 </button>
               )}
             </div>
@@ -408,21 +408,21 @@ export default function ConciliacaoInteligente() {
                         <td style={s.td}>
                           {item.status === 'conciliado_auto' && (
                             <div style={{ display: 'flex', gap: 4 }}>
-                              <button onClick={() => confirmarConciliacao(item)} style={s.btn(VERDE)}>✓ Confirmar</button>
-                              <button onClick={() => rejeitarMatch(item)} style={s.btn('#F1EFE8', '#5F5E5A')}>✕</button>
+                              <button onClick={() => confirmarConciliacao(item)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar</button>
+                              <button onClick={() => rejeitarMatch(item)} style={s.btn('#F1EFE8', '#5F5E5A')}><i className="ti ti-x" style={{fontSize:14}} /></button>
                             </div>
                           )}
                           {item.status === 'possivel' && (
                             <div style={{ display: 'flex', gap: 4 }}>
-                              <button onClick={() => confirmarConciliacao(item)} style={s.btn(LARANJA)}>✓ Confirmar</button>
-                              <button onClick={() => rejeitarMatch(item)} style={s.btn('#F1EFE8', '#5F5E5A')}>✕ Rejeitar</button>
+                              <button onClick={() => confirmarConciliacao(item)} style={s.btn(LARANJA)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar</button>
+                              <button onClick={() => rejeitarMatch(item)} style={s.btn('#F1EFE8', '#5F5E5A')}><i className="ti ti-x" style={{marginRight:4}} /> Rejeitar</button>
                             </div>
                           )}
                           {item.status === 'duplicidade' && (
                             <div style={{ fontSize: 11, color: VERMELHO }}>Resolva manualmente na Conciliação</div>
                           )}
                           {item.status === 'confirmado' && (
-                            <span style={s.badge('#EAF3DE', '#3B6D11')}>✓✓ Conciliado</span>
+                            <span style={s.badge('#EAF3DE', '#3B6D11')}><i className="ti ti-check" style={{fontSize:14}} /><i className="ti ti-check" style={{marginRight:4}} /> Conciliado</span>
                           )}
                           {(item.status === 'sem_lancamento' || item.status === 'sem_extrato') && (
                             <span style={{ fontSize: 11, color: '#888780' }}>Classificar na Conciliação</span>

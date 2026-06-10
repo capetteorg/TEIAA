@@ -210,7 +210,7 @@ export default function ControleDividas() {
       }
     }
 
-    setMsg(editandoId ? '✅ Atualizado!' : '✅ Cadastrado! Competências geradas automaticamente.')
+    setMsg(editandoId ? '<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Atualizado!' : '<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Cadastrado! Competências geradas automaticamente.')
     setForm({ equipe_id:'', tipo_vinculo:'CLT', valor_mensal_normal:'', divida_inicial:'', data_base_divida:'2024-12-31', observacoes:'', ativo:true })
     setEditandoId(null)
     setMostrarForm(false)
@@ -234,7 +234,7 @@ export default function ControleDividas() {
       usuario_id: user?.id || null,
     })
     await recalcularSaldo(parseInt(formAdj.pessoa_id))
-    setMsg('✅ Lançamento registrado!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento registrado!')
     setFormAdj({ pessoa_id:'', tipo:'ajuste', valor:'', data_movimentacao:new Date().toISOString().slice(0,10), competencia:new Date().toISOString().slice(0,7), descricao:'', observacoes:'' })
     carregar()
     setSalvando(false)
@@ -247,7 +247,7 @@ export default function ControleDividas() {
     await supabase.from('divida_movimentacoes').delete().eq('pessoa_id', pe.id)
     await supabase.from('pessoas_recorrentes').delete().eq('id', pe.id)
     carregar()
-    setMsg('✅ Pessoa excluída.')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pessoa excluída.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -373,19 +373,19 @@ export default function ControleDividas() {
             </div>
             {!editandoId && (
               <div style={{ background:'#E6F1FB', border:'0.5px solid #B3D1F0', borderRadius:8, padding:'8px 12px', marginBottom:10, fontSize:11, color:'#185FA5' }}>
-                📅 O sistema vai gerar automaticamente as competências de <strong>jan/2025</strong> até <strong>hoje</strong> como pendentes.
+                <i className="ti ti-calendar" style={{marginRight:4}} /> O sistema vai gerar automaticamente as competências de <strong>jan/2025</strong> até <strong>hoje</strong> como pendentes.
                 {parseFloat(form.divida_inicial) > 0 && <span> Uma movimentação de dívida inicial de <strong>{fmt(form.divida_inicial)}</strong> será lançada automaticamente.</span>}
               </div>
             )}
             <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':editandoId?'💾 Salvar':'+ Cadastrar'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':editandoId?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Cadastrar'}</button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditandoId(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>
         </div>
       )}
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:4, marginBottom:'1.25rem', flexWrap:'wrap' }}>
@@ -405,7 +405,7 @@ export default function ControleDividas() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'1rem' }}>
           {pessoas.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780', gridColumn:'1/-1' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}>👥</div>
+              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-users" style={{fontSize:14}} /></div>
               <div style={{ fontSize:13 }}>Nenhuma pessoa cadastrada ainda.</div>
             </div>
           ) : pessoas.map(pe => {
@@ -424,7 +424,7 @@ export default function ControleDividas() {
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ fontSize:10, color:'#888780' }}>Saldo devedor</div>
-                    <div style={{ fontSize:16, fontWeight:700, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'✅ Quitado'}</div>
+                    <div style={{ fontSize:16, fontWeight:700, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Quitado'}</div>
                   </div>
                 </div>
                 <div style={{ padding:'10px 14px' }}>
@@ -466,7 +466,7 @@ export default function ControleDividas() {
             </select>
           </div>
           <div style={{ fontSize:11, color:'#888780', marginBottom:10, background:'#E6F1FB', padding:'8px 12px', borderRadius:8 }}>
-            💡 As competências são atualizadas automaticamente quando você vincula um pagamento na <strong>Conciliação bancária</strong>.
+            <i className="ti ti-bulb" style={{marginRight:4}} /> As competências são atualizadas automaticamente quando você vincula um pagamento na <strong>Conciliação bancária</strong>.
           </div>
           {(() => {
             const lista = pessoaFiltro ? competencias.filter(c => String(c.pessoa_id) === pessoaFiltro) : competencias
@@ -572,7 +572,7 @@ export default function ControleDividas() {
                       <td style={s.td}><span style={s.badge('#F8F7F2','#5F5E5A')}>{TIPO_VINCULO_LABEL[pe.tipo_vinculo]}</span></td>
                       <td style={{ ...s.td, color:AZUL, fontWeight:500 }}>{fmt(pe.valor_mensal_normal||0)}</td>
                       <td style={{ ...s.td, color:'#888780' }}>{fmt(pe.divida_inicial||0)}</td>
-                      <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'✅ Quitado'}</td>
+                      <td style={{ ...s.td, fontWeight:600, color:saldo>0?VERMELHO:VERDE }}>{saldo>0?fmt(saldo):'<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Quitado'}</td>
                       <td style={s.td}><span style={s.badge(pe.ativo?'#EAF3DE':'#F1EFE8', pe.ativo?'#3B6D11':'#888780')}>{pe.ativo?'Sim':'Não'}</span></td>
                       <td style={s.td}>
                         {isAdmin && <button onClick={() => editarPessoa(pe)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}

@@ -83,7 +83,7 @@ export default function Patrimonio() {
     } else {
       await supabase.from('patrimonio').insert(dados)
     }
-    setMsg('✅ Bem salvo!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Bem salvo!')
     setMostrarForm(false)
     setEditandoId(null)
     carregar()
@@ -148,7 +148,7 @@ export default function Patrimonio() {
         ))}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {/* Form */}
       {isAdmin && mostrarForm && (
@@ -195,7 +195,7 @@ export default function Patrimonio() {
               <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
             </div>
             <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':editandoId?'💾 Salvar':'+ Cadastrar'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>{salvando?'Salvando...':editandoId?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Cadastrar'}</button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditandoId(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>
@@ -218,7 +218,7 @@ export default function Patrimonio() {
         {loading ? <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div> :
         bensFiltrados.length === 0 ? (
           <div style={{ textAlign:'center', padding:'3rem', color:'#888780' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>🏢</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-building" style={{fontSize:14}} /></div>
             <div>Nenhum bem cadastrado.</div>
           </div>
         ) : (
@@ -258,7 +258,7 @@ export default function Patrimonio() {
                         {isAdmin && (
                           <div style={{ display:'flex', gap:4 }}>
                             <button onClick={() => abrirForm(b)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), padding:'4px 8px', fontSize:11 }}>Editar</button>
-                            <button onClick={() => excluir(b.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'4px 8px', fontSize:11 }}>✕</button>
+                            <button onClick={() => excluir(b.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'4px 8px', fontSize:11 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                           </div>
                         )}
                       </td>

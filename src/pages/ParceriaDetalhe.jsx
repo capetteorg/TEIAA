@@ -180,7 +180,7 @@ export default function ParceriaDetalhe() {
                       <td style={s.td}>{m.categoria?.nome||'—'}</td>
                       <td style={s.td}>{m.plano?.nome||'—'}</td>
                       <td style={{ ...s.td, fontWeight:500, color:Number(m.valor)>=0?VERDE:VERMELHO, whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
-                      <td style={s.td}><span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>{m.conciliado?'✓ OK':'Pendente'}</span></td>
+                      <td style={s.td}><span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>{m.conciliado?'<i className="ti ti-check" style={{marginRight:4}} /> OK':'Pendente'}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -246,7 +246,7 @@ export default function ParceriaDetalhe() {
               {documentos.map(doc => (
                 <a key={doc.id} href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
                   style={{ display:'block', background:'#F8F7F2', border:'0.5px solid #E0DDD5', borderRadius:10, padding:'1rem', textDecoration:'none' }}>
-                  <div style={{ fontSize:22, marginBottom:6 }}>📄</div>
+                  <div style={{ fontSize:22, marginBottom:6 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                   <div style={{ fontSize:12, fontWeight:500, color:'#2C2C2A', marginBottom:2 }}>{doc.titulo}</div>
                   <div style={{ fontSize:10, color:'#888780' }}>{doc.categoria}</div>
                 </a>

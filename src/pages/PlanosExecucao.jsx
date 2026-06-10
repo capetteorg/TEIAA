@@ -152,7 +152,7 @@ export default function PlanosExecucao() {
     })
     if (error) setMsgProjetos('Erro: ' + error.message)
     else {
-      setMsgProjetos('✅ Projeto vinculado!')
+      setMsgProjetos('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Projeto vinculado!')
       setProjetoParaVincular('')
       carregarProjetosVinculados(planoSel.id)
     }
@@ -198,7 +198,7 @@ export default function PlanosExecucao() {
       setFormOrc({ descricao: '', tipo: 'saida', valor_previsto: '', valor_realizado: '', categoria: '', observacoes: '' })
       setEditandoOrc(null)
       carregarDetalhe(planoSel)
-      setMsgOrc('✅ Salvo!')
+      setMsgOrc('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Salvo!')
       setTimeout(() => setMsgOrc(''), 3000)
     } else {
       setMsgOrc('Erro: ' + error.message)
@@ -255,7 +255,7 @@ export default function PlanosExecucao() {
 
     if (editando) {
       // Edição: volta para lista normalmente
-      setMsg('✅ Plano salvo!')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Plano salvo!')
       setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false)
       carregar()
       setTimeout(() => setMsg(''), 4000)
@@ -270,7 +270,7 @@ export default function PlanosExecucao() {
         setPlanoSel(novo)
         setAbaDetalhe('projetos')
         setAba('detalhe')
-        setMsgProjetos('✅ Plano criado com sucesso! Agora vincule os projetos e serviços que fazem parte deste plano.')
+        setMsgProjetos('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Plano criado com sucesso! Agora vincule os projetos e serviços que fazem parte deste plano.')
         setTimeout(() => setMsgProjetos(''), 6000)
       }
     }
@@ -421,7 +421,7 @@ export default function PlanosExecucao() {
         )}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         <button onClick={() => setAba('lista')} style={s.tab(aba==='lista')}>Lista de planos</button>
@@ -436,7 +436,7 @@ export default function PlanosExecucao() {
           {mostrarForm && (
             <div style={{ ...s.card, borderColor: isPlanoAcao ? '#C9B3E8' : '#C0DD97' }}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-                {editando ? 'Editar plano' : isPlanoAcao ? '📋 Plano de Ação Institucional' : 'Novo Plano de Trabalho'}
+                {editando ? 'Editar plano' : isPlanoAcao ? '<i className="ti ti-clipboard-list" style={{marginRight:4}} /> Plano de Ação Institucional' : 'Novo Plano de Trabalho'}
               </div>
 
               {/* Banner orientação novo plano */}
@@ -524,7 +524,7 @@ export default function PlanosExecucao() {
                 {/* Campos CNAS */}
                 {isPlanoAcao && (
                   <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
-                    <div style={{ fontSize:12, fontWeight:600, color:ROXO, marginBottom:12 }}>📋 Campos específicos CNAS</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:ROXO, marginBottom:12 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Campos específicos CNAS</div>
 
                     <div style={s.secaoCnas}>Identificação da instituição</div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:12 }}>
@@ -545,7 +545,7 @@ export default function PlanosExecucao() {
                       {ORIGENS_RECURSOS_OPCOES.map(origem => (
                         <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
                           style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff', color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
-                          {form.origens_recursos.includes(origem)?'✓ ':''}{origem}
+                          {form.origens_recursos.includes(origem)?'<i className="ti ti-check" style={{marginRight:4}} /> ':''}{origem}
                         </button>
                       ))}
                     </div>
@@ -597,7 +597,7 @@ export default function PlanosExecucao() {
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                   <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':isPlanoAcao?ROXO:VERDE)}>
-                    {salvando ? 'Salvando...' : editando ? '💾 Salvar alterações' : `✅ Salvar e vincular projetos →`}
+                    {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : `<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Salvar e vincular projetos →`}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                 </div>
@@ -607,7 +607,7 @@ export default function PlanosExecucao() {
 
           {planos.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}>📋</div>
+              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:14}} /></div>
               <div style={{ fontSize:13 }}>Nenhum plano cadastrado ainda.</div>
             </div>
           ) : (
@@ -706,13 +706,13 @@ export default function PlanosExecucao() {
 
           <div style={{ display:'flex', gap:6, marginBottom:'1rem', flexWrap:'wrap' }}>
             {[
-              ['projetos','📁 Projetos e Serviços'],
-              ['orcamento','💰 Orçamento'],
+              ['projetos','<i className="ti ti-folder" style={{marginRight:4}} /> Projetos e Serviços'],
+              ['orcamento','<i className="ti ti-cash" style={{marginRight:4}} /> Orçamento'],
               ['metas','Metas'],
               ['atividades','Atividades previstas'],
               ['execucao','Execução realizada'],
               ['usuarios','Usuários'],
-              ...(planoSel.tipo_plano === 'Plano de Ação Institucional' ? [['cnas','📋 CNAS']] : []),
+              ...(planoSel.tipo_plano === 'Plano de Ação Institucional' ? [['cnas','<i className="ti ti-clipboard-list" style={{marginRight:4}} /> CNAS']] : []),
             ].map(([id,label]) => (
               <button key={id} onClick={() => setAbaDetalhe(id)} style={s.tabSec(abaDetalhe===id)}>{label}</button>
             ))}
@@ -722,7 +722,7 @@ export default function PlanosExecucao() {
           {abaDetalhe === 'projetos' && (
             <div>
               {msgProjetos && (
-                <div style={{ fontSize:12, padding:'10px 14px', borderRadius:8, marginBottom:'1rem', background:msgProjetos.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgProjetos.includes('✅')?'#3B6D11':'#A32D2D', fontWeight:500 }}>
+                <div style={{ fontSize:12, padding:'10px 14px', borderRadius:8, marginBottom:'1rem', background:msgProjetos.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgProjetos.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D', fontWeight:500 }}>
                   {msgProjetos}
                 </div>
               )}
@@ -746,7 +746,7 @@ export default function PlanosExecucao() {
 
                 {projetosVinculados.length === 0 ? (
                   <div style={{ background:'#F8F7F2', borderRadius:10, padding:'1.5rem', textAlign:'center' }}>
-                    <div style={{ fontSize:28, marginBottom:8 }}>📁</div>
+                    <div style={{ fontSize:28, marginBottom:8 }}><i className="ti ti-folder" style={{fontSize:14}} /></div>
                     <div style={{ fontSize:13, fontWeight:500, color:'#5F5E5A', marginBottom:4 }}>Nenhum projeto vinculado ainda</div>
                     <div style={{ fontSize:12, color:'#888780' }}>
                       Selecione os projetos, serviços e programas que fazem parte deste plano usando o campo acima.
@@ -807,7 +807,7 @@ export default function PlanosExecucao() {
             <div style={s.card}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Orçamento do plano</div>
 
-              {msgOrc && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msgOrc.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgOrc.includes('✅')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
+              {msgOrc && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msgOrc.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgOrc.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
 
               <form onSubmit={salvarOrcamento} style={{ background:'#F8F7F2', borderRadius:10, padding:12, marginBottom:'1rem' }}>
                 <div style={{ fontSize:12, fontWeight:500, marginBottom:8 }}>{editandoOrc ? 'Editar linha' : 'Adicionar linha'}</div>
@@ -827,7 +827,7 @@ export default function PlanosExecucao() {
                   <div><label style={s.label}>Observações</label><input value={formOrc.observacoes} onChange={e=>setFormOrc(f=>({...f,observacoes:e.target.value}))} style={s.input} /></div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvandoOrc} style={s.btn(VERDE)}>{editandoOrc?'💾 Salvar':'+ Adicionar'}</button>
+                  <button type="submit" disabled={salvandoOrc} style={s.btn(VERDE)}>{editandoOrc?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar'}</button>
                   {editandoOrc && <button type="button" onClick={() => { setFormOrc({ descricao:'', tipo:'saida', valor_previsto:'', valor_realizado:'', categoria:'', observacoes:'' }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -970,7 +970,7 @@ export default function PlanosExecucao() {
                 </div>
                 <div style={{ marginBottom:8 }}><label style={s.label}>Justificativa / Observação</label><input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} /></div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta?'💾 Salvar':'+ Adicionar meta'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar meta'}</button>
                   {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -1032,7 +1032,7 @@ export default function PlanosExecucao() {
                   <div><label style={s.label}>Responsável / Equipe prevista</label><input value={formAtiv.responsavel_equipe} onChange={e=>setFormAtiv(f=>({...f,responsavel_equipe:e.target.value}))} style={s.input} /></div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv?'💾 Salvar':'+ Adicionar'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv?'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar':'+ Adicionar'}</button>
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -1159,7 +1159,7 @@ export default function PlanosExecucao() {
           {abaDetalhe === 'cnas' && planoSel.tipo_plano === 'Plano de Ação Institucional' && (
             <div>
               <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:ROXO, marginBottom:14 }}>📋 Ficha CNAS — Plano de Ação Institucional</div>
+                <div style={{ fontSize:13, fontWeight:600, color:ROXO, marginBottom:14 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Ficha CNAS — Plano de Ação Institucional</div>
                 <div style={s.secaoCnas}>Identificação da instituição</div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:8, marginBottom:14 }}>
                   {[['Nome completo',instituicao?.nome_completo||planoSel.nome_plano],['CNPJ',instituicao?.cnpj||'—'],['Endereço',instituicao?.endereco||'—'],['Telefone/E-mail',[instituicao?.telefone,instituicao?.email].filter(Boolean).join(' · ')||'—']].map(([l,v])=>(
@@ -1185,7 +1185,7 @@ export default function PlanosExecucao() {
                   </div>
                 ) : null)}
                 <div style={{ marginTop:14 }}>
-                  <button onClick={() => editarPlano(planoSel)} style={s.btn(ROXO)}>✏️ Editar campos CNAS</button>
+                  <button onClick={() => editarPlano(planoSel)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} />️ Editar campos CNAS</button>
                 </div>
               </div>
               {metas.length > 0 && (
@@ -1224,7 +1224,7 @@ export default function PlanosExecucao() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>

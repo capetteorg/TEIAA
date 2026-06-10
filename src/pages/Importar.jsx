@@ -276,7 +276,7 @@ export default function Importar() {
 
           {step === 3 && (
             <div style={{ ...s.card, textAlign: 'center', padding: '3rem' }}>
-              <div style={{ fontSize: 48, marginBottom: '1rem' }}>✅</div>
+              <div style={{ fontSize: 48, marginBottom: '1rem' }}><i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} /></div>
               <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
               <div style={{ fontSize: 13, color: '#888780', marginBottom: '1.5rem' }}>
                 Agora vá em <strong>Conciliação</strong> para categorizar e validar as movimentações.
@@ -302,10 +302,10 @@ export default function Importar() {
           {/* Sub-abas */}
           <div style={{ display:'flex', gap:6, marginBottom:'1rem' }}>
             <button onClick={() => setAbaHist('extrato')} style={{ ...s.tab(abaHist==='extrato'), fontSize:11 }}>
-              🏦 Extratos bancários ({historico.length})
+              <i className="ti ti-building-bank" style={{marginRight:4}} /> Extratos bancários ({historico.length})
             </button>
             <button onClick={() => setAbaHist('cobrancas')} style={{ ...s.tab(abaHist==='cobrancas'), fontSize:11 }}>
-              🧾 Cobranças / Boletos ({historicoCob.length})
+              <i className="ti ti-receipt-2" style={{marginRight:4}} /> Cobranças / Boletos ({historicoCob.length})
             </button>
           </div>
 
@@ -388,7 +388,7 @@ export default function Importar() {
       {confirmandoCancelar && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:380, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Cancelar importação?</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:4 }}>
               {confirmandoCancelar._tipo === 'cobranca'

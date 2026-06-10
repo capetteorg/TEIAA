@@ -11,10 +11,10 @@ const GRAVIDADE = {
 }
 
 const TIPO = {
-  financeira: { label:'Financeiro', icon:'💰' },
-  cobranca:   { label:'Cobrança',   icon:'📋' },
-  projeto:    { label:'Projeto',    icon:'📁' },
-  documental: { label:'Documento',  icon:'📄' },
+  financeira: { label:'Financeiro', icon:'<i className="ti ti-cash" style={{fontSize:14}} />' },
+  cobranca:   { label:'Cobrança',   icon:'<i className="ti ti-clipboard-list" style={{fontSize:14}} />' },
+  projeto:    { label:'Projeto',    icon:'<i className="ti ti-folder" style={{fontSize:14}} />' },
+  documental: { label:'Documento',  icon:'<i className="ti ti-file" style={{fontSize:14}} />' },
 }
 
 export default function Pendencias() {
@@ -44,7 +44,7 @@ export default function Pendencias() {
     await supabase.rpc('gerar_pendencias')
     await carregar()
     setAtualizando(false)
-    setMsg('✅ Pendências atualizadas!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pendências atualizadas!')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -85,7 +85,7 @@ export default function Pendencias() {
           <div style={{ fontSize:12, color:'#888780' }}>Itens que precisam de atenção</div>
         </div>
         <button onClick={atualizar} disabled={atualizando} style={s.btn(AZUL)}>
-          {atualizando ? '⏳ Atualizando...' : '↻ Atualizar pendências'}
+          {atualizando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Atualizando...' : '↻ Atualizar pendências'}
         </button>
       </div>
 
@@ -132,7 +132,7 @@ export default function Pendencias() {
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
         ) : lista.length === 0 ? (
           <div style={{ textAlign:'center', padding:'3rem', color:'#888780' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>✅</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} /></div>
             <div style={{ fontSize:13 }}>
               {filtroResolvida === 'pendentes' ? 'Nenhuma pendência no momento!' : 'Nenhum item encontrado.'}
             </div>
@@ -150,7 +150,7 @@ export default function Pendencias() {
             <tbody>
               {lista.map((p,i) => {
                 const grav = GRAVIDADE[p.gravidade] || GRAVIDADE.informativa
-                const tipo = TIPO[p.tipo] || { label:p.tipo, icon:'📌' }
+                const tipo = TIPO[p.tipo] || { label:p.tipo, icon:'<i className="ti ti-pin" style={{fontSize:14}} />' }
                 return (
                   <tr key={p.id} style={{ background:p.resolvida?'#F8F7F2':i%2===0?'#fff':'#FAFAF8', opacity:p.resolvida?0.7:1 }}>
                     <td style={s.td}>
@@ -174,7 +174,7 @@ export default function Pendencias() {
                           <button onClick={() => navigate(p.rota_resolucao)} style={s.btn(AZUL)}>Resolver →</button>
                         )}
                         {!p.resolvida && (
-                          <button onClick={() => resolver(p.id)} style={s.btn('#EAF3DE','#3B6D11')}>✓ OK</button>
+                          <button onClick={() => resolver(p.id)} style={s.btn('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> OK</button>
                         )}
                         {p.resolvida && (
                           <button onClick={() => reabrirPendencia(p.id)} style={s.btn('#F1EFE8','#5F5E5A')}>Reabrir</button>

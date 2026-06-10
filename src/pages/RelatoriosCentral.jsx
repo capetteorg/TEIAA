@@ -464,7 +464,7 @@ export default function RelatoriosCentral() {
           <button onClick={gerar} disabled={loading} style={s.btn(loading?'#D3D1C7':AZUL)}>
             {loading ? 'Gerando...' : 'Gerar relatório'}
           </button>
-          {dados && <button onClick={exportarPDF} style={s.btn(VERDE)}>📄 Exportar PDF</button>}
+          {dados && <button onClick={exportarPDF} style={s.btn(VERDE)}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
         </div>
       </div>
 
@@ -476,7 +476,7 @@ export default function RelatoriosCentral() {
           <div>
             {/* Identificação */}
             <div style={{ ...s.card, background:'linear-gradient(135deg,#F0EAFA,#F8F7F2)' }}>
-              <div style={{ fontSize:14, fontWeight:700, color:ROXO, marginBottom:12 }}>📋 {plano.nome_plano}</div>
+              <div style={{ fontSize:14, fontWeight:700, color:ROXO, marginBottom:12 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> {plano.nome_plano}</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
                 {[
                   ['Instituição', inst?.nome_completo||'—'],
@@ -608,7 +608,7 @@ export default function RelatoriosCentral() {
           <div>
             {/* Cabeçalho */}
             <div style={{ ...s.card, background:'linear-gradient(135deg,#EAF3DE,#F8F7F2)' }}>
-              <div style={{ fontSize:14, fontWeight:700, color:VERDE, marginBottom:8 }}>📊 Relatório de Execução — {plano.nome_plano}</div>
+              <div style={{ fontSize:14, fontWeight:700, color:VERDE, marginBottom:8 }}><i className="ti ti-chart-bar" style={{marginRight:4}} /> Relatório de Execução — {plano.nome_plano}</div>
               <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:10 }}>
                 Período: {fmtData(plano.periodo_inicio)} a {fmtData(plano.periodo_fim)}
               </div>
@@ -769,7 +769,7 @@ export default function RelatoriosCentral() {
                       <td style={{ ...s.td, fontWeight:500, color:Number(m.valor)>=0?VERDE:VERMELHO, textAlign:'right', whiteSpace:'nowrap' }}>{fmt(m.valor)}</td>
                       <td style={s.td}>
                         <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
-                          {m.conciliado ? '✓ OK' : 'Pendente'}
+                          {m.conciliado ? '<i className="ti ti-check" style={{marginRight:4}} /> OK' : 'Pendente'}
                         </span>
                       </td>
                     </tr>

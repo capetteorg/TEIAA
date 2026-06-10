@@ -73,7 +73,7 @@ export default function LancamentosLista() {
     if (!error) {
       setEditando(null)
       setFormEdit({})
-      setMsg('✅ Lançamento atualizado.')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento atualizado.')
       carregar()
       setTimeout(() => setMsg(''), 3000)
     }
@@ -83,7 +83,7 @@ export default function LancamentosLista() {
   async function excluir(id) {
     await supabase.from('lancamentos').delete().eq('id', id)
     setConfirmandoExcluir(null)
-    setMsg('✅ Lançamento excluído.')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento excluído.')
     carregar()
     setTimeout(() => setMsg(''), 3000)
   }
@@ -116,7 +116,7 @@ export default function LancamentosLista() {
         </div>
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       {/* Métricas */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8, marginBottom:'1.25rem' }}>
@@ -193,7 +193,7 @@ export default function LancamentosLista() {
                           const isLancado = l.status_lanc === 'lancado'
                           const bg = isConciliado ? '#EAF3DE' : isLancado ? '#E6F1FB' : '#F1EFE8'
                           const cor = isConciliado ? '#3B6D11' : isLancado ? '#185FA5' : '#888780'
-                          const label = isConciliado ? '✓ Conciliado' : isLancado ? 'Lançado' : 'Pendente'
+                          const label = isConciliado ? '<i className="ti ti-check" style={{marginRight:4}} /> Conciliado' : isLancado ? 'Lançado' : 'Pendente'
                           return <span style={s.badge(bg, cor)}>{label}</span>
                         })()}
                       </td>
@@ -326,7 +326,7 @@ export default function LancamentosLista() {
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={salvarEdicao} disabled={salvando}
                 style={{ padding:'8px 20px', borderRadius:8, border:'none', background:AZUL, color:'#fff', fontWeight:600, cursor:'pointer' }}>
-                {salvando ? 'Salvando...' : '💾 Salvar'}
+                {salvando ? 'Salvando...' : '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar'}
               </button>
               <button onClick={() => { setEditando(null); setFormEdit({}) }}
                 style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
@@ -341,7 +341,7 @@ export default function LancamentosLista() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Excluir lançamento?</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:4 }}>{confirmandoExcluir.descricao}</div>
             <div style={{ fontSize:13, fontWeight:600, color:VERMELHO, marginBottom:'1.5rem' }}>{fmt(confirmandoExcluir.valor)}</div>

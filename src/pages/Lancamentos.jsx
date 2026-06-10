@@ -151,7 +151,7 @@ export default function Lancamentos({ tipo = 'despesa' }) {
         setPdfBase64(base64)
         setMsgIA('')
       } catch(err) {
-        setMsgIA('❌ Erro ao converter PDF. Tente uma imagem ou texto.')
+        setMsgIA('<i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Erro ao converter PDF. Tente uma imagem ou texto.')
         console.error(err)
       }
     }
@@ -190,7 +190,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
           { type: 'text', text: `${PROMPT_NF}\n\nTexto da nota fiscal:\n${textoNota}` }
         ]
       } else {
-        setMsgIA('❌ Nenhum documento fornecido.')
+        setMsgIA('<i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Nenhum documento fornecido.')
         setAnalisando(false)
         return
       }
@@ -226,10 +226,10 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
         if (forn) setFornecedorId(String(forn.id))
       }
 
-      setMsgIA(`✅ Dados extraídos! Confira e ajuste se necessário.${resultado.fornecedor ? ` Fornecedor: ${resultado.fornecedor}` : ''}`)
+      setMsgIA(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Dados extraídos! Confira e ajuste se necessário.${resultado.fornecedor ? ` Fornecedor: ${resultado.fornecedor}` : ''}`)
       setModoIA(false)
     } catch(e) {
-      setMsgIA('❌ Não foi possível extrair os dados. Preencha manualmente.')
+      setMsgIA('<i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Não foi possível extrair os dados. Preencha manualmente.')
       console.error(e)
     }
     setAnalisando(false)
@@ -307,7 +307,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
       }
     }
 
-    setMsg('✅ Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
     setForm(f => ({ ...f, nf: '', valor: '', descricao: '', categoria_id: '', projeto_id: '' }))
     setSubcategoriaId('')
     setSubcategorias([])
@@ -344,7 +344,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
         <div style={{ ...s.card, borderColor: modoIA ? '#C0DD97' : '#E0DDD5', marginBottom:10 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: modoIA ? '1rem' : 0 }}>
             <div>
-              <div style={{ fontSize:13, fontWeight:500 }}>📄 Adicionar documento fiscal</div>
+              <div style={{ fontSize:13, fontWeight:500 }}><i className="ti ti-file" style={{marginRight:4}} /> Adicionar documento fiscal</div>
               <div style={{ fontSize:11, color:'#888780' }}>A IA extrai valor, data, fornecedor e descrição automaticamente</div>
             </div>
             <button type="button" onClick={() => { setModoIA(!modoIA); setFotoPreview(null); setFotoBase64(null); setPdfBase64(null); setTextoNota(''); setMsgIA('') }}
@@ -356,7 +356,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
             <div>
               {/* Seletor de modo */}
               <div style={{ display:'flex', gap:6, marginBottom:'1rem' }}>
-                {[['foto','📷 Foto/Imagem'],['pdf','📄 PDF'],['texto','📝 Texto']].map(([m,l]) => (
+                {[['foto','<i className="ti ti-camera" style={{marginRight:4}} /> Foto/Imagem'],['pdf','<i className="ti ti-file" style={{marginRight:4}} /> PDF'],['texto','<i className="ti ti-file-text" style={{marginRight:4}} /> Texto']].map(([m,l]) => (
                   <button key={m} type="button" onClick={() => { setModoEntrada(m); setFotoBase64(null); setFotoPreview(null); setPdfBase64(null); setTextoNota(''); setMsgIA('') }}
                     style={{ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${modoEntrada===m?VERDE:'#D3D1C7'}`, background:modoEntrada===m?VERDE:'#fff', color:modoEntrada===m?'#fff':'#5F5E5A', cursor:'pointer' }}>
                     {l}
@@ -371,7 +371,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                   {!fotoPreview ? (
                     <div onClick={() => inputFotoRef.current?.click()}
                       style={{ border:`2px dashed ${VERDE}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F8FFF4' }}>
-                      <div style={{ fontSize:40, marginBottom:8 }}>📷</div>
+                      <div style={{ fontSize:40, marginBottom:8 }}><i className="ti ti-camera" style={{fontSize:14}} /></div>
                       <div style={{ fontSize:13, fontWeight:500, color:VERDE }}>
                         {isMobile ? 'Toque para fotografar ou escolher imagem' : 'Clique para selecionar a foto da nota'}
                       </div>
@@ -384,7 +384,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       <div style={{ display:'flex', gap:8, marginBottom:10 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':VERDE, color:'#fff', cursor:'pointer' }}>
-                          {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
+                          {analisando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Analisando...' : '<i className="ti ti-sparkles" style={{marginRight:4}} /> Extrair dados com IA'}
                         </button>
                         <button type="button" onClick={() => inputFotoRef.current?.click()}
                           style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
@@ -403,7 +403,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                   {!pdfBase64 ? (
                     <div onClick={() => inputPdfRef.current?.click()}
                       style={{ border:`2px dashed ${AZUL}`, borderRadius:12, padding:'2rem', textAlign:'center', cursor:'pointer', background:'#F0F7FF' }}>
-                      <div style={{ fontSize:40, marginBottom:8 }}>📄</div>
+                      <div style={{ fontSize:40, marginBottom:8 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                       <div style={{ fontSize:13, fontWeight:500, color:AZUL }}>Clique para selecionar o PDF da nota fiscal</div>
                       <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>Arquivo .pdf — primeira página será lida pela IA</div>
                     </div>
@@ -413,7 +413,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       <div style={{ display:'flex', gap:8 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':AZUL, color:'#fff', cursor:'pointer' }}>
-                          {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
+                          {analisando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Analisando...' : '<i className="ti ti-sparkles" style={{marginRight:4}} /> Extrair dados com IA'}
                         </button>
                         <button type="button" onClick={() => { setPdfBase64(null); setFotoPreview(null); setFotoBase64(null); inputPdfRef.current?.click() }}
                           style={{ padding:'10px 16px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
@@ -434,13 +434,13 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                     style={{ width:'100%', fontSize:12, padding:'8px 10px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', resize:'vertical', marginBottom:10 }} />
                   <button type="button" onClick={analisarNota} disabled={analisando||!textoNota}
                     style={{ width:'100%', padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando||!textoNota?'#D3D1C7':LARANJA, color:'#fff', cursor:'pointer' }}>
-                    {analisando ? '⏳ Analisando...' : '✨ Extrair dados com IA'}
+                    {analisando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Analisando...' : '<i className="ti ti-sparkles" style={{marginRight:4}} /> Extrair dados com IA'}
                   </button>
                 </div>
               )}
 
               {msgIA && (
-                <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginTop:10, background:msgIA.includes('✅')?'#F2FAE8':'#FEF2F2', color:msgIA.includes('✅')?'#3B6D11':'#A32D2D' }}>
+                <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginTop:10, background:msgIA.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msgIA.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
                   {msgIA}
                 </div>
               )}
@@ -449,12 +449,12 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
         </div>
       )}
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>{msg}</div>}
 
       <form onSubmit={salvar}>
         <div style={s.card}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-            {fotoBase64 && msgIA.includes('✅') ? '✅ Dados extraídos — confira e ajuste' : `Nova ${tipo}`}
+            {fotoBase64 && msgIA.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />') ? '<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Dados extraídos — confira e ajuste' : `Nova ${tipo}`}
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'1fr 1fr 1fr 1fr', gap:10, marginBottom:10 }}>
@@ -503,7 +503,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
               </select>
               {form.projeto_id && (
                 <div style={{ fontSize:11, color:'#3B6D11', marginTop:3 }}>
-                  ✅ Este lançamento aparecerá no financeiro do projeto selecionado
+                  <i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Este lançamento aparecerá no financeiro do projeto selecionado
                 </div>
               )}
             </div>
@@ -520,7 +520,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                       <option value="">Sem fornecedor</option>
                       {fornecedoresFiltrados.map(f => (
                         <option key={f.id} value={f.id}>
-                          {f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}{f.cadastro_rapido?' ⚠️':''}
+                          {f.nome}{f.cpf_cnpj?` — ${f.cpf_cnpj}`:''}{f.cadastro_rapido?' <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️':''}
                         </option>
                       ))}
                     </select>
@@ -553,7 +553,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                     </div>
                   </div>
                   <div style={{ fontSize:11, color:LARANJA, marginBottom:8 }}>
-                    ⚠️ Cadastro rápido — gera pendência para completar os dados depois
+                    <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Cadastro rápido — gera pendência para completar os dados depois
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
                     <button type="button" onClick={salvarFornRapido} disabled={salvandoForn||!formFornRapido.nome}
@@ -569,7 +569,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
               )}
               {fornecedorId && fornecedores.find(f=>String(f.id)===String(fornecedorId))?.cadastro_rapido && (
                 <div style={{ fontSize:11, color:LARANJA, marginTop:3 }}>
-                  ⚠️ Fornecedor com cadastro incompleto — complete em Fornecedores
+                  <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Fornecedor com cadastro incompleto — complete em Fornecedores
                 </div>
               )}
             </div>
@@ -596,7 +596,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
           {isAbatimento && (
             <div style={{ background:'#FEF2F2', border:'0.5px solid #F7C1C1', borderRadius:10, padding:'12px 14px', marginBottom:14 }}>
               <div style={{ fontSize:12, fontWeight:600, color:'#A32D2D', marginBottom:10 }}>
-                💳 Vincular ao abatimento de dívida
+                <i className="ti ti-credit-card" style={{marginRight:4}} /> Vincular ao abatimento de dívida
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:10 }}>
                 <div>
@@ -649,7 +649,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
 
           <button type="submit" disabled={salvando}
             style={{ width:'100%', padding:'12px', fontSize:14, fontWeight:600, borderRadius:10, border:'none', background:salvando?'#D3D1C7':tipo==='despesa'?VERMELHO:VERDE, color:'#fff', cursor:'pointer' }}>
-            {salvando ? 'Salvando...' : tipo==='despesa' ? '💾 Salvar despesa' : '💾 Salvar entrada'}
+            {salvando ? 'Salvando...' : tipo==='despesa' ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar despesa' : '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar entrada'}
           </button>
         </div>
       </form>

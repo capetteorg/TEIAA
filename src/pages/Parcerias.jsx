@@ -111,7 +111,7 @@ export default function Parcerias() {
     }
     if (error) setMsg('Erro: ' + error.message)
     else {
-      setMsg('✅ Salvo!')
+      setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Salvo!')
       setForm(FORM_VAZIO)
       setEditando(null)
       setMostrarForm(false)
@@ -189,7 +189,7 @@ export default function Parcerias() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -301,7 +301,7 @@ export default function Parcerias() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':LARANJA)}>
-                {salvando ? 'Salvando...' : editando ? '💾 Salvar alterações' : '+ Cadastrar'}
+                {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : '+ Cadastrar'}
               </button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>
                 Cancelar
@@ -342,7 +342,7 @@ export default function Parcerias() {
       {/* Cards */}
       {lista.length === 0 ? (
         <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-          <div style={{ fontSize:32, marginBottom:8 }}>📋</div>
+          <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:14}} /></div>
           <div style={{ fontSize:13 }}>Nenhum instrumento cadastrado ainda.</div>
         </div>
       ) : (
@@ -414,7 +414,7 @@ export default function Parcerias() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>

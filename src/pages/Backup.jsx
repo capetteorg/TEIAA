@@ -128,13 +128,13 @@ export default function Backup() {
 
         {progresso && (
           <div style={{ fontSize:12, color:AZUL, marginBottom:12, padding:'8px 12px', background:'#E6F1FB', borderRadius:8 }}>
-            ⏳ {progresso}
+            <i className="ti ti-loader" style={{marginRight:4}} /> {progresso}
           </div>
         )}
 
         {resultado && (
           <div style={{ fontSize:12, color:'#3B6D11', marginBottom:12, padding:'8px 12px', background:'#EAF3DE', borderRadius:8 }}>
-            ✅ Backup gerado com sucesso! {resultado.total.toLocaleString('pt-BR')} registros em {resultado.arquivos} tabelas.
+            <i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Backup gerado com sucesso! {resultado.total.toLocaleString('pt-BR')} registros em {resultado.arquivos} tabelas.
           </div>
         )}
 
@@ -147,18 +147,18 @@ export default function Backup() {
         <div style={{ fontSize:13, fontWeight:500, marginBottom:8 }}>Tabelas incluídas no backup</div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:6 }}>
           {[
-            '💰 Financeiro (contas, extratos, lançamentos)',
-            '📋 Planos de trabalho e metas',
-            '🏛️ Parcerias e emendas',
-            '📁 Projetos e serviços',
-            '📅 Atendimentos e atividades',
-            '👥 Usuários atendidos',
-            '👤 Equipe e funcionários',
-            '🎁 Doações',
-            '📅 Eventos e campanhas',
-            '🏢 Dados institucionais',
-            '📄 Documentos',
-            '💳 Cobranças',
+            '<i className="ti ti-cash" style={{marginRight:4}} /> Financeiro (contas, extratos, lançamentos)',
+            '<i className="ti ti-clipboard-list" style={{marginRight:4}} /> Planos de trabalho e metas',
+            '<i className="ti ti-building-community" style={{fontSize:14}} />️ Parcerias e emendas',
+            '<i className="ti ti-folder" style={{marginRight:4}} /> Projetos e serviços',
+            '<i className="ti ti-calendar" style={{marginRight:4}} /> Atendimentos e atividades',
+            '<i className="ti ti-users" style={{marginRight:4}} /> Usuários atendidos',
+            '<i className="ti ti-user" style={{marginRight:4}} /> Equipe e funcionários',
+            '<i className="ti ti-gift" style={{marginRight:4}} /> Doações',
+            '<i className="ti ti-calendar" style={{marginRight:4}} /> Eventos e campanhas',
+            '<i className="ti ti-building" style={{marginRight:4}} /> Dados institucionais',
+            '<i className="ti ti-file" style={{marginRight:4}} /> Documentos',
+            '<i className="ti ti-credit-card" style={{marginRight:4}} /> Cobranças',
           ].map(item => (
             <div key={item} style={{ fontSize:11, color:'#5F5E5A', padding:'5px 8px', background:'#F8F7F2', borderRadius:6 }}>
               {item}

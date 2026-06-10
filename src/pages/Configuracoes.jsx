@@ -21,32 +21,32 @@ export default function Configuracoes() {
         // Limpa movimentações primeiro (FK), depois extratos
         await supabase.from('extrato_movs').delete().neq('id', 0)
         await supabase.from('extratos').delete().neq('id', 0)
-        setMsg('✓ Extratos e movimentações excluídos.')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Extratos e movimentações excluídos.')
 
       } else if (tipo === 'lancamentos') {
         await supabase.from('rateios').delete().neq('id', 0)
         await supabase.from('lancamentos').delete().neq('id', 0)
-        setMsg('✓ Lançamentos excluídos.')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Lançamentos excluídos.')
 
       } else if (tipo === 'cobrancas') {
         await supabase.from('historico_cobrancas').delete().neq('id', 0)
         await supabase.from('cobrancas').delete().neq('id', 0)
-        setMsg('✓ Cobranças excluídas.')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Cobranças excluídas.')
 
       } else if (tipo === 'eventos_campanhas') {
         await supabase.from('eventos').delete().neq('id', 0)
         await supabase.from('campanhas').delete().neq('id', 0)
-        setMsg('✓ Eventos e campanhas excluídos.')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Eventos e campanhas excluídos.')
 
       } else if (tipo === 'funcionarios') {
         await supabase.from('pagamentos_divida').delete().neq('id', 0)
         await supabase.from('dividas').delete().neq('id', 0)
         await supabase.from('funcionarios').delete().neq('id', 0)
-        setMsg('✓ Funcionários e dívidas excluídos.')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Funcionários e dívidas excluídos.')
 
       } else if (tipo === 'fechamentos') {
         await supabase.from('fechamentos').delete().neq('id', 0)
-        setMsg('✓ Fechamentos excluídos.')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Fechamentos excluídos.')
 
       } else if (tipo === 'tudo') {
         // Ordem correta respeitando FKs
@@ -63,7 +63,7 @@ export default function Configuracoes() {
         await supabase.from('lancamentos').delete().neq('id', 0)
         await supabase.from('eventos').delete().neq('id', 0)
         await supabase.from('campanhas').delete().neq('id', 0)
-        setMsg('✓ Todos os dados de teste foram excluídos. Sistema pronto para uso real!')
+        setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Todos os dados de teste foram excluídos. Sistema pronto para uso real!')
       }
     } catch(err) {
       setMsg('Erro: ' + err.message)
@@ -88,7 +88,7 @@ export default function Configuracoes() {
       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Configurações avançadas</div>
 
       <div style={{ background: '#FEF2F2', border: '0.5px solid #F7C1C1', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#A32D2D', marginBottom: 4 }}>⚠ Zona de perigo</div>
+        <div style={{ fontSize: 13, fontWeight: 500, color: '#A32D2D', marginBottom: 4 }}><i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Zona de perigo</div>
         <div style={{ fontSize: 12, color: '#5F5E5A' }}>As ações abaixo são irreversíveis. Use apenas para limpar dados de teste antes de começar o uso real.</div>
       </div>
 
@@ -108,7 +108,7 @@ export default function Configuracoes() {
       ) : (
         <div>
           <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.6rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: '#3B6D11' }}>
-            ✓ Senha verificada — você pode executar as ações abaixo.
+            <i className="ti ti-check" style={{marginRight:4}} /> Senha verificada — você pode executar as ações abaixo.
           </div>
 
           {msg && (

@@ -135,7 +135,7 @@ export default function PainelDiretoria() {
       {/* Abas por conta */}
       <div style={{ display: 'flex', gap: 6, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <button onClick={() => setContaSel('todas')} style={s.contaTab(contaSel === 'todas')}>
-          🏦 Todas as contas
+          <i className="ti ti-building-bank" style={{marginRight:4}} /> Todas as contas
         </button>
         {contas.map(c => (
           <button key={c.id} onClick={() => setContaSel(String(c.id))} style={s.contaTab(contaSel === String(c.id))}>

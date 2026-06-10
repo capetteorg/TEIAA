@@ -81,7 +81,7 @@ export default function Categorias() {
                         <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontSize: 11 }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#B4B2A9', display: 'inline-block' }} />
                           <span style={{ flex: 1 }}>{s.nome}</span>
-                          <button onClick={() => excluirSub(s.id)} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 6, border: '0.5px solid #E8212A', background: 'transparent', color: '#E8212A', cursor: 'pointer' }}>✕</button>
+                          <button onClick={() => excluirSub(s.id)} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 6, border: '0.5px solid #E8212A', background: 'transparent', color: '#E8212A', cursor: 'pointer' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                         </div>
                       ))
                     }

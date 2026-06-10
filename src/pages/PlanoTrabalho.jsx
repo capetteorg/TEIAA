@@ -126,7 +126,7 @@ export default function PlanoTrabalho() {
       ;({ error } = await supabase.from('planos').insert(dados))
     }
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('✅ Plano salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
+    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Plano salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -232,7 +232,7 @@ export default function PlanoTrabalho() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -341,7 +341,7 @@ export default function PlanoTrabalho() {
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                   <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
-                    {salvando ? 'Salvando...' : editando ? '💾 Salvar' : '+ Criar plano'}
+                    {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Criar plano'}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                 </div>
@@ -352,7 +352,7 @@ export default function PlanoTrabalho() {
           {/* Lista de planos */}
           {planos.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}>📋</div>
+              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:14}} /></div>
               <div style={{ fontSize:13 }}>Nenhum plano cadastrado ainda.</div>
             </div>
           ) : (
@@ -494,7 +494,7 @@ export default function PlanoTrabalho() {
                     <input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} />
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? '💾 Salvar' : '+ Adicionar meta'}</button>
+                    <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Adicionar meta'}</button>
                     {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                   </div>
                 </form>
@@ -573,7 +573,7 @@ export default function PlanoTrabalho() {
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv ? '💾 Salvar' : '+ Adicionar'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar' : '+ Adicionar'}</button>
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>

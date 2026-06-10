@@ -122,7 +122,7 @@ export default function Login() {
             </form>
 
             <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#B4B2A9' }}>
-              🔒 Acesso restrito à equipe autorizada.
+              <i className="ti ti-lock" style={{marginRight:4}} /> Acesso restrito à equipe autorizada.
             </div>
           </div>
 
@@ -151,9 +151,9 @@ export default function Login() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
                 {[
-                  { icon: '📊', texto: 'Receitas e despesas por período' },
-                  { icon: '📄', texto: 'Relatórios e documentos de prestação de contas' },
-                  { icon: '🔍', texto: 'Consulta pública, livre e sem cadastro' },
+                  { icon: '<i className="ti ti-chart-bar" style={{fontSize:14}} />', texto: 'Receitas e despesas por período' },
+                  { icon: '<i className="ti ti-file" style={{fontSize:14}} />', texto: 'Relatórios e documentos de prestação de contas' },
+                  { icon: '<i className="ti ti-search" style={{fontSize:14}} />', texto: 'Consulta pública, livre e sem cadastro' },
                 ].map(item => (
                   <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#3B6D11' }}>
                     <span style={{ fontSize: 14 }}>{item.icon}</span>
@@ -175,7 +175,7 @@ export default function Login() {
               Acessar Transparência →
             </a>
             <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#6BBF2B' }}>
-              🌿 Sem necessidade de login
+              <i className="ti ti-leaf" style={{marginRight:4}} /> Sem necessidade de login
             </div>
           </div>
         </div>

@@ -8,11 +8,11 @@ const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F48
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 const STATUS_CONFIG = {
-  aberto:            { label:'Aberto',               bg:'#F1EFE8', cor:'#5F5E5A',  icon:'📂' },
-  fechado:           { label:'Aguardando aprovação', bg:'#E6F1FB', cor:'#185FA5',  icon:'🔒' },
-  aprovado:          { label:'Aprovado',             bg:'#EAF3DE', cor:'#3B6D11',  icon:'✅' },
-  aprovado_ressalva: { label:'Aprovado c/ ressalva', bg:'#FAEEDA', cor:'#854F0B',  icon:'⚠️' },
-  reprovado:         { label:'Reprovado',            bg:'#FEF2F2', cor:'#A32D2D',  icon:'❌' },
+  aberto:            { label:'Aberto',               bg:'#F1EFE8', cor:'#5F5E5A',  icon:'<i className="ti ti-folder-open" style={{fontSize:14}} />' },
+  fechado:           { label:'Aguardando aprovação', bg:'#E6F1FB', cor:'#185FA5',  icon:'<i className="ti ti-lock" style={{fontSize:14}} />' },
+  aprovado:          { label:'Aprovado',             bg:'#EAF3DE', cor:'#3B6D11',  icon:'<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />' },
+  aprovado_ressalva: { label:'Aprovado c/ ressalva', bg:'#FAEEDA', cor:'#854F0B',  icon:'<i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️' },
+  reprovado:         { label:'Reprovado',            bg:'#FEF2F2', cor:'#A32D2D',  icon:'<i className="ti ti-circle-x" style={{fontSize:14, color:'#A32D2D'}} />' },
 }
 
 function badgeStatus(status) {
@@ -101,8 +101,8 @@ export default function Fechamento() {
       })
       erro = error
     }
-    if (erro) { setMsg(`⚠ Erro: ${erro.message}`); return }
-    setMsg(`✅ Mês ${competencia} fechado e aguardando aprovação!`)
+    if (erro) { setMsg(`<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Erro: ${erro.message}`); return }
+    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Mês ${competencia} fechado e aguardando aprovação!`)
     await carregar()
     setTimeout(() => setMsg(''), 4000)
   }
@@ -122,7 +122,7 @@ export default function Fechamento() {
       reuniao_modalidade: null,
       membros_presentes: null,
     }).eq('competencia', competencia)
-    if (error) { setMsg(`⚠ Erro: ${error.message}`); return }
+    if (error) { setMsg(`<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Erro: ${error.message}`); return }
     setMsg('Mês reaberto.')
     await carregar()
     setTimeout(() => setMsg(''), 3000)
@@ -131,8 +131,8 @@ export default function Fechamento() {
   async function salvarAprovacao(competencia) {
     setSalvando(true)
     const { tipo_aprovacao, ressalvas, reuniao_data, reuniao_local, membros_presentes, observacoes, modalidade } = formAprov
-    if (!tipo_aprovacao) { setMsg('⚠ Selecione o tipo de aprovação.'); setSalvando(false); return }
-    if (!reuniao_data) { setMsg('⚠ Informe a data da reunião.'); setSalvando(false); return }
+    if (!tipo_aprovacao) { setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Selecione o tipo de aprovação.'); setSalvando(false); return }
+    if (!reuniao_data) { setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Informe a data da reunião.'); setSalvando(false); return }
     const { error } = await supabase.from('fechamentos').update({
       status: tipo_aprovacao,
       tipo_aprovacao,
@@ -145,10 +145,10 @@ export default function Fechamento() {
       membros_presentes: membros_presentes || null,
       observacoes: observacoes || null,
     }).eq('competencia', competencia)
-    if (error) { setMsg(`⚠ Erro: ${error.message}`); setSalvando(false); return }
+    if (error) { setMsg(`<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Erro: ${error.message}`); setSalvando(false); return }
     setAprovacaoAberta(null)
     setFormAprov({})
-    setMsg(`✅ Aprovação registrada para ${competencia}!`)
+    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Aprovação registrada para ${competencia}!`)
     await carregar()
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
@@ -198,7 +198,7 @@ export default function Fechamento() {
         ))}
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':msg.includes('⚠')?'#FAEEDA':'#E6F1FB', color:msg.includes('✅')?'#3B6D11':msg.includes('⚠')?'#854F0B':'#185FA5' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':msg.includes('<i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />')?'#FAEEDA':'#E6F1FB', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':msg.includes('<i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />')?'#854F0B':'#185FA5' }}>{msg}</div>}
 
       {/* Tabela */}
       <div style={{ ...s.card, padding:0, overflowX:'auto' }}>
@@ -262,19 +262,19 @@ export default function Fechamento() {
                     <td style={{ ...s.td }}>
                       <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
                         {isAdmin && status === 'aberto' && (
-                          <button onClick={() => fecharMes(competencia)} style={s.btn(AZUL)}>🔒 Fechar mês</button>
+                          <button onClick={() => fecharMes(competencia)} style={s.btn(AZUL)}><i className="ti ti-lock" style={{marginRight:4}} /> Fechar mês</button>
                         )}
                         {isAdmin && status === 'fechado' && (
                           <>
-                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao:'', ressalvas:'', reuniao_data:'', reuniao_local:'', membros_presentes:'', membros_presentes_ids:[], modalidade:'presencial', observacoes:'' }) }} style={s.btn(VERDE)}>✅ Registrar aprovação</button>
+                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao:'', ressalvas:'', reuniao_data:'', reuniao_local:'', membros_presentes:'', membros_presentes_ids:[], modalidade:'presencial', observacoes:'' }) }} style={s.btn(VERDE)}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar aprovação</button>
                             <button onClick={() => reabrirMes(competencia)} style={s.btn('#F1EFE8','#5F5E5A')}>↩ Reabrir</button>
                           </>
                         )}
                         {isAdmin && (status === 'aprovado' || status === 'aprovado_ressalva' || status === 'reprovado') && (
                           <>
-                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}>✏ Editar</button>
+                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}><i className="ti ti-pencil" style={{marginRight:4}} /> Editar</button>
                             <button onClick={() => gerarParecer(competencia, fechamento)} disabled={gerandoPDF===competencia} style={s.btn(VERDE)}>
-                              {gerandoPDF===competencia ? '⏳' : '🖨️'} Imprimir parecer
+                              {gerandoPDF===competencia ? '<i className="ti ti-loader" style={{fontSize:14}} />' : '<i className="ti ti-printer" style={{fontSize:14}} />️'} Imprimir parecer
                             </button>
                           </>
                         )}
@@ -288,16 +288,16 @@ export default function Fechamento() {
                       <td colSpan={8} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
                         <div style={{ background:'#F2FAE8', padding:'16px', borderLeft:`3px solid ${VERDE}` }}>
                           <div style={{ fontSize:13, fontWeight:500, marginBottom:12, color:VERDE }}>
-                            ✅ Registrar aprovação do Conselho Fiscal — {fmtMes(competencia)}
+                            <i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar aprovação do Conselho Fiscal — {fmtMes(competencia)}
                           </div>
                           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:10, marginBottom:10 }}>
                             <div>
                               <label style={s.label}>Tipo de aprovação *</label>
                               <select value={formAprov.tipo_aprovacao||''} onChange={e=>setFormAprov(f=>({...f,tipo_aprovacao:e.target.value}))} style={s.input}>
                                 <option value="">Selecione...</option>
-                                <option value="aprovado">✅ Aprovado</option>
-                                <option value="aprovado_ressalva">⚠️ Aprovado com ressalva</option>
-                                <option value="reprovado">❌ Reprovado</option>
+                                <option value="aprovado"><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Aprovado</option>
+                                <option value="aprovado_ressalva"><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Aprovado com ressalva</option>
+                                <option value="reprovado"><i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Reprovado</option>
                               </select>
                             </div>
                             <div>
@@ -307,9 +307,9 @@ export default function Fechamento() {
                             <div>
                               <label style={s.label}>Modalidade</label>
                               <select value={formAprov.modalidade||'presencial'} onChange={e=>setFormAprov(f=>({...f,modalidade:e.target.value}))} style={s.input}>
-                                <option value="presencial">🏢 Presencial</option>
-                                <option value="online">💻 Online</option>
-                                <option value="hibrida">🔀 Híbrida</option>
+                                <option value="presencial"><i className="ti ti-building" style={{marginRight:4}} /> Presencial</option>
+                                <option value="online"><i className="ti ti-laptop" style={{marginRight:4}} /> Online</option>
+                                <option value="hibrida"><i className="ti ti-arrows-shuffle" style={{marginRight:4}} /> Híbrida</option>
                               </select>
                             </div>
                             <div>
@@ -356,7 +356,7 @@ export default function Fechamento() {
                             <input value={formAprov.observacoes||''} onChange={e=>setFormAprov(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                           </div>
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => salvarAprovacao(competencia)} disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':'💾 Salvar aprovação'}</button>
+                            <button onClick={() => salvarAprovacao(competencia)} disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':'<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar aprovação'}</button>
                             <button onClick={() => { setAprovacaoAberta(null); setFormAprov({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>

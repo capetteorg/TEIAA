@@ -144,7 +144,7 @@ export default function Conciliacao() {
     setCruzando(false)
     const auto = Object.values(novoMap).filter(v=>v.auto).length
     const possivel = Object.values(novoMap).filter(v=>!v.auto).length
-    setMsg(`🤖 Cruzamento concluído! ${auto} automáticos, ${possivel} possíveis. Confirme abaixo.`)
+    setMsg(`<i className="ti ti-robot" style={{marginRight:4}} /> Cruzamento concluído! ${auto} automáticos, ${possivel} possíveis. Confirme abaixo.`)
     setTimeout(() => setMsg(''), 6000)
   }
 
@@ -161,7 +161,7 @@ export default function Conciliacao() {
     await supabase.from('lancamentos').update({ status_lanc:'conciliado', extrato_mov_id: movId }).eq('id', match.lancamento.id)
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
     setMatchMap(prev => { const n={...prev}; delete n[movId]; return n })
-    setMsg('✓ Conciliado!')
+    setMsg('<i className="ti ti-check" style={{marginRight:4}} /> Conciliado!')
     setTimeout(() => setMsg(''), 2000)
   }
 
@@ -172,7 +172,7 @@ export default function Conciliacao() {
   async function confirmarTodosAuto() {
     const autoIds = Object.entries(matchMap).filter(([,v])=>v.auto).map(([k])=>parseInt(k))
     for (const movId of autoIds) await confirmarMatch(movId)
-    setMsg(`✅ ${autoIds.length} conciliações automáticas confirmadas!`)
+    setMsg(`<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${autoIds.length} conciliações automáticas confirmadas!`)
     setTimeout(() => setMsg(''), 4000)
   }
 
@@ -209,7 +209,7 @@ export default function Conciliacao() {
     const lancIds = movsFiltradas.filter(m=>!m.conciliado&&m.lancamento_id).map(m=>m.lancamento_id)
     if (lancIds.length>0) await supabase.from('lancamentos').update({ status_lanc:'conciliado' }).in('id', lancIds)
     setMovs(prev => prev.map(m => ids.includes(m.id) ? { ...m, conciliado:true } : m))
-    setMsg('Tudo conciliado! ✓')
+    setMsg('Tudo conciliado! <i className="ti ti-check" style={{fontSize:14}} />')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -224,7 +224,7 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...dados } : m))
     setComplementarAberto(null)
     setFormCompl({})
-    setMsg('Dados complementares salvos! ✓')
+    setMsg('Dados complementares salvos! <i className="ti ti-check" style={{fontSize:14}} />')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -277,7 +277,7 @@ export default function Conciliacao() {
     await supabase.from('extrato_movs').update({ fornecedor:pessoa?.nome, obs_prestacao:`Pgto ${competencia} — mensal: R$${valMensal.toFixed(2)}${valAbat>0?`, abat: R$${valAbat.toFixed(2)}`:''}${valorNaoPago>0?` (faltam R$${valorNaoPago.toFixed(2)})`:''}` }).eq('id', movId)
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, fornecedor:pessoa?.nome } : m))
     setPagFuncAberto(null); setFormPagFunc({})
-    setMsg(valorNaoPago===0 ? `✅ ${pessoa?.nome} — ${competencia} quitado!` : `✅ ${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos. Faltam R$ ${valorNaoPago.toFixed(2)}.`)
+    setMsg(valorNaoPago===0 ? `<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${pessoa?.nome} — ${competencia} quitado!` : `<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> ${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos. Faltam R$ ${valorNaoPago.toFixed(2)}.`)
     setTimeout(() => setMsg(''), 5000)
   }
 
@@ -302,7 +302,7 @@ export default function Conciliacao() {
       if (!ok) return
     }
     if (partesDivisao.some(p => !p.categoria_id)) {
-      setMsg('⚠ Todas as partes precisam ter categoria.')
+      setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Todas as partes precisam ter categoria.')
       setTimeout(() => setMsg(''), 3000)
       return
     }
@@ -334,7 +334,7 @@ export default function Conciliacao() {
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .eq('extrato_id', extratoSel.id).order('data')
     setMovs(data || [])
-    setMsg('✅ Movimentação dividida com sucesso!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Movimentação dividida com sucesso!')
     setTimeout(() => setMsg(''), 4000)
   }
 
@@ -354,7 +354,7 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
     setLancamentos(prev => prev.map(l => l.id===lancId ? { ...l, extrato_mov_id: movId } : l))
     setVincularAberto(null)
-    setMsg('✅ Lançamento vinculado!')
+    setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Lançamento vinculado!')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -410,7 +410,7 @@ export default function Conciliacao() {
       </div>
       {extratos.length === 0 ? (
         <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-          <div style={{ fontSize:32, marginBottom:8 }}>📄</div>
+          <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
           <div style={{ fontSize:13 }}>Nenhum extrato importado ainda.</div>
           <button onClick={() => navigate('/importar')} style={{ ...s.btn(AZUL), marginTop:12 }}>Importar primeiro extrato →</button>
         </div>
@@ -427,7 +427,7 @@ export default function Conciliacao() {
                   <tr key={e.id} style={{ cursor:'pointer', background:fechado?'#F8F7F2':'#fff' }} onClick={() => abrirExtrato(e)}>
                     <td style={s.td}>
                       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                        {fechado && <span>🔒</span>}
+                        {fechado && <span><i className="ti ti-lock" style={{fontSize:14}} /></span>}
                         <strong style={{ color:fechado?'#888780':'#2C2C2A' }}>{e.competencia}</strong>
                       </div>
                     </td>
@@ -439,7 +439,7 @@ export default function Conciliacao() {
                           <div style={{ height:'100%', width:pct+'%', background:fechado?VERDE:AZUL, borderRadius:99 }} />
                         </div>
                         <span style={s.badge(fechado?'#EAF3DE':'#E6F1FB', fechado?'#3B6D11':'#185FA5')}>
-                          {fechado?'✓ ':''}{stats.conciliados}/{stats.total}
+                          {fechado?'<i className="ti ti-check" style={{marginRight:4}} /> ':''}{stats.conciliados}/{stats.total}
                         </span>
                       </div>
                     </td>
@@ -448,7 +448,7 @@ export default function Conciliacao() {
                     <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
                     <td style={s.td}>
                       <button onClick={ev=>{ev.stopPropagation();abrirExtrato(e)}} style={s.btn(fechado?'#F1EFE8':VERDE, fechado?'#5F5E5A':'#fff')}>
-                        {fechado?'🔒 Ver':'Abrir →'}
+                        {fechado?'<i className="ti ti-lock" style={{marginRight:4}} /> Ver':'Abrir →'}
                       </button>
                     </td>
                   </tr>
@@ -475,14 +475,14 @@ export default function Conciliacao() {
         </div>
         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
           <button onClick={cruzarAutomatico} disabled={cruzando} style={s.btn(ROXO)}>
-            {cruzando ? '⏳ Cruzando...' : '🤖 Cruzar com lançamentos'}
+            {cruzando ? '<i className="ti ti-loader" style={{marginRight:4}} /> Cruzando...' : '<i className="ti ti-robot" style={{marginRight:4}} /> Cruzar com lançamentos'}
           </button>
           {autoCount>0 && (
             <button onClick={confirmarTodosAuto} style={s.btn(VERDE)}>
-              ✓ Confirmar {autoCount} automáticos
+              <i className="ti ti-check" style={{marginRight:4}} /> Confirmar {autoCount} automáticos
             </button>
           )}
-          {totalPendentes>0 && <button onClick={conciliarTodos} style={s.btn('#EAF3DE','#3B6D11')}>✓ Conciliar todos ({totalPendentes})</button>}
+          {totalPendentes>0 && <button onClick={conciliarTodos} style={s.btn('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> Conciliar todos ({totalPendentes})</button>}
         </div>
       </div>
 
@@ -493,7 +493,7 @@ export default function Conciliacao() {
           ['Conciliados', totalConciliados, VERDE],
           ['Pendentes', totalPendentes, totalPendentes>0?LARANJA:'#888780'],
           ['Sem categoria', movs.filter(m=>!m.categoria_id&&!m.dividida).length, movs.filter(m=>!m.categoria_id&&!m.dividida).length>0?VERMELHO:'#888780'],
-          ...(autoCount>0||possivelCount>0 ? [['🤖 Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
+          ...(autoCount>0||possivelCount>0 ? [['<i className="ti ti-robot" style={{marginRight:4}} /> Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
         ].map(([l,v,c]) => (
           <div key={l} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
@@ -506,7 +506,7 @@ export default function Conciliacao() {
         </div>
       </div>
 
-      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')||msg.includes('✓')?'#F2FAE8':'#E6F1FB', color:msg.includes('✅')||msg.includes('✓')?'#3B6D11':'#185FA5' }}>{msg}</div>}
+      {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')||msg.includes('<i className="ti ti-check" style={{fontSize:14}} />')?'#F2FAE8':'#E6F1FB', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')||msg.includes('<i className="ti ti-check" style={{fontSize:14}} />')?'#3B6D11':'#185FA5' }}>{msg}</div>}
 
       {/* Filtros */}
       <div style={{ display:'flex', gap:6, marginBottom:'.85rem', flexWrap:'wrap', alignItems:'center' }}>
@@ -554,7 +554,7 @@ export default function Conciliacao() {
                     <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(m.data)}</td>
 
                     <td style={{ ...s.td, maxWidth:160 }}>
-                      {m.parent_id && <span style={{ fontSize:9, background:'#E6F1FB', color:'#185FA5', padding:'1px 5px', borderRadius:4, marginRight:4 }}>✂ parte</span>}
+                      {m.parent_id && <span style={{ fontSize:9, background:'#E6F1FB', color:'#185FA5', padding:'1px 5px', borderRadius:4, marginRight:4 }}><i className="ti ti-cut" style={{marginRight:4}} /> parte</span>}
                       <div onClick={() => setDescExpandida(descExpandida===m.id?null:m.id)} style={{ cursor:'pointer', display:'inline' }}>
                         {descExpandida===m.id ? (
                           <div style={{ whiteSpace:'normal', wordBreak:'break-all', background:'#F8F7F2', borderRadius:6, padding:'4px 6px', fontSize:11 }}>
@@ -609,22 +609,22 @@ export default function Conciliacao() {
                       {match && !m.conciliado ? (
                         <div style={{ background:match.auto?'#EAF3DE':'#FAEEDA', borderRadius:6, padding:'4px 8px', fontSize:10 }}>
                           <div style={{ color:match.auto?'#3B6D11':'#854F0B', fontWeight:600, marginBottom:2 }}>
-                            {match.auto?'🤖 Auto':'? Possível'} ({match.score}pts)
+                            {match.auto?'<i className="ti ti-robot" style={{marginRight:4}} /> Auto':'? Possível'} ({match.score}pts)
                           </div>
                           <div style={{ color:'#5F5E5A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>
                             {match.lancamento.descricao}
                           </div>
                           <div style={{ color:'#888780', marginTop:2 }}>{match.lancamento.categoria?.nome||'sem cat.'}</div>
                           <div style={{ display:'flex', gap:4, marginTop:4 }}>
-                            <button onClick={() => confirmarMatch(m.id)} style={{ ...s.btn(match.auto?VERDE:LARANJA), fontSize:9, padding:'2px 6px' }}>✓ Confirmar</button>
-                            <button onClick={() => rejeitarMatch(m.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:9, padding:'2px 6px' }}>✗</button>
+                            <button onClick={() => confirmarMatch(m.id)} style={{ ...s.btn(match.auto?VERDE:LARANJA), fontSize:9, padding:'2px 6px' }}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar</button>
+                            <button onClick={() => rejeitarMatch(m.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:9, padding:'2px 6px' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                           </div>
                         </div>
                       ) : lancVinc ? (
                         <div style={{ fontSize:10 }}>
                           <button onClick={() => setLancVinculadoAberto(lancVinculadoAberto===m.id?null:m.id)}
                             style={{ ...s.btn('#EAF3DE','#3B6D11'), fontSize:10, padding:'3px 8px' }}>
-                            🔗 Ver lançamento
+                            <i className="ti ti-link" style={{marginRight:4}} /> Ver lançamento
                           </button>
                         </div>
                       ) : (
@@ -637,24 +637,24 @@ export default function Conciliacao() {
                       <div style={{ position:'relative' }}>
                         <button onClick={() => setMenuAberto(menuAberto===m.id?null:m.id)}
                           style={{ ...s.btn(temCompl||movsDivida[m.id]?'#EAF3DE':'#F1EFE8', temCompl||movsDivida[m.id]?'#3B6D11':'#5F5E5A'), fontSize:10 }}>
-                          {temCompl||movsDivida[m.id]?'✓':'⋯'} Ações {movsDivida[m.id]?'👤':''}
+                          {temCompl||movsDivida[m.id]?'<i className="ti ti-check" style={{fontSize:14}} />':'⋯'} Ações {movsDivida[m.id]?'<i className="ti ti-user" style={{fontSize:14}} />':''}
                         </button>
                         {menuAberto===m.id && (
                           <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
                             <button onClick={() => { setMenuAberto(null); isAberto?setComplementarAberto(null):abrirComplementar(m) }}
                               style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:temCompl?'#3B6D11':'#2C2C2A' }}>
-                              📋 {temCompl?'Dados complementares ✓':'Dados complementares'}
+                              <i className="ti ti-clipboard-list" style={{marginRight:4}} /> {temCompl?'Dados complementares <i className="ti ti-check" style={{fontSize:14}} />':'Dados complementares'}
                             </button>
                             {!m.dividida && (
                               <button onClick={() => { setMenuAberto(null); abrirDivisao(m) }}
                                 style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:'#185FA5' }}>
-                                ✂ Dividir movimentação
+                                <i className="ti ti-cut" style={{marginRight:4}} /> Dividir movimentação
                               </button>
                             )}
                             {!m.conciliado && !m.lancamento_id && (
                               <button onClick={() => { setMenuAberto(null); setVincularAberto(vincularAberto===m.id?null:m.id) }}
                                 style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:VERDE }}>
-                                🔗 Vincular lançamento
+                                <i className="ti ti-link" style={{marginRight:4}} /> Vincular lançamento
                               </button>
                             )}
                             {m.valor<0 && pessoasRecorrentes.length>0 && (
@@ -664,7 +664,7 @@ export default function Conciliacao() {
                                 setPagFuncAberto(m.id)
                                 setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal:'', valor_abatimento:'' })
                               }} style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', background:'transparent', cursor:'pointer', color:ROXO }}>
-                                👤 Pagamento de funcionário
+                                <i className="ti ti-user" style={{marginRight:4}} /> Pagamento de funcionário
                               </button>
                             )}
                           </div>
@@ -676,20 +676,20 @@ export default function Conciliacao() {
 
                     <td style={s.td}>
                       <span style={s.badge(m.conciliado?'#EAF3DE':'#FAEEDA', m.conciliado?'#3B6D11':'#854F0B')}>
-                        {m.conciliado?'✓ OK':'Pendente'}
+                        {m.conciliado?'<i className="ti ti-check" style={{marginRight:4}} /> OK':'Pendente'}
                       </span>
                     </td>
 
                     <td style={s.td}>
                       <button onClick={() => {
                         if (!m.conciliado && !m.categoria_id) {
-                          setMsg('⚠ Selecione uma categoria antes de conciliar.')
+                          setMsg('<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Selecione uma categoria antes de conciliar.')
                           setTimeout(() => setMsg(''), 3000)
                           return
                         }
                         conciliarMov(m.id, !m.conciliado)
                       }} style={s.btn(m.conciliado?'#F1EFE8':!m.categoria_id?'#D3D1C7':VERDE, m.conciliado?'#5F5E5A':'#fff')}>
-                        {m.conciliado?'Desfazer':'OK ✓'}
+                        {m.conciliado?'Desfazer':'OK <i className="ti ti-check" style={{fontSize:14}} />'}
                       </button>
                     </td>
                   </tr>
@@ -699,7 +699,7 @@ export default function Conciliacao() {
                     <tr>
                       <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
                         <div style={{ background:'#F2FAE8', padding:'10px 16px', borderLeft:`3px solid ${VERDE}` }}>
-                          <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}>🔗 Lançamento vinculado</div>
+                          <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}><i className="ti ti-link" style={{marginRight:4}} /> Lançamento vinculado</div>
                           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:8, fontSize:11 }}>
                             <div><span style={{ color:'#888780' }}>Data:</span> <strong>{fmtData(lancVinc.data)}</strong></div>
                             <div><span style={{ color:'#888780' }}>Descrição:</span> <strong>{lancVinc.descricao}</strong></div>
@@ -718,7 +718,7 @@ export default function Conciliacao() {
                     <tr>
                       <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
                         <div style={{ background:'#F8F7F2', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
-                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>📋 Dados complementares</div>
+                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Dados complementares</div>
                           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
                             <div>
                               <label style={s.label}>Fornecedor</label>
@@ -778,7 +778,7 @@ export default function Conciliacao() {
                           </div>
                           <div style={{ marginBottom:10 }}><label style={s.label}>Observações para prestação de contas</label><input value={formCompl.obs_prestacao||''} onChange={e=>setFormCompl(p=>({...p,obs_prestacao:e.target.value}))} style={s.inputCompl} /></div>
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}>💾 Salvar</button>
+                            <button onClick={() => salvarComplementar(m.id)} style={s.btn(AZUL)}><i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar</button>
                             <button onClick={() => { setComplementarAberto(null); setFormCompl({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>
@@ -792,7 +792,7 @@ export default function Conciliacao() {
                       <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
                         <div style={{ background:'#F2FAE8', padding:'12px 16px', borderLeft:`3px solid ${VERDE}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:VERDE }}>
-                            🔗 Vincular lançamento — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
+                            <i className="ti ti-link" style={{marginRight:4}} /> Vincular lançamento — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
                           </div>
                           {(() => {
                             const tipoMov = m.valor >= 0 ? 'entrada' : 'despesa'
@@ -825,7 +825,7 @@ export default function Conciliacao() {
                                       <td style={{ padding:'6px 8px', fontSize:12, fontWeight:500, color:VERMELHO }}>{fmt(l.valor)}</td>
                                       <td style={{ padding:'6px 8px' }}>
                                         <button onClick={() => vincularLancamento(m.id, l.id)} style={{ padding:'4px 10px', fontSize:11, borderRadius:6, border:'none', background:VERDE, color:'#fff', cursor:'pointer' }}>
-                                          🔗 Vincular
+                                          <i className="ti ti-link" style={{marginRight:4}} /> Vincular
                                         </button>
                                       </td>
                                     </tr>
@@ -846,7 +846,7 @@ export default function Conciliacao() {
                       <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
                         <div style={{ background:'#E6F1FB', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>
-                            ✂ Dividir movimentação — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
+                            <i className="ti ti-cut" style={{marginRight:4}} /> Dividir movimentação — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
                           </div>
 
                           {/* Lançamentos não conciliados do mês */}
@@ -858,7 +858,7 @@ export default function Conciliacao() {
                             return (
                               <div style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:12, border:'0.5px solid #B3D1F0' }}>
                                 <div style={{ fontSize:11, fontWeight:600, color:AZUL, marginBottom:8 }}>
-                                  💡 Lançamentos não conciliados em {new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
+                                  <i className="ti ti-bulb" style={{marginRight:4}} /> Lançamentos não conciliados em {new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
                                 </div>
                                 {lancNaoConcil.map(l => (
                                   <div key={l.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'5px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:11 }}>
@@ -894,10 +894,10 @@ export default function Conciliacao() {
                               <div key={i} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:8, border: parte.lancamento_id ? `1px solid ${VERDE}` : '0.5px solid #D3D1C7' }}>
                                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                                   <span style={{ fontSize:11, fontWeight:600, color:parte.lancamento_id?VERDE:AZUL }}>
-                                    Parte {i+1} {parte.lancamento_id ? '🔗 vinculado ao lançamento' : ''}
+                                    Parte {i+1} {parte.lancamento_id ? '<i className="ti ti-link" style={{marginRight:4}} /> vinculado ao lançamento' : ''}
                                   </span>
                                   {partesDivisao.length > 2 && (
-                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'2px 8px', fontSize:10 }}>✕</button>
+                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'2px 8px', fontSize:10 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                                   )}
                                 </div>
                                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 2fr', gap:8 }}>
@@ -935,13 +935,13 @@ export default function Conciliacao() {
                             return (
                               <div style={{ fontSize:11, padding:'6px 12px', borderRadius:6, marginBottom:10, background:ok?'#EAF3DE':'#FEF2F2', color:ok?'#3B6D11':'#A32D2D' }}>
                                 Valor original: <strong>{fmt(m.valor)}</strong> · Soma das partes: <strong>R$ {soma.toFixed(2)}</strong>
-                                {ok ? ' ✓ OK' : ` · Diferença: R$ ${Math.abs(soma-original).toFixed(2)}`}
+                                {ok ? ' <i className="ti ti-check" style={{marginRight:4}} /> OK' : ` · Diferença: R$ ${Math.abs(soma-original).toFixed(2)}`}
                               </div>
                             )
                           })()}
                           <div style={{ display:'flex', gap:8 }}>
                             <button onClick={() => setPartesDivisao(prev => [...prev, { valor:'', categoria_id:'', descricao:'', lancamento_id:'' }])} style={s.btn('#E6F1FB',AZUL)}>+ Parte</button>
-                            <button onClick={() => confirmarDivisao(m)} style={s.btn(AZUL)}>✅ Confirmar divisão</button>
+                            <button onClick={() => confirmarDivisao(m)} style={s.btn(AZUL)}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Confirmar divisão</button>
                             <button onClick={() => setDividirAberto(null)} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>
@@ -955,16 +955,16 @@ export default function Conciliacao() {
                       <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
                         <div style={{ background:'#F5F0FF', padding:'12px 16px', borderLeft:`3px solid ${ROXO}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:ROXO }}>
-                            👤 Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
+                            <i className="ti ti-user" style={{marginRight:4}} /> Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
                           </div>
                           {movsDivida[m.id] && (
                             <div style={{ background:'#EAF3DE', border:'0.5px solid #C0DD97', borderRadius:8, padding:'10px 12px', marginBottom:10 }}>
-                              <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}>✅ Pagamento já registrado</div>
+                              <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Pagamento já registrado</div>
                               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8, fontSize:11 }}>
                                 <div><span style={{ color:'#888780' }}>Pessoa:</span> <strong>{movsDivida[m.id].pessoa?.nome||'—'}</strong></div>
                                 <div><span style={{ color:'#888780' }}>Competência:</span> <strong>{movsDivida[m.id].competencia ? new Date(movsDivida[m.id].competencia+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'}</strong></div>
-                                <div><span style={{ color:'#888780' }}>💼 Ano corrente:</span> <strong style={{ color:'#185FA5' }}>R$ {Number(movsDivida[m.id].valor_pago_mensal||0).toFixed(2)}</strong></div>
-                                <div><span style={{ color:'#888780' }}>📅 Abatimento:</span> <strong style={{ color:'#854F0B' }}>R$ {Number(movsDivida[m.id].abatimento||0).toFixed(2)}</strong></div>
+                                <div><span style={{ color:'#888780' }}><i className="ti ti-briefcase" style={{marginRight:4}} /> Ano corrente:</span> <strong style={{ color:'#185FA5' }}>R$ {Number(movsDivida[m.id].valor_pago_mensal||0).toFixed(2)}</strong></div>
+                                <div><span style={{ color:'#888780' }}><i className="ti ti-calendar" style={{marginRight:4}} /> Abatimento:</span> <strong style={{ color:'#854F0B' }}>R$ {Number(movsDivida[m.id].abatimento||0).toFixed(2)}</strong></div>
                               </div>
                               <div style={{ marginTop:8, fontSize:11, color:'#888780' }}>Quer corrigir? Preencha abaixo e registre novamente.</div>
                             </div>
@@ -1025,17 +1025,17 @@ export default function Conciliacao() {
                             const jaPago = Number(formPagFunc.ja_pago_mensal||0)
                             return jaPago>0 ? (
                               <div style={{ fontSize:11, padding:'6px 10px', borderRadius:6, marginBottom:8, background:'#E6F1FB', color:'#185FA5' }}>
-                                📊 Já pago neste mês: <strong>R$ {jaPago.toFixed(2)}</strong> de R$ {mensal.toFixed(2)} · Falta: <strong>R$ {Math.max(0,mensal-jaPago).toFixed(2)}</strong>
+                                <i className="ti ti-chart-bar" style={{marginRight:4}} /> Já pago neste mês: <strong>R$ {jaPago.toFixed(2)}</strong> de R$ {mensal.toFixed(2)} · Falta: <strong>R$ {Math.max(0,mensal-jaPago).toFixed(2)}</strong>
                               </div>
                             ) : null
                           })()}
                           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
                             <div>
-                              <label style={s.label}>💼 Ano corrente — salário/serviço mensal (R$)</label>
+                              <label style={s.label}><i className="ti ti-briefcase" style={{marginRight:4}} /> Ano corrente — salário/serviço mensal (R$)</label>
                               <input type="number" step="0.01" value={formPagFunc.valor_mensal||''} onChange={e=>setFormPagFunc(f=>({...f,valor_mensal:e.target.value}))} style={s.inputCompl} placeholder="0,00" />
                             </div>
                             <div>
-                              <label style={s.label}>📅 Dívidas anteriores — abatimento (R$)</label>
+                              <label style={s.label}><i className="ti ti-calendar" style={{marginRight:4}} /> Dívidas anteriores — abatimento (R$)</label>
                               <input type="number" step="0.01" value={formPagFunc.valor_abatimento||''} onChange={e=>setFormPagFunc(f=>({...f,valor_abatimento:e.target.value}))} style={s.inputCompl} placeholder="0,00" />
                             </div>
                           </div>
@@ -1052,14 +1052,14 @@ export default function Conciliacao() {
                               <div style={{ fontSize:11, padding:'8px 12px', borderRadius:6, marginBottom:10, background:excede?'#FEF2F2':'#E6F1FB', color:excede?'#A32D2D':'#185FA5' }}>
                                 <div>Extrato: <strong>R$ {totalMov.toFixed(2)}</strong> · Mensal: <strong>R$ {valMens.toFixed(2)}</strong> · Abatimento: <strong>R$ {valAbat.toFixed(2)}</strong></div>
                                 {pe && !excede && <div style={{ marginTop:4, color:naoPago>0?'#854F0B':'#3B6D11', fontWeight:500 }}>
-                                  {naoPago>0 ? `⚠ Após este pagamento faltam R$ ${naoPago.toFixed(2)} no mês` : '✓ Mês integralmente pago'}
+                                  {naoPago>0 ? `<i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Após este pagamento faltam R$ ${naoPago.toFixed(2)} no mês` : '<i className="ti ti-check" style={{marginRight:4}} /> Mês integralmente pago'}
                                 </div>}
-                                {excede && <div style={{ marginTop:4, fontWeight:600 }}>⛔ Soma excede o valor do extrato</div>}
+                                {excede && <div style={{ marginTop:4, fontWeight:600 }}><i className="ti ti-ban" style={{marginRight:4}} /> Soma excede o valor do extrato</div>}
                               </div>
                             )
                           })()}
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn(ROXO)}>✅ Registrar pagamento</button>
+                            <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn(ROXO)}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar pagamento</button>
                             <button onClick={() => { setPagFuncAberto(null); setFormPagFunc({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>

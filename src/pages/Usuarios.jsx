@@ -150,7 +150,7 @@ export default function Usuarios() {
                 {[adm, dir, op].map((v, i) => (
                   <td key={i} style={{ padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5' }}>
                     {v
-                      ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, fontWeight: 500, background: '#EAF3DE', color: '#3B6D11' }}>✓</span>
+                      ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, fontWeight: 500, background: '#EAF3DE', color: '#3B6D11' }}><i className="ti ti-check" style={{fontSize:14}} /></span>
                       : <span style={{ fontSize: 10, color: '#B4B2A9' }}>—</span>
                     }
                   </td>

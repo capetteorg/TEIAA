@@ -95,7 +95,7 @@ export default function Atendimentos() {
       ;({ error } = await supabase.from('atendimentos').insert(dados))
     }
     if (error) setMsg('Erro: ' + error.message)
-    else { setMsg('✅ Registro salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
+    else { setMsg('<i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registro salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -165,7 +165,7 @@ export default function Atendimentos() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('✅')?'#F2FAE8':'#FEF2F2', color:msg.includes('✅')?'#3B6D11':'#A32D2D' }}>
+        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#F2FAE8':'#FEF2F2', color:msg.includes('<i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} />')?'#3B6D11':'#A32D2D' }}>
           {msg}
         </div>
       )}
@@ -236,7 +236,7 @@ export default function Atendimentos() {
                   {PUBLICOS.map(pub => (
                     <button key={pub} type="button" onClick={() => togglePublico(pub)}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.publico_participante.includes(pub)?AZUL:'#D3D1C7'}`, background:form.publico_participante.includes(pub)?'#E6F1FB':'#fff', color:form.publico_participante.includes(pub)?'#185FA5':'#5F5E5A' }}>
-                      {form.publico_participante.includes(pub) ? '✓ ' : ''}{pub}
+                      {form.publico_participante.includes(pub) ? '<i className="ti ti-check" style={{marginRight:4}} /> ' : ''}{pub}
                     </button>
                   ))}
                 </div>
@@ -257,7 +257,7 @@ export default function Atendimentos() {
                   {equipe.map(e => (
                     <button key={e.id} type="button" onClick={() => toggleEquipe(String(e.id))}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.equipe_ids.includes(String(e.id))?VERDE:'#D3D1C7'}`, background:form.equipe_ids.includes(String(e.id))?'#EAF3DE':'#fff', color:form.equipe_ids.includes(String(e.id))?'#3B6D11':'#5F5E5A' }}>
-                      {form.equipe_ids.includes(String(e.id)) ? '✓ ' : ''}{e.nome.split(' ')[0]}
+                      {form.equipe_ids.includes(String(e.id)) ? '<i className="ti ti-check" style={{marginRight:4}} /> ' : ''}{e.nome.split(' ')[0]}
                     </button>
                   ))}
                 </div>
@@ -282,7 +282,7 @@ export default function Atendimentos() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
-                {salvando ? 'Salvando...' : editando ? '💾 Salvar alterações' : '+ Registrar'}
+                {salvando ? 'Salvando...' : editando ? '<i className="ti ti-device-floppy" style={{marginRight:4}} /> Salvar alterações' : '+ Registrar'}
               </button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
                 Cancelar
@@ -396,7 +396,7 @@ export default function Atendimentos() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>

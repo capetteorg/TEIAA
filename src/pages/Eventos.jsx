@@ -134,8 +134,8 @@ export default function Eventos() {
                   <span style={s.badge(bg, cor)}>{ev.status}</span>
                 </div>
                 {ev.descricao && <div style={{ fontSize: 11, color: '#888780', marginBottom: 6 }}>{ev.descricao}</div>}
-                {ev.data_inicio && <div style={{ fontSize: 11, color: '#5F5E5A', marginBottom: 4 }}>📅 {new Date(ev.data_inicio+'T12:00:00').toLocaleDateString('pt-BR')}{ev.data_fim?' → '+new Date(ev.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):''}</div>}
-                {ev.meta_financeira > 0 && <div style={{ fontSize: 11, color: '#5F5E5A' }}>🎯 Meta: {fmt(ev.meta_financeira)}</div>}
+                {ev.data_inicio && <div style={{ fontSize: 11, color: '#5F5E5A', marginBottom: 4 }}><i className="ti ti-calendar" style={{marginRight:4}} /> {new Date(ev.data_inicio+'T12:00:00').toLocaleDateString('pt-BR')}{ev.data_fim?' → '+new Date(ev.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):''}</div>}
+                {ev.meta_financeira > 0 && <div style={{ fontSize: 11, color: '#5F5E5A' }}><i className="ti ti-target" style={{marginRight:4}} /> Meta: {fmt(ev.meta_financeira)}</div>}
                 <button onClick={() => abrirEvento(ev)}
                   style={{ marginTop: 8, width: '100%', padding: '5px', fontSize: 11, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>
                   Ver movimentações →
