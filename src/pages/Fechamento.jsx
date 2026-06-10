@@ -35,7 +35,17 @@ export default function Fechamento() {
   const [salvando, setSalvando] = useState(false)
   const [expandido, setExpandido] = useState(null)
 
-  useEffect(() => { carregar() }, [])
+  const [membrosCF, setMembrosCF] = useState([])
+
+  useEffect(() => { carregar(); carregarMembrosCF() }, [])
+
+  async function carregarMembrosCF() {
+    const { data } = await supabase.from('diretoria')
+      .select('id,nome,cargo').eq('ativo', true)
+      .in('cargo', ['1º Membro Conselho Fiscal','2º Membro Conselho Fiscal','Suplente Conselho Fiscal','Presidente Conselho Fiscal'])
+      .order('cargo')
+    setMembrosCF(data || [])
+  }
 
   async function carregar() {
     setLoading(true)
@@ -81,7 +91,7 @@ export default function Fechamento() {
 
   async function salvarAprovacao(competencia) {
     setSalvando(true)
-    const { tipo_aprovacao, ressalvas, reuniao_data, reuniao_local, membros_presentes, observacoes } = formAprov
+    const { tipo_aprovacao, ressalvas, reuniao_data, reuniao_local, membros_presentes, observacoes, modalidade } = formAprov
     if (!tipo_aprovacao) { setMsg('⚠ Selecione o tipo de aprovação.'); setSalvando(false); return }
     if (!reuniao_data) { setMsg('⚠ Informe a data da reunião.'); setSalvando(false); return }
     await supabase.from('fechamentos').update({
@@ -92,6 +102,7 @@ export default function Fechamento() {
       ressalvas: ressalvas || null,
       reuniao_data,
       reuniao_local: reuniao_local || null,
+      reuniao_modalidade: modalidade || 'presencial',
       membros_presentes: membros_presentes || null,
       observacoes: observacoes || null,
     }).eq('competencia', competencia)
@@ -215,12 +226,12 @@ export default function Fechamento() {
                         )}
                         {isAdmin && status === 'fechado' && (
                           <>
-                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao:'', ressalvas:'', reuniao_data:'', reuniao_local:'', membros_presentes:'', observacoes:'' }) }} style={s.btn(VERDE)}>✅ Registrar aprovação</button>
+                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao:'', ressalvas:'', reuniao_data:'', reuniao_local:'', membros_presentes:'', membros_presentes_ids:[], modalidade:'presencial', observacoes:'' }) }} style={s.btn(VERDE)}>✅ Registrar aprovação</button>
                             <button onClick={() => reabrirMes(competencia)} style={s.btn('#F1EFE8','#5F5E5A')}>↩ Reabrir</button>
                           </>
                         )}
                         {isAdmin && (status === 'aprovado' || status === 'aprovado_ressalva' || status === 'reprovado') && (
-                          <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}>✏ Editar</button>
+                          <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}>✏ Editar</button>
                         )}
                       </div>
                     </td>
@@ -234,7 +245,7 @@ export default function Fechamento() {
                           <div style={{ fontSize:13, fontWeight:500, marginBottom:12, color:VERDE }}>
                             ✅ Registrar aprovação do Conselho Fiscal — {fmtMes(competencia)}
                           </div>
-                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10 }}>
+                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:10, marginBottom:10 }}>
                             <div>
                               <label style={s.label}>Tipo de aprovação *</label>
                               <select value={formAprov.tipo_aprovacao||''} onChange={e=>setFormAprov(f=>({...f,tipo_aprovacao:e.target.value}))} style={s.input}>
@@ -249,13 +260,45 @@ export default function Fechamento() {
                               <input type="date" value={formAprov.reuniao_data||''} onChange={e=>setFormAprov(f=>({...f,reuniao_data:e.target.value}))} style={s.input} />
                             </div>
                             <div>
-                              <label style={s.label}>Local da reunião</label>
-                              <input value={formAprov.reuniao_local||''} onChange={e=>setFormAprov(f=>({...f,reuniao_local:e.target.value}))} style={s.input} placeholder="Ex: Sede da CAPETTE" />
+                              <label style={s.label}>Modalidade</label>
+                              <select value={formAprov.modalidade||'presencial'} onChange={e=>setFormAprov(f=>({...f,modalidade:e.target.value}))} style={s.input}>
+                                <option value="presencial">🏢 Presencial</option>
+                                <option value="online">💻 Online</option>
+                                <option value="hibrida">🔀 Híbrida</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style={s.label}>Local / Plataforma</label>
+                              <input value={formAprov.reuniao_local||''} onChange={e=>setFormAprov(f=>({...f,reuniao_local:e.target.value}))} style={s.input}
+                                placeholder={formAprov.modalidade==='online'?'Ex: Google Meet':'Ex: Sede da CAPETTE'} />
                             </div>
                           </div>
                           <div style={{ marginBottom:10 }}>
                             <label style={s.label}>Membros presentes</label>
-                            <input value={formAprov.membros_presentes||''} onChange={e=>setFormAprov(f=>({...f,membros_presentes:e.target.value}))} style={s.input} placeholder="Ex: Michel Jahara, João Silva, Maria Santos" />
+                            {membrosCF.length > 0 ? (
+                              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
+                                {membrosCF.map(m => {
+                                  const selecionados = (formAprov.membros_presentes_ids || [])
+                                  const sel = selecionados.includes(m.id)
+                                  return (
+                                    <label key={m.id} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer', padding:'5px 10px', borderRadius:8, background:sel?'#EAF3DE':'#F8F7F2', border:`0.5px solid ${sel?VERDE:'#E0DDD5'}` }}>
+                                      <input type="checkbox" checked={sel} onChange={e => {
+                                        const ids = formAprov.membros_presentes_ids || []
+                                        const novos = e.target.checked ? [...ids, m.id] : ids.filter(i=>i!==m.id)
+                                        const nomes = membrosCF.filter(x=>novos.includes(x.id)).map(x=>x.nome).join(', ')
+                                        setFormAprov(f => ({ ...f, membros_presentes_ids: novos, membros_presentes: nomes }))
+                                      }} />
+                                      <div>
+                                        <div style={{ fontWeight:500 }}>{m.nome}</div>
+                                        <div style={{ fontSize:10, color:'#888780' }}>{m.cargo}</div>
+                                      </div>
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                            ) : (
+                              <input value={formAprov.membros_presentes||''} onChange={e=>setFormAprov(f=>({...f,membros_presentes:e.target.value}))} style={s.input} placeholder="Ex: Michel Jahara, João Silva" />
+                            )}
                           </div>
                           {(formAprov.tipo_aprovacao === 'aprovado_ressalva' || formAprov.tipo_aprovacao === 'reprovado') && (
                             <div style={{ marginBottom:10 }}>
