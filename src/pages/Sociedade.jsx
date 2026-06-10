@@ -174,11 +174,13 @@ export default function Sociedade() {
                   </div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                     {[
-                      instituicao?.endereco && `${instituicao.endereco}`,
-                      instituicao?.telefone && `${instituicao.telefone}`,
-                      instituicao?.email && `${instituicao.email}`,
+                      instituicao?.endereco && { icon:'ti-map-pin', val:instituicao.endereco },
+                      instituicao?.telefone && { icon:'ti-phone', val:instituicao.telefone },
+                      instituicao?.email && { icon:'ti-mail', val:instituicao.email },
                     ].filter(Boolean).map((info,i) => (
-                      <span key={i} style={{ fontSize:11, color:'#5F5E5A', padding:'3px 10px', background:'rgba(255,255,255,0.8)', borderRadius:99, border:'0.5px solid #E0DDD5' }}>{info}</span>
+                      <span key={i} style={{ fontSize:11, color:'#5F5E5A', padding:'3px 10px', background:'rgba(255,255,255,0.8)', borderRadius:99, border:'0.5px solid #E0DDD5', display:'inline-flex', alignItems:'center', gap:4 }}>
+                        <i className={`ti ${info.icon}`} style={{fontSize:11}} /> {info.val}
+                      </span>
                     ))}
                   </div>
                 </div>
