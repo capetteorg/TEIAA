@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx'
 import { parsearExtratoSicredi } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 
@@ -114,8 +115,9 @@ export default function Importar() {
         .eq('competencia', competencia)
         .limit(1)
       if (existente?.length > 0) {
-        const ok = window.confirm(
-          `Já existe um extrato importado para esta conta no período ${competencia}.\n\nArquivo anterior: ${existente[0].arquivo_nome}\n\nDeseja importar mesmo assim?`
+        const ok = await confirmar(
+          `Já existe um extrato importado para esta conta no período ${competencia}.\n\nArquivo anterior: ${existente[0].arquivo_nome}\n\nDeseja importar mesmo assim?`,
+          { titulo:'Extrato já importado', confirmarLabel:'Importar mesmo assim' }
         )
         if (!ok) { setSalvando(false); return }
       }

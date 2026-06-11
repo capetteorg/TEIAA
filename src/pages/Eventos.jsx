@@ -33,7 +33,7 @@ export default function Eventos() {
     setMsg('Evento criado!')
     setForm({ nome: '', descricao: '', data_inicio: '', data_fim: '', meta_financeira: '', status: 'planejado', observacoes: '' })
     carregar()
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function abrirEvento(ev) {

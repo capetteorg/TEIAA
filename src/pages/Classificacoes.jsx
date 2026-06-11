@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { classificacoes as dbClass } from '../lib/db'
 import { supabase } from '../lib/supabase'
+import { confirmar } from '../lib/ui'
 
 export default function Classificacoes() {
   const [lista, setLista] = useState([])
@@ -32,7 +33,7 @@ export default function Classificacoes() {
     setMsg('Regra criada!')
     dbClass.listar().then(({ data }) => setLista(data || []))
     setForm({ tipo_doc: '', direcao: 'entrada', categoria_id: '', categoria: '', subcategoria: '' })
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const catsFiltradas = categorias.filter(c =>
@@ -74,7 +75,7 @@ export default function Classificacoes() {
                     )}
                   </td>
                   <td style={s.td}>
-                    <button onClick={() => { if(confirm('Excluir esta regra?')) dbClass.excluir(r.id).then(() => dbClass.listar().then(({data}) => setLista(data||[]))) }}
+                    <button onClick={async () => { if (await confirmar('Excluir esta regra de classificação?', { titulo:'Excluir regra', confirmarLabel:'Excluir' })) dbClass.excluir(r.id).then(() => dbClass.listar().then(({data}) => setLista(data||[]))) }}
                       style={{ fontSize:11, padding:'2px 8px', borderRadius:6, border:'0.5px solid #E8212A', background:'transparent', color:'#E8212A', cursor:'pointer' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                   </td>
                 </tr>

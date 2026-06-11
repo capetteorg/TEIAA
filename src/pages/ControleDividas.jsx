@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
@@ -216,7 +217,7 @@ export default function ControleDividas() {
     setMostrarForm(false)
     carregar()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarAjuste(e) {
@@ -226,7 +227,7 @@ export default function ControleDividas() {
     await supabase.from('divida_movimentacoes').insert({
       pessoa_id: parseInt(formAdj.pessoa_id),
       tipo: formAdj.tipo,
-      valor: parseFloat(formAdj.valor),
+      valor: (parseFloat(formAdj.valor) || 0),
       data_movimentacao: formAdj.data_movimentacao,
       competencia: formAdj.competencia || null,
       descricao: formAdj.descricao || null,
@@ -238,17 +239,17 @@ export default function ControleDividas() {
     setFormAdj({ pessoa_id:'', tipo:'ajuste', valor:'', data_movimentacao:new Date().toISOString().slice(0,10), competencia:new Date().toISOString().slice(0,7), descricao:'', observacoes:'' })
     carregar()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluirPessoa(pe) {
-    if (!window.confirm(`Excluir ${pe.nome}? Isso apagará todas as movimentações e competências vinculadas.`)) return
+    if (!(await confirmar(`Excluir ${pe.nome}? Isso apagará todas as movimentações e competências vinculadas.`, { titulo:'Excluir pessoa', confirmarLabel:'Excluir tudo' }))) return
     await supabase.from('competencias_mensais').delete().eq('pessoa_id', pe.id)
     await supabase.from('divida_movimentacoes').delete().eq('pessoa_id', pe.id)
     await supabase.from('pessoas_recorrentes').delete().eq('id', pe.id)
     carregar()
     setMsg('Pessoa excluída.')
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function recalcularSaldo(pessoaId) {
@@ -374,7 +375,7 @@ export default function ControleDividas() {
             {!editandoId && (
               <div style={{ background:'#E6F1FB', border:'0.5px solid #B3D1F0', borderRadius:8, padding:'8px 12px', marginBottom:10, fontSize:11, color:'#185FA5' }}>
                 <i className="ti ti-calendar" style={{marginRight:4}} /> O sistema vai gerar automaticamente as competências de <strong>jan/2025</strong> até <strong>hoje</strong> como pendentes.
-                {parseFloat(form.divida_inicial) > 0 && <span> Uma movimentação de dívida inicial de <strong>{fmt(form.divida_inicial)}</strong> será lançada automaticamente.</span>}
+                {(parseFloat(form.divida_inicial) || 0) > 0 && <span> Uma movimentação de dívida inicial de <strong>{fmt(form.divida_inicial)}</strong> será lançada automaticamente.</span>}
               </div>
             )}
             <div style={{ display:'flex', gap:8 }}>

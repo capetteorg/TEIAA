@@ -115,7 +115,7 @@ export default function PlanoTrabalho() {
       ...form,
       parceria_id: form.parceria_id ? parseInt(form.parceria_id) : null,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
-      valor_total_previsto: form.valor_total_previsto ? parseFloat(form.valor_total_previsto) : null,
+      valor_total_previsto: form.valor_total_previsto ? (parseFloat(form.valor_total_previsto) || 0) : null,
       periodo_inicio: form.periodo_inicio || null,
       periodo_fim: form.periodo_fim || null,
     }
@@ -128,7 +128,7 @@ export default function PlanoTrabalho() {
     if (error) setMsg('Erro: ' + error.message)
     else { setMsg('Plano salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarMeta(e) {
@@ -138,8 +138,8 @@ export default function PlanoTrabalho() {
       ...formMeta,
       plano_id: planoSel.id,
       projeto_id: formMeta.projeto_id ? parseInt(formMeta.projeto_id) : planoSel.projeto_id,
-      quantidade_prevista: formMeta.quantidade_prevista ? parseFloat(formMeta.quantidade_prevista) : null,
-      quantidade_realizada: formMeta.quantidade_realizada ? parseFloat(formMeta.quantidade_realizada) : null,
+      quantidade_prevista: formMeta.quantidade_prevista ? (parseFloat(formMeta.quantidade_prevista) || 0) : null,
+      quantidade_realizada: formMeta.quantidade_realizada ? (parseFloat(formMeta.quantidade_realizada) || 0) : null,
     }
     let error
     if (editandoMeta) {

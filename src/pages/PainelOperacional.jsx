@@ -14,8 +14,10 @@ export default function PainelOperacional() {
     let mounted = true
     async function carregar() {
       const hoje = new Date()
-      const inicioMes = hoje.toISOString().slice(0,7) + '-01'
-      const fimMes = hoje.toISOString().slice(0,7) + '-30'
+      const ym = hoje.toISOString().slice(0,7)
+      const inicioMes = ym + '-01'
+      const [yy, mm] = ym.split('-')
+      const fimMes = `${ym}-${new Date(+yy, +mm, 0).getDate()}`
 
       const [atends, usuarios, equipe, cobrancas, atRecentes] = await Promise.all([
         supabase.from('atendimentos').select('id', { count:'exact', head:true }).gte('data_atend', inicioMes).lte('data_atend', fimMes),

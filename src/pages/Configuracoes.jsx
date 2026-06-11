@@ -11,7 +11,13 @@ export default function Configuracoes() {
   function verificarSenha(e) {
     e.preventDefault()
     if (senha === 'confirmar') { setSenhaOk(true); setMsg('') }
-    else { setMsg('Digite "confirmar" para continuar.'); setSenha('') }
+    else { setMsg('Digite exatamente a palavra "confirmar" para liberar as ações.'); setSenha('') }
+  }
+
+  // Deleta com verificação de erro — aborta a sequência na primeira falha
+  async function del(tabela) {
+    const { error } = await supabase.from(tabela).delete().neq('id', 0)
+    if (error) throw new Error(`Falha ao limpar "${tabela}": ${error.message}. Operação interrompida — verifique e tente novamente.`)
   }
 
   async function executar(tipo) {
@@ -19,50 +25,50 @@ export default function Configuracoes() {
     try {
       if (tipo === 'extratos') {
         // Limpa movimentações primeiro (FK), depois extratos
-        await supabase.from('extrato_movs').delete().neq('id', 0)
-        await supabase.from('extratos').delete().neq('id', 0)
+        await del('extrato_movs')
+        await del('extratos')
         setMsg('Extratos e movimentações excluídos.')
 
       } else if (tipo === 'lancamentos') {
-        await supabase.from('rateios').delete().neq('id', 0)
-        await supabase.from('lancamentos').delete().neq('id', 0)
+        await del('rateios')
+        await del('lancamentos')
         setMsg('Lançamentos excluídos.')
 
       } else if (tipo === 'cobrancas') {
-        await supabase.from('historico_cobrancas').delete().neq('id', 0)
-        await supabase.from('cobrancas').delete().neq('id', 0)
+        await del('historico_cobrancas')
+        await del('cobrancas')
         setMsg('Cobranças excluídas.')
 
       } else if (tipo === 'eventos_campanhas') {
-        await supabase.from('eventos').delete().neq('id', 0)
-        await supabase.from('campanhas').delete().neq('id', 0)
+        await del('eventos')
+        await del('campanhas')
         setMsg('Eventos e campanhas excluídos.')
 
       } else if (tipo === 'funcionarios') {
-        await supabase.from('pagamentos_divida').delete().neq('id', 0)
-        await supabase.from('dividas').delete().neq('id', 0)
-        await supabase.from('funcionarios').delete().neq('id', 0)
+        await del('pagamentos_divida')
+        await del('dividas')
+        await del('funcionarios')
         setMsg('Funcionários e dívidas excluídos.')
 
       } else if (tipo === 'fechamentos') {
-        await supabase.from('fechamentos').delete().neq('id', 0)
+        await del('fechamentos')
         setMsg('Fechamentos excluídos.')
 
       } else if (tipo === 'tudo') {
         // Ordem correta respeitando FKs
-        await supabase.from('historico_cobrancas').delete().neq('id', 0)
-        await supabase.from('cobrancas').delete().neq('id', 0)
-        await supabase.from('historico_movs').delete().neq('id', 0)
-        await supabase.from('pagamentos_divida').delete().neq('id', 0)
-        await supabase.from('dividas').delete().neq('id', 0)
-        await supabase.from('funcionarios').delete().neq('id', 0)
-        await supabase.from('fechamentos').delete().neq('id', 0)
-        await supabase.from('extrato_movs').delete().neq('id', 0)
-        await supabase.from('extratos').delete().neq('id', 0)
-        await supabase.from('rateios').delete().neq('id', 0)
-        await supabase.from('lancamentos').delete().neq('id', 0)
-        await supabase.from('eventos').delete().neq('id', 0)
-        await supabase.from('campanhas').delete().neq('id', 0)
+        await del('historico_cobrancas')
+        await del('cobrancas')
+        await del('historico_movs')
+        await del('pagamentos_divida')
+        await del('dividas')
+        await del('funcionarios')
+        await del('fechamentos')
+        await del('extrato_movs')
+        await del('extratos')
+        await del('rateios')
+        await del('lancamentos')
+        await del('eventos')
+        await del('campanhas')
         setMsg('Todos os dados de teste foram excluídos. Sistema pronto para uso real!')
       }
     } catch(err) {
@@ -70,7 +76,7 @@ export default function Configuracoes() {
     }
     setLoading(false)
     setConfirmando(null)
-    setTimeout(() => setMsg(''), 5000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const acoes = [
@@ -96,12 +102,12 @@ export default function Configuracoes() {
         <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1.5rem', maxWidth: 400 }}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Digite <strong>confirmar</strong> para continuar</div>
           <form onSubmit={verificarSenha}>
-            <input type="password" value={senha} onChange={e => setSenha(e.target.value)}
-              placeholder="Senha master" required
+            <input type="text" value={senha} onChange={e => setSenha(e.target.value)}
+              placeholder='Digite: confirmar' required autoComplete="off"
               style={{ width: '100%', fontSize: 13, padding: '8px 10px', border: '0.5px solid #D3D1C7', borderRadius: 8, marginBottom: 10 }} />
             {msg && <div style={{ fontSize: 12, color: '#A32D2D', marginBottom: 10 }}>{msg}</div>}
             <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#E8212A', color: '#fff', cursor: 'pointer' }}>
-              Verificar senha
+              Liberar ações
             </button>
           </form>
         </div>

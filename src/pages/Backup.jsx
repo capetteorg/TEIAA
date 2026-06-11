@@ -73,28 +73,29 @@ export default function Backup() {
       { tabela: 'plano_trabalho', campos: ['id','conta_id','nome','descricao','valor_previsto'] },
     ]
 
+    const dump = { _meta: { sistema: 'AGENDO Integra — CAPETTE', gerado_em: new Date().toISOString(), versao: 1 } }
+
     for (const mod of modulos) {
       setProgresso(`Exportando ${mod.tabela}...`)
       try {
-        const { data } = await supabase.from(mod.tabela).select('*').order('id')
+        const { data, error } = await supabase.from(mod.tabela).select('*').order('id')
+        if (error) throw error
         const registros = data || []
         totalRegistros += registros.length
-        arquivos.push({ nome: `${mod.tabela}.csv`, conteudo: csvDe(registros, mod.campos) })
+        dump[mod.tabela] = registros
+        arquivos.push({ nome: mod.tabela })
       } catch(e) {
-        arquivos.push({ nome: `${mod.tabela}.csv`, conteudo: `erro: ${e.message}` })
+        dump[mod.tabela] = { _erro: e.message }
+        arquivos.push({ nome: mod.tabela })
       }
     }
 
-    // Gerar ZIP via download individual ou arquivo único
-    const conteudoTotal = arquivos.map(a => 
-      `\n\n========== ${a.nome} ==========\n${a.conteudo}`
-    ).join('')
-
-    const blob = new Blob([conteudoTotal], { type: 'text/plain;charset=utf-8' })
+    // JSON estruturado — reimportável tabela por tabela
+    const blob = new Blob([JSON.stringify(dump, null, 1)], { type: 'application/json;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `backup_capette_${new Date().toISOString().slice(0,10)}.txt`
+    a.download = `backup_capette_${new Date().toISOString().slice(0,10)}.json`
     a.click()
     URL.revokeObjectURL(url)
 
@@ -122,7 +123,7 @@ export default function Backup() {
       <div style={s.card}>
         <div style={{ fontSize:13, fontWeight:500, marginBottom:8 }}>Exportar todos os dados</div>
         <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.25rem', lineHeight:1.7 }}>
-          Gera um arquivo de backup com todos os dados do sistema em formato CSV, incluindo:
+          Gera um arquivo de backup JSON estruturado (reimportável tabela por tabela) com todos os dados do sistema, incluindo:
           financeiro, parcerias, planos, projetos, atendimentos, usuários atendidos, equipe, doações, eventos e campanhas.
         </div>
 

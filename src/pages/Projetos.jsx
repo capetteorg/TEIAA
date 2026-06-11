@@ -137,7 +137,7 @@ export default function Projetos() {
       carregar()
     }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function editar(p) {
@@ -192,7 +192,7 @@ export default function Projetos() {
       carregarFinanceiro(projetoDetalhe.id)
     }
     setSalvandoOrc(false)
-    setTimeout(() => setMsgOrc(''), 3000)
+    setTimeout(() => setMsgOrc(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluirOrcamento(id) {
@@ -229,7 +229,7 @@ export default function Projetos() {
       carregarEquipeProjeto(projetoDetalhe.id)
     }
     setSalvandoEquipe(false)
-    setTimeout(() => setMsgEquipe(''), 3000)
+    setTimeout(() => setMsgEquipe(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function removerEquipe(id) {

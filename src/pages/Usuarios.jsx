@@ -24,6 +24,9 @@ export default function Usuarios() {
     e.preventDefault()
     setSalvando(true)
 
+    // Guardar a sessão do admin antes do signUp (que pode trocar a sessão ativa)
+    const { data: { session: sessaoAdmin } } = await supabase.auth.getSession()
+
     // Cria conta usando signUp — funciona com publishable key
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
@@ -35,6 +38,11 @@ export default function Usuarios() {
       setMsg('Erro ao criar conta: ' + authError.message)
       setSalvando(false)
       return
+    }
+
+    // Restaurar a sessão do admin (signUp pode ter logado como o novo usuário)
+    if (sessaoAdmin) {
+      await supabase.auth.setSession({ access_token: sessaoAdmin.access_token, refresh_token: sessaoAdmin.refresh_token })
     }
 
     // Salva perfil na tabela usuarios
@@ -55,7 +63,7 @@ export default function Usuarios() {
     setForm({ email: '', nome: '', perfil: 'operacional', senha: '' })
     carregarUsuarios()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 6000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const s = {

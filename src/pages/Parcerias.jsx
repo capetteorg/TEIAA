@@ -97,8 +97,8 @@ export default function Parcerias() {
       num_termo: isExecucao ? form.num_termo || null : null,
       num_processo: isExecucao ? form.num_processo || null : null,
       responsavel: isExecucao ? form.responsavel || null : null,
-      valor_aprovado: isExecucao && form.valor_aprovado ? parseFloat(form.valor_aprovado) : null,
-      valor_recebido: isExecucao && form.valor_recebido ? parseFloat(form.valor_recebido) : null,
+      valor_aprovado: isExecucao && form.valor_aprovado ? (parseFloat(form.valor_aprovado) || 0) : null,
+      valor_recebido: isExecucao && form.valor_recebido ? (parseFloat(form.valor_recebido) || 0) : null,
       vigencia_inicio: isExecucao && form.vigencia_inicio ? form.vigencia_inicio : null,
       vigencia_fim: isExecucao && form.vigencia_fim ? form.vigencia_fim : null,
       parlamentar: form.tipo === 'emenda' ? form.parlamentar || null : null,
@@ -118,7 +118,7 @@ export default function Parcerias() {
       carregar()
     }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function editar(p) {

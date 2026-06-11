@@ -86,7 +86,7 @@ export default function Doacoes() {
     const dados = {
       ...form,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
-      valor_estimado: form.valor_estimado ? parseFloat(form.valor_estimado) : null,
+      valor_estimado: form.valor_estimado ? (parseFloat(form.valor_estimado) || 0) : null,
     }
 
     let error, data
@@ -126,7 +126,7 @@ export default function Doacoes() {
     if (error) setMsg('Erro: ' + error.message)
     else { setMsg('Doação registrada!'); setForm(FORM_VAZIO); setItens([{ ...ITEM_VAZIO }]); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function editar(d) {

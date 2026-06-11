@@ -172,7 +172,7 @@ export default function ConciliacaoInteligente() {
       r.mov?.id === item.mov?.id ? { ...r, status: 'confirmado' } : r
     ))
     setMsg('Conciliação confirmada!')
-    setTimeout(() => setMsg(''), 2000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function rejeitarMatch(item) {
@@ -187,7 +187,7 @@ export default function ConciliacaoInteligente() {
       await confirmarConciliacao(item)
     }
     setMsg(`${autoItems.length} conciliações confirmadas!`)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const fmt = v => (v >= 0 ? '+' : '') + 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })

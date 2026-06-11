@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 const TIPOS_RECEITA = ['Repasse da emenda', 'Rendimento de aplicação', 'Estorno', 'Devolução recebida', 'Outra entrada']
@@ -145,7 +146,7 @@ export default function Conciliacao() {
     const auto = Object.values(novoMap).filter(v=>v.auto).length
     const possivel = Object.values(novoMap).filter(v=>!v.auto).length
     setMsg(`Cruzamento concluído! ${auto} automáticos, ${possivel} possíveis. Confirme abaixo.`)
-    setTimeout(() => setMsg(''), 6000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function confirmarMatch(movId) {
@@ -162,7 +163,7 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, ...upd, categoria: categorias.find(c=>String(c.id)===String(upd.categoria_id||m.categoria_id)) } : m))
     setMatchMap(prev => { const n={...prev}; delete n[movId]; return n })
     setMsg('Conciliado!')
-    setTimeout(() => setMsg(''), 2000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function rejeitarMatch(movId) {
@@ -173,7 +174,7 @@ export default function Conciliacao() {
     const autoIds = Object.entries(matchMap).filter(([,v])=>v.auto).map(([k])=>parseInt(k))
     for (const movId of autoIds) await confirmarMatch(movId)
     setMsg(`${autoIds.length} conciliações automáticas confirmadas!`)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarCategoria(movId, catId) {
@@ -210,7 +211,7 @@ export default function Conciliacao() {
     if (lancIds.length>0) await supabase.from('lancamentos').update({ status_lanc:'conciliado' }).in('id', lancIds)
     setMovs(prev => prev.map(m => ids.includes(m.id) ? { ...m, conciliado:true } : m))
     setMsg('Tudo conciliado! ')
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarComplementar(movId) {
@@ -225,7 +226,7 @@ export default function Conciliacao() {
     setComplementarAberto(null)
     setFormCompl({})
     setMsg('Dados complementares salvos! ')
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function abrirComplementar(m) {
@@ -278,7 +279,7 @@ export default function Conciliacao() {
     setMovs(prev => prev.map(m => m.id===movId ? { ...m, fornecedor:pessoa?.nome } : m))
     setPagFuncAberto(null); setFormPagFunc({})
     setMsg(valorNaoPago===0 ? `${pessoa?.nome} — ${competencia} quitado!` : `${pessoa?.nome} — R$ ${totalPagoMensal.toFixed(2)} pagos. Faltam R$ ${valorNaoPago.toFixed(2)}.`)
-    setTimeout(() => setMsg(''), 5000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const [dividirAberto, setDividirAberto] = useState(null)
@@ -298,12 +299,12 @@ export default function Conciliacao() {
     const original = Math.abs(Number(m.valor))
     const diff = Math.abs(total - original)
     if (diff > 0.01) {
-      const ok = window.confirm(`A soma das partes (R$ ${total.toFixed(2)}) difere do valor original (R$ ${original.toFixed(2)}) em R$ ${diff.toFixed(2)}.\n\nDeseja confirmar mesmo assim?`)
+      const ok = await confirmar(`A soma das partes (R$ ${total.toFixed(2)}) difere do valor original (R$ ${original.toFixed(2)}) em R$ ${diff.toFixed(2)}.\n\nDeseja confirmar mesmo assim?`, { titulo:'Divergência de valores', confirmarLabel:'Confirmar mesmo assim', perigo:false })
       if (!ok) return
     }
     if (partesDivisao.some(p => !p.categoria_id)) {
       setMsg('Todas as partes precisam ter categoria.')
-      setTimeout(() => setMsg(''), 3000)
+      setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
       return
     }
     await supabase.from('extrato_movs').update({ dividida: true, conciliado: true }).eq('id', m.id)
@@ -335,7 +336,7 @@ export default function Conciliacao() {
       .eq('extrato_id', extratoSel.id).order('data')
     setMovs(data || [])
     setMsg('Movimentação dividida com sucesso!')
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const [vincularAberto, setVincularAberto] = useState(null)
@@ -355,7 +356,7 @@ export default function Conciliacao() {
     setLancamentos(prev => prev.map(l => l.id===lancId ? { ...l, extrato_mov_id: movId } : l))
     setVincularAberto(null)
     setMsg('Lançamento vinculado!')
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function temDadosCompl(m) {
@@ -684,7 +685,7 @@ export default function Conciliacao() {
                       <button onClick={() => {
                         if (!m.conciliado && !m.categoria_id) {
                           setMsg('Selecione uma categoria antes de conciliar.')
-                          setTimeout(() => setMsg(''), 3000)
+                          setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
                           return
                         }
                         conciliarMov(m.id, !m.conciliado)

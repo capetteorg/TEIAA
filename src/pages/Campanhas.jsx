@@ -33,7 +33,7 @@ export default function Campanhas() {
     setMsg('Campanha criada!')
     setForm({ nome: '', descricao: '', objetivo: '', meta_financeira: '', data_inicio: '', data_fim: '', status: 'ativa', observacoes: '' })
     carregar()
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function abrirCampanha(camp) {

@@ -394,6 +394,7 @@ ${financeiroResumo ? `
 </body></html>`
 
     const w = window.open('', '_blank')
+    if (!w) { alert('O navegador bloqueou a janela do relatório. Permita pop-ups para este site e tente novamente.'); return }
     w.document.write(html)
     w.document.close()
   }

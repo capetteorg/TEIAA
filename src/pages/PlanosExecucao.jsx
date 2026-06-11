@@ -156,7 +156,7 @@ export default function PlanosExecucao() {
       setProjetoParaVincular('')
       carregarProjetosVinculados(planoSel.id)
     }
-    setTimeout(() => setMsgProjetos(''), 3000)
+    setTimeout(() => setMsgProjetos(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function desvincularProjeto(id) {
@@ -185,8 +185,8 @@ export default function PlanosExecucao() {
     const dados = {
       ...formOrc,
       plano_id: planoSel.id,
-      valor_previsto: formOrc.valor_previsto ? parseFloat(formOrc.valor_previsto) : null,
-      valor_realizado: formOrc.valor_realizado ? parseFloat(formOrc.valor_realizado) : null,
+      valor_previsto: formOrc.valor_previsto ? (parseFloat(formOrc.valor_previsto) || 0) : null,
+      valor_realizado: formOrc.valor_realizado ? (parseFloat(formOrc.valor_realizado) || 0) : null,
     }
     let error
     if (editandoOrc) {
@@ -199,7 +199,7 @@ export default function PlanosExecucao() {
       setEditandoOrc(null)
       carregarDetalhe(planoSel)
       setMsgOrc('Salvo!')
-      setTimeout(() => setMsgOrc(''), 3000)
+      setTimeout(() => setMsgOrc(m => m && m.includes('Erro') ? m : ''), 4000)
     } else {
       setMsgOrc('Erro: ' + error.message)
     }
@@ -233,7 +233,7 @@ export default function PlanosExecucao() {
       ...form,
       parceria_id: form.parceria_id ? parseInt(form.parceria_id) : null,
       projeto_id: null, // projetos são vinculados pela aba Projetos
-      valor_total_previsto: form.valor_total_previsto ? parseFloat(form.valor_total_previsto) : null,
+      valor_total_previsto: form.valor_total_previsto ? (parseFloat(form.valor_total_previsto) || 0) : null,
       periodo_inicio: form.periodo_inicio || null,
       periodo_fim: form.periodo_fim || null,
       origens_recursos: form.origens_recursos || [],
@@ -258,7 +258,7 @@ export default function PlanosExecucao() {
       setMsg('Plano salvo!')
       setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false)
       carregar()
-      setTimeout(() => setMsg(''), 4000)
+      setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
     } else {
       // Novo plano: abre direto na aba Projetos com orientação
       setForm(FORM_VAZIO); setMostrarForm(false)
@@ -271,7 +271,7 @@ export default function PlanosExecucao() {
         setAbaDetalhe('projetos')
         setAba('detalhe')
         setMsgProjetos('Plano criado com sucesso! Agora vincule os projetos e serviços que fazem parte deste plano.')
-        setTimeout(() => setMsgProjetos(''), 6000)
+        setTimeout(() => setMsgProjetos(m => m && m.includes('Erro') ? m : ''), 4000)
       }
     }
     setSalvando(false)
@@ -284,8 +284,8 @@ export default function PlanosExecucao() {
       ...formMeta,
       plano_id: planoSel.id,
       projeto_id: formMeta.projeto_id ? parseInt(formMeta.projeto_id) : null,
-      quantidade_prevista: formMeta.quantidade_prevista ? parseFloat(formMeta.quantidade_prevista) : null,
-      quantidade_realizada: formMeta.quantidade_realizada ? parseFloat(formMeta.quantidade_realizada) : null,
+      quantidade_prevista: formMeta.quantidade_prevista ? (parseFloat(formMeta.quantidade_prevista) || 0) : null,
+      quantidade_realizada: formMeta.quantidade_realizada ? (parseFloat(formMeta.quantidade_realizada) || 0) : null,
     }
     let error
     if (editandoMeta) {

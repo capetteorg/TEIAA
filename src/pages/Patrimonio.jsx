@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
@@ -88,11 +89,11 @@ export default function Patrimonio() {
     setEditandoId(null)
     carregar()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluir(id) {
-    if (!window.confirm('Excluir este bem?')) return
+    if (!(await confirmar('Excluir este bem do inventário?', { titulo:'Excluir bem', confirmarLabel:'Excluir' }))) return
     await supabase.from('patrimonio').delete().eq('id', id)
     setBens(prev => prev.filter(b => b.id !== id))
   }

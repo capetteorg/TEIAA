@@ -99,7 +99,7 @@ export default function Instituicao() {
     if (error) { setMsg('Erro: ' + error.message) }
     else { setMsg('Dados institucionais salvos!'); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarDiretor(e) {
@@ -145,7 +145,7 @@ export default function Instituicao() {
       setMsg('Erro: ' + err.message)
     }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function encerrarMandato(id) {

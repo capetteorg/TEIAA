@@ -11,6 +11,8 @@ export default function LancamentosLista() {
   const navigate = useNavigate()
 
   const [lista, setLista] = useState([])
+  const [limite, setLimite] = useState(300)
+  const [temMais, setTemMais] = useState(false)
   const [loading, setLoading] = useState(false)
   const [filtroTipo, setFiltroTipo] = useState('todos')
   const [filtroPeriodo, setFiltroPeriodo] = useState('')
@@ -33,7 +35,7 @@ export default function LancamentosLista() {
     supabase.from('fornecedores').select('id,nome').eq('ativo', true).order('nome').then(({ data }) => setFornecedores(data || []))
   }, [])
 
-  useEffect(() => { carregar() }, [filtroTipo, filtroPeriodo, filtroCategoria, filtroProjeto])
+  useEffect(() => { carregar() }, [filtroTipo, filtroPeriodo, filtroCategoria, filtroProjeto, limite])
 
   async function carregar() {
     setLoading(true)
@@ -52,8 +54,11 @@ export default function LancamentosLista() {
     }
     if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
     if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
+    q = q.limit(limite + 1)
     const { data } = await q
-    setLista(data || [])
+    const recebidos = data || []
+    setTemMais(recebidos.length > limite)
+    setLista(recebidos.slice(0, limite))
     setLoading(false)
   }
 
@@ -62,7 +67,7 @@ export default function LancamentosLista() {
     const { error } = await supabase.from('lancamentos').update({
       data: formEdit.data,
       descricao: formEdit.descricao,
-      valor: parseFloat(formEdit.valor),
+      valor: (parseFloat(formEdit.valor) || 0),
       conta_id: formEdit.conta_id ? parseInt(formEdit.conta_id) : null,
       categoria_id: formEdit.categoria_id ? parseInt(formEdit.categoria_id) : null,
       fornecedor_id: formEdit.fornecedor_id ? parseInt(formEdit.fornecedor_id) : null,
@@ -75,7 +80,7 @@ export default function LancamentosLista() {
       setFormEdit({})
       setMsg('Lançamento atualizado.')
       carregar()
-      setTimeout(() => setMsg(''), 3000)
+      setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
     }
     setSalvando(false)
   }
@@ -85,7 +90,7 @@ export default function LancamentosLista() {
     setConfirmandoExcluir(null)
     setMsg('Lançamento excluído.')
     carregar()
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
@@ -226,6 +231,14 @@ export default function LancamentosLista() {
                 })}
               </tbody>
             </table>
+          {temMais && (
+            <div style={{ textAlign:'center', marginTop:12 }}>
+              <button onClick={() => setLimite(l => l + 300)}
+                style={{ padding:'8px 24px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.92)', color:'#5F5E5A', cursor:'pointer' }}>
+                Carregar mais 300 lançamentos
+              </button>
+            </div>
+          )}
           </div>
         )}
       </div>

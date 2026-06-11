@@ -76,7 +76,7 @@ export default function UsuariosAtendidos() {
     if (error) setMsg('Erro: ' + error.message)
     else { setMsg('Usuário salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function editar(u) {

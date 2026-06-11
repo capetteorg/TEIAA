@@ -79,7 +79,7 @@ export default function Contas() {
     setMsg(editando ? 'Conta atualizada!' : 'Conta criada!')
     setForm(FORM_INICIAL); setEditando(null)
     carregar()
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   function iniciarEdicao(c) {

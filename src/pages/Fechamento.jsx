@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { gerarPDFParecer } from '../lib/pdf'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
@@ -81,7 +82,7 @@ export default function Fechamento() {
   }
 
   async function fecharMes(competencia) {
-    if (!window.confirm(`Fechar o mês ${competencia}? Isso indica que a conciliação foi revisada e está pronta para aprovação do Conselho Fiscal.`)) return
+    if (!(await confirmar(`Fechar o mês ${competencia}? Isso indica que a conciliação foi revisada e está pronta para aprovação do Conselho Fiscal.`, { titulo:'Fechar mês', confirmarLabel:'Fechar mês', perigo:false }))) return
     // Verificar se já existe fechamento para essa competência
     const { data: existe } = await supabase.from('fechamentos').select('id').eq('competencia', competencia).single()
     let erro
@@ -104,11 +105,11 @@ export default function Fechamento() {
     if (erro) { setMsg(`Erro: ${erro.message}`); return }
     setMsg(`Mês ${competencia} fechado e aguardando aprovação!`)
     await carregar()
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function reabrirMes(competencia) {
-    if (!window.confirm(`Reabrir o mês ${competencia}?`)) return
+    if (!(await confirmar(`Reabrir o mês ${competencia}? Os dados de aprovação serão resetados.`, { titulo:'Reabrir mês', confirmarLabel:'Reabrir' }))) return
     const { error } = await supabase.from('fechamentos').update({
       status: 'aberto',
       fechado_em: null,
@@ -125,7 +126,7 @@ export default function Fechamento() {
     if (error) { setMsg(`Erro: ${error.message}`); return }
     setMsg('Mês reaberto.')
     await carregar()
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarAprovacao(competencia) {
@@ -151,7 +152,7 @@ export default function Fechamento() {
     setMsg(`Aprovação registrada para ${competencia}!`)
     await carregar()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const fmt = v => 'R$ '+Math.abs(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})
@@ -179,6 +180,7 @@ export default function Fechamento() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ marginBottom:'1.25rem' }}>
         <div style={{ fontSize:15, fontWeight:500 }}>Fechamento e Aprovação do Conselho Fiscal</div>
+          <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Fluxo: o financeiro <strong>fecha</strong> o mês após a conciliação → o Conselho Fiscal <strong>aprova</strong> (ou reprova) → meses aprovados aparecem na Transparência Pública.</div>
         <div style={{ fontSize:12, color:'#888780' }}>Controle de fechamento mensal e registro de aprovações</div>
       </div>
 

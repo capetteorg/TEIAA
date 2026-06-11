@@ -45,7 +45,7 @@ export default function Pendencias() {
     await carregar()
     setAtualizando(false)
     setMsg('Pendências atualizadas!')
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function resolver(id) {
@@ -174,7 +174,7 @@ export default function Pendencias() {
                           <button onClick={() => navigate(p.rota_resolucao)} style={s.btn(AZUL)}>Resolver →</button>
                         )}
                         {!p.resolvida && (
-                          <button onClick={() => resolver(p.id)} style={s.btn('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> OK</button>
+                          <button onClick={() => resolver(p.id)} style={s.btn('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> Marcar resolvida</button>
                         )}
                         {p.resolvida && (
                           <button onClick={() => reabrirPendencia(p.id)} style={s.btn('#F1EFE8','#5F5E5A')}>Reabrir</button>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+
+const fimDe = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 import { gerarPDFPrestacaoContas } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
@@ -57,9 +59,9 @@ export default function PrestacaoContas() {
       .order('data')
 
     if (periodo === 'mes' && mesInicio) {
-      q = q.gte('data', mesInicio + '-01').lte('data', mesInicio + '-31')
+      q = q.gte('data', mesInicio + '-01').lte('data', fimDe(mesInicio))
     } else if (periodo === 'personalizado' && mesInicio && mesFim) {
-      q = q.gte('data', mesInicio + '-01').lte('data', mesFim + '-31')
+      q = q.gte('data', mesInicio + '-01').lte('data', fimDe(mesFim))
     }
 
     const { data: movs } = await q

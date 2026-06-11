@@ -13,6 +13,14 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const [contas, setContas] = useState([])
   const [projetos, setProjetos] = useState([])
   const [form, setForm] = useState({ nf: '', data: new Date().toISOString().slice(0,10), valor: '', descricao: '', conta_id: '', categoria_id: '', projeto_id: '', dispensa_nf: false })
+
+  // Avisar antes de sair se o formulário tem dados não salvos
+  useEffect(() => {
+    const temDados = form.valor || form.descricao || form.nf
+    const aviso = e => { if (temDados) { e.preventDefault(); e.returnValue = '' } }
+    window.addEventListener('beforeunload', aviso)
+    return () => window.removeEventListener('beforeunload', aviso)
+  }, [form.valor, form.descricao, form.nf])
   const [subcategoriaId, setSubcategoriaId] = useState('')
   const [subcategorias, setSubcategorias] = useState([])
   const [rateio, setRateio] = useState({ educ: '', social: '' })
@@ -273,7 +281,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
     const dadosLanc = {
       ...form,
       tipo,
-      valor: parseFloat(form.valor),
+      valor: (parseFloat(form.valor) || 0),
       conciliado: false,
       subcategoria_id: subcategoriaId ? parseInt(subcategoriaId) : null,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
@@ -319,7 +327,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
     setFotoBase64(null); setFotoPreview(null); setMsgIA('')
     carregarLista()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const v = parseFloat(form.valor) || 0

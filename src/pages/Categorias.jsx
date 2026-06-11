@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { categorias as dbCats } from '../lib/db'
+import { confirmar } from '../lib/ui'
 
 export default function Categorias() {
   const [ent, setEnt] = useState([])
@@ -26,11 +27,11 @@ export default function Categorias() {
     const { error } = await dbCats.criar(form)
     if (error) { setMsg('Erro: ' + error.message); return }
     setMsg('Categoria criada!'); setForm(f => ({ ...f, nome: '' }))
-    carregar(); setTimeout(() => setMsg(''), 3000)
+    carregar(); setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluirCat(id) {
-    if (!confirm('Excluir esta categoria? As subcategorias também serão excluídas.')) return
+    if (!(await confirmar('Excluir esta categoria? As subcategorias também serão excluídas.', { titulo:'Excluir categoria', confirmarLabel:'Excluir' }))) return
     await dbCats.excluir(id); carregar()
   }
 
@@ -39,11 +40,11 @@ export default function Categorias() {
     const { error } = await supabase.from('subcategorias').insert({ nome: formSub.nome, categoria_id: parseInt(formSub.categoria_id) })
     if (error) { setMsgSub('Erro: ' + error.message); return }
     setMsgSub('Subcategoria criada!'); setFormSub(f => ({ ...f, nome: '' }))
-    carregar(); setTimeout(() => setMsgSub(''), 3000)
+    carregar(); setTimeout(() => setMsgSub(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluirSub(id) {
-    if (!confirm('Excluir subcategoria?')) return
+    if (!(await confirmar('Excluir esta subcategoria?', { titulo:'Excluir subcategoria', confirmarLabel:'Excluir' }))) return
     await supabase.from('subcategorias').delete().eq('id', id); carregar()
   }
 

@@ -73,7 +73,7 @@ export default function EventosCampanhas() {
       descricao: form.descricao || null,
       data_inicio: form.data_inicio || null,
       data_fim: form.data_fim || null,
-      meta_financeira: form.meta_financeira ? parseFloat(form.meta_financeira) : null,
+      meta_financeira: form.meta_financeira ? (parseFloat(form.meta_financeira) || 0) : null,
       status: form.status,
       observacoes: form.observacoes || null,
       criado_por: user.id,
@@ -90,7 +90,7 @@ export default function EventosCampanhas() {
     if (error) setMsg('Erro: ' + error.message)
     else { setMsg('Salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function abrirDetalhe(item) {

@@ -60,7 +60,7 @@ export default function Fornecedores() {
       carregar()
     }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluir(id) {

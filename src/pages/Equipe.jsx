@@ -164,7 +164,7 @@ export default function Equipe() {
     if (error) setMsg('Erro: ' + error.message)
     else { setMsg('Pessoa salva com sucesso!'); setForm(FORM_VAZIO); setEditando(null); setAba('lista'); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarMovimentacao(e) {
@@ -178,7 +178,7 @@ export default function Equipe() {
       setFormMov({ data_mov:'', tipo_mov:'Observação administrativa', descricao:'' })
       carregarHistorico(pessoaSel.id)
       setMsg('Movimentação registrada!')
-      setTimeout(() => setMsg(''), 3000)
+      setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
     }
   }
 

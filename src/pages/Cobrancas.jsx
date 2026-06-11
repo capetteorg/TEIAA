@@ -174,7 +174,7 @@ export default function Cobrancas() {
     setMsg(`${novos} boletos importados. ${duplicatas > 0 ? duplicatas + ' duplicatas ignoradas.' : ''}`)
     carregar()
     carregarUltimoLote()
-    setTimeout(() => setMsg(''), 5000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarEdicao() {
@@ -182,7 +182,7 @@ export default function Cobrancas() {
       status: formEdit.status,
       pago_informado: formEdit.status === 'pago informado' || formEdit.pago_informado,
       data_promessa: formEdit.data_promessa || null,
-      valor_prometido: formEdit.valor_prometido ? parseFloat(formEdit.valor_prometido) : null,
+      valor_prometido: formEdit.valor_prometido ? (parseFloat(formEdit.valor_prometido) || 0) : null,
       ultima_obs: formEdit.ultima_obs,
       atualizado_por: user.id,
       atualizado_em: new Date().toISOString(),

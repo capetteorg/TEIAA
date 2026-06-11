@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
 
@@ -78,11 +79,11 @@ export default function Documentos() {
       setMsg('Erro: ' + err.message)
     }
     setUploading(false)
-    setTimeout(() => setMsg(''), 5000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluir(doc) {
-    if (!confirm(`Excluir "${doc.titulo}"?`)) return
+    if (!(await confirmar(`Excluir "${doc.titulo}"?`, { titulo:'Excluir documento', confirmarLabel:'Excluir' }))) return
     // Remove do storage
     const nomeArq = doc.arquivo_url.split('/').pop()
     await supabase.storage.from('documentos').remove([nomeArq])

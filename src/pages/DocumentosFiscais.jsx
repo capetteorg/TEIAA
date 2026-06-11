@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
 
@@ -235,11 +236,11 @@ export default function DocumentosFiscais() {
     setArquivo(null)
     carregar()
     setSalvando(false)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluir(id) {
-    if (!window.confirm('Excluir este documento?')) return
+    if (!(await confirmar('Excluir este documento?', { titulo:'Excluir documento', confirmarLabel:'Excluir' }))) return
     await supabase.from('documentos_fiscais').delete().eq('id', id)
     setDocs(prev => prev.filter(d => d.id !== id))
   }
@@ -270,11 +271,11 @@ export default function DocumentosFiscais() {
       carregar()
     } catch(err) { setMsg('Erro: ' + err.message) }
     setUploadando(false)
-    setTimeout(() => setMsg(''), 5000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function excluirArquivo(doc) {
-    if (!window.confirm(`Excluir "${doc.titulo}"?`)) return
+    if (!(await confirmar(`Excluir "${doc.titulo}"?`, { titulo:'Excluir arquivo', confirmarLabel:'Excluir' }))) return
     const nomeArq = doc.arquivo_url?.split('/').pop()
     if (nomeArq) await supabase.storage.from('documentos').remove([nomeArq])
     await supabase.from('documentos').delete().eq('id', doc.id)

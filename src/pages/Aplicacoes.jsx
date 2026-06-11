@@ -35,7 +35,7 @@ export default function Aplicacoes() {
     if (error) setMsg('Erro: ' + error.message)
     else { setMsg('Aplicação cadastrada!'); setForm({ nome:'', conta_id:'', saldo_atual:'' }); setMostrarForm(false); carregar() }
     setSalvando(false)
-    setTimeout(() => setMsg(''), 3000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   async function salvarRendimento(e) {
@@ -44,7 +44,7 @@ export default function Aplicacoes() {
     const dados = {
       aplicacao_id: parseInt(formRend.aplicacao_id),
       competencia: formRend.competencia,
-      valor: parseFloat(formRend.valor),
+      valor: (parseFloat(formRend.valor) || 0),
     }
     const { error } = await supabase.from('rendimentos_aplicacao').insert(dados)
     if (error) { setMsgRend('Erro: ' + error.message); setSalvando(false); return }
@@ -58,7 +58,7 @@ export default function Aplicacoes() {
     setFormRend({ aplicacao_id:'', competencia:'', valor:'' })
     carregar()
     setSalvando(false)
-    setTimeout(() => setMsgRend(''), 3000)
+    setTimeout(() => setMsgRend(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
   const fmt = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits:2 })
