@@ -11,10 +11,10 @@ const GRAVIDADE = {
 }
 
 const TIPO = {
-  financeira: { label:'Financeiro', icon:'' },
-  cobranca:   { label:'Cobrança',   icon:'' },
-  projeto:    { label:'Projeto',    icon:'' },
-  documental: { label:'Documento',  icon:'' },
+  financeira: { label:'Financeiro', icon:'ti-cash' },
+  cobranca:   { label:'Cobrança',   icon:'ti-receipt-2' },
+  projeto:    { label:'Projeto',    icon:'ti-folder' },
+  documental: { label:'Documento',  icon:'ti-file' },
 }
 
 export default function Pendencias() {
@@ -132,7 +132,7 @@ export default function Pendencias() {
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
         ) : lista.length === 0 ? (
           <div style={{ textAlign:'center', padding:'3rem', color:'#888780' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-circle-check" style={{fontSize:14, color:'#3B6D11'}} /></div>
+            <div style={{ marginBottom:8 }}><i className="ti ti-circle-check" style={{fontSize:32, color:'#3B6D11'}} /></div>
             <div style={{ fontSize:13 }}>
               {filtroResolvida === 'pendentes' ? 'Nenhuma pendência no momento!' : 'Nenhum item encontrado.'}
             </div>
@@ -150,7 +150,7 @@ export default function Pendencias() {
             <tbody>
               {lista.map((p,i) => {
                 const grav = GRAVIDADE[p.gravidade] || GRAVIDADE.informativa
-                const tipo = TIPO[p.tipo] || { label:p.tipo, icon:'' }
+                const tipo = TIPO[p.tipo] || { label:p.tipo, icon:'ti-pin' }
                 return (
                   <tr key={p.id} style={{ background:p.resolvida?'#F8F7F2':i%2===0?'#fff':'#FAFAF8', opacity:p.resolvida?0.7:1 }}>
                     <td style={s.td}>

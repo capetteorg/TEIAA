@@ -352,7 +352,7 @@ export default function PlanoTrabalho() {
           {/* Lista de planos */}
           {planos.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:14}} /></div>
+              <div style={{ marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:32, color:'#C8C6BC'}} /></div>
               <div style={{ fontSize:13 }}>Nenhum plano cadastrado ainda.</div>
             </div>
           ) : (

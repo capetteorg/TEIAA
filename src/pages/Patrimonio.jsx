@@ -218,7 +218,7 @@ export default function Patrimonio() {
         {loading ? <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div> :
         bensFiltrados.length === 0 ? (
           <div style={{ textAlign:'center', padding:'3rem', color:'#888780' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-building" style={{fontSize:14}} /></div>
+            <div style={{ marginBottom:8 }}><i className="ti ti-building" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div>Nenhum bem cadastrado.</div>
           </div>
         ) : (

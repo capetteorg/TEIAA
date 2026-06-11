@@ -296,7 +296,7 @@ export default function Fechamento() {
                               <select value={formAprov.tipo_aprovacao||''} onChange={e=>setFormAprov(f=>({...f,tipo_aprovacao:e.target.value}))} style={s.input}>
                                 <option value="">Selecione...</option>
                                 <option value="aprovado"><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Aprovado</option>
-                                <option value="aprovado_ressalva"><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Aprovado com ressalva</option>
+                                <option value="aprovado_ressalva"><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} /> Aprovado com ressalva</option>
                                 <option value="reprovado"><i className="ti ti-circle-x" style={{marginRight:4, color:'#A32D2D'}} /> Reprovado</option>
                               </select>
                             </div>

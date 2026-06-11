@@ -194,12 +194,12 @@ export default function ConciliacaoInteligente() {
   const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
   const STATUS_INFO = {
-    conciliado_auto: { label: 'Conciliado automaticamente', bg: '#EAF3DE', cor: '#3B6D11', icon: '' },
-    possivel:        { label: 'Possível correspondência',   bg: '#FAEEDA', cor: '#854F0B', icon: '?' },
-    duplicidade:     { label: 'Duplicidade',                bg: '#FCEBEB', cor: '#A32D2D', icon: '!' },
-    sem_lancamento:  { label: 'Sem lançamento operacional', bg: '#F1EFE8', cor: '#5F5E5A', icon: '—' },
-    sem_extrato:     { label: 'Sem extrato bancário',       bg: '#E6F1FB', cor: '#185FA5', icon: '↑' },
-    confirmado:      { label: 'Confirmado',                  bg: '#EAF3DE', cor: '#3B6D11', icon: '' },
+    conciliado_auto: { label: 'Conciliado automaticamente', bg: '#EAF3DE', cor: '#3B6D11', icon: 'ti-check' },
+    possivel:        { label: 'Possível correspondência',   bg: '#FAEEDA', cor: '#854F0B', icon: 'ti-question-mark' },
+    duplicidade:     { label: 'Duplicidade',                bg: '#FCEBEB', cor: '#A32D2D', icon: 'ti-exclamation-mark' },
+    sem_lancamento:  { label: 'Sem lançamento operacional', bg: '#F1EFE8', cor: '#5F5E5A', icon: 'ti-minus' },
+    sem_extrato:     { label: 'Sem extrato bancário',       bg: '#E6F1FB', cor: '#185FA5', icon: 'ti-arrow-up' },
+    confirmado:      { label: 'Confirmado',                  bg: '#EAF3DE', cor: '#3B6D11', icon: 'ti-check' },
   }
 
   const listaFiltrada = resultado.filter(r => {

@@ -131,7 +131,7 @@ export default function Fornecedores() {
 
           {duplicatas.length > 0 && (
             <div style={{ background:'#FAEEDA', border:'0.5px solid #F5C99A', borderRadius:8, padding:'10px 12px', marginBottom:10, fontSize:12, color:'#854F0B' }}>
-              <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Possível duplicata encontrada:
+              <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} /> Possível duplicata encontrada:
               {duplicatas.map(d => (
                 <div key={d.id} style={{ marginTop:4 }}>
                   <strong>{d.nome}</strong> {d.cpf_cnpj ? `— ${d.cpf_cnpj}` : ''} {d.cadastro_rapido ? '(cadastro rápido — incompleto)' : ''}
@@ -226,7 +226,7 @@ export default function Fornecedores() {
         {incompletos > 0 && (
           <button onClick={() => setFiltroIncompleto(!filtroIncompleto)}
             style={{ fontSize:11, padding:'6px 12px', borderRadius:8, border:`0.5px solid ${filtroIncompleto?LARANJA:'#D3D1C7'}`, background:filtroIncompleto?'#FAEEDA':'transparent', color:filtroIncompleto?LARANJA:'#5F5E5A', cursor:'pointer' }}>
-            <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Ver incompletos ({incompletos})
+            <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} /> Ver incompletos ({incompletos})
           </button>
         )}
         <span style={{ fontSize:12, color:'#888780' }}>{listaFiltrada.length} resultado{listaFiltrada.length!==1?'s':''}</span>
@@ -258,7 +258,7 @@ export default function Fornecedores() {
                     <td style={{ ...s.td, fontFamily:'monospace', fontSize:11 }}>{f.pix||'—'}</td>
                     <td style={s.td}>
                       {incompleto(f)
-                        ? <span style={s.badge('#FAEEDA','#854F0B')}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Incompleto</span>
+                        ? <span style={s.badge('#FAEEDA','#854F0B')}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} /> Incompleto</span>
                         : <span style={s.badge('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> Completo</span>}
                     </td>
                     <td style={s.td}>
@@ -279,7 +279,7 @@ export default function Fornecedores() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
+            <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Excluir fornecedor?</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}><strong>{confirmandoExcluir.nome}</strong></div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>

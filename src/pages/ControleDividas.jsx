@@ -405,7 +405,7 @@ export default function ControleDividas() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'1rem' }}>
           {pessoas.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780', gridColumn:'1/-1' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-users" style={{fontSize:14}} /></div>
+              <div style={{ marginBottom:8 }}><i className="ti ti-users" style={{fontSize:32, color:'#C8C6BC'}} /></div>
               <div style={{ fontSize:13 }}>Nenhuma pessoa cadastrada ainda.</div>
             </div>
           ) : pessoas.map(pe => {

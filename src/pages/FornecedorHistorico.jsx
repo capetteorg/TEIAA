@@ -99,8 +99,8 @@ export default function FornecedorHistorico() {
             <div style={{ fontSize:12, color:'#5F5E5A', marginTop:4, display:'flex', gap:16, flexWrap:'wrap' }}>
               {fornecedor.cpf_cnpj && <span style={{ fontFamily:'monospace' }}>{fornecedor.cpf_cnpj}</span>}
               {fornecedor.telefone && <span><i className="ti ti-phone" style={{marginRight:4}} /> {fornecedor.telefone}</span>}
-              {fornecedor.email && <span><i className="ti ti-mail" style={{fontSize:14}} />️ {fornecedor.email}</span>}
-              {fornecedor.area_atuacao && <span><i className="ti ti-tag" style={{fontSize:14}} />️ {fornecedor.area_atuacao}</span>}
+              {fornecedor.email && <span><i className="ti ti-mail" style={{fontSize:14}} /> {fornecedor.email}</span>}
+              {fornecedor.area_atuacao && <span><i className="ti ti-tag" style={{fontSize:14}} /> {fornecedor.area_atuacao}</span>}
             </div>
           </div>
 
@@ -146,7 +146,7 @@ export default function FornecedorHistorico() {
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
             ) : lancamentos.length === 0 ? (
               <div style={{ textAlign:'center', padding:'3rem', color:'#888780' }}>
-                <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-mail-opened" style={{fontSize:14}} /></div>
+                <div style={{ marginBottom:8 }}><i className="ti ti-mail-opened" style={{fontSize:32, color:'#C8C6BC'}} /></div>
                 <div style={{ fontSize:13 }}>Nenhum lançamento encontrado.</div>
               </div>
             ) : (

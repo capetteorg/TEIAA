@@ -431,7 +431,7 @@ export default function DocumentosFiscais() {
           </div>
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
             <button onClick={gerarDeclaracoesPDF} style={s.btn(declaracoesSel.length>0?LARANJA:'#D3D1C7')}>
-              <i className="ti ti-printer" style={{fontSize:14}} />️ Gerar PDF ({declaracoesSel.length} declarações)
+              <i className="ti ti-printer" style={{fontSize:14}} /> Gerar PDF ({declaracoesSel.length} declarações)
             </button>
             <button onClick={() => setDeclaracoesSel(Object.keys(TEXTOS_DECLARACOES))} style={s.btn('#F1EFE8','#5F5E5A')}>Todas</button>
             <button onClick={() => setDeclaracoesSel([])} style={s.btn('#F1EFE8','#5F5E5A')}>Limpar</button>
@@ -449,7 +449,7 @@ export default function DocumentosFiscais() {
         {loading ? <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div> :
         docsDaAba.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2.5rem', color:'#888780' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-folder" style={{fontSize:14}} /></div>
+            <div style={{ marginBottom:8 }}><i className="ti ti-folder" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:13 }}>Nenhum documento cadastrado nesta aba.</div>
             {isAdmin && <div style={{ fontSize:12, marginTop:4 }}>Clique em "+ Adicionar documento" para começar.</div>}
           </div>

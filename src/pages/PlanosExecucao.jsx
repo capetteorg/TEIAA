@@ -607,7 +607,7 @@ export default function PlanosExecucao() {
 
           {planos.length === 0 ? (
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-              <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:14}} /></div>
+              <div style={{ marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:32, color:'#C8C6BC'}} /></div>
               <div style={{ fontSize:13 }}>Nenhum plano cadastrado ainda.</div>
             </div>
           ) : (
@@ -1185,7 +1185,7 @@ export default function PlanosExecucao() {
                   </div>
                 ) : null)}
                 <div style={{ marginTop:14 }}>
-                  <button onClick={() => editarPlano(planoSel)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} />️ Editar campos CNAS</button>
+                  <button onClick={() => editarPlano(planoSel)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button>
                 </div>
               </div>
               {metas.length > 0 && (
@@ -1224,7 +1224,7 @@ export default function PlanosExecucao() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
+            <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>

@@ -129,7 +129,7 @@ export default function Aplicacoes() {
 
       {lista.length === 0 && !mostrarForm && (
         <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-          <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-trending-up" style={{fontSize:14}} /></div>
+          <div style={{ marginBottom:8 }}><i className="ti ti-trending-up" style={{fontSize:32, color:'#C8C6BC'}} /></div>
           <div>Nenhuma aplicação cadastrada. Clique em "+ Nova aplicação" para começar.</div>
         </div>
       )}

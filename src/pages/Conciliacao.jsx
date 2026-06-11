@@ -410,7 +410,7 @@ export default function Conciliacao() {
       </div>
       {extratos.length === 0 ? (
         <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
-          <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
+          <div style={{ marginBottom:8 }}><i className="ti ti-file" style={{fontSize:32, color:'#C8C6BC'}} /></div>
           <div style={{ fontSize:13 }}>Nenhum extrato importado ainda.</div>
           <button onClick={() => navigate('/importar')} style={{ ...s.btn(AZUL), marginTop:12 }}>Importar primeiro extrato →</button>
         </div>
@@ -640,7 +640,7 @@ export default function Conciliacao() {
                           {temCompl||movsDivida[m.id]?'':'⋯'} Ações {movsDivida[m.id]?'':''}
                         </button>
                         {menuAberto===m.id && (
-                          <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E0DDD5', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
+                          <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E8E6DE', borderRadius:10, boxShadow:'0 4px 16px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
                             <button onClick={() => { setMenuAberto(null); isAberto?setComplementarAberto(null):abrirComplementar(m) }}
                               style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:temCompl?'#3B6D11':'#2C2C2A' }}>
                               <i className="ti ti-clipboard-list" style={{marginRight:4}} /> {temCompl?'Dados complementares ✓':'Dados complementares'}

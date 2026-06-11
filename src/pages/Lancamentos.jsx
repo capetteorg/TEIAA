@@ -553,7 +553,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                     </div>
                   </div>
                   <div style={{ fontSize:11, color:LARANJA, marginBottom:8 }}>
-                    <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Cadastro rápido — gera pendência para completar os dados depois
+                    <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} /> Cadastro rápido — gera pendência para completar os dados depois
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
                     <button type="button" onClick={salvarFornRapido} disabled={salvandoForn||!formFornRapido.nome}
@@ -569,7 +569,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
               )}
               {fornecedorId && fornecedores.find(f=>String(f.id)===String(fornecedorId))?.cadastro_rapido && (
                 <div style={{ fontSize:11, color:LARANJA, marginTop:3 }}>
-                  <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️ Fornecedor com cadastro incompleto — complete em Fornecedores
+                  <i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} /> Fornecedor com cadastro incompleto — complete em Fornecedores
                 </div>
               )}
             </div>

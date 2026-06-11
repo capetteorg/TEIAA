@@ -289,7 +289,7 @@ export default function Projetos() {
       <div style={{ padding:'1.25rem 1.5rem' }}>
         <div style={{ display:'flex', gap:8, marginBottom:'1rem', flexWrap:'wrap' }}>
           <button onClick={() => setProjetoDetalhe(null)} style={s.btn('#F1EFE8','#5F5E5A')}>← Voltar</button>
-          <button onClick={() => editar(p)} style={s.btn(AZUL)}><i className="ti ti-pencil" style={{fontSize:14}} />️ Editar projeto</button>
+          <button onClick={() => editar(p)} style={s.btn(AZUL)}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar projeto</button>
         </div>
 
         {/* Cabeçalho */}
@@ -667,7 +667,7 @@ export default function Projetos() {
             </>}
             {p.participacao_usuarios && <><div style={s.secao(ROXO)}>Participação dos usuários e famílias</div><div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div></>}
             {p.monitoramento_avaliacao && <><div style={s.secao(ROXO)}>Monitoramento e avaliação</div><div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div></>}
-            <div style={{ marginTop:14 }}><button onClick={() => editar(p)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} />️ Editar campos CNAS</button></div>
+            <div style={{ marginTop:14 }}><button onClick={() => editar(p)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button></div>
           </div>
         )}
       </div>
@@ -788,7 +788,7 @@ export default function Projetos() {
       </div>
 
       {lista.length === 0 ? (
-        <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}><div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:14}} /></div><div style={{ fontSize:13 }}>Nenhum projeto cadastrado.</div></div>
+        <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}><div style={{ marginBottom:8 }}><i className="ti ti-clipboard-list" style={{fontSize:32, color:'#C8C6BC'}} /></div><div style={{ fontSize:13 }}>Nenhum projeto cadastrado.</div></div>
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:'1rem' }}>
           {lista.map(p => {
@@ -829,7 +829,7 @@ export default function Projetos() {
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:8 }}><i className="ti ti-alert-triangle" style={{fontSize:14, color:'#E67814'}} />️</div>
+            <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
