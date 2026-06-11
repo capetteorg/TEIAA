@@ -13,8 +13,13 @@ export default function Usuarios() {
   const [form, setForm] = useState({ email: '', nome: '', perfil: 'operacional', senha: '' })
   const [msg, setMsg] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [logs, setLogs] = useState([])
 
-  useEffect(() => { carregarUsuarios() }, [])
+  useEffect(() => {
+    carregarUsuarios()
+    supabase.from('auditoria').select('*').order('criado_em', { ascending:false }).limit(50)
+      .then(({ data }) => setLogs(data || []))
+  }, [])
 
   async function carregarUsuarios() {
     const { data } = await supabase.from('usuarios').select('*').order('nome')
@@ -169,6 +174,32 @@ export default function Usuarios() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Trilha de auditoria */}
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginTop: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Atividades recentes (auditoria)</div>
+        {logs.length === 0 ? (
+          <div style={{ fontSize: 12, color: '#888780' }}>Nenhuma atividade registrada ainda. Ações sensíveis (fechamentos, aprovações, exclusões em massa) aparecem aqui.</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead><tr>{['Quando','Quem','Ação','Detalhe'].map(h => (
+              <th key={h} style={{ textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE' }}>{h}</th>
+            ))}</tr></thead>
+            <tbody>
+              {logs.map(l => (
+                <tr key={l.id}>
+                  <td style={{ padding: '7px 8px', borderBottom: '0.5px solid #F1EFE8', fontSize: 11, color: '#888780', whiteSpace: 'nowrap' }}>
+                    {new Date(l.criado_em).toLocaleString('pt-BR')}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '0.5px solid #F1EFE8', fontSize: 11 }}>{l.usuario}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '0.5px solid #F1EFE8', fontWeight: 500 }}>{l.acao}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '0.5px solid #F1EFE8', fontSize: 11, color: '#5F5E5A' }}>{l.detalhe || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )

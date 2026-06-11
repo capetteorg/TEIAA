@@ -40,6 +40,7 @@ import LancamentosLista from './pages/LancamentosLista'
 import Pendencias from './pages/Pendencias'
 import DocumentosFiscais from './pages/DocumentosFiscais'
 import Patrimonio from './pages/Patrimonio'
+import NovaSenha from './pages/NovaSenha'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -63,6 +64,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/painel" replace />} />
       <Route path="/transparencia" element={<Sociedade />} />
+      <Route path="/nova-senha" element={<NovaSenha />} />
 
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route index element={<Navigate to="/painel-admin" replace />} />

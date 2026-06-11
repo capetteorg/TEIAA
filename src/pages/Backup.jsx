@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { confirmar } from '../lib/ui'
+import { auditar } from '../lib/auditoria'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -21,6 +23,52 @@ export default function Backup() {
   const [loading, setLoading] = useState(false)
   const [progresso, setProgresso] = useState('')
   const [resultado, setResultado] = useState(null)
+  const [restaurando, setRestaurando] = useState(false)
+  const [progRestore, setProgRestore] = useState('')
+  const [resRestore, setResRestore] = useState(null)
+
+  async function restaurarBackup(e) {
+    const arquivo = e.target.files[0]
+    e.target.value = ''
+    if (!arquivo) return
+
+    let dump
+    try { dump = JSON.parse(await arquivo.text()) }
+    catch { setResRestore({ erro: 'Arquivo inválido — selecione um backup .json gerado por este sistema.' }); return }
+    if (!dump._meta) { setResRestore({ erro: 'Este arquivo não parece ser um backup do AGENDO Integra.' }); return }
+
+    const tabelas = Object.keys(dump).filter(t => t !== '_meta' && t !== 'usuarios' && t !== 'auditoria' && Array.isArray(dump[t]))
+    const totalReg = tabelas.reduce((a,t) => a + dump[t].length, 0)
+
+    const ok = await confirmar(
+      `Restaurar backup de ${new Date(dump._meta.gerado_em).toLocaleString('pt-BR')}?\n\n${tabelas.length} tabelas · ${totalReg.toLocaleString('pt-BR')} registros.\n\nRegistros com mesmo ID serão SOBRESCRITOS. Tabelas de usuários e auditoria não são restauradas.`,
+      { titulo: 'Restaurar backup', confirmarLabel: 'Restaurar agora' }
+    )
+    if (!ok) return
+
+    setRestaurando(true)
+    setResRestore(null)
+    auditar('Restauração de backup', `${arquivo.name} — ${totalReg} registros`)
+    const erros = []
+    let restaurados = 0
+
+    for (const tabela of tabelas) {
+      const linhas = dump[tabela]
+      if (linhas.length === 0) continue
+      setProgRestore(`Restaurando ${tabela} (${linhas.length})...`)
+      // Lotes de 500 para não estourar payload
+      for (let i = 0; i < linhas.length; i += 500) {
+        const lote = linhas.slice(i, i + 500)
+        const { error } = await supabase.from(tabela).upsert(lote, { onConflict: 'id' })
+        if (error) { erros.push(`${tabela}: ${error.message}`); break }
+        restaurados += lote.length
+      }
+    }
+
+    setProgRestore('')
+    setRestaurando(false)
+    setResRestore({ restaurados, erros })
+  }
 
   async function gerarBackup() {
     setLoading(true)
@@ -142,6 +190,30 @@ export default function Backup() {
         <button onClick={gerarBackup} disabled={loading} style={s.btn(loading?'#D3D1C7':'#0E7EA8')}>
           {loading ? 'Gerando backup...' : 'Gerar e baixar backup'}
         </button>
+      </div>
+
+      <div style={s.card}>
+        <div style={{ fontSize:13, fontWeight:500, marginBottom:8 }}>Restaurar backup</div>
+        <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1rem', lineHeight:1.7 }}>
+          Importa um arquivo .json gerado pelo backup acima. Registros com o mesmo ID serão sobrescritos.
+          Usuários do sistema e trilha de auditoria não são restaurados por segurança.
+        </div>
+        {progRestore && (
+          <div style={{ fontSize:12, color:'#0E7EA8', marginBottom:12, padding:'8px 12px', background:'#E6F1FB', borderRadius:8 }}>{progRestore}</div>
+        )}
+        {resRestore?.erro && (
+          <div style={{ fontSize:12, color:'#A32D2D', marginBottom:12, padding:'8px 12px', background:'#FEF2F2', borderRadius:8 }}>{resRestore.erro}</div>
+        )}
+        {resRestore?.restaurados >= 0 && !resRestore.erro && (
+          <div style={{ fontSize:12, marginBottom:12, padding:'8px 12px', borderRadius:8, background:resRestore.erros.length?'#FAEEDA':'#EAF3DE', color:resRestore.erros.length?'#854F0B':'#3B6D11' }}>
+            {resRestore.restaurados.toLocaleString('pt-BR')} registros restaurados.
+            {resRestore.erros.length > 0 && <div style={{ marginTop:6 }}>{resRestore.erros.map((e,i)=><div key={i}>⚠ {e}</div>)}</div>}
+          </div>
+        )}
+        <label style={{ display:'inline-block', padding:'10px 20px', fontSize:13, fontWeight:500, borderRadius:8, background:restaurando?'#D3D1C7':'#0E7EA8', color:'#fff', cursor:restaurando?'default':'pointer' }}>
+          {restaurando ? 'Restaurando...' : 'Selecionar arquivo .json'}
+          <input type="file" accept=".json,application/json" onChange={restaurarBackup} disabled={restaurando} style={{ display:'none' }} />
+        </label>
       </div>
 
       <div style={s.card}>

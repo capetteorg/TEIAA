@@ -27,6 +27,8 @@ const FORM_VAZIO = {
 export default function UsuariosAtendidos() {
   const isMobile = useIsMobile()
   const [usuarios, setUsuarios] = useState([])
+  const [limite, setLimite] = useState(300)
+  const [temMais, setTemMais] = useState(false)
   const [projetos, setProjetos] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editando, setEditando] = useState(null)
@@ -51,8 +53,12 @@ export default function UsuariosAtendidos() {
     if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
     if (filtros.dataInicio) q = q.gte('data_ingresso', filtros.dataInicio)
     if (filtros.dataFim) q = q.lte('data_ingresso', filtros.dataFim)
+    q = q.limit(limite + 1)
+
     const { data } = await q
-    setUsuarios(data || [])
+    const recebidos = data || []
+    setTemMais(recebidos.length > limite)
+    setUsuarios(recebidos.slice(0, limite))
     setLoading(false)
   }
 
@@ -319,6 +325,14 @@ export default function UsuariosAtendidos() {
                     })}
                   </tbody>
                 </table>
+          {temMais && (
+            <div style={{ textAlign:'center', marginTop:12 }}>
+              <button onClick={() => setLimite(l => l + 300)}
+                style={{ padding:'8px 24px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.92)', color:'#5F5E5A', cursor:'pointer' }}>
+                Carregar mais 300
+              </button>
+            </div>
+          )}
               </div>
             )}
           </div>

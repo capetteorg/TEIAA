@@ -200,7 +200,7 @@ export default function Layout() {
           ))}
         </div>
         {isMobile && (
-          <button onClick={() => setMenuAberto(false)} style={{ border:'none', background:'none', fontSize:18, cursor:'pointer', color:'#888780', padding:'4px', lineHeight:1 }}>✕</button>
+          <button onClick={() => setMenuAberto(false)} style={{ border:'none', background:'none', fontSize:18, cursor:"pointer", color:"#888780", padding:"4px", lineHeight:1 }}><i className="ti ti-x" style={{fontSize:18}} /></button>
         )}
       </div>
 

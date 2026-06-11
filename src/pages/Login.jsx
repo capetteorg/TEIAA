@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { supabase } from '../lib/supabase'
 
-const LOGO_LETRAS = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#0E7EA8'],['E','#E8207A']]
+const LOGO_LETRAS = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']]
 
 export default function Login() {
   const { login } = useAuth()
@@ -9,6 +10,17 @@ export default function Login() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [loading, setLoading] = useState(false)
+  const [msgRecuperacao, setMsgRecuperacao] = useState('')
+
+  async function recuperarSenha() {
+    if (!email) { setErro('Informe seu e-mail no campo acima e clique novamente.'); return }
+    setErro('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/nova-senha',
+    })
+    if (error) setErro('Erro ao enviar: ' + error.message)
+    else setMsgRecuperacao('E-mail de recuperação enviado para ' + email + '. Verifique sua caixa de entrada.')
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -119,10 +131,20 @@ export default function Login() {
               }}>
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>
+
+              {msgRecuperacao && (
+                <div style={{ fontSize: 12, color: '#3B6D11', background: '#F2FAE8', border: '0.5px solid #C0DD97', padding: '7px 10px', borderRadius: 8 }}>
+                  {msgRecuperacao}
+                </div>
+              )}
+              <button type="button" onClick={recuperarSenha}
+                style={{ background: 'none', border: 'none', fontSize: 11, color: '#888780', cursor: 'pointer', textDecoration: 'underline', padding: 0, marginTop: 2 }}>
+                Esqueci minha senha
+              </button>
             </form>
 
             <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#B4B2A9' }}>
-              <i className="ti ti-lock" style={{marginRight:4}} /> Acesso restrito à equipe autorizada.
+              🔒 Acesso restrito à equipe autorizada.
             </div>
           </div>
 
@@ -151,12 +173,12 @@ export default function Login() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
                 {[
-                  { icon: 'ti-chart-bar', texto: 'Receitas e despesas por período' },
-                  { icon: 'ti-file', texto: 'Relatórios e documentos de prestação de contas' },
-                  { icon: 'ti-search', texto: 'Consulta pública, livre e sem cadastro' },
+                  { icon: '📊', texto: 'Receitas e despesas por período' },
+                  { icon: '📄', texto: 'Relatórios e documentos de prestação de contas' },
+                  { icon: '🔍', texto: 'Consulta pública, livre e sem cadastro' },
                 ].map(item => (
                   <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#3B6D11' }}>
-                    <i className={`ti ${item.icon}`} style={{ fontSize: 14 }} />
+                    <span style={{ fontSize: 14 }}>{item.icon}</span>
                     {item.texto}
                   </div>
                 ))}
@@ -175,7 +197,7 @@ export default function Login() {
               Acessar Transparência →
             </a>
             <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#6BBF2B' }}>
-              <i className="ti ti-leaf" style={{marginRight:4}} /> Sem necessidade de login
+              🌿 Sem necessidade de login
             </div>
           </div>
         </div>

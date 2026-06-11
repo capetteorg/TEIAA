@@ -46,6 +46,8 @@ export default function Atendimentos() {
   const isMobile = useIsMobile()
   const { user } = useAuth()
   const [atendimentos, setAtendimentos] = useState([])
+  const [limite, setLimite] = useState(300)
+  const [temMais, setTemMais] = useState(false)
   const [projetos, setProjetos] = useState([])
   const [equipe, setEquipe] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
@@ -73,8 +75,12 @@ export default function Atendimentos() {
     if (filtros.tipo_atend) q = q.eq('tipo_atend', filtros.tipo_atend)
     if (filtros.profissional_id) q = q.eq('profissional_id', parseInt(filtros.profissional_id))
     if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
+    q = q.limit(limite + 1)
+
     const { data } = await q
-    setAtendimentos(data || [])
+    const recebidos = data || []
+    setTemMais(recebidos.length > limite)
+    setAtendimentos(recebidos.slice(0, limite))
     setLoading(false)
   }
 
@@ -389,6 +395,14 @@ export default function Atendimentos() {
                 })}
               </tbody>
             </table>
+          {temMais && (
+            <div style={{ textAlign:'center', marginTop:12 }}>
+              <button onClick={() => setLimite(l => l + 300)}
+                style={{ padding:'8px 24px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.92)', color:'#5F5E5A', cursor:'pointer' }}>
+                Carregar mais 300
+              </button>
+            </div>
+          )}
           </div>
         )}
       </div>

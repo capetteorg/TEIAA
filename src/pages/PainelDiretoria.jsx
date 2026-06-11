@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { Line } from 'react-chartjs-2'
+import 'chart.js/auto'
 
 const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 
@@ -15,6 +17,35 @@ export default function PainelDiretoria() {
   const [movs, setMovs] = useState([])
   const [resumo, setResumo] = useState({ entradas: 0, saidas: 0 })
   const [loading, setLoading] = useState(true)
+
+  // Evolução dos últimos 6 meses
+  const [evolucao, setEvolucao] = useState(null)
+  useEffect(() => {
+    async function carregarEvolucao() {
+      const hoje = new Date()
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
+      const { data } = await supabase.from('extrato_movs').select('data,valor').gte('data', inicio)
+      const porMes = {}
+      ;(data||[]).forEach(m => {
+        const ym = m.data.slice(0,7)
+        if (!porMes[ym]) porMes[ym] = { ent:0, sai:0 }
+        const v = Number(m.valor)
+        v > 0 ? porMes[ym].ent += v : porMes[ym].sai += Math.abs(v)
+      })
+      const meses = []
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
+        meses.push(d.toISOString().slice(0,7))
+      }
+      setEvolucao({
+        labels: meses.map(m => new Date(m+'-15').toLocaleDateString('pt-BR',{month:'short'})),
+        ent: meses.map(m => porMes[m]?.ent || 0),
+        sai: meses.map(m => porMes[m]?.sai || 0),
+      })
+    }
+    carregarEvolucao()
+  }, [])
+
   const [ultimoExtrato, setUltimoExtrato] = useState(null)
   const inicializado = useRef(false)
 
@@ -306,6 +337,32 @@ export default function PainelDiretoria() {
             </div>
           )}
         </>
+      )}
+
+      {/* Evolução 6 meses */}
+      {evolucao && (evolucao.ent.some(v=>v>0) || evolucao.sai.some(v=>v>0)) && (
+        <div style={{ ...s.card, marginBottom:10 }}>
+          <div style={{ fontSize:13, fontWeight:500, marginBottom:12 }}>Evolução — últimos 6 meses</div>
+          <div style={{ height:180 }}>
+            <Line
+              data={{
+                labels: evolucao.labels,
+                datasets: [
+                  { label:'Entradas', data:evolucao.ent, borderColor:'#6BBF2B', backgroundColor:'rgba(107,191,43,0.08)', fill:true, tension:0.35, pointRadius:3, borderWidth:2 },
+                  { label:'Saídas', data:evolucao.sai, borderColor:'#E8212A', backgroundColor:'rgba(232,33,42,0.05)', fill:true, tension:0.35, pointRadius:3, borderWidth:2 },
+                ],
+              }}
+              options={{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{ labels:{ boxWidth:10, font:{ size:11, family:'Inter' }, color:'#888780' } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': R$ '+Number(ctx.raw).toLocaleString('pt-BR',{minimumFractionDigits:2}) } } },
+                scales:{
+                  y:{ ticks:{ font:{ size:10, family:'Inter' }, color:'#B4B2A9', callback: v => 'R$ '+(v>=1000?(v/1000).toFixed(0)+'k':v) }, grid:{ color:'#F1EFE8' }, border:{ display:false } },
+                  x:{ ticks:{ font:{ size:10, family:'Inter' }, color:'#B4B2A9' }, grid:{ display:false }, border:{ display:false } },
+                },
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
       </div>

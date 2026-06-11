@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { Line } from 'react-chartjs-2'
+import 'chart.js/auto'
 
 const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', ROXO = '#8B2FC9', LARANJA = '#F4821F'
@@ -15,7 +17,7 @@ const SAUDACAO = () => {
 
 export default function PainelAdmin() {
   const navigate = useNavigate()
-  const [resumo, setResumo] = useState({ entradas:0, saidas:0, saldo:0 })
+  const [resumo, setResumo] = useState({ entradas:0, saidas:0, saldo:0, saldoConta:0, temExtrato:false })
   const [mes, setMes] = useState('')
   const [loading, setLoading] = useState(true)
   const [nome, setNome] = useState('')
@@ -35,6 +37,35 @@ export default function PainelAdmin() {
   }, [])
 
   useEffect(() => { if (mes) carregarResumo() }, [mes])
+
+  // Evolução dos últimos 6 meses
+  const [evolucao, setEvolucao] = useState(null)
+  useEffect(() => {
+    async function carregarEvolucao() {
+      const hoje = new Date()
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
+      const { data } = await supabase.from('extrato_movs').select('data,valor').gte('data', inicio)
+      const porMes = {}
+      ;(data||[]).forEach(m => {
+        const ym = m.data.slice(0,7)
+        if (!porMes[ym]) porMes[ym] = { ent:0, sai:0 }
+        const v = Number(m.valor)
+        v > 0 ? porMes[ym].ent += v : porMes[ym].sai += Math.abs(v)
+      })
+      const meses = []
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
+        meses.push(d.toISOString().slice(0,7))
+      }
+      setEvolucao({
+        labels: meses.map(m => new Date(m+'-15').toLocaleDateString('pt-BR',{month:'short'})),
+        ent: meses.map(m => porMes[m]?.ent || 0),
+        sai: meses.map(m => porMes[m]?.sai || 0),
+      })
+    }
+    carregarEvolucao()
+  }, [])
+
 
   async function inicializar() {
     const mesAtual = new Date().toISOString().slice(0,7)
@@ -61,13 +92,20 @@ export default function PainelAdmin() {
   }
 
   async function carregarResumo() {
-    const { data: movs } = await supabase
-      .from('extrato_movs').select('valor')
-      .gte('data', mes+'-01').lte('data', fimMes(mes))
+    const [{ data: movs }, { data: exts }] = await Promise.all([
+      supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes(mes)),
+      supabase.from('extratos').select('saldo_inicial,saldo_final').eq('competencia', mes),
+    ])
     const lista = movs || []
     const ent = lista.filter(m => Number(m.valor) > 0).reduce((a,m) => a+Number(m.valor), 0)
     const sai = Math.abs(lista.filter(m => Number(m.valor) < 0).reduce((a,m) => a+Number(m.valor), 0))
-    setResumo({ entradas:ent, saidas:sai, saldo:ent-sai })
+    // Saldo real em conta: usa saldo_final dos extratos; fallback: saldo_inicial + resultado do mês
+    const extratos = exts || []
+    const temSaldoFinal = extratos.some(e => e.saldo_final !== null && e.saldo_final !== undefined)
+    const saldoConta = temSaldoFinal
+      ? extratos.reduce((a,e) => a + Number(e.saldo_final||0), 0)
+      : extratos.reduce((a,e) => a + Number(e.saldo_inicial||0), 0) + (ent - sai)
+    setResumo({ entradas:ent, saidas:sai, saldo:ent-sai, saldoConta, temExtrato: extratos.length > 0 })
   }
 
   const fmt = v => 'R$ '+Math.abs(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})
@@ -163,7 +201,7 @@ export default function PainelAdmin() {
               style={{ fontSize:11, padding:'3px 7px', border:'0.5px solid #D3D1C7', borderRadius:7, color:'#5F5E5A', background:'rgba(255,255,255,0.8)' }} />
           </div>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
+        <div style={{ display:'grid', gridTemplateColumns:resumo.temExtrato?'1fr 1fr 1fr 1fr':'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
           <div style={metricStyle('#EAF3DE')}>
             <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Entradas</div>
             <div style={{ fontSize:17, fontWeight:500, color:'#3B6D11' }}>{fmt(resumo.entradas)}</div>
@@ -173,9 +211,15 @@ export default function PainelAdmin() {
             <div style={{ fontSize:17, fontWeight:500, color:'#A32D2D' }}>{fmt(resumo.saidas)}</div>
           </div>
           <div style={metricStyle(resumo.saldo>=0?'#E6F1FB':'#FEF2F2')}>
-            <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Saldo</div>
+            <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Resultado do mês</div>
             <div style={{ fontSize:17, fontWeight:500, color:resumo.saldo>=0?AG_BLUE:'#A32D2D' }}>{(resumo.saldo<0?'–':'')+fmt(resumo.saldo)}</div>
           </div>
+          {resumo.temExtrato && (
+            <div style={metricStyle('#F1EFE8')}>
+              <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Saldo em conta</div>
+              <div style={{ fontSize:17, fontWeight:500, color:resumo.saldoConta>=0?'#2C2C2A':'#A32D2D' }}>{(resumo.saldoConta<0?'–':'')+fmt(resumo.saldoConta)}</div>
+            </div>
+          )}
         </div>
         {resumo.entradas > 0 && (
           <div style={{ marginBottom:12 }}>
@@ -199,6 +243,33 @@ export default function PainelAdmin() {
           ))}
         </div>
       </div>
+
+
+      {/* Evolução 6 meses */}
+      {evolucao && (evolucao.ent.some(v=>v>0) || evolucao.sai.some(v=>v>0)) && (
+        <div style={{ ...cardStyle, marginBottom:'1.5rem' }}>
+          <div style={{ fontSize:11, fontWeight:500, color:'#B4B2A9', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:12 }}>Evolução — últimos 6 meses</div>
+          <div style={{ height:180 }}>
+            <Line
+              data={{
+                labels: evolucao.labels,
+                datasets: [
+                  { label:'Entradas', data:evolucao.ent, borderColor:'#6BBF2B', backgroundColor:'rgba(107,191,43,0.08)', fill:true, tension:0.35, pointRadius:3, borderWidth:2 },
+                  { label:'Saídas', data:evolucao.sai, borderColor:'#E8212A', backgroundColor:'rgba(232,33,42,0.05)', fill:true, tension:0.35, pointRadius:3, borderWidth:2 },
+                ],
+              }}
+              options={{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{ labels:{ boxWidth:10, font:{ size:11, family:'Inter' }, color:'#888780' } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': R$ '+Number(ctx.raw).toLocaleString('pt-BR',{minimumFractionDigits:2}) } } },
+                scales:{
+                  y:{ ticks:{ font:{ size:10, family:'Inter' }, color:'#B4B2A9', callback: v => 'R$ '+(v>=1000?(v/1000).toFixed(0)+'k':v) }, grid:{ color:'#F1EFE8' }, border:{ display:false } },
+                  x:{ ticks:{ font:{ size:10, family:'Inter' }, color:'#B4B2A9' }, grid:{ display:false }, border:{ display:false } },
+                },
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Ações rápidas */}
       <div style={cardStyle}>
