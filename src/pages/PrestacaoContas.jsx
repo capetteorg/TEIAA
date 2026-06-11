@@ -191,7 +191,7 @@ export default function PrestacaoContas() {
           )}
         </div>
         <button onClick={gerarDados} disabled={!contaSel || loading}
-          style={s.btn(contaSel ? '#4A8FD4' : '#D3D1C7')}>
+          style={s.btn(contaSel ? '#0E7EA8' : '#D3D1C7')}>
           {loading ? 'Carregando...' : 'Gerar relatório'}
         </button>
       </div>
@@ -238,8 +238,8 @@ export default function PrestacaoContas() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 10 }}>
               {[
                 { label: 'Repasses recebidos', val: fmt(dados.totalRepasses), cor: VERDE },
-                { label: 'Rendimentos', val: fmt(dados.totalRendimentos), cor: '#4A8FD4' },
-                { label: 'Total disponível', val: fmt(dados.totalDisponivel), cor: '#4A8FD4' },
+                { label: 'Rendimentos', val: fmt(dados.totalRendimentos), cor: '#0E7EA8' },
+                { label: 'Total disponível', val: fmt(dados.totalDisponivel), cor: '#0E7EA8' },
                 { label: 'Total despesas', val: fmt(dados.totalDespesas), cor: VERMELHO },
               ].map(m => (
                 <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.85rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>

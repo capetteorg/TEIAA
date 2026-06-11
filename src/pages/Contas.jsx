@@ -137,7 +137,7 @@ export default function Contas() {
                   <button onClick={() => setExpandida(aberta ? null : c.id)} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
                     {aberta ? '▲' : '▼'}
                   </button>
-                  <button onClick={() => iniciarEdicao(c)} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '0.5px solid #4A8FD4', background: 'transparent', color: '#4A8FD4', cursor: 'pointer' }}>
+                  <button onClick={() => iniciarEdicao(c)} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '0.5px solid #0E7EA8', background: 'transparent', color: '#0E7EA8', cursor: 'pointer' }}>
                     Editar
                   </button>
                 </div>

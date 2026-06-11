@@ -204,7 +204,7 @@ export default function Documentos() {
                 <tr key={doc.id}>
                   <td style={{ ...s.td, fontWeight: 500 }}>
                     <a href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                      style={{ color: '#4A8FD4', textDecoration: 'none' }}>
+                      style={{ color: '#0E7EA8', textDecoration: 'none' }}>
                       <i className="ti ti-file" style={{marginRight:4}} /> {doc.titulo}
                     </a>
                   </td>

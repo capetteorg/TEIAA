@@ -47,6 +47,8 @@ export default function Layout() {
   const p = perfil?.perfil
   const [menuAberto, setMenuAberto] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [buscaAberta, setBuscaAberta] = useState(false)
+  const [termoBusca, setTermoBusca] = useState('')
   const [badgeCobrancas, setBadgeCobrancas] = useState(0)
   const [badgeDividas, setBadgeDividas] = useState(0)
   const [badgePendencias, setBadgePendencias] = useState(0)
@@ -55,6 +57,20 @@ export default function Layout() {
     const fn = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
+  }, [])
+
+  // Busca global: Ctrl+K / Cmd+K
+  useEffect(() => {
+    const onKey = e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setBuscaAberta(v => !v)
+        setTermoBusca('')
+      }
+      if (e.key === 'Escape') setBuscaAberta(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
@@ -83,6 +99,53 @@ export default function Layout() {
   const perfilLabel = p === 'admin' ? 'Admin' : p === 'diretoria' ? 'Diretoria' : 'Operacional'
   const perfilCor   = p === 'admin' ? AG_BLUE : p === 'diretoria' ? AG_GREEN : '#E67814'
 
+  // Itens buscáveis (espelha o menu, respeitando o perfil)
+  const itensBusca = [
+    { to:'/painel-admin', label:'Painel', icon:'layout-dashboard', ok:p==='admin' },
+    { to:'/painel-operacional', label:'Painel', icon:'layout-dashboard', ok:p==='operacional' },
+    { to:'/painel-diretoria', label:'Acompanhamento', icon:'layout-dashboard', ok:p==='diretoria' },
+    { to:'/importar', label:'Importar extrato', icon:'file-upload', ok:p==='admin' },
+    { to:'/conciliacao', label:'Conciliação', icon:'checks', ok:p==='admin' },
+    { to:'/lancamentos', label:'Lançamentos', icon:'list-details', ok:p==='admin'||p==='operacional' },
+    { to:'/cobrancas', label:'Cobranças', icon:'receipt-2', ok:p==='admin'||p==='operacional' },
+    { to:'/pendencias', label:'Pendências', icon:'alert-triangle', ok:p==='admin' },
+    { to:'/fornecedores', label:'Fornecedores', icon:'building-store', ok:p==='admin' },
+    { to:'/historico-fornecedor', label:'Histórico Fornecedor', icon:'history', ok:p==='admin' },
+    { to:'/controle-dividas', label:'Controle de Dívidas', icon:'credit-card-off', ok:p==='admin'||p==='diretoria' },
+    { to:'/aplicacoes', label:'Aplicações', icon:'chart-line', ok:p==='admin' },
+    { to:'/planos-execucao', label:'Plano de Ação', icon:'clipboard-check', ok:p==='admin' },
+    { to:'/projetos', label:'Projetos', icon:'folder', ok:p==='admin' },
+    { to:'/atendimentos', label:'Atendimentos', icon:'clipboard-list', ok:p==='admin'||p==='operacional' },
+    { to:'/usuarios-atendidos', label:'Usuários Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
+    { to:'/equipe', label:'Equipe', icon:'users-group', ok:p==='admin'||p==='operacional' },
+    { to:'/doacoes', label:'Doações', icon:'gift', ok:p==='admin' },
+    { to:'/eventos-campanhas', label:'Eventos e Campanhas', icon:'calendar-event', ok:p==='admin' },
+    { to:'/relatorios', label:'Central de Relatórios', icon:'report-analytics', ok:p==='admin'||p==='diretoria' },
+    { to:'/fechamento', label:'Fechamento / Conselho Fiscal', icon:'checkup-list', ok:p==='admin' },
+    { to:'/prestacao-contas', label:'Prestação de Contas', icon:'file-certificate', ok:p==='admin' },
+    { to:'/transparencia', label:'Transparência Pública', icon:'world', ok:p==='admin' },
+    { to:'/instituicao', label:'Instituição', icon:'building', ok:p==='admin' },
+    { to:'/parcerias', label:'Instrumentos', icon:'file-invoice', ok:p==='admin' },
+    { to:'/documentos-fiscais', label:'Documentos', icon:'files', ok:p==='admin' },
+    { to:'/patrimonio', label:'Patrimônio', icon:'building-warehouse', ok:p==='admin' },
+    { to:'/contas', label:'Contas bancárias', icon:'building-bank', ok:p==='admin' },
+    { to:'/categorias', label:'Categorias', icon:'tag', ok:p==='admin' },
+    { to:'/classificacoes', label:'Classificações', icon:'list-tree', ok:p==='admin' },
+    { to:'/usuarios', label:'Usuários do sistema', icon:'user-cog', ok:p==='admin' },
+    { to:'/backup', label:'Backup', icon:'database-export', ok:p==='admin' },
+    { to:'/configuracoes', label:'Zona de perigo', icon:'alert-octagon', ok:p==='admin' },
+  ].filter(i => i.ok)
+
+  const resultadosBusca = termoBusca
+    ? itensBusca.filter(i => i.label.toLowerCase().includes(termoBusca.toLowerCase()))
+    : itensBusca.slice(0, 8)
+
+  function irPara(to) {
+    setBuscaAberta(false)
+    setTermoBusca('')
+    navigate(to)
+  }
+
   const sidebar = (
     <div style={{
       width: 228,
@@ -100,7 +163,7 @@ export default function Layout() {
           onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
         />
         <div style={{ display:'none', gap:2, alignItems:'center' }}>
-          {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']].map(([l,c])=>(
+          {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#0E7EA8'],['E','#E8207A']].map(([l,c])=>(
             <span key={l+c} style={{ fontSize:16, fontWeight:700, color:c }}>{l}</span>
           ))}
         </div>
@@ -196,7 +259,36 @@ export default function Layout() {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .drawer-mobile { animation: drawerIn .22s cubic-bezier(.2,.8,.3,1); }
         .drawer-overlay { animation: fadeIn .18s ease; }
+        .busca-item:hover { background: rgba(150,193,31,0.10) !important; }
       `}</style>
+
+      {/* Busca global — Ctrl+K */}
+      {buscaAberta && (
+        <div onClick={e => { if (e.target === e.currentTarget) setBuscaAberta(false) }}
+          style={{ position:'fixed', inset:0, background:'rgba(26,31,28,0.4)', zIndex:9999, display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'12vh', backdropFilter:'blur(2px)' }}>
+          <div style={{ background:'rgba(255,255,255,0.98)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 8px 40px rgba(0,0,0,0.18)', width:'100%', maxWidth:480, overflow:'hidden' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderBottom:'0.5px solid #E8E6DE' }}>
+              <i className="ti ti-search" style={{ fontSize:16, color:'#888780' }} />
+              <input autoFocus value={termoBusca} onChange={e => setTermoBusca(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && resultadosBusca[0]) irPara(resultadosBusca[0].to) }}
+                placeholder="Ir para... (digite o nome da tela)"
+                style={{ flex:1, border:'none', outline:'none', fontSize:14, background:'transparent', color:'#1A1F1C' }} />
+              <span style={{ fontSize:10, color:'#C8C6BC', border:'0.5px solid #E8E6DE', borderRadius:5, padding:'2px 6px' }}>Esc</span>
+            </div>
+            <div style={{ maxHeight:320, overflowY:'auto', padding:'6px 0' }}>
+              {resultadosBusca.length === 0 ? (
+                <div style={{ padding:'1.5rem', textAlign:'center', fontSize:12, color:'#888780' }}>Nenhuma tela encontrada.</div>
+              ) : resultadosBusca.map(item => (
+                <div key={item.to} className="busca-item" onClick={() => irPara(item.to)}
+                  style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 16px', fontSize:13, color:'#2C2C2A', cursor:'pointer' }}>
+                  <i className={`ti ti-${item.icon}`} style={{ fontSize:15, color:'#888780' }} />
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isMobile && sidebar}
 
@@ -229,7 +321,7 @@ export default function Layout() {
         </div>
 
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#C8C6BC' }}>AGENDO Integra</span>
+          <span style={{ fontSize: 10, color: '#C8C6BC' }}>AGENDO Integra · <span style={{ cursor:'pointer' }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
           <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
         </div>
 

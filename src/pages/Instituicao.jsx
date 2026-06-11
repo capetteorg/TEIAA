@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8'
 
 const CARGOS = [
   'Presidente', 'Vice-presidente',

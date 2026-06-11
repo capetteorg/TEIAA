@@ -245,7 +245,7 @@ export default function Cobrancas() {
           )}
         </div>
         {isAdmin && (
-          <label style={{ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: '#4A8FD4', color: '#fff', cursor: 'pointer' }}>
+          <label style={{ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
             Importar XLS Sicredi
             <input type="file" accept=".xls,.xlsx" onChange={importarXLS} style={{ display: 'none' }} />
           </label>
@@ -285,7 +285,7 @@ export default function Cobrancas() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: '1.25rem' }}>
         {[
-          { label: 'Total boletos', val: cobrancas.length, cor: '#4A8FD4' },
+          { label: 'Total boletos', val: cobrancas.length, cor: '#0E7EA8' },
           { label: 'Valor em aberto', val: fmt(totalAberto), cor: VERMELHO },
           { label: 'Pago informado', val: fmt(totalInformado), cor: '#BA7517' },
           { label: 'Pago confirmado', val: fmt(totalConfirmado), cor: VERDE },
@@ -407,7 +407,7 @@ export default function Cobrancas() {
                           <div style={{ display: 'flex', gap: 4 }}>
                             {!c.pago_confirmado && (
                               <button onClick={() => { setEditando(c.id); setFormEdit({ status: c.status, data_promessa: c.data_promessa||'', valor_prometido: c.valor_prometido||'', ultima_obs: '' }) }}
-                                style={s.btn('#4A8FD4')}>Atualizar</button>
+                                style={s.btn('#0E7EA8')}>Atualizar</button>
                             )}
                             {isAdmin && c.pago_informado && !c.pago_confirmado && (
                               <button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar extrato</button>

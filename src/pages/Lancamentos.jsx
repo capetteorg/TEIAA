@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import CatSelect from '../components/CatSelect'
 import { useIsMobile } from '../hooks/useIsMobile'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 const SUBCATEGORIA_ABATIMENTO_ID = 53
 
 export default function Lancamentos({ tipo = 'despesa' }) {

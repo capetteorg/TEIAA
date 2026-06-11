@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { confirmar } from '../lib/ui'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8'
 
 export default function Importar() {
   const { user } = useAuth()
@@ -193,7 +193,7 @@ export default function Importar() {
         <>
           {step === 1 && (
             <div style={s.card}>
-              <div style={{ background: '#F8F7F2', borderLeft: '3px solid #4A8FD4', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
+              <div style={{ background: '#F8F7F2', borderLeft: '3px solid #0E7EA8', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
                 <strong>Sicredi · XLS</strong> — selecione o arquivo exportado pelo internet banking. Após importar, vá em <strong>Conciliação</strong> para categorizar e validar.
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: '1rem' }}>

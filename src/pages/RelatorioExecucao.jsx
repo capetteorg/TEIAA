@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F'
+const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
 const STATUS_META_COR = {
   'não iniciada': ['#F1EFE8','#888780'],
@@ -217,7 +217,7 @@ export default function RelatorioExecucao() {
   .resumo-valor { font-size: 14px; font-weight: bold; }
   .verde { color: #6BBF2B; }
   .vermelho { color: #E8212A; }
-  .azul { color: #4A8FD4; }
+  .azul { color: #0E7EA8; }
   .assinaturas { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 30px; }
   .assinatura { text-align: center; }
   .assinatura-linha { border-top: 1px solid #2C2C2A; padding-top: 5px; font-size: 9px; color: #5F5E5A; }
@@ -324,7 +324,7 @@ ${usuarios.length > 0 ? `
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
     <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
       <div style="font-size:9px;color:#888780;margin-bottom:2px">Total cadastrado</div>
-      <div style="font-size:18px;font-weight:bold;color:#4A8FD4">${usuarios.length}</div>
+      <div style="font-size:18px;font-weight:bold;color:#0E7EA8">${usuarios.length}</div>
     </div>
     <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
       <div style="font-size:9px;color:#888780;margin-bottom:2px">Ativos</div>

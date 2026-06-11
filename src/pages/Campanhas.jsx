@@ -81,10 +81,10 @@ export default function Campanhas() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.25rem' }}>
           {[
-            { label: 'Meta financeira', val: fmt(campanhaSel.meta_financeira||0), cor: '#4A8FD4' },
+            { label: 'Meta financeira', val: fmt(campanhaSel.meta_financeira||0), cor: '#0E7EA8' },
             { label: 'Total arrecadado', val: fmt(totalEnt), cor: VERDE },
             { label: 'Total gasto', val: fmt(totalSai), cor: VERMELHO },
-            { label: '% da meta', val: pctMeta+'%', cor: pctMeta>=100?VERDE:'#4A8FD4' },
+            { label: '% da meta', val: pctMeta+'%', cor: pctMeta>=100?VERDE:'#0E7EA8' },
           ].map(m => (
             <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.85rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.7rem' }} />
@@ -102,7 +102,7 @@ export default function Campanhas() {
               <span>{fmt(totalEnt)} de {fmt(campanhaSel.meta_financeira)} ({pctMeta}%)</span>
             </div>
             <div style={{ height: 10, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: Math.min(pctMeta,100)+'%', background: pctMeta>=100?VERDE:'#4A8FD4', borderRadius: 99, transition: 'width .3s' }} />
+              <div style={{ height: '100%', width: Math.min(pctMeta,100)+'%', background: pctMeta>=100?VERDE:'#0E7EA8', borderRadius: 99, transition: 'width .3s' }} />
             </div>
           </div>
         )}

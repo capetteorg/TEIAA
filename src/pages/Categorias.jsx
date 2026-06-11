@@ -146,7 +146,7 @@ export default function Categorias() {
               </div>
             </div>
             {msgSub && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msgSub.includes('Erro') ? '#FEF2F2' : '#F2FAE8', color: msgSub.includes('Erro') ? '#A32D2D' : '#3B6D11' }}>{msgSub}</div>}
-            <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#4A8FD4', color: '#fff', cursor: 'pointer' }}>Adicionar subcategoria</button>
+            <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>Adicionar subcategoria</button>
           </form>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-const VERDE = '#6BBF2B', AZUL = '#4A8FD4', VERMELHO = '#E8212A'
+const VERDE = '#6BBF2B', AZUL = '#0E7EA8', VERMELHO = '#E8212A'
 
 export default function Aplicacoes() {
   const [lista, setLista] = useState([])
