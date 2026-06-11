@@ -920,7 +920,7 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo) {
 
   <div class="secao">
     <div class="secao-titulo">Declaração Final</div>
-    <div style="font-size:10px;line-height:1.7;padding:10px;border:1px solid #E0DDD5;border-radius:4px;margin-bottom:12px">
+    <div style="font-size:10px;line-height:1.7;padding:10px;border:1px solid #E8E6DE;border-radius:4px;margin-bottom:12px">
       Declaramos que as informações financeiras apresentadas neste relatório foram extraídas dos registros do sistema FinOSC Capette, 
       com base nos extratos bancários importados, conciliações realizadas e dados informados pela equipe responsável. 
       Os documentos comprobatórios físicos ou digitais encontram-se arquivados externamente, conforme referências indicadas neste relatório.
