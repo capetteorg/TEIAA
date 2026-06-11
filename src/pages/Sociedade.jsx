@@ -379,7 +379,7 @@ export default function Sociedade() {
             {/* Resumo anual por mês */}
             <div style={s.card}>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Resumo mensal — {ano}</div>
-              {loading ? <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div> : (
+              {loading ? <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div> : (
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                   <thead><tr>{['Mês','Entradas','Saídas','Resultado'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
                   <tbody>

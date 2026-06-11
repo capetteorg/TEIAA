@@ -76,7 +76,7 @@ export default function Aplicacoes() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Aplicações financeiras</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Aplicações financeiras</div>
           <div style={{ fontSize:12, color:'#888780' }}>Controle de aplicações e rendimentos</div>
         </div>
         <button onClick={() => setMostrarForm(!mostrarForm)} style={s.btn(mostrarForm?'#F1EFE8':AZUL, mostrarForm?'#5F5E5A':'#fff')}>
@@ -130,7 +130,8 @@ export default function Aplicacoes() {
       {lista.length === 0 && !mostrarForm && (
         <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
           <div style={{ marginBottom:8 }}><i className="ti ti-trending-up" style={{fontSize:32, color:'#C8C6BC'}} /></div>
-          <div>Nenhuma aplicação cadastrada. Clique em "+ Nova aplicação" para começar.</div>
+          <div>Nenhuma aplicação cadastrada ainda.</div>
+          <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Nova aplicação</button>
         </div>
       )}
 

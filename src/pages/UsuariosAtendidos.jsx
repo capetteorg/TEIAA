@@ -139,7 +139,7 @@ export default function UsuariosAtendidos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Usuários / Público Atendido</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Usuários / Público Atendido</div>
           <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {usuarios.length} total</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
@@ -288,7 +288,7 @@ export default function UsuariosAtendidos() {
           {/* Tabela */}
           <div style={s.card}>
             {loading ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div>
+              <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
             ) : usuarios.length === 0 ? (
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
                 Nenhum usuário cadastrado. Clique em "+ Cadastrar usuário" para começar.

@@ -75,7 +75,7 @@ export default function Usuarios() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Usuários do sistema</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Usuários do sistema</div>
 
       <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Usuários ativos ({lista.length})</div>

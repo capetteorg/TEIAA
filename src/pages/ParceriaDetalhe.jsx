@@ -53,7 +53,7 @@ export default function ParceriaDetalhe() {
   const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
-  if (loading) return <div style={{ padding:'2rem', textAlign:'center', color:'#888780' }}>Carregando...</div>
+  if (loading) return <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
   if (!parceria) return <div style={{ padding:'2rem', textAlign:'center', color:'#888780' }}>Parceria não encontrada.</div>
 
   const [bg, cor] = SITUACAO_COR[parceria.situacao] || ['#F1EFE8','#5F5E5A']

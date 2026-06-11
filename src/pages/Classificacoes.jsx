@@ -51,7 +51,7 @@ export default function Classificacoes() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize:15, fontWeight:500, marginBottom:'1.25rem' }}>Classificações automáticas</div>
+      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Classificações automáticas</div>
       <div style={{ background:'#F8F7F2', borderLeft:'3px solid #8B2FC9', borderRadius:'0 8px 8px 0', padding:'.55rem .9rem', fontSize:12, color:'#5F5E5A', marginBottom:'1.25rem' }}>
         Regras aplicadas automaticamente ao importar o extrato. Quando o tipo do documento bater com uma regra, o lançamento é classificado automaticamente.
       </div>

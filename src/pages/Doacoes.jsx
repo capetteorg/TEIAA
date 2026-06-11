@@ -178,7 +178,7 @@ export default function Doacoes() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Doações recebidas</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Doações recebidas</div>
           <div style={{ fontSize:12, color:'#888780' }}>Doações não financeiras · {doacoes.length} registros</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setItens([{...ITEM_VAZIO}]) }}
@@ -370,7 +370,7 @@ export default function Doacoes() {
           {/* Tabela */}
           <div style={s.card}>
             {loading ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div>
+              <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
             ) : doacoes.length === 0 ? (
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
                 Nenhuma doação registrada. Clique em "+ Registrar doação" para começar.

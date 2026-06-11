@@ -112,7 +112,7 @@ export default function Documentos() {
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <div style={{ fontSize: 15, fontWeight: 500 }}>Documentos Institucionais</div>
+        <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>Documentos Institucionais</div>
         <button onClick={() => setMostrarForm(!mostrarForm)}
           style={{ ...s.btn(mostrarForm ? '#F1EFE8' : VERDE), fontWeight: 500 }}>
           {mostrarForm ? 'Cancelar' : '+ Publicar documento'}
@@ -187,7 +187,7 @@ export default function Documentos() {
           Documentos publicados ({documentos.length})
         </div>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '1.5rem', color: '#888780', fontSize: 12 }}>Carregando...</div>
+          <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
         ) : documentos.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#888780', fontSize: 12 }}>
             Nenhum documento publicado ainda. Clique em "Publicar documento" para começar.

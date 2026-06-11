@@ -206,7 +206,7 @@ export default function Fechamento() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:'1.25rem' }}>
         <div>
-        <div style={{ fontSize:15, fontWeight:500 }}>Fechamento e Aprovação do Conselho Fiscal</div>
+        <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Fechamento e Aprovação do Conselho Fiscal</div>
           <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Fluxo: o financeiro <strong>fecha</strong> o mês após a conciliação → o Conselho Fiscal <strong>aprova</strong> (ou reprova) → meses aprovados aparecem na Transparência Pública.</div>
         <div style={{ fontSize:12, color:'#888780' }}>Controle de fechamento mensal e registro de aprovações</div>
         </div>

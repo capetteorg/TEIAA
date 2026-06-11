@@ -72,7 +72,7 @@ export default function Campanhas() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
           <button onClick={() => { setCampanhaSel(null); setMovs([]) }}
             style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>← Voltar</button>
-          <div style={{ fontSize: 15, fontWeight: 500 }}>{campanhaSel.nome}</div>
+          <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>{campanhaSel.nome}</div>
           <button onClick={() => gerarPDFCampanha(campanhaSel, entradas, saidas)}
             style={{ padding: '5px 13px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer', marginLeft: 'auto' }}>
             Exportar PDF
@@ -107,7 +107,7 @@ export default function Campanhas() {
           </div>
         )}
 
-        {loading ? <div style={{ textAlign: 'center', padding: '2rem', color: '#888780' }}>Carregando...</div> : (
+        {loading ? <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div> : (
           <div style={s.card}>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Movimentações da campanha ({movs.length})</div>
             {movs.length === 0 ? (
@@ -136,7 +136,7 @@ export default function Campanhas() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Campanhas</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Campanhas</div>
 
       {lista.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>

@@ -679,7 +679,7 @@ export default function Projetos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Projetos / Serviços / Ações</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Projetos / Serviços / Ações</div>
           <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {projetos.length} total</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setAbaForm('geral') }}

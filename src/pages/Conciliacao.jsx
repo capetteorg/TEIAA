@@ -404,7 +404,7 @@ export default function Conciliacao() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem' }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Conciliação bancária</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Conciliação bancária</div>
           <div style={{ fontSize:12, color:'#888780' }}>Selecione um extrato para conciliar</div>
         </div>
         <button onClick={() => navigate('/importar')} style={s.btn(AZUL)}>↑ Importar extrato</button>

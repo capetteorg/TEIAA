@@ -113,7 +113,7 @@ export default function PainelDiretoria() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>
         Acompanhamento Financeiro — Diretoria
       </div>
 
@@ -174,7 +174,7 @@ export default function PainelDiretoria() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#888780', fontSize: 13 }}>Carregando...</div>
+        <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
       ) : movs.length === 0 ? (
         <div style={{ ...s.card, textAlign: 'center', padding: '2rem', color: '#888780', fontSize: 13 }}>
           Nenhuma movimentação encontrada em <strong>{mesLabel}</strong>

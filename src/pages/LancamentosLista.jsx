@@ -113,7 +113,7 @@ export default function LancamentosLista() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Lançamentos</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Lançamentos</div>
           <div style={{ fontSize:12, color:'#888780' }}>{lista.length} lançamento{lista.length!==1?'s':''}</div>
         </div>
         <div style={{ display:'flex', gap:6 }}>
@@ -178,7 +178,7 @@ export default function LancamentosLista() {
       {/* Tabela */}
       <div style={s.card}>
         {loading ? (
-          <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
+          <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
         ) : lista.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
             Nenhum lançamento encontrado.

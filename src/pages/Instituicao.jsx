@@ -200,7 +200,7 @@ export default function Instituicao() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Cadastro da Instituição</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Cadastro da Instituição</div>
 
       {presidenteAtual && (
         <div style={{ background: '#EAF3DE', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

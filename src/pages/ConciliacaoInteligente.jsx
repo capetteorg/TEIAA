@@ -218,7 +218,7 @@ export default function ConciliacaoInteligente() {
 
   if (!extratoSel) return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Conciliação inteligente</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Conciliação inteligente</div>
       <div style={{ background: '#E6F1FB', border: '0.5px solid #B3D1F0', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: '#185FA5' }}>
         <strong>Como funciona:</strong> O sistema cruza automaticamente as movimentações do extrato bancário com os lançamentos feitos pelo Operacional, usando valor, data e descrição como critérios. Você confirma, rejeita ou resolve os casos manualmente.
       </div>
@@ -257,7 +257,7 @@ export default function ConciliacaoInteligente() {
           style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
           ← Voltar
         </button>
-        <div style={{ fontSize: 15, fontWeight: 500 }}>
+        <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>
           Conciliação inteligente — {extratoSel.competencia} · {extratoSel.conta?.nome}
         </div>
         {resultado.length === 0 && !loading && (

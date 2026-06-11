@@ -174,7 +174,7 @@ export default function Importar() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Importar extrato</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Importar extrato</div>
 
       {/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
@@ -279,7 +279,7 @@ export default function Importar() {
           {step === 3 && (
             <div style={{ ...s.card, textAlign: 'center', padding: '3rem' }}>
               <div style={{ marginBottom: '1rem' }}><i className="ti ti-circle-check" style={{fontSize:48, color:'#3B6D11'}} /></div>
-              <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
+              <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
               <div style={{ fontSize: 13, color: '#888780', marginBottom: '1.5rem' }}>
                 Agora vá em <strong>Conciliação</strong> para categorizar e validar as movimentações.
               </div>
@@ -312,7 +312,7 @@ export default function Importar() {
           </div>
 
           {loadingHistorico ? (
-            <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Carregando...</div>
+            <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
           ) : (
             <>
               {/* Extratos bancários */}

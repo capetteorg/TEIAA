@@ -152,7 +152,7 @@ export default function PrestacaoContas() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Prestação de Conta — Emenda / Edital</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Prestação de Conta — Emenda / Edital</div>
 
       {/* Seleção de conta e período */}
       <div style={s.card}>
@@ -257,7 +257,7 @@ export default function PrestacaoContas() {
               ].map(m => (
                 <div key={m.label} style={{ background: '#F8F7F2', borderRadius: 10, padding: '.75rem 1rem' }}>
                   <div style={{ fontSize: 10, color: '#888780', marginBottom: 3 }}>{m.label}</div>
-                  <div style={{ fontSize: 15, fontWeight: 500, color: m.cor }}>{m.val}</div>
+                  <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', color: m.cor }}>{m.val}</div>
                 </div>
               ))}
             </div>

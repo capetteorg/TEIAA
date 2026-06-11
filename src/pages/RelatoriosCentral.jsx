@@ -395,7 +395,7 @@ export default function RelatoriosCentral() {
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:15, fontWeight:500, marginBottom:'1.25rem' }}>Relatórios</div>
+      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Relatórios</div>
 
       {/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>

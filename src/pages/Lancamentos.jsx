@@ -343,7 +343,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
 
   return (
     <div style={{ padding: isMobile ? '1rem' : '1.25rem 1.5rem' }}>
-      <div style={{ fontSize:15, fontWeight:500, marginBottom:'1.25rem' }}>
+      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>
         {tipo === 'despesa' ? 'Lançar despesa' : 'Lançar entrada'}
       </div>
 

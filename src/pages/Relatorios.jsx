@@ -82,7 +82,7 @@ export default function Relatorios() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1.25rem' }}>Relatórios</div>
+      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Relatórios</div>
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 4 }}>
@@ -108,7 +108,7 @@ export default function Relatorios() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign:'center', padding:'3rem', color:'#888780', fontSize:13 }}>Carregando...</div>
+        <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
       ) : !dados ? null : (
         <>
           <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>

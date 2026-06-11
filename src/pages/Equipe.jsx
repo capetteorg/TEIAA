@@ -256,7 +256,7 @@ export default function Equipe() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Equipe</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Equipe</div>
           <div style={{ fontSize:12, color:'#888780' }}>Controle institucional de atuação</div>
         </div>
         {aba !== 'cadastro' && (
@@ -313,6 +313,7 @@ export default function Equipe() {
             <div style={{ ...s.card, textAlign:'center', padding:'3rem', color:'#888780' }}>
               <div style={{ marginBottom:8 }}><i className="ti ti-users" style={{fontSize:32, color:'#C8C6BC'}} /></div>
               <div style={{ fontSize:13 }}>Nenhuma pessoa cadastrada ainda.</div>
+            <button onClick={() => { setAba('cadastro'); setEditando(null); setForm(FORM_VAZIO) }} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Cadastrar pessoa</button>
             </div>
           ) : (
             <div style={s.card}>

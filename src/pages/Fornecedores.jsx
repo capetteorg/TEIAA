@@ -109,7 +109,7 @@ export default function Fornecedores() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Fornecedores</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Fornecedores</div>
           <div style={{ fontSize:12, color:'#888780' }}>
             {lista.length} cadastrado{lista.length!==1?'s':''} 
             {incompletos > 0 && <span style={{ color:LARANJA }}> · {incompletos} incompleto{incompletos>1?'s':''}</span>}

@@ -415,7 +415,7 @@ ${financeiroResumo ? `
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:15, fontWeight:500, marginBottom:'1.25rem' }}>Relatório de Execução do Objeto</div>
+      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Relatório de Execução do Objeto</div>
 
       {/* Configuração */}
       <div style={s.card}>

@@ -340,7 +340,7 @@ export default function DocumentosFiscais() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:15, fontWeight:500 }}>Documentos Fiscais e Institucionais</div>
+          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Documentos Fiscais e Institucionais</div>
           <div style={{ fontSize:12, color:'#888780' }}>Gestão centralizada de documentos da organização</div>
         </div>
         {isAdmin && (
@@ -447,7 +447,7 @@ export default function DocumentosFiscais() {
           <div style={{ fontSize:13, fontWeight:500 }}>{ABAS.find(a=>a.id===aba)?.label} ({docsDaAba.length})</div>
           <div style={{ fontSize:11, color:'#888780' }}>{ABAS.find(a=>a.id===aba)?.desc}</div>
         </div>
-        {loading ? <div style={{ textAlign:'center', padding:'2rem', color:'#888780' }}>Carregando...</div> :
+        {loading ? <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div> :
         docsDaAba.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2.5rem', color:'#888780' }}>
             <div style={{ marginBottom:8 }}><i className="ti ti-folder" style={{fontSize:32, color:'#C8C6BC'}} /></div>
