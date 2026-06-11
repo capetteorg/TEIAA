@@ -48,7 +48,7 @@ const CSS_BASE = `
   /* Info do relatório */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 10px; }
   .info-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 10px; }
-  .info-item { background: #F8F7F2; border-radius: 6px; padding: 6px 10px; border: 0.5px solid #E0DDD5; }
+  .info-item { background: #F8F7F2; border-radius: 6px; padding: 6px 10px; border: 0.5px solid #E8E6DE; }
   .info-label { color: #888; font-size: 8px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .3px; }
   .info-valor { font-weight: 600; color: #2C2C2A; }
 
@@ -56,7 +56,7 @@ const CSS_BASE = `
   .resumo-box { border: 1px solid #C0DD97; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; background: #F2FAE8; }
   .resumo-titulo { font-size: 11px; font-weight: 700; margin-bottom: 10px; color: #3B6D11; text-transform: uppercase; letter-spacing: .3px; }
   .resumo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-  .resumo-item { text-align: center; background: #fff; border-radius: 6px; padding: 8px 6px; border: 0.5px solid #E0DDD5; }
+  .resumo-item { text-align: center; background: #fff; border-radius: 6px; padding: 8px 6px; border: 0.5px solid #E8E6DE; }
   .resumo-label { font-size: 8px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .3px; }
   .resumo-valor { font-size: 14px; font-weight: 700; }
   .verde { color: #3B6D11; }
@@ -73,7 +73,7 @@ const CSS_BASE = `
   /* Tabelas */
   table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 8px; }
   thead tr { background: #F8F7F2; }
-  th { padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; color: #5F5E5A; border-bottom: 2px solid #E0DDD5; letter-spacing: .2px; text-transform: uppercase; }
+  th { padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; color: #5F5E5A; border-bottom: 2px solid #E8E6DE; letter-spacing: .2px; text-transform: uppercase; }
   td { padding: 5px 8px; border-bottom: 0.5px solid #F1EFE8; vertical-align: top; }
   tr:nth-child(even) td { background: #FAFAF8; }
   .total-row td { background: #F8F7F2 !important; font-weight: 700; border-top: 1.5px solid #D3D1C7; border-bottom: none; }
@@ -92,7 +92,7 @@ const CSS_BASE = `
   .alerta-ok { background: #EAF3DE; border-left: 3px solid #6BBF2B; color: #3B6D11; }
 
   /* Assinaturas */
-  .assinaturas { margin-top: 28px; padding-top: 14px; border-top: 1.5px solid #E0DDD5; }
+  .assinaturas { margin-top: 28px; padding-top: 14px; border-top: 1.5px solid #E8E6DE; }
   .assin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 14px; }
   .assin-item { text-align: center; }
   .assin-linha { border-bottom: 1px solid #2C2C2A; margin-bottom: 5px; height: 32px; }
@@ -100,7 +100,7 @@ const CSS_BASE = `
   .assin-cargo { font-size: 9px; color: #888; }
 
   /* Rodapé */
-  .rodape { margin-top: 18px; padding-top: 10px; border-top: 1px solid #E0DDD5; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #888; }
+  .rodape { margin-top: 18px; padding-top: 10px; border-top: 1px solid #E8E6DE; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #888; }
   .rodape-sistema { font-size: 8px; color: #aaa; }
 
   @page { margin: 15mm; }
@@ -937,7 +937,6 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo) {
 // RELATÓRIO DE PARECER DO CONSELHO FISCAL
 // =============================================
 export function gerarPDFParecer({ fechamento, movs, instituicao }) {
-  const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) : '—'
   const fmtMes = comp => {
     if (!comp) return '—'
@@ -957,132 +956,83 @@ export function gerarPDFParecer({ fechamento, movs, instituicao }) {
 
   const membros = (fechamento.membros_presentes||'').split(',').map(s=>s.trim()).filter(Boolean)
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <style>
-    * { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family: Arial, sans-serif; font-size:11px; color:#2C2C2A; padding:24px; background:#fff; }
-    .cab { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; padding-bottom:14px; border-bottom:3px solid #6BBF2B; }
-    .cab-dir { text-align:right; font-size:9px; color:#666; max-width:380px; }
-    .cab-dir strong { font-size:13px; color:#2C2C2A; display:block; margin-bottom:3px; }
-    .titulo { text-align:center; margin-bottom:20px; padding:14px; background:linear-gradient(135deg,#F2FAE8,#E6F1FB); border-radius:8px; border:1px solid #C0DD97; }
-    .titulo h1 { font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:1px; }
-    .titulo p { font-size:11px; color:#5F5E5A; margin-top:4px; }
-    .secao { margin-bottom:20px; }
-    .secao-titulo { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#5F5E5A; border-bottom:1.5px solid #E0DDD5; padding-bottom:5px; margin-bottom:10px; }
-    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
-    .card { background:#F8F7F2; border-radius:6px; padding:8px 12px; }
-    .card-label { font-size:9px; color:#888; margin-bottom:2px; }
-    .card-val { font-size:13px; font-weight:700; }
-    .parecer-box { border:2px solid; border-radius:8px; padding:16px; text-align:center; margin-bottom:20px; }
-    .parecer-tipo { font-size:20px; font-weight:900; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px; }
-    .parecer-desc { font-size:12px; line-height:1.7; }
-    .ressalva { background:#FAEEDA; border:1px solid #F4C07A; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:11px; line-height:1.7; }
-    .assinatura { break-inside:avoid; }
-    .assinatura-linha { border-top:1px solid #2C2C2A; margin-top:40px; padding-top:6px; text-align:center; }
-    .assinatura-nome { font-size:11px; font-weight:600; }
-    .assinatura-cargo { font-size:10px; color:#888; }
-    .rodape { border-top:0.5px solid #E0DDD5; padding-top:8px; font-size:8px; color:#aaa; text-align:center; margin-top:24px; }
-    @media print { body { padding:16px; } }
-  </style></head><body>
+  const html = `
+  ${htmlCabecalho()}
 
-  <!-- Cabeçalho -->
-  <div class="cab">
-    <div>
-      <div style="display:flex;gap:1px;align-items:center;margin-bottom:3px">
-        ${[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']].map(([l,c])=>`<span style="font-size:20px;font-weight:900;color:${c}">${l}</span>`).join('')}
-      </div>
-      <div style="font-size:9px;color:#888">${CAPETTE_INFO.nome}</div>
-    </div>
-    <div class="cab-dir">
-      <strong>CNPJ ${CAPETTE_INFO.cnpj}</strong>
-      <div class="cab-registros">${CAPETTE_INFO.registros.slice(-1)[0]}</div>
-    </div>
+  <div class="titulo-bloco">
+    <div class="titulo-principal">Relatório de Aprovação de Contas</div>
+    <div class="titulo-sub">Parecer do Conselho Fiscal — ${fmtMes(fechamento.competencia)}</div>
   </div>
 
-  <!-- Título -->
-  <div class="titulo">
-    <h1>Relatório de Aprovação de Contas</h1>
-    <p>Parecer do Conselho Fiscal — ${fmtMes(fechamento.competencia)}</p>
-  </div>
-
-  <!-- Resumo financeiro -->
   <div class="secao">
-    <div class="secao-titulo">1. Resumo Financeiro — ${fmtMes(fechamento.competencia)}</div>
-    <div class="grid3">
-      <div class="card">
-        <div class="card-label">Entradas</div>
-        <div class="card-val" style="color:#3B6D11">${fmt(entradas)}</div>
+    <div class="secao-titulo secao-titulo-verde">1. Resumo Financeiro — ${fmtMes(fechamento.competencia)}</div>
+    <div class="resumo-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="resumo-item">
+        <div class="resumo-label">Entradas</div>
+        <div class="resumo-valor verde">${fmt(entradas)}</div>
       </div>
-      <div class="card">
-        <div class="card-label">Saídas</div>
-        <div class="card-val" style="color:#A32D2D">${fmt(saidas)}</div>
+      <div class="resumo-item">
+        <div class="resumo-label">Saídas</div>
+        <div class="resumo-valor vermelho">${fmt(saidas)}</div>
       </div>
-      <div class="card">
-        <div class="card-label">Resultado</div>
-        <div class="card-val" style="color:${saldo>=0?'#185FA5':'#A32D2D'}">${fmt(saldo)}</div>
+      <div class="resumo-item">
+        <div class="resumo-label">Resultado</div>
+        <div class="resumo-valor ${saldo>=0?'azul':'vermelho'}">${fmt(saldo)}</div>
       </div>
     </div>
   </div>
 
-  <!-- Dados da reunião -->
   <div class="secao">
-    <div class="secao-titulo">2. Reunião do Conselho Fiscal</div>
-    <div class="grid2" style="margin-bottom:10px">
-      <div class="card">
-        <div class="card-label">Data da reunião</div>
-        <div style="font-size:12px;font-weight:600">${fmtData(fechamento.reuniao_data)}</div>
+    <div class="secao-titulo secao-titulo-azul">2. Reunião do Conselho Fiscal</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Data da reunião</div>
+        <div class="info-valor">${fmtData(fechamento.reuniao_data)}</div>
       </div>
-      <div class="card">
-        <div class="card-label">Modalidade</div>
-        <div style="font-size:12px;font-weight:600">${modalLabel[fechamento.reuniao_modalidade]||'Presencial'}</div>
+      <div class="info-item">
+        <div class="info-label">Modalidade</div>
+        <div class="info-valor">${modalLabel[fechamento.reuniao_modalidade]||'Presencial'}</div>
       </div>
     </div>
-    ${fechamento.reuniao_local ? `<div class="card" style="margin-bottom:10px">
-      <div class="card-label">Local / Plataforma</div>
-      <div style="font-size:12px">${fechamento.reuniao_local}</div>
+    ${fechamento.reuniao_local ? `<div class="info-item" style="margin-bottom:10px">
+      <div class="info-label">Local / Plataforma</div>
+      <div class="info-valor">${fechamento.reuniao_local}</div>
     </div>` : ''}
   </div>
 
-  <!-- Parecer -->
   <div class="secao">
     <div class="secao-titulo">3. Parecer do Conselho Fiscal</div>
-    <div class="parecer-box" style="border-color:${tipoCor[fechamento.tipo_aprovacao]};background:${tipoBg[fechamento.tipo_aprovacao]}">
-      <div class="parecer-tipo" style="color:${tipoCor[fechamento.tipo_aprovacao]}">${tipoLabel[fechamento.tipo_aprovacao]||'—'}</div>
-      <div class="parecer-desc">
+    <div style="border:2px solid ${tipoCor[fechamento.tipo_aprovacao]};background:${tipoBg[fechamento.tipo_aprovacao]};border-radius:8px;padding:16px;text-align:center;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;color:${tipoCor[fechamento.tipo_aprovacao]}">${tipoLabel[fechamento.tipo_aprovacao]||'—'}</div>
+      <div style="font-size:12px;line-height:1.7">
         Reunidos em ${fmtData(fechamento.reuniao_data)}, o Conselho Fiscal da ${CAPETTE_INFO.nome}
         examinou as contas referentes ao mês de <strong>${fmtMes(fechamento.competencia)}</strong>
         e deliberou pela <strong>${(tipoLabel[fechamento.tipo_aprovacao]||'—').toLowerCase()}</strong>
         das contas apresentadas.
       </div>
     </div>
-    ${fechamento.ressalvas ? `<div class="ressalva">
+    ${fechamento.ressalvas ? `<div class="alerta alerta-aviso">
       <strong>Ressalvas / Observações:</strong><br/>${fechamento.ressalvas}
     </div>` : ''}
     ${fechamento.observacoes ? `<div style="font-size:11px;margin-bottom:12px;color:#5F5E5A">${fechamento.observacoes}</div>` : ''}
   </div>
 
-  <!-- Assinaturas -->
-  <div class="secao assinatura">
+  <div class="secao" style="break-inside:avoid">
     <div class="secao-titulo">4. Assinaturas</div>
     <div style="font-size:11px;color:#5F5E5A;margin-bottom:16px">
       Teresópolis, ${fmtData(fechamento.reuniao_data)}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(${Math.min(membros.length||3,3)},1fr);gap:24px">
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(membros.length||3,3)},1fr);gap:24px;margin-top:24px">
       ${(membros.length > 0 ? membros : ['Membro do Conselho Fiscal','Membro do Conselho Fiscal','Membro do Conselho Fiscal']).map(nome => `
-        <div class="assinatura-linha">
-          <div class="assinatura-nome">${nome}</div>
-          <div class="assinatura-cargo">Conselho Fiscal — ${CAPETTE_INFO.nome}</div>
+        <div style="border-top:1px solid #2C2C2A;margin-top:40px;padding-top:6px;text-align:center">
+          <div style="font-size:11px;font-weight:600">${nome}</div>
+          <div style="font-size:10px;color:#888">Conselho Fiscal — ${CAPETTE_INFO.nome}</div>
         </div>
       `).join('')}
     </div>
   </div>
 
-  <div class="rodape">
-    ${CAPETTE_INFO.nome} · CNPJ ${CAPETTE_INFO.cnpj} · ${CAPETTE_INFO.endereco}<br/>
-    Documento gerado pelo AGENDO Integra em ${new Date().toLocaleString('pt-BR')}
-  </div>
-  </body></html>`
+  ${htmlRodape()}`
 
-  abrirImpressao(html, `Parecer Conselho Fiscal — ${fechamento.competencia}`, true)
+  abrirImpressao(html, `Parecer Conselho Fiscal — ${fechamento.competencia}`)
 }
