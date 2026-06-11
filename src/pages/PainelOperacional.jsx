@@ -72,19 +72,19 @@ export default function PainelOperacional() {
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:'1.25rem' }}>
         <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Atendimentos em {mesAtual}</div>
-          <div style={{ fontSize:24, fontWeight:700, color:AZUL }}>{loading?'...':resumo.atendimentos}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:'#2C2C2A' }}>{loading?'...':resumo.atendimentos}</div>
         </div>
         <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Usuários ativos</div>
-          <div style={{ fontSize:24, fontWeight:700, color:VERDE }}>{loading?'...':resumo.usuarios}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:'#2C2C2A' }}>{loading?'...':resumo.usuarios}</div>
         </div>
         <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Equipe ativa</div>
-          <div style={{ fontSize:24, fontWeight:700, color:LARANJA }}>{loading?'...':resumo.equipeAtiva}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:'#2C2C2A' }}>{loading?'...':resumo.equipeAtiva}</div>
         </div>
         <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:14, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize:10, color:'#888780', marginBottom:4 }}>Cobranças pendentes</div>
-          <div style={{ fontSize:24, fontWeight:700, color:resumo.cobrancas>0?VERMELHO:'#888780' }}>{loading?'...':resumo.cobrancas}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:resumo.cobrancas>0?VERMELHO:'#2C2C2A' }}>{loading?'...':resumo.cobrancas}</div>
         </div>
       </div>
 
@@ -93,17 +93,17 @@ export default function PainelOperacional() {
         <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Ações rápidas</div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {[
-            { label:'Registrar atendimento', icon:'ti-clipboard-list', cor:AZUL, link:'/atendimentos' },
-            { label:'Lançar despesa', icon:'ti-circle-arrow-down', cor:VERMELHO, link:'/despesas' },
-            { label:'Lançar entrada', icon:'ti-circle-arrow-up', cor:VERDE, link:'/entradas' },
-            { label:'Cadastrar usuário', icon:'ti-user-plus', cor:LARANJA, link:'/usuarios-atendidos' },
-            { label:'Equipe', icon:'ti-users', cor:'#8B2FC9', link:'/equipe' },
-            { label:'Cobranças', icon:'ti-receipt-2', cor:'#5F5E5A', link:'/cobrancas' },
+            { label:'Registrar atendimento', icon:'ti-clipboard-list', link:'/atendimentos' },
+            { label:'Lançar despesa', icon:'ti-circle-arrow-down', link:'/despesas' },
+            { label:'Lançar entrada', icon:'ti-circle-arrow-up', link:'/entradas' },
+            { label:'Cadastrar usuário', icon:'ti-user-plus', link:'/usuarios-atendidos' },
+            { label:'Equipe', icon:'ti-users', link:'/equipe' },
+            { label:'Cobranças', icon:'ti-receipt-2', link:'/cobrancas' },
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.link)}
-              style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', padding:'12px', borderRadius:10, border:`0.5px solid ${a.cor}30`, background:`${a.cor}08`, cursor:'pointer', textAlign:'left' }}>
-              <div style={{ fontSize:22, marginBottom:4 }}><i className={`ti ${a.icon}`} style={{fontSize:22}} /></div>
-              <div style={{ fontSize:12, fontWeight:600, color:a.cor }}>{a.label}</div>
+              style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', padding:'12px', borderRadius:10, border:'0.5px solid #E8E6DE', background:'rgba(255,255,255,0.75)', cursor:'pointer', textAlign:'left', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <div style={{ marginBottom:4 }}><i className={`ti ${a.icon}`} style={{fontSize:22, color:AZUL}} /></div>
+              <div style={{ fontSize:12, fontWeight:600, color:'#2C2C2A' }}>{a.label}</div>
             </button>
           ))}
         </div>

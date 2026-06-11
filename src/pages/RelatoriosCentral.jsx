@@ -464,7 +464,7 @@ export default function RelatoriosCentral() {
           <button onClick={gerar} disabled={loading} style={s.btn(loading?'#D3D1C7':AZUL)}>
             {loading ? 'Gerando...' : 'Gerar relatório'}
           </button>
-          {dados && <button onClick={exportarPDF} style={s.btn(VERDE)}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
+          {dados && <button onClick={exportarPDF} style={s.btn('#0E7EA8')}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
         </div>
       </div>
 

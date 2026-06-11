@@ -205,20 +205,20 @@ export default function PainelAdmin() {
         <div style={{ fontSize:11, fontWeight:500, color:'#B4B2A9', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:12 }}>Ações rápidas</div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))', gap:8 }}>
           {[
-            { icon:'ti-circle-arrow-down', label:'Lançar despesa',   rota:'/despesas',          bg:'rgba(232,33,42,0.06)',   cor:AG_RED },
-            { icon:'ti-circle-arrow-up',   label:'Lançar entrada',   rota:'/entradas',          bg:'rgba(107,191,43,0.08)',  cor:'#3B6D11' },
-            { icon:'ti-file-upload',       label:'Importar',         rota:'/importar',          bg:'rgba(14,126,168,0.07)',  cor:AG_BLUE },
-            { icon:'ti-checks',            label:'Conciliar',        rota:'/conciliacao',       bg:'rgba(107,191,43,0.08)',  cor:'#3B6D11' },
-            { icon:'ti-receipt-2',         label:'Cobranças',        rota:'/cobrancas',         bg:'rgba(230,120,20,0.07)', cor:'#E67814', badge: cobrancasPendentes },
-            { icon:'ti-report-analytics',  label:'Relatórios',       rota:'/relatorios',        bg:'rgba(139,47,201,0.07)', cor:ROXO },
-            { icon:'ti-users',             label:'Usuários atend.',  rota:'/usuarios-atendidos',bg:'rgba(107,191,43,0.08)', cor:'#3B6D11' },
-            { icon:'ti-checkup-list',      label:'Fechamento',       rota:'/fechamento',        bg:'rgba(0,0,0,0.04)',       cor:'#5F5E5A' },
-            { icon:'ti-world',             label:'Transparência',    rota:'/transparencia',     bg:'rgba(14,126,168,0.07)', cor:AG_BLUE },
-            { icon:'ti-file-certificate',  label:'Prestação',        rota:'/prestacao-contas',  bg:'rgba(139,47,201,0.07)', cor:ROXO },
+            { icon:'ti-circle-arrow-down', label:'Lançar despesa',   rota:'/despesas',          badge: 0 },
+            { icon:'ti-circle-arrow-up',   label:'Lançar entrada',   rota:'/entradas' },
+            { icon:'ti-file-upload',       label:'Importar',         rota:'/importar' },
+            { icon:'ti-checks',            label:'Conciliar',        rota:'/conciliacao' },
+            { icon:'ti-receipt-2',         label:'Cobranças',        rota:'/cobrancas',         badge: cobrancasPendentes },
+            { icon:'ti-report-analytics',  label:'Relatórios',       rota:'/relatorios' },
+            { icon:'ti-users',             label:'Usuários atend.',  rota:'/usuarios-atendidos' },
+            { icon:'ti-checkup-list',      label:'Fechamento',       rota:'/fechamento' },
+            { icon:'ti-world',             label:'Transparência',    rota:'/transparencia' },
+            { icon:'ti-file-certificate',  label:'Prestação',        rota:'/prestacao-contas' },
           ].map(item => (
             <button key={item.rota} onClick={() => navigate(item.rota)}
-              style={{ background:item.bg, border:'0.5px solid rgba(0,0,0,0.06)', borderRadius:12, padding:'12px 6px 10px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:5, position:'relative', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
-              <i className={`ti ${item.icon}`} style={{ fontSize:20, color:item.cor }} aria-hidden="true" />
+              style={{ background:'rgba(255,255,255,0.75)', border:'0.5px solid #E8E6DE', borderRadius:12, padding:'12px 6px 10px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:5, position:'relative', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              <i className={`ti ${item.icon}`} style={{ fontSize:20, color:AG_BLUE }} aria-hidden="true" />
               <span style={{ fontSize:10, color:'#5F5E5A', fontWeight:400, lineHeight:1.3, textAlign:'center' }}>{item.label}</span>
               {item.badge > 0 && (
                 <span style={{ position:'absolute', top:5, right:5, background:AG_RED, color:'#fff', fontSize:9, fontWeight:700, borderRadius:99, minWidth:15, height:15, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px' }}>

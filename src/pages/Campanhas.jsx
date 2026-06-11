@@ -74,7 +74,7 @@ export default function Campanhas() {
             style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>← Voltar</button>
           <div style={{ fontSize: 15, fontWeight: 500 }}>{campanhaSel.nome}</div>
           <button onClick={() => gerarPDFCampanha(campanhaSel, entradas, saidas)}
-            style={{ padding: '5px 13px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer', marginLeft: 'auto' }}>
+            style={{ padding: '5px 13px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer', marginLeft: 'auto' }}>
             Exportar PDF
           </button>
         </div>
@@ -152,7 +152,7 @@ export default function Campanhas() {
                 {camp.meta_financeira > 0 && <div style={{ fontSize: 11, color: '#5F5E5A', marginBottom: 4 }}><i className="ti ti-target" style={{marginRight:4}} /> Meta: {fmt(camp.meta_financeira)}</div>}
                 {camp.data_inicio && <div style={{ fontSize: 11, color: '#5F5E5A' }}><i className="ti ti-calendar" style={{marginRight:4}} /> {new Date(camp.data_inicio+'T12:00:00').toLocaleDateString('pt-BR')}{camp.data_fim?' → '+new Date(camp.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):''}</div>}
                 <button onClick={() => abrirCampanha(camp)}
-                  style={{ marginTop: 8, width: '100%', padding: '5px', fontSize: 11, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>
+                  style={{ marginTop: 8, width: '100%', padding: '5px', fontSize: 11, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
                   Ver movimentações →
                 </button>
               </div>
@@ -183,7 +183,7 @@ export default function Campanhas() {
             <textarea value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Descrição da campanha" rows={2} style={{ ...s.input, resize: 'vertical' }} />
           </div>
           {msg && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msg.includes('Erro')?'#FEF2F2':'#F2FAE8', color: msg.includes('Erro')?'#A32D2D':'#3B6D11' }}>{msg}</div>}
-          <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>Criar campanha</button>
+          <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>Criar campanha</button>
         </form>
       </div>
     </div>

@@ -218,7 +218,7 @@ export default function UsuariosAtendidos() {
               <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} placeholder="Observações sobre o usuário ou atendimento..." />
             </div>
             <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
                 {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Cadastrar'}
               </button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>

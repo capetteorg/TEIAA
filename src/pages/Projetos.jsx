@@ -775,7 +775,7 @@ export default function Projetos() {
               </div>
             </>)}
             <div style={{ display:'flex', gap:8, marginTop:14 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':editando?'Salvar alterações':'+ Cadastrar projeto'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>{salvando?'Salvando...':editando?'Salvar alterações':'+ Cadastrar projeto'}</button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>
@@ -815,7 +815,7 @@ export default function Projetos() {
                     {p.periodo_inicio && <div style={{ background:'#F8F7F2', borderRadius:6, padding:'5px 8px', gridColumn:'span 2' }}><div style={{ fontSize:9, color:'#888780', marginBottom:1 }}>Período</div><div style={{ fontSize:11 }}>{fmtData(p.periodo_inicio)} a {fmtData(p.periodo_fim)}</div></div>}
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={() => abrirDetalhe(p)} style={{ ...s.btn(VERDE), flex:1, fontSize:11 }}>Ver ficha →</button>
+                    <button onClick={() => abrirDetalhe(p)} style={{ ...s.btn('#0E7EA8'), flex:1, fontSize:11 }}>Ver ficha →</button>
                     <button onClick={() => editar(p)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
                     <button onClick={() => setConfirmandoExcluir(p.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:11 }}>Excluir</button>
                   </div>

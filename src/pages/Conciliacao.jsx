@@ -479,7 +479,7 @@ export default function Conciliacao() {
             {cruzando ? 'Cruzando...' : 'Cruzar com lançamentos'}
           </button>
           {autoCount>0 && (
-            <button onClick={confirmarTodosAuto} style={s.btn(VERDE)}>
+            <button onClick={confirmarTodosAuto} style={s.btn('#0E7EA8')}>
               <i className="ti ti-check" style={{marginRight:4}} /> Confirmar {autoCount} automáticos
             </button>
           )}
@@ -689,7 +689,7 @@ export default function Conciliacao() {
                           return
                         }
                         conciliarMov(m.id, !m.conciliado)
-                      }} style={s.btn(m.conciliado?'#F1EFE8':!m.categoria_id?'#D3D1C7':VERDE, m.conciliado?'#5F5E5A':'#fff')}>
+                      }} style={s.btn(m.conciliado?'#F1EFE8':!m.categoria_id?'#D3D1C7':'#0E7EA8', m.conciliado?'#5F5E5A':'#fff')}>
                         {m.conciliado?'Desfazer':'OK ✓'}
                       </button>
                     </td>
@@ -825,7 +825,7 @@ export default function Conciliacao() {
                                       <td style={{ padding:'6px 8px', fontSize:11, color:'#888780' }}>{l.categoria?.nome||'—'}</td>
                                       <td style={{ padding:'6px 8px', fontSize:12, fontWeight:500, color:VERMELHO }}>{fmt(l.valor)}</td>
                                       <td style={{ padding:'6px 8px' }}>
-                                        <button onClick={() => vincularLancamento(m.id, l.id)} style={{ padding:'4px 10px', fontSize:11, borderRadius:6, border:'none', background:VERDE, color:'#fff', cursor:'pointer' }}>
+                                        <button onClick={() => vincularLancamento(m.id, l.id)} style={{ padding:'4px 10px', fontSize:11, borderRadius:6, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>
                                           <i className="ti ti-link" style={{marginRight:4}} /> Vincular
                                         </button>
                                       </td>

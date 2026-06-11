@@ -139,7 +139,7 @@ export default function Backup() {
           </div>
         )}
 
-        <button onClick={gerarBackup} disabled={loading} style={s.btn(loading?'#D3D1C7':VERDE)}>
+        <button onClick={gerarBackup} disabled={loading} style={s.btn(loading?'#D3D1C7':'#0E7EA8')}>
           {loading ? 'Gerando backup...' : 'Gerar e baixar backup'}
         </button>
       </div>

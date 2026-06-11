@@ -214,7 +214,7 @@ export default function Fechamento() {
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
             {anosCompletos.map(ano => (
               <button key={ano} onClick={() => parecerAnual(ano)} disabled={gerandoPDF==='anual-'+ano}
-                style={{ padding:'7px 16px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#6BBF2B', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+                style={{ padding:'7px 16px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
                 <i className="ti ti-file-certificate" style={{fontSize:14}} />
                 {gerandoPDF==='anual-'+ano ? 'Gerando...' : `Parecer anual ${ano}`}
               </button>
@@ -307,14 +307,14 @@ export default function Fechamento() {
                         )}
                         {isAdmin && status === 'fechado' && (
                           <>
-                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao:'', ressalvas:'', reuniao_data:'', reuniao_local:'', membros_presentes:'', membros_presentes_ids:[], modalidade:'presencial', observacoes:'' }) }} style={s.btn(VERDE)}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar aprovação</button>
+                            <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao:'', ressalvas:'', reuniao_data:'', reuniao_local:'', membros_presentes:'', membros_presentes_ids:[], modalidade:'presencial', observacoes:'' }) }} style={s.btn('#0E7EA8')}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar aprovação</button>
                             <button onClick={() => reabrirMes(competencia)} style={s.btn('#F1EFE8','#5F5E5A')}>↩ Reabrir</button>
                           </>
                         )}
                         {isAdmin && (status === 'aprovado' || status === 'aprovado_ressalva' || status === 'reprovado') && (
                           <>
                             <button onClick={() => { setAprovacaoAberta(isAprovAberto?null:competencia); setFormAprov({ tipo_aprovacao: fechamento.tipo_aprovacao||'', ressalvas: fechamento.ressalvas||'', reuniao_data: fechamento.reuniao_data||'', reuniao_local: fechamento.reuniao_local||'', membros_presentes: fechamento.membros_presentes||'', membros_presentes_ids:[], modalidade: fechamento.reuniao_modalidade||'presencial', observacoes: fechamento.observacoes||'' }) }} style={s.btn('#F1EFE8','#5F5E5A')}><i className="ti ti-pencil" style={{marginRight:4}} /> Editar</button>
-                            <button onClick={() => gerarParecer(competencia, fechamento)} disabled={gerandoPDF===competencia} style={s.btn(VERDE)}>
+                            <button onClick={() => gerarParecer(competencia, fechamento)} disabled={gerandoPDF===competencia} style={s.btn('#0E7EA8')}>
                               {gerandoPDF===competencia ? '' : ''} Imprimir parecer
                             </button>
                           </>
@@ -397,7 +397,7 @@ export default function Fechamento() {
                             <input value={formAprov.observacoes||''} onChange={e=>setFormAprov(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                           </div>
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => salvarAprovacao(competencia)} disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>{salvando?'Salvando...':'Salvar aprovação'}</button>
+                            <button onClick={() => salvarAprovacao(competencia)} disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>{salvando?'Salvando...':'Salvar aprovação'}</button>
                             <button onClick={() => { setAprovacaoAberta(null); setFormAprov({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>

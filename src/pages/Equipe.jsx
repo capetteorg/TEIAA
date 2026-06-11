@@ -260,7 +260,7 @@ export default function Equipe() {
           <div style={{ fontSize:12, color:'#888780' }}>Controle institucional de atuação</div>
         </div>
         {aba !== 'cadastro' && (
-          <button onClick={() => { setAba('cadastro'); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn(VERDE)}>
+          <button onClick={() => { setAba('cadastro'); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#0E7EA8')}>
             + Cadastrar pessoa
           </button>
         )}
@@ -510,7 +510,7 @@ export default function Equipe() {
           </div>
 
           <div style={{ display:'flex', gap:8 }}>
-            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
+            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
               {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Cadastrar pessoa'}
             </button>
             <button type="button" onClick={() => { setAba('lista'); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
@@ -598,7 +598,7 @@ export default function Equipe() {
                 <label style={s.label}>Descrição / Observação</label>
                 <input value={formMov.descricao} onChange={e=>setFormMov(f=>({...f,descricao:e.target.value}))} style={s.input} placeholder="Descreva a movimentação..." />
               </div>
-              <button type="submit" style={s.btn(VERDE)}>+ Registrar</button>
+              <button type="submit" style={s.btn('#0E7EA8')}>+ Registrar</button>
             </form>
 
             {/* Lista do histórico */}

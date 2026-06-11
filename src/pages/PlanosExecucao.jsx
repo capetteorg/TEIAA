@@ -741,7 +741,7 @@ export default function PlanosExecucao() {
                       <option key={p.id} value={p.id}>{p.nome} {p.situacao !== 'ativo' ? `(${p.situacao})` : ''}</option>
                     ))}
                   </select>
-                  <button onClick={vincularProjeto} style={s.btn(VERDE)}>+ Vincular</button>
+                  <button onClick={vincularProjeto} style={s.btn('#0E7EA8')}>+ Vincular</button>
                 </div>
 
                 {projetosVinculados.length === 0 ? (
@@ -827,7 +827,7 @@ export default function PlanosExecucao() {
                   <div><label style={s.label}>Observações</label><input value={formOrc.observacoes} onChange={e=>setFormOrc(f=>({...f,observacoes:e.target.value}))} style={s.input} /></div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvandoOrc} style={s.btn(VERDE)}>{editandoOrc?'Salvar':'+ Adicionar'}</button>
+                  <button type="submit" disabled={salvandoOrc} style={s.btn('#0E7EA8')}>{editandoOrc?'Salvar':'+ Adicionar'}</button>
                   {editandoOrc && <button type="button" onClick={() => { setFormOrc({ descricao:'', tipo:'saida', valor_previsto:'', valor_realizado:'', categoria:'', observacoes:'' }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -970,7 +970,7 @@ export default function PlanosExecucao() {
                 </div>
                 <div style={{ marginBottom:8 }}><label style={s.label}>Justificativa / Observação</label><input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} /></div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta?'Salvar':'+ Adicionar meta'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn('#0E7EA8')}>{editandoMeta?'Salvar':'+ Adicionar meta'}</button>
                   {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>
@@ -1032,7 +1032,7 @@ export default function PlanosExecucao() {
                   <div><label style={s.label}>Responsável / Equipe prevista</label><input value={formAtiv.responsavel_equipe} onChange={e=>setFormAtiv(f=>({...f,responsavel_equipe:e.target.value}))} style={s.input} /></div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv?'Salvar':'+ Adicionar'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn('#0E7EA8')}>{editandoAtiv?'Salvar':'+ Adicionar'}</button>
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>

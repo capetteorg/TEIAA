@@ -272,7 +272,7 @@ export default function Contas() {
           {msg && <div style={{ fontSize: 12, padding: '7px 10px', borderRadius: 8, marginBottom: 10, background: msg.includes('Erro') ? '#FEF2F2' : '#F2FAE8', color: msg.includes('Erro') ? '#A32D2D' : '#3B6D11' }}>{msg}</div>}
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#6BBF2B', color: '#fff', cursor: 'pointer' }}>
+            <button type="submit" style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
               {editando ? 'Salvar alterações' : 'Adicionar conta'}
             </button>
             {editando && (

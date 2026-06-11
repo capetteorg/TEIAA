@@ -448,7 +448,7 @@ ${financeiroResumo ? `
           <button onClick={gerar} disabled={loading || (!planoSel && !projetoSel)} style={s.btn(loading||(!planoSel&&!projetoSel)?'#D3D1C7':AZUL)}>
             {loading ? 'Gerando...' : 'Gerar relatório'}
           </button>
-          {dados && <button onClick={gerarPDF} style={s.btn(VERDE)}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
+          {dados && <button onClick={gerarPDF} style={s.btn('#0E7EA8')}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
         </div>
       </div>
 

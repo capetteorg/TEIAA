@@ -340,7 +340,7 @@ export default function PlanoTrabalho() {
                   <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
+                  <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
                     {salvando ? 'Salvando...' : editando ? 'Salvar' : '+ Criar plano'}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
@@ -389,7 +389,7 @@ export default function PlanoTrabalho() {
                         </div>
                       )}
                       <div style={{ display:'flex', gap:6 }}>
-                        <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn(VERDE), flex:1, fontSize:11 }}>Ver plano completo →</button>
+                        <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn('#0E7EA8'), flex:1, fontSize:11 }}>Ver plano completo →</button>
                         <button onClick={e=>{e.stopPropagation();editarPlano(p)}} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
                       </div>
                     </div>
@@ -494,7 +494,7 @@ export default function PlanoTrabalho() {
                     <input value={formMeta.justificativa} onChange={e=>setFormMeta(f=>({...f,justificativa:e.target.value}))} style={s.input} />
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoMeta ? 'Salvar' : '+ Adicionar meta'}</button>
+                    <button type="submit" disabled={salvando} style={s.btn('#0E7EA8')}>{editandoMeta ? 'Salvar' : '+ Adicionar meta'}</button>
                     {editandoMeta && <button type="button" onClick={() => { setFormMeta(META_VAZIO); setEditandoMeta(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                   </div>
                 </form>
@@ -573,7 +573,7 @@ export default function PlanoTrabalho() {
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(VERDE)}>{editandoAtiv ? 'Salvar' : '+ Adicionar'}</button>
+                  <button type="submit" disabled={salvando} style={s.btn('#0E7EA8')}>{editandoAtiv ? 'Salvar' : '+ Adicionar'}</button>
                   {editandoAtiv && <button type="button" onClick={() => { setFormAtiv(ATIVIDADE_VAZIA); setEditandoAtiv(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                 </div>
               </form>

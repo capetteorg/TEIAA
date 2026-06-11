@@ -246,7 +246,7 @@ export default function Importar() {
                       Voltar
                     </button>
                     <button onClick={salvar} disabled={salvando}
-                      style={{ padding: '6px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer', opacity: salvando ? 0.7 : 1 }}>
+                      style={{ padding: '6px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer', opacity: salvando ? 0.7 : 1 }}>
                       {salvando ? 'Salvando...' : 'Confirmar importação →'}
                     </button>
                   </div>
@@ -285,7 +285,7 @@ export default function Importar() {
               </div>
               <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
                 <button onClick={() => setStep(1)}
-                  style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: VERDE, color: '#fff', cursor: 'pointer' }}>
+                  style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
                   + Importar outro extrato
                 </button>
                 <button onClick={() => { setAba('historico'); setStep(1) }}

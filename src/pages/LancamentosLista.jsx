@@ -135,7 +135,7 @@ export default function LancamentosLista() {
             <i className="ti ti-table-export" style={{fontSize:14}} /> CSV
           </button>
           <button onClick={() => navigate('/despesas')} style={s.btn(VERMELHO)}>+ Despesa</button>
-          <button onClick={() => navigate('/entradas')} style={s.btn(VERDE)}>+ Entrada</button>
+          <button onClick={() => navigate('/entradas')} style={s.btn('#0E7EA8')}>+ Entrada</button>
         </div>
       </div>
 

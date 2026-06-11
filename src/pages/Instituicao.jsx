@@ -365,7 +365,7 @@ export default function Instituicao() {
             </div>
           </div>
 
-          <button type="submit" disabled={salvando} style={{ ...s.btn(salvando ? '#D3D1C7' : VERDE), fontWeight: 500, padding: '8px 20px' }}>
+          <button type="submit" disabled={salvando} style={{ ...s.btn(salvando ? '#D3D1C7' : '#0E7EA8'), fontWeight: 500, padding: '8px 20px' }}>
             {salvando ? 'Salvando...' : 'Salvar dados institucionais'}
           </button>
         </form>
@@ -458,7 +458,7 @@ export default function Instituicao() {
                   <label style={s.label}>Observações</label>
                   <input value={formDir.observacoes} onChange={e=>setFormDir(f=>({...f,observacoes:e.target.value}))} style={s.input} placeholder="Observações sobre o mandato" />
                 </div>
-                <button type="submit" disabled={salvando} style={{ ...s.btn(salvando ? '#D3D1C7' : VERDE), fontWeight: 500 }}>
+                <button type="submit" disabled={salvando} style={{ ...s.btn(salvando ? '#D3D1C7' : '#0E7EA8'), fontWeight: 500 }}>
                   {salvando ? 'Salvando...' : editandoDir ? 'Salvar alterações' : '+ Adicionar'}
                 </button>
               </form>

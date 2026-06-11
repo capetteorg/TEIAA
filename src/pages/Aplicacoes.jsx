@@ -151,7 +151,7 @@ export default function Aplicacoes() {
                 <input type="number" step="0.01" value={formRend.valor} onChange={e=>setFormRend(f=>({...f,valor:e.target.value}))} placeholder="0,00" required style={s.input} /></div>
             </div>
             {msgRend && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:10, background:!msgRend.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgRend.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgRend}</div>}
-            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':VERDE)}>
+            <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
               {salvando ? 'Salvando...' : 'Salvar rendimento'}
             </button>
           </form>

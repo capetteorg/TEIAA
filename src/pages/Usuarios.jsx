@@ -131,7 +131,7 @@ export default function Usuarios() {
               {msg}
             </div>
           )}
-          <button type="submit" disabled={salvando} style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#6BBF2B', color: '#fff', cursor: 'pointer', opacity: salvando ? 0.7 : 1 }}>
+          <button type="submit" disabled={salvando} style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer', opacity: salvando ? 0.7 : 1 }}>
             {salvando ? 'Criando...' : 'Criar usuário'}
           </button>
         </form>

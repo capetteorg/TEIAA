@@ -239,7 +239,7 @@ export default function ConciliacaoInteligente() {
                   <td style={s.td}>{e.total_movs} movs</td>
                   <td style={{ ...s.td, color: VERDE }}>{fmt(e.saldo_final || 0)}</td>
                   <td style={s.td}>
-                    <button onClick={() => abrirExtrato(e)} style={s.btn(VERDE)}>Cruzar →</button>
+                    <button onClick={() => abrirExtrato(e)} style={s.btn('#0E7EA8')}>Cruzar →</button>
                   </td>
                 </tr>
               ))}
@@ -330,7 +330,7 @@ export default function ConciliacaoInteligente() {
               <button onClick={() => setFiltro('sem_lancamento')} style={s.tab(filtro==='sem_lancamento')}>Sem lançamento ({stats.semLancamento})</button>
               <button onClick={() => setFiltro('sem_extrato')} style={s.tab(filtro==='sem_extrato')}>Sem extrato ({stats.semExtrato})</button>
               {stats.autoMatched > 0 && (
-                <button onClick={confirmarTodosAuto} style={{ ...s.btn(VERDE), marginLeft: 'auto', fontSize: 12, padding: '5px 14px' }}>
+                <button onClick={confirmarTodosAuto} style={{ ...s.btn('#0E7EA8'), marginLeft: 'auto', fontSize: 12, padding: '5px 14px' }}>
                   <i className="ti ti-check" style={{marginRight:4}} /> Confirmar todos automáticos ({stats.autoMatched})
                 </button>
               )}
@@ -408,7 +408,7 @@ export default function ConciliacaoInteligente() {
                         <td style={s.td}>
                           {item.status === 'conciliado_auto' && (
                             <div style={{ display: 'flex', gap: 4 }}>
-                              <button onClick={() => confirmarConciliacao(item)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar</button>
+                              <button onClick={() => confirmarConciliacao(item)} style={s.btn('#0E7EA8')}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar</button>
                               <button onClick={() => rejeitarMatch(item)} style={s.btn('#F1EFE8', '#5F5E5A')}><i className="ti ti-x" style={{fontSize:14}} /></button>
                             </div>
                           )}

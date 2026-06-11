@@ -87,7 +87,7 @@ export default function Relatorios() {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 4 }}>
           {['mes','ano'].map(t => (
-            <button key={t} onClick={() => setPeriodo(t)} style={{ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: periodo===t?'#6BBF2B':'transparent', color: periodo===t?'#fff':'#5F5E5A', cursor: 'pointer' }}>
+            <button key={t} onClick={() => setPeriodo(t)} style={{ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: periodo===t?'#0E7EA8':'transparent', color: periodo===t?'#fff':'#5F5E5A', cursor: 'pointer' }}>
               {t==='mes'?'Mensal':'Anual'}
             </button>
           ))}
@@ -102,7 +102,7 @@ export default function Relatorios() {
               {[2026,2025,2024,2023].map(a=><option key={a}>{a}</option>)}
             </select>
         }
-        <button onClick={exportarPDF} disabled={!dados} style={{padding:'6px 14px',fontSize:12,borderRadius:8,border:'none',background:dados?'#6BBF2B':'#D3D1C7',color:'#fff',cursor:dados?'pointer':'default'}}>
+        <button onClick={exportarPDF} disabled={!dados} style={{padding:'6px 14px',fontSize:12,borderRadius:8,border:'none',background:dados?'#0E7EA8':'#D3D1C7',color:'#fff',cursor:dados?'pointer':'default'}}>
           Exportar PDF
         </button>
       </div>

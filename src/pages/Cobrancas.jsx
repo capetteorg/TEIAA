@@ -314,7 +314,7 @@ export default function Cobrancas() {
             <div style={{ fontSize: 13, fontWeight: 500 }}>Prévia — {preview.length} boletos encontrados</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => { setPreview([]); setTab('lista') }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
-              <button onClick={confirmarImportacao} disabled={salvando} style={s.btn(VERDE)}>
+              <button onClick={confirmarImportacao} disabled={salvando} style={s.btn('#0E7EA8')}>
                 {salvando ? 'Importando...' : `Confirmar importação (${preview.length})`}
               </button>
             </div>
@@ -385,7 +385,7 @@ export default function Cobrancas() {
                         </td>
                         <td style={s.td}>
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <button onClick={salvarEdicao} style={s.btn(VERDE)}>Salvar</button>
+                            <button onClick={salvarEdicao} style={s.btn('#0E7EA8')}>Salvar</button>
                             <button onClick={() => { setEditando(null); setFormEdit({}) }} style={s.btn('#F1EFE8','#5F5E5A')}><i className="ti ti-x" style={{fontSize:14}} /></button>
                           </div>
                         </td>
@@ -410,7 +410,7 @@ export default function Cobrancas() {
                                 style={s.btn('#0E7EA8')}>Atualizar</button>
                             )}
                             {isAdmin && c.pago_informado && !c.pago_confirmado && (
-                              <button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar extrato</button>
+                              <button onClick={() => confirmarPagamento(c.id)} style={s.btn('#0E7EA8')}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar extrato</button>
                             )}
                           </div>
                         </td>
@@ -474,7 +474,7 @@ export default function Cobrancas() {
                     <td style={s.td}>{c.data_vencimento ? new Date(c.data_vencimento+'T12:00:00').toLocaleDateString('pt-BR') : '—'}</td>
                     <td style={{ ...s.td, color: VERDE, fontWeight: 500 }}>{fmt(c.valor)}</td>
                     <td style={{ ...s.td, color: '#888780' }}>{c.ultima_obs||'—'}</td>
-                    <td style={s.td}><button onClick={() => confirmarPagamento(c.id)} style={s.btn(VERDE)}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar no extrato</button></td>
+                    <td style={s.td}><button onClick={() => confirmarPagamento(c.id)} style={s.btn('#0E7EA8')}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar no extrato</button></td>
                   </tr>
                 ))}
               </tbody>
