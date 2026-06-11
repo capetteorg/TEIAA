@@ -124,7 +124,12 @@ export default function Sociedade() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)' }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', position:'relative' }}>
+
+      {/* Marca d'água Agendo */}
+      <div style={{ position:'fixed', right:'-6vw', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', zIndex:0, opacity:0.04, filter:'grayscale(100%)' }}>
+        <img src="/agendo-logo.png" alt="" style={{ width:'30vw', maxWidth:360 }} />
+      </div>
 
       {/* Cabeçalho */}
       <div style={{ background: 'rgba(255,255,255,0.92)', borderBottom: '0.5px solid #E8E6DE', padding: '1rem 1.5rem', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
@@ -603,8 +608,8 @@ export default function Sociedade() {
         <div style={{ maxWidth:1000, margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             <img src="/logo.png" alt="Logo" style={{ height:22, width:'auto', objectFit:'contain', maxWidth:100 }}
-              onError={e=>{ e.target.style.display='none' }} />
-            <div style={{ display:'flex', gap:2 }}>
+              onError={e=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+            <div style={{ display:'none', gap:2 }}>
               {LOGO.map(([l,c]) => <span key={l+c} style={{ fontSize:13, fontWeight:700, color:c }}>{l}</span>)}
             </div>
           </div>
