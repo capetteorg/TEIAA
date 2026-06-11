@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { auditar } from '../lib/auditoria'
 
 const PERFIS = {
   admin:       { label: 'Administrador', cor: '#8B2FC9', bg: '#EEEDFE' },
@@ -59,6 +60,7 @@ export default function Usuarios() {
       return
     }
 
+    auditar('Criação de usuário', `${form.email} — perfil ${form.perfil}`)
     setMsg('Usuário criado! Um e-mail de confirmação foi enviado para ' + form.email)
     setForm({ email: '', nome: '', perfil: 'operacional', senha: '' })
     carregarUsuarios()

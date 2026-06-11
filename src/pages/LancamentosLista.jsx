@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { exportarCSV } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4'
 
@@ -116,6 +117,23 @@ export default function LancamentosLista() {
           <div style={{ fontSize:12, color:'#888780' }}>{lista.length} lançamento{lista.length!==1?'s':''}</div>
         </div>
         <div style={{ display:'flex', gap:6 }}>
+          <button onClick={() => exportarCSV(
+            `lancamentos_${new Date().toISOString().slice(0,10)}`,
+            lista,
+            [
+              { label:'Data', get: l => l.data },
+              { label:'Tipo', get: l => l.tipo },
+              { label:'Descrição', get: l => l.descricao },
+              { label:'Valor', get: l => String(l.valor).replace('.', ',') },
+              { label:'NF', get: l => l.nf || l.num_nota || '' },
+              { label:'Conta', get: l => l.conta?.nome || '' },
+              { label:'Categoria', get: l => l.categoria?.nome || '' },
+              { label:'Conciliado', get: l => l.conciliado ? 'Sim' : 'Não' },
+            ]
+          )} disabled={lista.length===0}
+            style={{ padding:'6px 14px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.92)', color:'#5F5E5A', cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
+            <i className="ti ti-table-export" style={{fontSize:14}} /> CSV
+          </button>
           <button onClick={() => navigate('/despesas')} style={s.btn(VERMELHO)}>+ Despesa</button>
           <button onClick={() => navigate('/entradas')} style={s.btn(VERDE)}>+ Entrada</button>
         </div>

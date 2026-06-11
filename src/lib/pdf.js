@@ -152,6 +152,10 @@ const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimu
 // Abre janela de impressão
 function abrirImpressao(html, titulo, paisagem = false) {
   const win = window.open('', '_blank')
+  if (!win) {
+    alert('O navegador bloqueou a janela do relatório. Permita pop-ups para este site e tente novamente.')
+    return
+  }
   win.document.write(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -166,7 +170,13 @@ ${paisagem ? '@page { size: A4 landscape; margin: 10mm; }' : ''}
 </html>`)
   win.document.close()
   win.focus()
-  setTimeout(() => win.print(), 600)
+  // Aguardar TODAS as imagens (logo) carregarem antes de imprimir
+  const imgs = Array.from(win.document.images)
+  const prontas = Promise.all(imgs.map(img =>
+    img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
+  ))
+  const timeout = new Promise(r => setTimeout(r, 2500)) // máx 2,5s de espera
+  Promise.race([prontas, timeout]).then(() => setTimeout(() => win.print(), 200))
 }
 
 // =============================================
@@ -1035,4 +1045,100 @@ export function gerarPDFParecer({ fechamento, movs, instituicao }) {
   ${htmlRodape()}`
 
   abrirImpressao(html, `Parecer Conselho Fiscal — ${fechamento.competencia}`)
+}
+
+
+// =============================================
+// PARECER ANUAL DO CONSELHO FISCAL
+// Gerado quando todos os 12 meses do ano estão aprovados
+// =============================================
+export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) : '—'
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+  const tipoLabel = { aprovado:'Aprovado', aprovado_ressalva:'Aprovado c/ ressalva', reprovado:'Reprovado' }
+
+  const entradas = movs.filter(m=>Number(m.valor)>0).reduce((a,m)=>a+Number(m.valor),0)
+  const saidas = Math.abs(movs.filter(m=>Number(m.valor)<0).reduce((a,m)=>a+Number(m.valor),0))
+  const saldo = entradas - saidas
+
+  const comRessalva = fechamentos.filter(f => f.tipo_aprovacao === 'aprovado_ressalva')
+  const ultimoAprovado = [...fechamentos].sort((a,b)=>(b.aprovado_em||'').localeCompare(a.aprovado_em||''))[0]
+  const membros = (ultimoAprovado?.membros_presentes||'').split(',').map(s=>s.trim()).filter(Boolean)
+
+  const linhasMeses = fechamentos
+    .sort((a,b)=>a.competencia.localeCompare(b.competencia))
+    .map(f => {
+      const m = parseInt(f.competencia.split('-')[1]) - 1
+      return `<tr>
+        <td>${MESES[m]}</td>
+        <td>${tipoLabel[f.tipo_aprovacao]||'—'}</td>
+        <td>${f.aprovado_em ? new Date(f.aprovado_em).toLocaleDateString('pt-BR') : '—'}</td>
+        <td>${f.ressalvas ? f.ressalvas : '—'}</td>
+      </tr>`
+    }).join('')
+
+  const html = `
+  ${htmlCabecalho()}
+
+  <div class="titulo-bloco">
+    <div class="titulo-principal">Parecer Anual do Conselho Fiscal</div>
+    <div class="titulo-sub">Consolidação das aprovações mensais — Exercício de ${ano}</div>
+  </div>
+
+  <div class="secao">
+    <div class="secao-titulo secao-titulo-verde">1. Resumo Financeiro Consolidado — ${ano}</div>
+    <div class="resumo-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="resumo-item">
+        <div class="resumo-label">Total de entradas</div>
+        <div class="resumo-valor verde">${fmt(entradas)}</div>
+      </div>
+      <div class="resumo-item">
+        <div class="resumo-label">Total de saídas</div>
+        <div class="resumo-valor vermelho">${fmt(saidas)}</div>
+      </div>
+      <div class="resumo-item">
+        <div class="resumo-label">Resultado do exercício</div>
+        <div class="resumo-valor ${saldo>=0?'azul':'vermelho'}">${fmt(saldo)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="secao">
+    <div class="secao-titulo secao-titulo-azul">2. Aprovações Mensais</div>
+    <table>
+      <thead><tr><th>Mês</th><th>Parecer</th><th>Aprovado em</th><th>Ressalvas</th></tr></thead>
+      <tbody>${linhasMeses}</tbody>
+    </table>
+  </div>
+
+  <div class="secao">
+    <div class="secao-titulo">3. Parecer Consolidado</div>
+    <div style="border:2px solid #3B6D11;background:#EAF3DE;border-radius:8px;padding:16px;text-align:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;color:#3B6D11">CONTAS DO EXERCÍCIO ${ano} APROVADAS</div>
+      <div style="font-size:12px;line-height:1.7">
+        O Conselho Fiscal da ${CAPETTE_INFO.nome}, tendo examinado e aprovado as contas de todos
+        os 12 (doze) meses do exercício de <strong>${ano}</strong>, conforme registros mensais detalhados acima,
+        manifesta parecer pela <strong>regularidade das contas do exercício</strong>${comRessalva.length>0?`, registrando-se ${comRessalva.length} aprovação(ões) com ressalva conforme tabela`:''}.
+      </div>
+    </div>
+  </div>
+
+  <div class="secao" style="break-inside:avoid">
+    <div class="secao-titulo">4. Assinaturas</div>
+    <div style="font-size:11px;color:#5F5E5A;margin-bottom:16px">
+      Teresópolis, ${fmtData(new Date().toISOString().slice(0,10))}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(membros.length||3,3)},1fr);gap:24px;margin-top:24px">
+      ${(membros.length > 0 ? membros : ['Membro do Conselho Fiscal','Membro do Conselho Fiscal','Membro do Conselho Fiscal']).map(nome => `
+        <div style="border-top:1px solid #2C2C2A;margin-top:40px;padding-top:6px;text-align:center">
+          <div style="font-size:11px;font-weight:600">${nome}</div>
+          <div style="font-size:10px;color:#888">Conselho Fiscal — ${CAPETTE_INFO.nome}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  ${htmlRodape()}`
+
+  abrirImpressao(html, `Parecer Anual ${ano} — Conselho Fiscal`)
 }

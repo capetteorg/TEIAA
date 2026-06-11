@@ -59,3 +59,27 @@ export function confirmar(mensagem, opcoes = {}) {
     btnConfirmar.focus()
   })
 }
+
+
+// =============================================
+// EXPORTAÇÃO CSV (compatível com Excel pt-BR: separador ; e BOM)
+// =============================================
+export function exportarCSV(nomeArquivo, linhas, colunas) {
+  if (!linhas || linhas.length === 0) return
+  const cols = colunas || Object.keys(linhas[0])
+  const esc = v => {
+    if (v === null || v === undefined) return ''
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v)
+    return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const header = cols.map(c => esc(c.label || c)).join(';')
+  const rows = linhas.map(l => cols.map(c => esc(typeof c === 'object' ? c.get(l) : l[c])).join(';'))
+  const csv = '\uFEFF' + [header, ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nomeArquivo.endsWith('.csv') ? nomeArquivo : nomeArquivo + '.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}

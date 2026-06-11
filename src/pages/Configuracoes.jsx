@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { auditar } from '../lib/auditoria'
 
 export default function Configuracoes() {
   const [senha, setSenha] = useState('')
@@ -22,6 +23,7 @@ export default function Configuracoes() {
 
   async function executar(tipo) {
     setLoading(true)
+    auditar('Zona de perigo — exclusão em massa', tipo)
     try {
       if (tipo === 'extratos') {
         // Limpa movimentações primeiro (FK), depois extratos

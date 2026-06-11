@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFParecer } from '../lib/pdf'
+import { gerarPDFParecer, gerarPDFParecerAnual } from '../lib/pdf'
+import { auditar } from '../lib/auditoria'
 import { confirmar } from '../lib/ui'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#4A8FD4', LARANJA = '#F4821F', ROXO = '#8B2FC9'
@@ -47,6 +48,28 @@ export default function Fechamento() {
       .select('valor').gte('data', `${competencia}-01`).lte('data', `${competencia}-${String(ult).padStart(2,'0')}`)
     const { data: inst } = await supabase.from('instituicao').select('*').limit(1).single()
     gerarPDFParecer({ fechamento, movs: movData||[], instituicao: inst||{} })
+    setGerandoPDF(null)
+  }
+
+  // Anos com todos os 12 meses aprovados
+  const anosCompletos = (() => {
+    const porAno = {}
+    fechamentos.forEach(f => {
+      if (['aprovado','aprovado_ressalva'].includes(f.status)) {
+        const ano = f.competencia.split('-')[0]
+        porAno[ano] = (porAno[ano]||0) + 1
+      }
+    })
+    return Object.entries(porAno).filter(([,n]) => n >= 12).map(([ano]) => ano).sort().reverse()
+  })()
+
+  async function parecerAnual(ano) {
+    setGerandoPDF('anual-'+ano)
+    const { data: movData } = await supabase.from('extrato_movs')
+      .select('valor').gte('data', `${ano}-01-01`).lte('data', `${ano}-12-31`)
+    const { data: inst } = await supabase.from('instituicao').select('*').limit(1).single()
+    const fechAno = fechamentos.filter(f => f.competencia.startsWith(ano) && ['aprovado','aprovado_ressalva'].includes(f.status))
+    gerarPDFParecerAnual({ ano, fechamentos: fechAno, movs: movData||[], instituicao: inst||{} })
     setGerandoPDF(null)
   }
 
@@ -103,6 +126,7 @@ export default function Fechamento() {
       erro = error
     }
     if (erro) { setMsg(`Erro: ${erro.message}`); return }
+    auditar('Fechamento de mês', competencia)
     setMsg(`Mês ${competencia} fechado e aguardando aprovação!`)
     await carregar()
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
@@ -124,6 +148,7 @@ export default function Fechamento() {
       membros_presentes: null,
     }).eq('competencia', competencia)
     if (error) { setMsg(`Erro: ${error.message}`); return }
+    auditar('Reabertura de mês', competencia)
     setMsg('Mês reaberto.')
     await carregar()
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
@@ -146,6 +171,7 @@ export default function Fechamento() {
       membros_presentes: membros_presentes || null,
       observacoes: observacoes || null,
     }).eq('competencia', competencia)
+    if (!error) auditar('Aprovação do Conselho Fiscal', `${competencia} — ${tipo_aprovacao}`)
     if (error) { setMsg(`Erro: ${error.message}`); setSalvando(false); return }
     setAprovacaoAberta(null)
     setFormAprov({})
@@ -178,10 +204,23 @@ export default function Fechamento() {
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ marginBottom:'1.25rem' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:'1.25rem' }}>
+        <div>
         <div style={{ fontSize:15, fontWeight:500 }}>Fechamento e Aprovação do Conselho Fiscal</div>
           <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Fluxo: o financeiro <strong>fecha</strong> o mês após a conciliação → o Conselho Fiscal <strong>aprova</strong> (ou reprova) → meses aprovados aparecem na Transparência Pública.</div>
         <div style={{ fontSize:12, color:'#888780' }}>Controle de fechamento mensal e registro de aprovações</div>
+        </div>
+        {anosCompletos.length > 0 && (
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            {anosCompletos.map(ano => (
+              <button key={ano} onClick={() => parecerAnual(ano)} disabled={gerandoPDF==='anual-'+ano}
+                style={{ padding:'7px 16px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#6BBF2B', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+                <i className="ti ti-file-certificate" style={{fontSize:14}} />
+                {gerandoPDF==='anual-'+ano ? 'Gerando...' : `Parecer anual ${ano}`}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Métricas */}
