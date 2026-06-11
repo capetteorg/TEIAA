@@ -10,15 +10,15 @@ const AG_RED   = '#E63214'
 function NavItem({ to, icon, label, visivel = true, onClick, badge }) {
   if (!visivel) return null
   return (
-    <NavLink to={to} onClick={onClick} style={({ isActive }) => ({
+    <NavLink to={to} onClick={onClick} className="nav-item" style={({ isActive }) => ({
       display: 'flex', alignItems: 'center', gap: 9,
-      padding: '8px 1.1rem',
+      padding: '9px 1.1rem',
       fontSize: 12.5,
       color: isActive ? '#1A1F1C' : '#888780',
       background: isActive ? 'rgba(150,193,31,0.10)' : 'transparent',
       borderRight: isActive ? `2px solid ${AG_GREEN}` : '2px solid transparent',
       textDecoration: 'none',
-      transition: 'background .12s, color .12s',
+      transition: 'background .15s ease, color .15s ease',
       fontWeight: isActive ? 500 : 400,
     })}>
       <i className={`ti ti-${icon}`} style={{ fontSize: 15, flexShrink: 0 }} />
@@ -81,7 +81,7 @@ export default function Layout() {
 
   const fecharMenu = () => isMobile && setMenuAberto(false)
   const perfilLabel = p === 'admin' ? 'Admin' : p === 'diretoria' ? 'Diretoria' : 'Operacional'
-  const perfilCor   = p === 'admin' ? AG_BLUE : AG_GREEN
+  const perfilCor   = p === 'admin' ? AG_BLUE : p === 'diretoria' ? AG_GREEN : '#E67814'
 
   const sidebar = (
     <div style={{
@@ -93,10 +93,10 @@ export default function Layout() {
     }}>
 
       {/* Logo da OSC */}
-      <div style={{ padding: '1rem 1.1rem', borderBottom: '0.5px solid #E8E6DE', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 60 }}>
+      <div style={{ padding: '1.15rem 1.1rem', borderBottom: '0.5px solid #E8E6DE', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 70 }}>
         <img
           src="/logo.png" alt="Logo"
-          style={{ height: 36, width: 'auto', objectFit: 'contain', maxWidth: 160, display: 'block' }}
+          style={{ height: 40, width: 'auto', objectFit: 'contain', maxWidth: 168, display: 'block' }}
           onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
         />
         <div style={{ display:'none', gap:2, alignItems:'center' }}>
@@ -110,7 +110,7 @@ export default function Layout() {
       </div>
 
       {/* Menu */}
-      <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 8 }}>
+      <div className="sidebar-scroll" style={{ overflowY: 'auto', flex: 1, paddingBottom: 8 }}>
 
         <NavSecao label="Principal" />
         <NavItem to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
@@ -162,8 +162,8 @@ export default function Layout() {
 
       {/* Rodapé usuário */}
       <div style={{ padding: '.7rem 1.1rem', borderTop: '0.5px solid #E8E6DE', display: 'flex', alignItems: 'center', gap: 9 }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: `${AG_BLUE}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 11, fontWeight: 500, color: AG_BLUE }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', background: `${perfilCor}18`, border: `1px solid ${perfilCor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: perfilCor }}>
             {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
           </span>
         </div>
@@ -184,13 +184,25 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden' }}>
+      <style>{`
+        .nav-item:hover { background: rgba(0,0,0,0.035) !important; color: #2C2C2A !important; }
+        .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #DDDBD2; border-radius: 99px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: #C8C6BC; }
+        .sidebar-scroll { scrollbar-width: thin; scrollbar-color: #DDDBD2 transparent; }
+        @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .drawer-mobile { animation: drawerIn .22s cubic-bezier(.2,.8,.3,1); }
+        .drawer-overlay { animation: fadeIn .18s ease; }
+      `}</style>
 
       {!isMobile && sidebar}
 
       {isMobile && menuAberto && (
         <>
-          <div onClick={() => setMenuAberto(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 99 }} />
-          <div style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 240, overflowY: 'auto' }}>
+          <div onClick={() => setMenuAberto(false)} className="drawer-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 99 }} />
+          <div className="drawer-mobile" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 240, overflowY: 'auto' }}>
             {sidebar}
           </div>
         </>
