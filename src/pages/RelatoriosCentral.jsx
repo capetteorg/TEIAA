@@ -30,6 +30,8 @@ export default function RelatoriosCentral() {
   const [planoSel, setPlanoSel] = useState('')
   const [contaSel, setContaSel] = useState('todas')
   const [dataInicio, setDataInicio] = useState('')
+  const [modoConc, setModoConc] = useState('mes') // 'mes' | 'ano'
+  const [anoConc, setAnoConc] = useState(new Date().getFullYear().toString())
   const [dataFim, setDataFim] = useState('')
   const [dados, setDados] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -75,16 +77,20 @@ export default function RelatoriosCentral() {
   async function gerarConciliacao(pId) {
     const competencia = dataInicio.slice(0,7)
 
-    // Buscar extrato pela competência
+    // Buscar extratos: por competência (mês) ou por ano inteiro
     let qExt = supabase.from('extratos')
       .select('id, competencia, conta_id, conta:contas(nome,banco,agencia,conta_num)')
-      .eq('competencia', competencia)
+    if (modoConc === 'ano') {
+      qExt = qExt.gte('competencia', `${anoConc}-01`).lte('competencia', `${anoConc}-12`)
+    } else {
+      qExt = qExt.eq('competencia', competencia)
+    }
     if (contaSel && contaSel !== 'todas') qExt = qExt.eq('conta_id', parseInt(contaSel))
     const { data: extratosPeriodo } = await qExt
     const extratosIds = (extratosPeriodo || []).map(e => e.id)
 
     if (extratosIds.length === 0) {
-      setMsg('Nenhum extrato encontrado para esta competência e conta.')
+      setMsg(modoConc === 'ano' ? `Nenhum extrato encontrado para ${anoConc} nesta conta.` : 'Nenhum extrato encontrado para esta competência e conta.')
       setDados({ tipo: 'conciliacao', lista: [], entradas: [], saidas: [], totalEnt: 0, totalSai: 0, saldo: 0, contaDados: null })
       return
     }
@@ -371,7 +377,7 @@ export default function RelatoriosCentral() {
   function exportarPDF() {
     if (!dados) return
     if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim)
-    else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, dataInicio, dataFim)
+    else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, modoConc==='ano' ? `${anoConc}-01-01` : dataInicio, modoConc==='ano' ? `${anoConc}-12-31` : dataFim)
     else alert('PDF para este relatório em breve!')
   }
 
@@ -383,8 +389,8 @@ export default function RelatoriosCentral() {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'7px 16px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', fontWeight:500 }),
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background:ativo?AZUL:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
@@ -450,13 +456,29 @@ export default function RelatoriosCentral() {
           )}
           {aba==='conciliacao' && (
             <div>
-              <label style={s.label}>Competência (mês) *</label>
-              <input type="month" value={dataInicio.slice(0,7)} onChange={e => {
-                const [ano, mes] = e.target.value.split('-')
-                const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
-                setDataInicio(`${e.target.value}-01`)
-                setDataFim(`${e.target.value}-${ultimoDia}`)
-              }} style={s.input} />
+              <label style={s.label}>Período *</label>
+              <div style={{ display:'flex', gap:6, marginBottom:6 }}>
+                {[['mes','Por mês'],['ano','Por ano']].map(([v,l]) => (
+                  <button key={v} type="button" onClick={() => setModoConc(v)}
+                    style={{ padding:'5px 14px', fontSize:12, borderRadius:8, cursor:'pointer', border:`0.5px solid ${modoConc===v?'#0E7EA8':'#D3D1C7'}`, background:modoConc===v?'#0E7EA8':'transparent', color:modoConc===v?'#fff':'#5F5E5A' }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {modoConc === 'mes' ? (
+                <input type="month" value={dataInicio.slice(0,7)} onChange={e => {
+                  const [ano, mes] = e.target.value.split('-')
+                  const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
+                  setDataInicio(`${e.target.value}-01`)
+                  setDataFim(`${e.target.value}-${ultimoDia}`)
+                }} style={s.input} />
+              ) : (
+                <select value={anoConc} onChange={e => setAnoConc(e.target.value)} style={s.input}>
+                  {Array.from({length: 6}, (_, i) => new Date().getFullYear() - i).map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
         </div>
@@ -528,8 +550,8 @@ export default function RelatoriosCentral() {
               {projetosCompletos.map((pv, idx) => {
                 const p = pv.projeto
                 return (
-                  <div key={pv.id} style={{ border:'0.5px solid #E0DDD5', borderRadius:10, marginBottom:12, overflow:'hidden' }}>
-                    <div style={{ background:`${VERDE}08`, borderBottom:'0.5px solid #E0DDD5', padding:'10px 14px', display:'flex', alignItems:'center', gap:8 }}>
+                  <div key={pv.id} style={{ border:'0.5px solid #E8E6DE', borderRadius:10, marginBottom:12, overflow:'hidden' }}>
+                    <div style={{ background:`${VERDE}08`, borderBottom:'0.5px solid #E8E6DE', padding:'10px 14px', display:'flex', alignItems:'center', gap:8 }}>
                       <span style={{ fontSize:12, fontWeight:700, color:'#888780' }}>{idx+1}.</span>
                       <div>
                         <div style={{ fontSize:11, color:'#888780' }}>{p?.tipo}</div>
