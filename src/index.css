@@ -117,3 +117,8 @@ a { text-decoration: none; color: inherit; }
   to   { opacity: 1; transform: translateY(0); }
 }
 .page-anim { animation: pageIn .18s ease-out; }
+
+/* ===== TABELAS PREMIUM ===== */
+tbody tr { transition: background .12s ease; }
+tbody tr:hover { background: rgba(14,126,168,0.04); }
+thead th { font-weight: 500; }
