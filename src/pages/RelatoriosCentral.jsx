@@ -164,10 +164,15 @@ export default function RelatoriosCentral() {
       from += pageSize
     }
 
+    let extratosDaConta = null
     if (contaSel && contaSel !== 'todas') {
-      const { data: exts } = await supabase.from('extratos').select('id').eq('conta_id', parseInt(contaSel))
-      const ids = new Set((exts||[]).map(e => e.id))
+      const { data: exts } = await supabase.from('extratos').select('id, conta_id, data_fim, saldo_final').eq('conta_id', parseInt(contaSel))
+      extratosDaConta = exts || []
+      const ids = new Set(extratosDaConta.map(e => e.id))
       lista = lista.filter(m => ids.has(m.extrato_id))
+    } else {
+      const { data: exts } = await supabase.from('extratos').select('id, conta_id, data_fim, saldo_final')
+      extratosDaConta = exts || []
     }
     lista = lista.filter(m => !m.dividida)
 
@@ -175,6 +180,29 @@ export default function RelatoriosCentral() {
     const saidas = lista.filter(m => Number(m.valor) < 0)
     const totalEnt = entradas.reduce((a,m) => a+Number(m.valor), 0)
     const totalSai = Math.abs(saidas.reduce((a,m) => a+Number(m.valor), 0))
+    const resultadoPeriodo = totalEnt - totalSai
+
+    // Saldo bancário: usa o saldo_final do último extrato do período.
+    // O saldo inicial é derivado do saldo final menos o resultado do período.
+    // Assim não altera nenhuma movimentação e não depende de lançar saldo manual.
+    const extratosAteFim = (extratosDaConta || []).filter(e => e.data_fim && e.data_fim <= dataFim)
+    let saldoFinalBancario = null
+    if (contaSel && contaSel !== 'todas') {
+      const ultimoExtrato = extratosAteFim
+        .sort((a,b) => String(b.data_fim).localeCompare(String(a.data_fim)))[0]
+      saldoFinalBancario = ultimoExtrato?.saldo_final != null ? Number(ultimoExtrato.saldo_final) : null
+    } else {
+      const ultimosPorConta = {}
+      extratosAteFim.forEach(e => {
+        if (!ultimosPorConta[e.conta_id] || String(e.data_fim).localeCompare(String(ultimosPorConta[e.conta_id].data_fim)) > 0) {
+          ultimosPorConta[e.conta_id] = e
+        }
+      })
+      const ultimos = Object.values(ultimosPorConta).filter(e => e.saldo_final != null)
+      saldoFinalBancario = ultimos.length > 0 ? ultimos.reduce((a,e) => a + Number(e.saldo_final || 0), 0) : null
+    }
+    const saldoInicialBancario = saldoFinalBancario != null ? saldoFinalBancario - resultadoPeriodo : null
+
     const grupoSai = {}
     saidas.forEach(m => {
       const cat = m.categoria?.nome || 'Sem categoria'
@@ -182,7 +210,20 @@ export default function RelatoriosCentral() {
       grupoSai[cat].total += Math.abs(Number(m.valor))
       grupoSai[cat].qtd++
     })
-    setDados({ tipo: 'financeiro', entradas, saidas, totalEnt, totalSai, saldo: totalEnt - totalSai, grupoSai, lista, contaDados })
+    setDados({
+      tipo: 'financeiro',
+      entradas,
+      saidas,
+      totalEnt,
+      totalSai,
+      saldo: resultadoPeriodo,
+      resultadoPeriodo,
+      saldoInicialBancario,
+      saldoFinalBancario,
+      grupoSai,
+      lista,
+      contaDados
+    })
   }
 
   async function gerarExecucao(pId, plId) {

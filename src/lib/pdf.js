@@ -256,7 +256,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
         ${linhas}
         <tr class="total-row">
           <td colspan="6"><strong>SALDO DO PERÍODO</strong></td>
-          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':''}${fmt(saldo)}</strong></td>
+          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':'-'} ${fmt(saldo)}</strong></td>
           <td></td>
         </tr>
       </tbody>
@@ -273,7 +273,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 // RELATÓRIO FINANCEIRO GERAL
 // =============================================
 export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
-  const { entradas, saidas, totalEnt, totalSai, saldo, lista, contaDados } = dados
+  const { entradas, saidas, totalEnt, totalSai, saldo, lista, contaDados, saldoInicialBancario, saldoFinalBancario } = dados
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const periodoLabel = `${fmtData(dataInicio)} a ${fmtData(dataFim)}`
@@ -355,6 +355,13 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
     </tr>`
   }).join('')
 
+  const temSaldoBancario = saldoInicialBancario != null && saldoFinalBancario != null
+  const cardsSaldoBancario = temSaldoBancario ? `
+      <div class="resumo-item"><div class="resumo-label">Saldo Bancário Inicial</div><div class="resumo-valor azul">${fmt(saldoInicialBancario)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Saldo Bancário Final</div><div class="resumo-valor azul">${fmt(saldoFinalBancario)}</div></div>
+    ` : ''
+  const colunasResumo = temSaldoBancario ? 6 : 4
+
   const html = `
   ${htmlCabecalho()}
   <div class="titulo-bloco">
@@ -366,7 +373,8 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
 
   <div class="resumo-box">
     <div class="resumo-titulo">Resumo do Período</div>
-    <div class="resumo-grid">
+    <div class="resumo-grid" style="grid-template-columns:repeat(${colunasResumo},1fr)">
+      ${cardsSaldoBancario}
       <div class="resumo-item"><div class="resumo-label">Total Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
       <div class="resumo-item"><div class="resumo-label">Total Saídas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
       <div class="resumo-item"><div class="resumo-label">Resultado do Período</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div></div>
@@ -426,7 +434,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
         ${linhasExtrato || '<tr><td colspan="6" style="text-align:center;color:#888">Sem movimentações</td></tr>'}
         <tr class="total-row">
           <td colspan="5"><strong>RESULTADO DO PERÍODO</strong></td>
-          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':'-'} ${fmt(saldo)}</strong></td>
+          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':''}${fmt(saldo)}</strong></td>
         </tr>
       </tbody>
     </table>
