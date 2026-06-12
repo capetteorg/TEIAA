@@ -124,9 +124,15 @@ export default function Importar() {
       }
     }
 
-    // Saldo inicial derivado: saldo_final − resultado das movimentações do período
-    const somaMovs = movs.reduce((a, m) => a + Number(m.valor || 0), 0)
-    const saldoInicial = Math.round((Number(extrato.saldoFinal || 0) - somaMovs) * 100) / 100
+    // Saldo final do PERÍODO = saldo da última movimentação (a linha "Saldo atual" do
+    // arquivo reflete o dia da exportação, não o fechamento do mês)
+    const ordenadas = [...movs].sort((a, b) => a.dataISO.localeCompare(b.dataISO))
+    const ultimoSaldo = ordenadas.length ? Number(ordenadas[ordenadas.length - 1].saldo || 0) : Number(extrato.saldoFinal || 0)
+    const saldoFinalPeriodo = Math.round(ultimoSaldo * 100) / 100
+
+    // Saldo inicial derivado: saldo_final do período − resultado das movimentações
+    const somaMovs = movs.reduce((a, m) => a + Number(m.tipo === 'entrada' ? m.valorAbs : -m.valorAbs), 0)
+    const saldoInicial = Math.round((saldoFinalPeriodo - somaMovs) * 100) / 100
 
     // Verificação de continuidade: saldo inicial deve bater com o final do mês anterior
     let avisoContinuidade = ''
@@ -148,7 +154,7 @@ export default function Importar() {
       competencia,
       arquivo_nome: extrato.arquivo,
       saldo_inicial: saldoInicial,
-      saldo_final: extrato.saldoFinal,
+      saldo_final: saldoFinalPeriodo,
       total_movs: movs.length,
       importado_por: user.id,
       importado_em: new Date().toISOString(),
@@ -168,6 +174,7 @@ export default function Importar() {
         descricao: m.desc,
         doc: m.doc,
         valor: m.tipo === 'entrada' ? m.valorAbs : -m.valorAbs,
+        saldo: m.saldo ?? null,
         tipo: m.tipo,
         classif_auto: regra?.classificacao || m.classif || null,
         categoria_id: regra?.categoria_id || null,
