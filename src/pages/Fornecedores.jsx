@@ -135,7 +135,7 @@ export default function Fornecedores() {
               {duplicatas.map(d => (
                 <div key={d.id} style={{ marginTop:4 }}>
                   <strong>{d.nome}</strong> {d.cpf_cnpj ? `— ${d.cpf_cnpj}` : ''} {d.cadastro_rapido ? '(cadastro rápido — incompleto)' : ''}
-                  <button onClick={() => editar(d)} style={{ marginLeft:8, fontSize:11, padding:'1px 8px', borderRadius:6, border:`0.5px solid ${LARANJA}`, background:'transparent', color:LARANJA, cursor:'pointer' }}>
+                  <button onClick={() => editar(d)} style={{ marginLeft:8, fontSize:11, padding:'1px 8px', borderRadius:6, border:'0.5px solid #D3D1C7', background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>
                     Completar este
                   </button>
                 </div>

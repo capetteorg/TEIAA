@@ -164,7 +164,7 @@ export default function Parcerias() {
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     tab: ativo => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?'#0E7EA8':'#D3D1C7'}`, background:ativo?'#0E7EA8':'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
-    secao: { fontSize:11, fontWeight:600, color:'#5F5E5A', borderLeft:`3px solid ${LARANJA}`, paddingLeft:8, margin:'14px 0 8px' },
+    secao: { fontSize:11, fontWeight:600, color:'#5F5E5A', borderLeft:`3px solid $'#0E7EA8'`, paddingLeft:8, margin:'14px 0 8px' },
   }
 
   async function excluir(id) {

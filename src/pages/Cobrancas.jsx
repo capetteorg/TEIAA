@@ -224,10 +224,10 @@ export default function Cobrancas() {
 
   const s = {
     card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
-    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5', whiteSpace: 'nowrap' },
-    td: { padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12, verticalAlign: 'middle' },
+    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE', whiteSpace: 'nowrap' },
+    td: { padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12, verticalAlign: 'middle' },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
-    tab: ativo => ({ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: ativo ? VERDE : 'transparent', color: ativo ? '#fff' : '#5F5E5A', cursor: 'pointer' }),
+    tab: ativo => ({ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: ativo ? '#0E7EA8' : 'transparent', color: ativo ? '#fff' : '#5F5E5A', cursor: 'pointer' }),
     btn: (bg, cor='#fff') => ({ padding: '4px 10px', fontSize: 11, borderRadius: 6, border: 'none', background: bg, color: cor, cursor: 'pointer', whiteSpace: 'nowrap' }),
   }
 
@@ -347,7 +347,7 @@ export default function Cobrancas() {
             </select>
             <input type="month" value={filtroPeriodo} onChange={e=>setFiltroPeriodo(e.target.value)} style={{ fontSize: 12, padding: '5px 8px', border: '0.5px solid #D3D1C7', borderRadius: 8 }} />
             <span style={{ fontSize: 12, color: '#888780' }}>{lista.length} registros</span>
-            <button onClick={() => gerarPDFCobrancas(lista, { periodo: filtroPeriodo, status: filtroStatus })} style={{ ...s.btn('#F4821F'), marginLeft: 'auto' }}>Exportar PDF</button>
+            <button onClick={() => gerarPDFCobrancas(lista, { periodo: filtroPeriodo, status: filtroStatus })} style={{ ...s.btn('#0E7EA8'), marginLeft: 'auto' }}>Exportar PDF</button>
           </div>
           {loading ? (
             <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>

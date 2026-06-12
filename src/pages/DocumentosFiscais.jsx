@@ -416,14 +416,14 @@ export default function DocumentosFiscais() {
 
       {/* Gerador de declarações */}
       {aba === 'declaracoes' && (
-        <div style={{ ...s.card, borderColor:LARANJA+'60', marginBottom:'1.25rem' }}>
+        <div style={{ ...s.card, borderColor:'#E8E6DE', marginBottom:'1.25rem' }}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}><i className="ti ti-file" style={{marginRight:4}} /> Gerador de Declarações</div>
           <div style={{ fontSize:12, color:'#888780', marginBottom:12 }}>
             Selecione as declarações e gere um PDF — uma folha por declaração, pronta para impressão e assinatura.
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:6, marginBottom:12 }}>
             {TIPOS_DECLARACOES.filter(t => TEXTOS_DECLARACOES[t]).map(tipo => (
-              <label key={tipo} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, cursor:'pointer', padding:'6px 10px', borderRadius:8, background: declaracoesSel.includes(tipo)?'#EAF3DE':'#F8F7F2', border:`0.5px solid ${declaracoesSel.includes(tipo)?VERDE:'#E8E6DE'}` }}>
+              <label key={tipo} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, cursor:'pointer', padding:'6px 10px', borderRadius:8, background: declaracoesSel.includes(tipo)?'#E6F1FB':'#F8F7F2', border:`0.5px solid ${declaracoesSel.includes(tipo)?'#0E7EA8':'#E8E6DE'}` }}>
                 <input type="checkbox" checked={declaracoesSel.includes(tipo)}
                   onChange={e => setDeclaracoesSel(prev => e.target.checked ? [...prev, tipo] : prev.filter(t=>t!==tipo))} />
                 {tipo}
@@ -431,7 +431,7 @@ export default function DocumentosFiscais() {
             ))}
           </div>
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-            <button onClick={gerarDeclaracoesPDF} style={s.btn(declaracoesSel.length>0?LARANJA:'#D3D1C7')}>
+            <button onClick={gerarDeclaracoesPDF} style={s.btn(declaracoesSel.length>0?'#0E7EA8':'#D3D1C7')}>
               <i className="ti ti-printer" style={{fontSize:14}} /> Gerar PDF ({declaracoesSel.length} declarações)
             </button>
             <button onClick={() => setDeclaracoesSel(Object.keys(TEXTOS_DECLARACOES))} style={s.btn('#F1EFE8','#5F5E5A')}>Todas</button>

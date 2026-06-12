@@ -236,11 +236,11 @@ export default function Equipe() {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
-    tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?VERDE:'#D3D1C7'}`, background:ativo?VERDE:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
+    tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?'#0E7EA8':'#D3D1C7'}`, background:ativo?'#0E7EA8':'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     grupo: (cols) => ({ display:'grid', gridTemplateColumns:cols, gap:10, marginBottom:10 }),
   }
 
@@ -460,7 +460,7 @@ export default function Equipe() {
             <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
               {todosProjetos.map(proj => (
                 <button key={proj} type="button" onClick={() => toggleProjeto(proj)}
-                  style={{ fontSize:11, padding:'5px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.projetos.includes(proj)?VERDE:'#D3D1C7'}`, background:form.projetos.includes(proj)?'#EAF3DE':'#fff', color:form.projetos.includes(proj)?'#3B6D11':'#5F5E5A' }}>
+                  style={{ fontSize:11, padding:'5px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.projetos.includes(proj)?'#0E7EA8':'#D3D1C7'}`, background:form.projetos.includes(proj)?'#E6F1FB':'#fff', color:form.projetos.includes(proj)?'#0E7EA8':'#5F5E5A' }}>
                   {form.projetos.includes(proj) ? '✓ ' : ''}{proj}
                 </button>
               ))}

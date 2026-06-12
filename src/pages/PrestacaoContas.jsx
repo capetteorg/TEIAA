@@ -410,14 +410,14 @@ export default function PrestacaoContas() {
               </div>
             )}
             <button onClick={() => gerarPDFPrestacaoContas(dados, pendencias, 'preliminar')}
-              style={s.btn('#F4821F')}>
+              style={s.btn('#0E7EA8')}>
               Exportar PDF Preliminar
             </button>
             <button onClick={() => {
               if (!podeGerarFinal) { alert('Resolva as pendências críticas antes de gerar o relatório final.'); return }
               gerarPDFPrestacaoContas(dados, pendencias, 'final')
             }}
-              style={s.btn(podeGerarFinal ? VERDE : '#D3D1C7')}>
+              style={s.btn(podeGerarFinal ? '#0E7EA8' : '#D3D1C7')}>
               Exportar PDF Final Consolidado
             </button>
           </div>
