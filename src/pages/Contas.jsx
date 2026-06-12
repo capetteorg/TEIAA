@@ -96,18 +96,18 @@ export default function Contas() {
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 },
     card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
-    secao: { fontSize: 11, fontWeight: 500, color: '#888780', textTransform: 'uppercase', letterSpacing: '.08em', margin: '12px 0 6px', paddingBottom: 4, borderBottom: '0.5px solid #E0DDD5' },
+    secao: { fontSize: 11, fontWeight: 500, color: '#888780', textTransform: 'uppercase', letterSpacing: '.08em', margin: '12px 0 6px', paddingBottom: 4, borderBottom: '0.5px solid #E8E6DE' },
     grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
     grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 },
     grid4: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 },
   }
 
   // Badge de tipo
-  const tipoCor = { principal: ['#EAF3DE','#3B6D11'], emenda: ['#E6F1FB','#185FA5'], edital: ['#EEEDFE','#534AB7'], fomento: ['#F1EFE8','#5F5E5A'], colaboracao: ['#FAEEDA','#854F0B'], convenio: ['#FCEBEB','#A32D2D'], projeto: ['#F8F7F2','#5F5E5A'] }
+  const tipoCor = { principal: ['#EAF3DE','#3B6D11'], emenda: ['#E6F1FB','#185FA5'], edital: ['#E6F1FB','#185FA5'], fomento: ['#F1EFE8','#5F5E5A'], colaboracao: ['#FAEEDA','#854F0B'], convenio: ['#FCEBEB','#A32D2D'], projeto: ['#F8F7F2','#5F5E5A'] }
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Contas bancárias</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Contas bancárias</div>
 
       {/* Lista de contas */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -144,7 +144,7 @@ export default function Contas() {
               </div>
 
               {aberta && (
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid #E0DDD5', fontSize: 11 }}>
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid #E8E6DE', fontSize: 11 }}>
                   {c.parlamentar && <div style={{ marginBottom: 3 }}><strong>Parlamentar:</strong> {c.parlamentar}</div>}
                   {c.orgao_concedente && <div style={{ marginBottom: 3 }}><strong>Órgão:</strong> {c.orgao_concedente}</div>}
                   {c.num_termo && <div style={{ marginBottom: 3 }}><strong>Termo/Processo:</strong> {c.num_termo} {c.num_processo ? '· '+c.num_processo : ''}</div>}

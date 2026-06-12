@@ -147,11 +147,11 @@ export default function UsuariosAtendidos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Usuários / Público Atendido</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Usuários / Público Atendido</div>
           <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {usuarios.length} total</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-          style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+          style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Cadastrar usuário'}
         </button>
       </div>
@@ -299,7 +299,9 @@ export default function UsuariosAtendidos() {
               <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
             ) : usuarios.length === 0 ? (
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-                Nenhum usuário cadastrado. Clique em "+ Cadastrar usuário" para começar.
+                <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Nenhum usuário cadastrado</div>
+                <div style={{ fontSize:12, color:'#888780', maxWidth:380, margin:'0 auto' }}>Cadastre as pessoas atendidas pela instituição para acompanhar atendimentos, projetos e relatórios.</div>
+                <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Cadastrar usuário</button>
               </div>
             ) : (
               <div style={{ maxHeight:520, overflowY:'auto',overflowX:'auto' }}>

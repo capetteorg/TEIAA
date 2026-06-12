@@ -32,7 +32,7 @@ const STATUS_META_COR = {
   'alcançada': ['#EAF3DE','#3B6D11'],
   'parcialmente alcançada': ['#FAEEDA','#854F0B'],
   'não alcançada': ['#FCEBEB','#A32D2D'],
-  'outro': ['#EEEDFE','#534AB7'],
+  'outro': ['#E6F1FB','#185FA5'],
 }
 
 const FORM_VAZIO = {
@@ -199,7 +199,7 @@ export default function PlanoTrabalho() {
     'em execução': ['#FAEEDA','#854F0B'],
     'encerrado': ['#F1EFE8','#888780'],
     'cancelado': ['#FCEBEB','#A32D2D'],
-    'outro': ['#EEEDFE','#534AB7'],
+    'outro': ['#E6F1FB','#185FA5'],
   }
 
   const s = {
@@ -220,7 +220,7 @@ export default function PlanoTrabalho() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Planos de Trabalho / Planos de Ação</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Planos de Trabalho / Planos de Ação</div>
           <div style={{ fontSize:12, color:'#888780' }}>{planos.length} plano{planos.length!==1?'s':''} cadastrado{planos.length!==1?'s':''}</div>
         </div>
         {aba !== 'detalhe' && (
@@ -362,7 +362,7 @@ export default function PlanoTrabalho() {
                 return (
                   <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                     onClick={() => abrirDetalhe(p)}>
-                    <div style={{ background:`${VERDE}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                    <div style={{ background:'rgba(0,0,0,0.02)', borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo_plano}</div>
                         <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome_plano}</div>
@@ -410,7 +410,7 @@ export default function PlanoTrabalho() {
           </div>
 
           {/* Cabeçalho do plano */}
-          <div style={{ ...s.card, background:'linear-gradient(135deg, #EAF3DE, #F8F7F2)', marginBottom:'1rem' }}>
+          <div style={{ ...s.card, marginBottom:'1rem' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:12 }}>
               <div>
                 <div style={{ fontSize:11, color:'#888780', marginBottom:2 }}>{planoSel.tipo_plano}</div>

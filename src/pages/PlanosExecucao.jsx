@@ -26,7 +26,7 @@ const STATUS_META_COR = {
   'alcançada': ['#EAF3DE','#3B6D11'],
   'parcialmente alcançada': ['#FAEEDA','#854F0B'],
   'não alcançada': ['#FCEBEB','#A32D2D'],
-  'outro': ['#EEEDFE','#534AB7'],
+  'outro': ['#E6F1FB','#185FA5'],
 }
 
 const ORIGENS_RECURSOS_OPCOES = [
@@ -382,7 +382,7 @@ export default function PlanosExecucao() {
     'em execução': ['#FAEEDA','#854F0B'],
     'encerrado': ['#F1EFE8','#888780'],
     'cancelado': ['#FCEBEB','#A32D2D'],
-    'outro': ['#EEEDFE','#534AB7'],
+    'outro': ['#E6F1FB','#185FA5'],
   }
 
   const s = {
@@ -407,7 +407,7 @@ export default function PlanosExecucao() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Plano de Ação Institucional</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Plano de Ação Institucional</div>
           <div style={{ fontSize:12, color:'#888780' }}>{planos.length} plano{planos.length!==1?'s':''} cadastrado{planos.length!==1?'s':''}</div>
         </div>
         {aba !== 'detalhe' && (
@@ -524,7 +524,7 @@ export default function PlanosExecucao() {
                 {/* Campos CNAS */}
                 {isPlanoAcao && (
                   <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
-                    <div style={{ fontSize:12, fontWeight:600, color:ROXO, marginBottom:12 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Campos específicos CNAS</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:'#0E7EA8', marginBottom:12 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Campos específicos CNAS</div>
 
                     <div style={s.secaoCnas}>Identificação da instituição</div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:12 }}>
@@ -618,7 +618,7 @@ export default function PlanosExecucao() {
                 return (
                   <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:`0.5px solid ${isPai?'#C9B3E8':'#E8E6DE'}`, borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                     onClick={() => abrirDetalhe(p)}>
-                    <div style={{ background:isPai?`${ROXO}10`:`${VERDE}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                    <div style={{ background:'rgba(0,0,0,0.02)', borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:10, color:isPai?'#0E7EA8':'#888780', marginBottom:2, fontWeight:isPai?600:400 }}>{p.tipo_plano}</div>
                         <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome_plano}</div>
@@ -646,8 +646,8 @@ export default function PlanosExecucao() {
                       )}
                       {isPai && p.origens_recursos?.length > 0 && (
                         <div style={{ display:'flex', flexWrap:'wrap', gap:3, marginBottom:8 }}>
-                          {p.origens_recursos.slice(0,3).map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
-                          {p.origens_recursos.length > 3 && <span style={s.badge('#F0EAFA',ROXO)}>+{p.origens_recursos.length-3}</span>}
+                          {p.origens_recursos.slice(0,3).map(o => <span key={o} style={s.badge('#E6F1FB','#0E7EA8')}>{o}</span>)}
+                          {p.origens_recursos.length > 3 && <span style={s.badge('#E6F1FB','#0E7EA8')}>+{p.origens_recursos.length-3}</span>}
                         </div>
                       )}
                       <div style={{ display:'flex', gap:6 }}>
@@ -789,7 +789,7 @@ export default function PlanosExecucao() {
                             {p?.atividades_previstas && <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}><strong style={{ color:'#5F5E5A' }}>Atividades:</strong> {p.atividades_previstas.substring(0,150)}{p.atividades_previstas.length>150?'...':''}</div>}
                             {p?.origens_recursos?.length > 0 && (
                               <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginTop:4 }}>
-                                {p.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
+                                {p.origens_recursos.map(o => <span key={o} style={s.badge('#E6F1FB','#0E7EA8')}>{o}</span>)}
                               </div>
                             )}
                           </div>
@@ -1159,7 +1159,7 @@ export default function PlanosExecucao() {
           {abaDetalhe === 'cnas' && planoSel.tipo_plano === 'Plano de Ação Institucional' && (
             <div>
               <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem', marginBottom:10 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:ROXO, marginBottom:14 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Ficha CNAS — Plano de Ação Institucional</div>
+                <div style={{ fontSize:13, fontWeight:600, color:'#0E7EA8', marginBottom:14 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Ficha CNAS — Plano de Ação Institucional</div>
                 <div style={s.secaoCnas}>Identificação da instituição</div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:8, marginBottom:14 }}>
                   {[['Nome completo',instituicao?.nome_completo||planoSel.nome_plano],['CNPJ',instituicao?.cnpj||'—'],['Endereço',instituicao?.endereco||'—'],['Telefone/E-mail',[instituicao?.telefone,instituicao?.email].filter(Boolean).join(' · ')||'—']].map(([l,v])=>(
@@ -1176,7 +1176,7 @@ export default function PlanosExecucao() {
                 <div style={{ ...s.infoBox, marginBottom:14 }}><div style={s.infoVal}>{planoSel.periodo_inicio ? `${fmtData(planoSel.periodo_inicio)} a ${fmtData(planoSel.periodo_fim)}` : '—'}</div></div>
                 <div style={s.secaoCnas}>Origem dos recursos</div>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
-                  {planoSel.origens_recursos?.length > 0 ? planoSel.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>) : <span style={{ fontSize:12, color:'#888780' }}>Não informado</span>}
+                  {planoSel.origens_recursos?.length > 0 ? planoSel.origens_recursos.map(o => <span key={o} style={s.badge('#E6F1FB','#0E7EA8')}>{o}</span>) : <span style={{ fontSize:12, color:'#888780' }}>Não informado</span>}
                 </div>
                 {[['Finalidades estatutárias',planoSel.finalidades_estatutarias],['Infraestrutura disponível',planoSel.infraestrutura],['Abrangência territorial',planoSel.abrangencia_territorial||'Município de Teresópolis/RJ'],['Recursos financeiros previstos',planoSel.recursos_financeiros],['Recursos humanos',planoSel.recursos_humanos_cnas],['Forma de participação dos usuários',planoSel.forma_participacao_usuarios]].map(([l,v]) => v ? (
                   <div key={l}>

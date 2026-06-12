@@ -161,11 +161,11 @@ export default function EventosCampanhas() {
     <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Eventos e Campanhas</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Eventos e Campanhas</div>
           <div style={{ fontSize:12, color:'#888780' }}>{lista.filter(i=>i.tipo==='evento').length} eventos · {lista.filter(i=>i.tipo==='campanha').length} campanhas</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setSel(null) }}
-          style={s.btn(mostrarForm?'#F1EFE8':ROXO, mostrarForm?'#5F5E5A':'#fff')}>
+          style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Novo'}
         </button>
       </div>
@@ -221,7 +221,7 @@ export default function EventosCampanhas() {
               </div>
             </div>
             <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':ROXO)}>{salvando?'Salvando...':editando?'Salvar':'+ Cadastrar'}</button>
+              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>{salvando?'Salvando...':editando?'Salvar':'+ Cadastrar'}</button>
               <button type="button" onClick={()=>{setMostrarForm(false);setEditando(null)}} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
             </div>
           </form>
@@ -232,7 +232,7 @@ export default function EventosCampanhas() {
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         <button onClick={()=>setFiltroTipo('todos')} style={s.tab(filtroTipo==='todos')}>Todos ({lista.length})</button>
         <button onClick={()=>setFiltroTipo('evento')} style={s.tab(filtroTipo==='evento', LARANJA)}>Eventos ({lista.filter(i=>i.tipo==='evento').length})</button>
-        <button onClick={()=>setFiltroTipo('campanha')} style={s.tab(filtroTipo==='campanha', ROXO)}>Campanhas ({lista.filter(i=>i.tipo==='campanha').length})</button>
+        <button onClick={()=>setFiltroTipo('campanha')} style={s.tab(filtroTipo==='campanha', '#0E7EA8')}>Campanhas ({lista.filter(i=>i.tipo==='campanha').length})</button>
         <div style={{ width:1, background:'#E8E6DE', margin:'0 4px' }} />
         {['planejado','em andamento','ativa','concluído','concluída'].map(st => {
           const count = lista.filter(i=>i.status===st).length
@@ -247,7 +247,7 @@ export default function EventosCampanhas() {
         <div style={{ ...s.card, borderColor: sel.tipo==='evento'?'#F4C88A':'#C9B3E8', marginBottom:'1.25rem' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
             <div>
-              <span style={s.badge(sel.tipo==='evento'?'#FAEEDA':'#EEEDFE', sel.tipo==='evento'?'#854F0B':'#534AB7')}>{TIPO_LABEL[sel.tipo]}</span>
+              <span style={s.badge(sel.tipo==='evento'?'#FAEEDA':'#E6F1FB', sel.tipo==='evento'?'#854F0B':'#185FA5')}>{TIPO_LABEL[sel.tipo]}</span>
               <div style={{ fontSize:15, fontWeight:600, marginTop:4 }}>{sel.nome}</div>
               {sel.descricao && <div style={{ fontSize:12, color:'#5F5E5A', marginTop:2 }}>{sel.descricao}</div>}
             </div>
@@ -321,9 +321,9 @@ export default function EventosCampanhas() {
             return (
               <div key={`${item.tipo}-${item.id}`} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                 onClick={() => abrirDetalhe(item)}>
-                <div style={{ background:item.tipo==='evento'?`${LARANJA}15`:`${ROXO}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <div style={{ background:'rgba(0,0,0,0.02)', borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                   <div>
-                    <span style={s.badge(item.tipo==='evento'?'#FAEEDA':'#EEEDFE', item.tipo==='evento'?'#854F0B':'#534AB7')}>{TIPO_LABEL[item.tipo]}</span>
+                    <span style={s.badge(item.tipo==='evento'?'#FAEEDA':'#E6F1FB', item.tipo==='evento'?'#854F0B':'#185FA5')}>{TIPO_LABEL[item.tipo]}</span>
                     <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginTop:4 }}>{item.nome}</div>
                   </div>
                   <span style={s.badge(bg,cor)}>{item.status}</span>

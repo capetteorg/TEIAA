@@ -125,7 +125,7 @@ export default function Patrimonio() {
     <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Controle de Patrimônio</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Controle de Patrimônio</div>
           <div style={{ fontSize:12, color:'#888780' }}>Inventário de bens com depreciação automática</div>
         </div>
         {isAdmin && (

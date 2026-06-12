@@ -16,8 +16,8 @@ function NavItem({ to, icon, label, visivel = true, onClick, badge, colapsado = 
       justifyContent: colapsado ? 'center' : 'flex-start',
       fontSize: 12.5,
       color: isActive ? '#1A1F1C' : '#888780',
-      background: isActive ? 'rgba(150,193,31,0.10)' : 'transparent',
-      borderRight: isActive ? `2px solid ${AG_GREEN}` : '2px solid transparent',
+      background: isActive ? 'rgba(14,126,168,0.08)' : 'transparent',
+      borderRight: isActive ? `2px solid ${AG_BLUE}` : '2px solid transparent',
       textDecoration: 'none',
       transition: 'background .15s ease, color .15s ease',
       fontWeight: isActive ? 500 : 400,
@@ -303,7 +303,7 @@ export default function Layout() {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .drawer-mobile { animation: drawerIn .22s cubic-bezier(.2,.8,.3,1); }
         .drawer-overlay { animation: fadeIn .18s ease; }
-        .busca-item:hover { background: rgba(150,193,31,0.10) !important; }
+        .busca-item:hover { background: rgba(14,126,168,0.08) !important; }
       `}</style>
 
       {/* Busca global — Ctrl+K */}
@@ -367,7 +367,7 @@ export default function Layout() {
         </div>
 
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#C8C6BC' }}>AGENDO Integra · <span style={{ cursor:'pointer' }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
+          <span style={{ fontSize: 10, color: '#C8C6BC' }}>AGENDO Integra · CAPETTE · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
           <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
         </div>
 

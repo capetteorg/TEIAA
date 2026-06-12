@@ -184,26 +184,26 @@ export default function Instituicao() {
     input: { width: '100%', fontSize: 12, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box' },
     textarea: { width: '100%', fontSize: 12, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box', resize: 'vertical' },
     grupo: { display: 'grid', gap: 10, marginBottom: 10 },
-    secao: { fontSize: 11, fontWeight: 600, color: '#5F5E5A', borderLeft: `3px solid ${VERDE}`, paddingLeft: 8, margin: '14px 0 8px' },
+    secao: { fontSize: 11, fontWeight: 600, color: '#5F5E5A', borderLeft: `3px solid ${AZUL}`, paddingLeft: 8, margin: '14px 0 8px' },
     tab: ativo => ({
       padding: '7px 16px', fontSize: 12, borderRadius: 8,
-      border: '0.5px solid ' + (ativo ? VERDE : '#D3D1C7'),
-      background: ativo ? VERDE : '#fff',
+      border: '0.5px solid ' + (ativo ? AZUL : '#D3D1C7'),
+      background: ativo ? AZUL : '#fff',
       color: ativo ? '#fff' : '#5F5E5A',
       cursor: 'pointer',
     }),
-    th: { textAlign: 'left', padding: '6px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' },
-    td: { padding: '7px 10px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12, verticalAlign: 'middle' },
+    th: { textAlign: 'left', padding: '6px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE' },
+    td: { padding: '7px 10px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12, verticalAlign: 'middle' },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 8px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
     btn: (bg, cor='#fff') => ({ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer', whiteSpace: 'nowrap' }),
   }
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Cadastro da Instituição</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Cadastro da Instituição</div>
 
       {presidenteAtual && (
-        <div style={{ background: '#EAF3DE', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ background: '#F0F6FA', border: '0.5px solid #C5DCEA', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 20 }}><i className="ti ti-user" style={{fontSize:14}} /></div>
           <div>
             <div style={{ fontSize: 11, color: '#3B6D11', marginBottom: 2 }}>Presidente atual — mandato vigente</div>

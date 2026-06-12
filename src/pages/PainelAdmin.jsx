@@ -225,7 +225,7 @@ export default function PainelAdmin() {
         {resumo.entradas > 0 && (
           <div style={{ marginBottom:12 }}>
             <div style={{ height:5, background:'#EAF3DE', borderRadius:99, overflow:'hidden' }}>
-              <div style={{ height:'100%', width:Math.min(Math.round(resumo.saidas/resumo.entradas*100),100)+'%', background:resumo.saidas>resumo.entradas?AG_RED:'#E67814', borderRadius:99, transition:'width .4s' }} />
+              <div style={{ height:'100%', width:Math.min(Math.round(resumo.saidas/resumo.entradas*100),100)+'%', background:resumo.saidas>resumo.entradas?'#D9534F':'#0E7EA8', opacity:0.85, borderRadius:99, transition:'width .4s' }} />
             </div>
             <div style={{ fontSize:10, color:'#B4B2A9', marginTop:3 }}>
               {Math.round(resumo.saidas/resumo.entradas*100)}% das entradas comprometido em saídas
@@ -289,7 +289,8 @@ export default function PainelAdmin() {
             { icon:'ti-file-certificate',  label:'Prestação',        rota:'/prestacao-contas' },
           ].map(item => (
             <button key={item.rota} onClick={() => navigate(item.rota)}
-              style={{ background:'rgba(255,255,255,0.75)', border:'0.5px solid #E8E6DE', borderRadius:12, padding:'12px 6px 10px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:5, position:'relative', boxShadow:'0 1px 6px rgba(0,0,0,0.04)' }}>
+              className="acao-rapida"
+              style={{ background:'rgba(255,255,255,0.75)', border:'0.5px solid #E8E6DE', borderRadius:12, padding:'12px 6px 10px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:5, position:'relative', boxShadow:'0 1px 6px rgba(0,0,0,0.04)', transition:'transform .12s ease, box-shadow .15s ease, border-color .15s ease' }}>
               <i className={`ti ${item.icon}`} style={{ fontSize:20, color:AG_BLUE }} aria-hidden="true" />
               <span style={{ fontSize:10, color:'#5F5E5A', fontWeight:400, lineHeight:1.3, textAlign:'center' }}>{item.label}</span>
               {item.badge > 0 && (

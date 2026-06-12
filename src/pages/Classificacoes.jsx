@@ -45,14 +45,14 @@ export default function Classificacoes() {
   const s = {
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:13, padding:'6px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
-    th: { textAlign:'left', padding:'5px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5' },
-    td: { padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12 },
+    th: { textAlign:'left', padding:'5px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE' },
+    td: { padding:'7px 8px', borderBottom:'0.5px solid #E8E6DE', fontSize:12 },
   }
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Classificações automáticas</div>
-      <div style={{ background:'#F8F7F2', borderLeft:'3px solid #8B2FC9', borderRadius:'0 8px 8px 0', padding:'.55rem .9rem', fontSize:12, color:'#5F5E5A', marginBottom:'1.25rem' }}>
+      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>Classificações automáticas</div>
+      <div style={{ background:'#F8F7F2', borderLeft:'3px solid #0E7EA8', borderRadius:'0 8px 8px 0', padding:'.55rem .9rem', fontSize:12, color:'#5F5E5A', marginBottom:'1.25rem' }}>
         Regras aplicadas automaticamente ao importar o extrato. Quando o tipo do documento bater com uma regra, o lançamento é classificado automaticamente.
       </div>
 

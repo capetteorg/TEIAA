@@ -116,7 +116,7 @@ export default function LancamentosLista() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Lançamentos</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Lançamentos</div>
           <div style={{ fontSize:12, color:'#888780' }}>{lista.length} lançamento{lista.length!==1?'s':''}</div>
         </div>
         <div style={{ display:'flex', gap:6 }}>

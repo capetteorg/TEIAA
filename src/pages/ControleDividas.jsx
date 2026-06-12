@@ -24,7 +24,7 @@ const TIPO_MOV_COR = {
   divida_inicial: ['#FAEEDA', '#854F0B'],
   acrescimo: ['#FCEBEB', '#A32D2D'],
   abatimento: ['#EAF3DE', '#3B6D11'],
-  ajuste: ['#EEEDFE', '#534AB7'],
+  ajuste: ['#E6F1FB', '#185FA5'],
 }
 
 function gerarCompetencias(inicio = '2025-01') {
@@ -285,7 +285,7 @@ export default function ControleDividas() {
     th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
-    tab: ativo => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?VERMELHO:'#D3D1C7'}`, background:ativo?VERMELHO:'transparent', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
+    tab: ativo => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?'#0E7EA8':'#D3D1C7'}`, background:ativo?'#0E7EA8':'transparent', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     grupo: cols => ({ display:'grid', gridTemplateColumns:cols, gap:10, marginBottom:10 }),
   }
@@ -294,7 +294,7 @@ export default function ControleDividas() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Controle de Dívidas</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Controle de Dívidas</div>
           <div style={{ fontSize:12, color:'#888780' }}>Conta corrente de pagamentos com funcionários e prestadores</div>
         </div>
         {isAdmin && (
@@ -418,7 +418,7 @@ export default function ControleDividas() {
             const compPend = compPessoa.filter(c => c.status === 'pendente').length
             const ultimaMov = movPessoa[0]
             return (
-              <div key={pe.id} style={{ background:'rgba(255,255,255,0.92)', border:`1.5px solid ${saldo>0?VERMELHO+'40':'#E8E6DE'}`, borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
+              <div key={pe.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
                 <div style={{ background:saldo>0?`${VERMELHO}08`:`${VERDE}08`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                   <div>
                     <div style={{ fontSize:13, fontWeight:600 }}>{pe.nome}</div>

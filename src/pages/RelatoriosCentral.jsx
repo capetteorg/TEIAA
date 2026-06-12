@@ -450,13 +450,13 @@ export default function RelatoriosCentral() {
     btn: (bg,cor='#fff') => ({ padding:'7px 16px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', fontWeight:500 }),
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background:ativo?AZUL:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
     metric: () => ({ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)', minWidth:120 }),
-    secao: cor => ({ fontSize:11, fontWeight:600, color:cor||ROXO, borderLeft:`3px solid ${cor||ROXO}`, paddingLeft:8, margin:'14px 0 8px', textTransform:'uppercase', letterSpacing:'.05em' }),
+    secao: cor => ({ fontSize:11, fontWeight:600, color:cor||'#0E7EA8', borderLeft:`3px solid ${cor||'#0E7EA8'}`, paddingLeft:8, margin:'14px 0 8px', textTransform:'uppercase', letterSpacing:'.05em' }),
     infoBox: { background:'#F8F7F2', borderRadius:8, padding:'8px 10px', marginBottom:6 },
   }
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Relatórios</div>
+      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>Relatórios</div>
 
       {/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
@@ -559,7 +559,7 @@ export default function RelatoriosCentral() {
           <div>
             {/* Identificação */}
             <div style={{ ...s.card, background:'linear-gradient(135deg,#F0EAFA,#F8F7F2)' }}>
-              <div style={{ fontSize:14, fontWeight:700, color:ROXO, marginBottom:12 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> {plano.nome_plano}</div>
+              <div style={{ fontSize:14, fontWeight:700, color:'#0E7EA8', marginBottom:12 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> {plano.nome_plano}</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
                 {[
                   ['Instituição', inst?.nome_completo||'—'],
@@ -583,7 +583,7 @@ export default function RelatoriosCentral() {
                 <div style={{ marginTop:8 }}>
                   <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Origem dos recursos</div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-                    {plano.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
+                    {plano.origens_recursos.map(o => <span key={o} style={s.badge('#E6F1FB','#0E7EA8')}>{o}</span>)}
                   </div>
                 </div>
               )}
@@ -697,7 +697,7 @@ export default function RelatoriosCentral() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8 }}>
                 {[
-                  ['Projetos', projetosCompletos.length, ROXO],
+                  ['Projetos', projetosCompletos.length, AZUL],
                   ['Atendimentos', totalAtendGeral, AZUL],
                   ['Usuários ativos', totalUsersGeral, VERDE],
                   ['Total entradas', fmt(totalEntGeral), VERDE],

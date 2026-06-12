@@ -27,7 +27,7 @@ const SITUACAO_COR = {
   'em planejamento': ['#E6F1FB','#185FA5'],
   'encerrado': ['#F1EFE8','#5F5E5A'],
   'suspenso': ['#FAEEDA','#854F0B'],
-  'outro': ['#EEEDFE','#534AB7'],
+  'outro': ['#E6F1FB','#185FA5'],
 }
 
 const ORIGENS_RECURSOS_OPCOES = [
@@ -486,7 +486,7 @@ export default function Projetos() {
             {/* Resumo da equipe do projeto — formato CNAS */}
             {projetoEquipe.length > 0 && (
               <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem' }}>
-                <div style={{ fontSize:12, fontWeight:600, color:ROXO, marginBottom:10 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Resumo para CNAS</div>
+                <div style={{ fontSize:12, fontWeight:600, color:'#0E7EA8', marginBottom:10 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Resumo para CNAS</div>
                 <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:'pre-line' }}>
                   {projetoEquipe.map(pe =>
                     `${pe.membro?.nome} — ${pe.funcao_no_projeto || pe.membro?.funcao}${pe.tipo_vinculo ? ` (${pe.tipo_vinculo})` : ''}${pe.carga_horaria ? ` · ${pe.carga_horaria}` : ''}`
@@ -566,7 +566,7 @@ export default function Projetos() {
                   </div>
                   {msgOrc && <div style={{ fontSize:12, padding:'7px 10px', borderRadius:8, marginBottom:8, background:!msgOrc.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msgOrc.includes('Erro')?'#3B6D11':'#A32D2D' }}>{msgOrc}</div>}
                   <div style={{ display:'flex', gap:6 }}>
-                    <button type="submit" disabled={salvandoOrc} style={s.btn(salvandoOrc?'#D3D1C7':VERDE)}>{salvandoOrc?'Salvando...':editandoOrc?'Salvar':'+ Adicionar'}</button>
+                    <button type="submit" disabled={salvandoOrc} style={s.btn(salvandoOrc?'#D3D1C7':'#0E7EA8')}>{salvandoOrc?'Salvando...':editandoOrc?'Salvar':'+ Adicionar'}</button>
                     {editandoOrc && <button type="button" onClick={() => { setFormOrc({ categoria:'', subcategoria:'', fonte_recurso:'', valor_previsto:'', valor_recebido:'', observacoes:'', ano:2026 }); setEditandoOrc(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>}
                   </div>
                 </form>
@@ -639,7 +639,7 @@ export default function Projetos() {
             {p.origens_recursos?.length > 0 && <>
               <div style={s.secao(LARANJA)}>Origem dos recursos</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:8 }}>
-                {p.origens_recursos.map(o => <span key={o} style={s.badge('#F0EAFA',ROXO)}>{o}</span>)}
+                {p.origens_recursos.map(o => <span key={o} style={s.badge('#E6F1FB','#0E7EA8')}>{o}</span>)}
               </div>
             </>}
             {p.parcerias_envolvidas && <><div style={s.secao(LARANJA)}>Parcerias envolvidas</div><div style={s.infoBox}><div style={s.infoVal}>{p.parcerias_envolvidas}</div></div></>}
@@ -651,23 +651,23 @@ export default function Projetos() {
         {/* Aba CNAS */}
         {abaDetalhe === 'cnas' && (
           <div style={{ background:'#F0EAFA', border:'0.5px solid #C9B3E8', borderRadius:12, padding:'1rem 1.25rem' }}>
-            <div style={{ fontSize:13, fontWeight:600, color:ROXO, marginBottom:14 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Ficha CNAS — {p.nome}</div>
+            <div style={{ fontSize:13, fontWeight:600, color:'#0E7EA8', marginBottom:14 }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Ficha CNAS — {p.nome}</div>
             {[['Público-alvo',p.publico_alvo],['Faixa etária',p.faixa_etaria],['Capacidade de atendimento',p.capacidade_prevista],['Abrangência territorial',p.abrangencia],['Funcionamento',p.funcionamento],['Período',p.periodo_inicio?`${fmtData(p.periodo_inicio)} a ${fmtData(p.periodo_fim)}`:null]].filter(([,v])=>v).map(([l,v])=>(
-              <div key={l}><div style={s.secao(ROXO)}>{l}</div><div style={s.infoBox}><div style={s.infoVal}>{v}</div></div></div>
+              <div key={l}><div style={s.secao('#0E7EA8')}>{l}</div><div style={s.infoBox}><div style={s.infoVal}>{v}</div></div></div>
             ))}
-            {p.atividades_previstas && <><div style={s.secao(ROXO)}>Atividades previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.atividades_previstas}</div></div></>}
-            {p.temas_trabalhados && <><div style={s.secao(ROXO)}>Temas trabalhados</div><div style={s.infoBox}><div style={s.infoVal}>{p.temas_trabalhados}</div></div></>}
-            {p.refeicoes_previstas && <><div style={s.secao(ROXO)}>Refeições previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.refeicoes_previstas}</div></div></>}
+            {p.atividades_previstas && <><div style={s.secao('#0E7EA8')}>Atividades previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.atividades_previstas}</div></div></>}
+            {p.temas_trabalhados && <><div style={s.secao('#0E7EA8')}>Temas trabalhados</div><div style={s.infoBox}><div style={s.infoVal}>{p.temas_trabalhados}</div></div></>}
+            {p.refeicoes_previstas && <><div style={s.secao('#0E7EA8')}>Refeições previstas</div><div style={s.infoBox}><div style={s.infoVal}>{p.refeicoes_previstas}</div></div></>}
             {projetoEquipe.length > 0 && <>
-              <div style={s.secao(ROXO)}>Recursos humanos envolvidos</div>
+              <div style={s.secao('#0E7EA8')}>Recursos humanos envolvidos</div>
               <div style={s.infoBox}>
                 <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:'pre-line' }}>
                   {projetoEquipe.map(pe => `${pe.membro?.nome} — ${pe.funcao_no_projeto||pe.membro?.funcao}${pe.tipo_vinculo?` (${pe.tipo_vinculo})`:''}${pe.carga_horaria?` · ${pe.carga_horaria}`:''}`).join('\n')}
                 </div>
               </div>
             </>}
-            {p.participacao_usuarios && <><div style={s.secao(ROXO)}>Participação dos usuários e famílias</div><div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div></>}
-            {p.monitoramento_avaliacao && <><div style={s.secao(ROXO)}>Monitoramento e avaliação</div><div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div></>}
+            {p.participacao_usuarios && <><div style={s.secao('#0E7EA8')}>Participação dos usuários e famílias</div><div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div></>}
+            {p.monitoramento_avaliacao && <><div style={s.secao('#0E7EA8')}>Monitoramento e avaliação</div><div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div></>}
             <div style={{ marginTop:14 }}><button onClick={() => editar(p)} style={s.btn('#0E7EA8')}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button></div>
           </div>
         )}
@@ -680,11 +680,11 @@ export default function Projetos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Projetos / Serviços / Ações</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Projetos / Serviços / Ações</div>
           <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {projetos.length} total</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setAbaForm('geral') }}
-          style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+          style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Novo projeto'}
         </button>
       </div>
@@ -805,7 +805,7 @@ export default function Projetos() {
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
                     <span style={s.badge(bg,cor)}>{p.situacao}</span>
-                    {temCnas && <span style={s.badge('#F0EAFA',ROXO)}>CNAS <i className="ti ti-check" style={{fontSize:14}} /></span>}
+                    {temCnas && <span style={s.badge('#E6F1FB','#0E7EA8')}>CNAS <i className="ti ti-check" style={{fontSize:14}} /></span>}
                   </div>
                 </div>
                 <div style={{ padding:'12px 14px' }}>

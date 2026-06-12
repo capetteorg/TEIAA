@@ -203,7 +203,7 @@ export default function Importar() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Importar extrato</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Importar extrato</div>
 
       {/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem' }}>
@@ -254,7 +254,7 @@ export default function Importar() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.25rem' }}>
                 {[
                   { label: 'Associado', val: extrato.associado || '—', cor: AZUL },
-                  { label: 'Conta Sicredi', val: extrato.conta || '—', cor: '#8B2FC9' },
+                  { label: 'Conta Sicredi', val: extrato.conta || '—', cor: '#0E7EA8' },
                   { label: 'Entradas', val: movs.filter(m => m.tipo === 'entrada').length + ' movs', cor: VERDE },
                   { label: 'Saídas', val: movs.filter(m => m.tipo === 'saida').length + ' movs', cor: VERMELHO },
                 ].map(m => (
@@ -308,7 +308,7 @@ export default function Importar() {
           {step === 3 && (
             <div style={{ ...s.card, textAlign: 'center', padding: '3rem' }}>
               <div style={{ marginBottom: '1rem' }}><i className="ti ti-circle-check" style={{fontSize:48, color:'#3B6D11'}} /></div>
-              <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
+              <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
               {avisoSaldo && (
                 <div style={{ fontSize:12, color:'#854F0B', background:'#FAEEDA', border:'0.5px solid #EDD9A3', borderRadius:10, padding:'10px 14px', margin:'0 auto 1rem', maxWidth:520, textAlign:'left', display:'flex', gap:8, alignItems:'flex-start' }}>
                   <i className="ti ti-alert-triangle" style={{fontSize:15, flexShrink:0, marginTop:1}} />

@@ -23,7 +23,7 @@ const STATUS_COR = {
   'não pago': ['#FCEBEB','#A32D2D'],
   'sem resposta': ['#F1EFE8','#888780'],
   'contestação': ['#FAEEDA','#854F0B'],
-  'renegociado': ['#EEEDFE','#534AB7'],
+  'renegociado': ['#E6F1FB','#185FA5'],
   'cancelado': ['#F1EFE8','#5F5E5A'],
   'incobrável': ['#FCEBEB','#A32D2D'],
 }
@@ -238,7 +238,7 @@ export default function Cobrancas() {
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <div>
-          <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>Cobranças / Boletos Vencidos</div>
+          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em' }}>Cobranças / Boletos Vencidos</div>
           {ultimoLote && (
             <div style={{ fontSize: 11, color: '#888780', marginTop: 2 }}>
               Última atualização: {new Date(ultimoLote.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
@@ -297,7 +297,7 @@ export default function Cobrancas() {
           <div key={m.label} style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: '.75rem 1rem', border: '0.5px solid #E8E6DE', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ height: 3, borderRadius: 99, background: m.cor, marginBottom: '.6rem' }} />
             <div style={{ fontSize: 10, color: '#888780', marginBottom: 3 }}>{m.label}</div>
-            <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', color: m.cor }}>{m.val}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', color: m.cor }}>{m.val}</div>
           </div>
         ))}
       </div>

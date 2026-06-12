@@ -453,7 +453,7 @@ export default function Conciliacao() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem' }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Conciliação bancária</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Conciliação bancária</div>
           <div style={{ fontSize:12, color:'#888780' }}>Selecione um extrato para conciliar</div>
         </div>
         <button onClick={() => navigate('/importar')} style={s.btn(AZUL)}>↑ Importar extrato</button>
@@ -579,7 +579,7 @@ export default function Conciliacao() {
           ['Conciliados', totalConciliados, VERDE],
           ['Pendentes', totalPendentes, totalPendentes>0?LARANJA:'#888780'],
           ['Sem categoria', movs.filter(m=>!m.categoria_id&&!m.dividida).length, movs.filter(m=>!m.categoria_id&&!m.dividida).length>0?VERMELHO:'#888780'],
-          ...(autoCount>0||possivelCount>0 ? [['Automáticos', autoCount, ROXO], ['? Possíveis', possivelCount, LARANJA]] : []),
+          ...(autoCount>0||possivelCount>0 ? [['Automáticos', autoCount, AZUL], ['? Possíveis', possivelCount, LARANJA]] : []),
         ].map(([l,v,c]) => (
           <div key={l} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{l}</div>
@@ -603,7 +603,7 @@ export default function Conciliacao() {
           </button>
         ))}
         {isRateio && <span style={s.badge('#E6F1FB','#185FA5')}>Preponderância ativa</span>}
-        {isEmenda && <span style={s.badge('#F0EAFA','#8B2FC9')}>Conta emenda</span>}
+        {isEmenda && <span style={s.badge('#E6F1FB','#0E7EA8')}>Conta emenda</span>}
       </div>
 
       {/* Tabela */}
@@ -749,7 +749,7 @@ export default function Conciliacao() {
                                 if (pagFuncAberto===m.id) { setPagFuncAberto(null); return }
                                 setPagFuncAberto(m.id)
                                 setFormPagFunc({ pessoa_id:'', competencia: m.data?.slice(0,7)||'', valor_mensal:'', valor_abatimento:'' })
-                              }} style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', background:'transparent', cursor:'pointer', color:ROXO }}>
+                              }} style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', background:'transparent', cursor:'pointer', color:AZUL }}>
                                 <i className="ti ti-user" style={{marginRight:4}} /> Pagamento de funcionário
                               </button>
                             )}
@@ -1039,8 +1039,8 @@ export default function Conciliacao() {
                   {pagFuncAberto===m.id && (
                     <tr>
                       <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
-                        <div style={{ background:'#F5F0FF', padding:'12px 16px', borderLeft:`3px solid ${ROXO}` }}>
-                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:ROXO }}>
+                        <div style={{ background:'#F0F6FA', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
+                          <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>
                             <i className="ti ti-user" style={{marginRight:4}} /> Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
                           </div>
                           {movsDivida[m.id] && (

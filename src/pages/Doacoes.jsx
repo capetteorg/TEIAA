@@ -182,11 +182,11 @@ export default function Doacoes() {
     <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Doações recebidas</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Doações recebidas</div>
           <div style={{ fontSize:12, color:'#888780' }}>Doações não financeiras · {doacoes.length} registros</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setItens([{...ITEM_VAZIO}]) }}
-          style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+          style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Registrar doação'}
         </button>
       </div>
@@ -267,7 +267,7 @@ export default function Doacoes() {
             <div style={{ background:'#F8F7F2', borderRadius:10, padding:'12px', marginBottom:14 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                 <div style={{ fontSize:12, fontWeight:500 }}>Itens da doação</div>
-                <button type="button" onClick={addItem} style={s.btn('#EAF3DE','#3B6D11')}>+ Adicionar item</button>
+                <button type="button" onClick={addItem} style={s.btn('#F1EFE8','#5F5E5A')}>+ Adicionar item</button>
               </div>
               {itens.map((item, i) => (
                 <div key={i} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr auto', gap:8, marginBottom:8, alignItems:'flex-end' }}>
@@ -326,7 +326,7 @@ export default function Doacoes() {
               { label:'Total de doações', val:doacoes.length, cor:AZUL },
               { label:'Valor estimado total', val:fmt(totalEstimado), cor:VERDE },
               { label:'Alimentação', val:doacoes.filter(d=>d.categoria==='Alimentação').length, cor:LARANJA },
-              { label:'Doadores únicos', val:new Set(doacoes.map(d=>d.doador)).size, cor:'#8B2FC9' },
+              { label:'Doadores únicos', val:new Set(doacoes.map(d=>d.doador)).size, cor:'#0E7EA8' },
             ].map(m => (
               <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
                 <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
@@ -377,7 +377,9 @@ export default function Doacoes() {
               <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
             ) : doacoes.length === 0 ? (
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-                Nenhuma doação registrada. Clique em "+ Registrar doação" para começar.
+                <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Nenhuma doação registrada</div>
+                <div style={{ fontSize:12, color:'#888780', maxWidth:380, margin:'0 auto' }}>Registre doações recebidas para acompanhar categorias, doadores, valores estimados e projetos relacionados.</div>
+                <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Registrar doação</button>
               </div>
             ) : (
               <div style={{ maxHeight:520, overflowY:'auto',overflowX:'auto' }}>

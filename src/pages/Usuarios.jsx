@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { auditar } from '../lib/auditoria'
 
 const PERFIS = {
-  admin:       { label: 'Administrador', cor: '#8B2FC9', bg: '#EEEDFE' },
+  admin:       { label: 'Administrador', cor: '#0E7EA8', bg: '#E6F1FB' },
   diretoria:   { label: 'Diretoria',     cor: '#185FA5', bg: '#E6F1FB' },
   operacional: { label: 'Operacional',   cor: '#3B6D11', bg: '#EAF3DE' },
 }
@@ -80,14 +80,14 @@ export default function Usuarios() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Usuários do sistema</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Usuários do sistema</div>
 
       <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Usuários ativos ({lista.length})</div>
         {lista.length === 0
           ? <div style={{ fontSize: 12, color: '#888780' }}>Nenhum usuário cadastrado.</div>
           : lista.map(u => (
-            <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '0.5px solid #E0DDD5', fontSize: 13 }}>
+            <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '0.5px solid #E8E6DE', fontSize: 13 }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: PERFIS[u.perfil]?.bg || '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: PERFIS[u.perfil]?.cor || '#5F5E5A', flexShrink: 0 }}>
                 {(u.nome || '?').slice(0, 2).toUpperCase()}
               </div>
@@ -147,7 +147,7 @@ export default function Usuarios() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr>{['Função', 'Administrador', 'Diretoria', 'Operacional'].map(h => (
-              <th key={h} style={{ textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' }}>{h}</th>
+              <th key={h} style={{ textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE' }}>{h}</th>
             ))}</tr>
           </thead>
           <tbody>
@@ -161,9 +161,9 @@ export default function Usuarios() {
               ['Gerenciar usuários', true, false, false],
             ].map(([fn, adm, dir, op]) => (
               <tr key={fn}>
-                <td style={{ padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5' }}>{fn}</td>
+                <td style={{ padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE' }}>{fn}</td>
                 {[adm, dir, op].map((v, i) => (
-                  <td key={i} style={{ padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5' }}>
+                  <td key={i} style={{ padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE' }}>
                     {v
                       ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, fontWeight: 500, background: '#EAF3DE', color: '#3B6D11' }}><i className="ti ti-check" style={{fontSize:14}} /></span>
                       : <span style={{ fontSize: 10, color: '#B4B2A9' }}>—</span>

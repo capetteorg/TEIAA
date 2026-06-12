@@ -196,7 +196,7 @@ export default function Sociedade() {
                     { label:'Anos de atuação', val:'50+', cor:VERDE },
                     { label:'Usuários ativos', val:totalUsuarios, cor:AZUL },
                     { label:'Projetos ativos', val:projetos.length, cor:LARANJA },
-                    { label:'Parcerias ativas', val:parcerias.length, cor:'#8B2FC9' },
+                    { label:'Parcerias ativas', val:parcerias.length, cor:'#0E7EA8' },
                   ].map(m => (
                     <div key={m.label} style={{ background:'rgba(255,255,255,0.9)', borderRadius:10, padding:'.85rem 1rem', textAlign:'center' }}>
                       <div style={{ fontSize:22, fontWeight:700, color:m.cor }}>{m.val}</div>

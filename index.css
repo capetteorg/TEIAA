@@ -118,7 +118,27 @@ a { text-decoration: none; color: inherit; }
 }
 .page-anim { animation: pageIn .18s ease-out; }
 
-/* ===== TABELAS PREMIUM ===== */
+/* ===== TABELAS PREMIUM (SaaS) ===== */
+table { border-collapse: collapse; }
+thead th {
+  font-weight: 500;
+  background: rgba(0,0,0,0.018);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 10.5px !important;
+}
 tbody tr { transition: background .12s ease; }
 tbody tr:hover { background: rgba(14,126,168,0.04); }
-thead th { font-weight: 500; }
+tbody td { vertical-align: middle; }
+
+/* utilitário: truncar texto longo em células */
+.td-trunc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* utilitário: valores monetários à direita */
+.td-valor { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Ações rápidas do painel */
+.acao-rapida:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(14,126,168,0.12) !important;
+  border-color: rgba(14,126,168,0.35) !important;
+}

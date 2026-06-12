@@ -109,14 +109,14 @@ export default function Fornecedores() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Fornecedores</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Fornecedores</div>
           <div style={{ fontSize:12, color:'#888780' }}>
             {lista.length} cadastrado{lista.length!==1?'s':''} 
             {incompletos > 0 && <span style={{ color:LARANJA }}> · {incompletos} incompleto{incompletos>1?'s':''}</span>}
           </div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO); setDuplicatas([]) }}
-          style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+          style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Novo fornecedor'}
         </button>
       </div>
@@ -251,7 +251,7 @@ export default function Fornecedores() {
                       {f.nome}
                       {f.nome_fantasia && <div style={{ fontSize:10, color:'#888780' }}>{f.nome_fantasia}</div>}
                     </td>
-                    <td style={s.td}><span style={s.badge(f.tipo==='fisica'?'#E6F1FB':'#F0EAFA', f.tipo==='fisica'?'#185FA5':'#534AB7')}>{f.tipo==='fisica'?'PF':'PJ'}</span></td>
+                    <td style={s.td}><span style={s.badge(f.tipo==='fisica'?'#E6F1FB':'#F1EFE8', f.tipo==='fisica'?'#185FA5':'#5F5E5A')}>{f.tipo==='fisica'?'PF':'PJ'}</span></td>
                     <td style={{ ...s.td, fontFamily:'monospace', fontSize:11 }}>{f.cpf_cnpj||'—'}</td>
                     <td style={{ ...s.td, color:'#5F5E5A' }}>{f.telefone||'—'}</td>
                     <td style={{ ...s.td, color:'#888780', fontSize:11 }}>{f.area_atuacao||'—'}</td>
@@ -263,7 +263,7 @@ export default function Fornecedores() {
                     </td>
                     <td style={s.td}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={() => navigate(`/historico-fornecedor?id=${f.id}`)} style={s.btn('#EAF3DE',VERDE)}>Histórico</button>
+                        <button onClick={() => navigate(`/historico-fornecedor?id=${f.id}`)} style={s.btn('#E6F1FB','#185FA5')}>Histórico</button>
                         <button onClick={() => editar(f)} style={s.btn('#E6F1FB',AZUL)}>Editar</button>
                         <button onClick={() => setConfirmandoExcluir(f)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                       </div>

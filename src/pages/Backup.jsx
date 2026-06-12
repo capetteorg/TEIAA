@@ -166,7 +166,7 @@ export default function Backup() {
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Backup do Sistema</div>
+      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>Backup do Sistema</div>
 
       <div style={s.card}>
         <div style={{ fontSize:13, fontWeight:500, marginBottom:8 }}>Exportar todos os dados</div>

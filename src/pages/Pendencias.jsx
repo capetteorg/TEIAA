@@ -81,7 +81,7 @@ export default function Pendencias() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Pendências</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Pendências</div>
           <div style={{ fontSize:12, color:'#888780' }}>Itens que precisam de atenção</div>
         </div>
         <button onClick={atualizar} disabled={atualizando} style={s.btn(AZUL)}>
@@ -94,9 +94,9 @@ export default function Pendencias() {
       {/* Métricas */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:8, marginBottom:'1.25rem' }}>
         {[
-          { label:'Críticas', val:criticas, cor:VERMELHO, bg:'#FCEBEB' },
-          { label:'Atenção', val:atencao, cor:'#854F0B', bg:'#FAEEDA' },
-          { label:'Informativas', val:informativas, cor:'#185FA5', bg:'#E6F1FB' },
+          { label:'Críticas', val:criticas, cor:VERMELHO, bg:'rgba(255,255,255,0.92)' },
+          { label:'Atenção', val:atencao, cor:'#854F0B', bg:'rgba(255,255,255,0.92)' },
+          { label:'Informativas', val:informativas, cor:'#185FA5', bg:'rgba(255,255,255,0.92)' },
           { label:'Total pendentes', val:criticas+atencao+informativas, cor:'#5F5E5A', bg:'#F1EFE8' },
         ].map(m => (
           <div key={m.label} style={{ background:m.bg, borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE' }}>

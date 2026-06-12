@@ -179,11 +179,11 @@ export default function Parcerias() {
     <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Parcerias, Emendas e Editais</div>
+          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Parcerias, Emendas e Editais</div>
           <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Instrumentos jurídicos da CAPETTE</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-          style={s.btn(mostrarForm ? '#F1EFE8' : LARANJA, mostrarForm ? '#5F5E5A' : '#fff')}>
+          style={s.btn(mostrarForm ? '#F1EFE8' : '#0E7EA8', mostrarForm ? '#5F5E5A' : '#fff')}>
           {mostrarForm ? 'Cancelar' : '+ Novo instrumento'}
         </button>
       </div>

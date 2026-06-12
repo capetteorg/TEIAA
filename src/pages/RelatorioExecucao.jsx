@@ -10,7 +10,7 @@ const STATUS_META_COR = {
   'alcançada': ['#EAF3DE','#3B6D11'],
   'parcialmente alcançada': ['#FAEEDA','#854F0B'],
   'não alcançada': ['#FCEBEB','#A32D2D'],
-  'outro': ['#EEEDFE','#534AB7'],
+  'outro': ['#E6F1FB','#185FA5'],
 }
 
 export default function RelatorioExecucao() {
@@ -423,7 +423,7 @@ ${incluirAss ? `<div class="assinaturas">
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Relatório de Execução do Objeto</div>
+      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>Relatório de Execução do Objeto</div>
 
       {/* Configuração */}
       <div style={s.card}>
@@ -473,7 +473,7 @@ ${incluirAss ? `<div class="assinaturas">
               { label:'Atendimentos', val:dados.atendimentos.length, cor:AZUL },
               { label:'Participantes', val:dados.totalParticipantes.toLocaleString('pt-BR'), cor:VERDE },
               { label:'Usuários ativos', val:dados.usuarios.filter(u=>u.situacao==='ativo').length, cor:VERDE },
-              { label:'Equipe', val:dados.equipe.length, cor:'#8B2FC9' },
+              { label:'Equipe', val:dados.equipe.length, cor:'#0E7EA8' },
               { label:'Metas', val:dados.metas.length, cor:LARANJA },
             ].map(m => (
               <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
