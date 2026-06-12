@@ -369,7 +369,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
     <div class="resumo-grid">
       <div class="resumo-item"><div class="resumo-label">Total Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
       <div class="resumo-item"><div class="resumo-label">Total Saídas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Saldo</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${saldo>=0?'+':''}${fmt(saldo)}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Resultado do Período</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div></div>
       <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor azul">${lista.length}</div></div>
     </div>
   </div>
@@ -425,8 +425,8 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
       <tbody>
         ${linhasExtrato || '<tr><td colspan="6" style="text-align:center;color:#888">Sem movimentações</td></tr>'}
         <tr class="total-row">
-          <td colspan="5"><strong>SALDO DO PERÍODO</strong></td>
-          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':''}${fmt(saldo)}</strong></td>
+          <td colspan="5"><strong>RESULTADO DO PERÍODO</strong></td>
+          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':'-'} ${fmt(saldo)}</strong></td>
         </tr>
       </tbody>
     </table>
