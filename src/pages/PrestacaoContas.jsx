@@ -54,7 +54,7 @@ export default function PrestacaoContas() {
 
     // Busca movimentações
     let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano, valor_total_previsto)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano, valor_total_previsto)').limit(10000)
       .in('extrato_id', extratoIds)
       .order('data')
 

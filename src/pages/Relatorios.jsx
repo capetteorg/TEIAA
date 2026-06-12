@@ -26,7 +26,7 @@ export default function Relatorios() {
   async function carregar() {
     setLoading(true)
     let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, competencia)')
+      .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, competencia)').limit(10000)
 
     if (periodo === 'mes') {
       q = q.gte('data', mes+'-01').lte('data', fimMes(mes))
@@ -76,8 +76,8 @@ export default function Relatorios() {
     : 'Relatório anual — ' + ano
 
   const s = {
-    th: { textAlign:'left', padding:'5px 7px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5' },
-    td: { padding:'7px 7px', borderBottom:'0.5px solid #E0DDD5', fontSize:12 },
+    th: { textAlign:'left', padding:'5px 7px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE' },
+    td: { padding:'7px 7px', borderBottom:'0.5px solid #E8E6DE', fontSize:12 },
   }
 
   return (

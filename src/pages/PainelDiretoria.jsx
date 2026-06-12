@@ -24,7 +24,7 @@ export default function PainelDiretoria() {
     async function carregarEvolucao() {
       const hoje = new Date()
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
-      const { data } = await supabase.from('extrato_movs').select('data,valor').gte('data', inicio)
+      const { data } = await supabase.from('extrato_movs').select('data,valor').limit(10000).gte('data', inicio)
       const porMes = {}
       ;(data||[]).forEach(m => {
         const ym = m.data.slice(0,7)
@@ -85,7 +85,7 @@ export default function PainelDiretoria() {
     // Busca movimentações do mês selecionado
     const { data: movsData } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
       .in('extrato_id', extratoIds)
       .gte('data', mes + '-01')
       .lte('data', fimMes(mes))
@@ -117,8 +117,8 @@ export default function PainelDiretoria() {
 
   const s = {
     card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
-    th: { textAlign: 'left', padding: '7px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5', background: '#FAFAF8', whiteSpace: 'nowrap' },
-    td: { padding: '8px 10px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12, verticalAlign: 'middle' },
+    th: { textAlign: 'left', padding: '7px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE', background: '#FAFAF8', whiteSpace: 'nowrap' },
+    td: { padding: '8px 10px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12, verticalAlign: 'middle' },
     tab: ativo => ({
       padding: '7px 16px', fontSize: 12, borderRadius: 8,
       border: '0.5px solid ' + (ativo ? VERDE : '#D3D1C7'),
@@ -308,7 +308,7 @@ export default function PainelDiretoria() {
                     </div>
                   )
                 })}
-                <div style={{ borderTop: '0.5px solid #E0DDD5', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600 }}>
+                <div style={{ borderTop: '0.5px solid #E8E6DE', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600 }}>
                   <span>Total</span><span style={{ color: VERDE }}>{fmt(resumo.entradas)}</span>
                 </div>
               </div>
@@ -330,7 +330,7 @@ export default function PainelDiretoria() {
                     </div>
                   )
                 })}
-                <div style={{ borderTop: '0.5px solid #E0DDD5', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600 }}>
+                <div style={{ borderTop: '0.5px solid #E8E6DE', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600 }}>
                   <span>Total</span><span style={{ color: VERMELHO }}>{fmt(resumo.saidas)}</span>
                 </div>
               </div>

@@ -58,9 +58,9 @@ export default function Sociedade() {
     const ultimoDia = new Date(parseInt(anoMes), parseInt(mmMes), 0).getDate()
     const fimMes = `${mes}-${String(ultimoDia).padStart(2,'0')}`
     const [movMes, movAno, todas] = await Promise.all([
-      supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes),
-      supabase.from('extrato_movs').select('*, categoria:categorias(nome,tipo)').gte('data', ano+'-01-01').lte('data', ano+'-12-31').order('data', { ascending:false }),
-      supabase.from('extrato_movs').select('valor'),
+      supabase.from('extrato_movs').select('valor').limit(10000).gte('data', mes+'-01').lte('data', fimMes),
+      supabase.from('extrato_movs').select('*, categoria:categorias(nome,tipo)').limit(10000).gte('data', ano+'-01-01').lte('data', ano+'-12-31').order('data', { ascending:false }),
+      supabase.from('extrato_movs').select('valor').limit(10000),
     ])
     const entMes = (movMes.data||[]).filter(m=>Number(m.valor)>0).reduce((a,m)=>a+Number(m.valor),0)
     const saiMes = Math.abs((movMes.data||[]).filter(m=>Number(m.valor)<0).reduce((a,m)=>a+Number(m.valor),0))
@@ -117,8 +117,8 @@ export default function Sociedade() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8' },
-    td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8' },
+    td: { padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     tab: ativo => ({ padding:'8px 16px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?VERDE:'#D3D1C7'}`, background:ativo?VERDE:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap', fontWeight: ativo?500:400 }),
   }
@@ -183,7 +183,7 @@ export default function Sociedade() {
                       instituicao?.telefone && { icon:'ti-phone', val:instituicao.telefone },
                       instituicao?.email && { icon:'ti-mail', val:instituicao.email },
                     ].filter(Boolean).map((info,i) => (
-                      <span key={i} style={{ fontSize:11, color:'#5F5E5A', padding:'3px 10px', background:'rgba(255,255,255,0.8)', borderRadius:99, border:'0.5px solid #E0DDD5', display:'inline-flex', alignItems:'center', gap:4 }}>
+                      <span key={i} style={{ fontSize:11, color:'#5F5E5A', padding:'3px 10px', background:'rgba(255,255,255,0.8)', borderRadius:99, border:'0.5px solid #E8E6DE', display:'inline-flex', alignItems:'center', gap:4 }}>
                         <i className={`ti ${info.icon}`} style={{fontSize:11}} /> {info.val}
                       </span>
                     ))}
@@ -285,7 +285,7 @@ export default function Sociedade() {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'1rem' }}>
                 {projetos.map(p => (
                   <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
-                    <div style={{ background:`linear-gradient(135deg, ${VERDE}15, ${AZUL}08)`, padding:'14px 16px', borderBottom:'0.5px solid #E0DDD5' }}>
+                    <div style={{ background:`linear-gradient(135deg, ${VERDE}15, ${AZUL}08)`, padding:'14px 16px', borderBottom:'0.5px solid #E8E6DE' }}>
                       <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo||'Projeto institucional'}</div>
                       <div style={{ fontSize:14, fontWeight:600, color:'#2C2C2A' }}>{p.nome}</div>
                     </div>
@@ -330,7 +330,7 @@ export default function Sociedade() {
                   const [bg,cor] = SIT_COR[p.situacao]||['#F1EFE8','#888780']
                   return (
                     <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
-                      <div style={{ background:`${LARANJA}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                      <div style={{ background:`${LARANJA}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                         <div>
                           <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{TIPO_LABEL[p.tipo]||p.tipo}</div>
                           <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome_projeto}</div>

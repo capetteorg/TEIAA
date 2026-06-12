@@ -32,7 +32,7 @@ export default function ParceriaDetalhe() {
       if (extratos?.length) {
         const ids = extratos.map(e => e.id)
         const { data: movsData } = await supabase.from('extrato_movs')
-          .select('*, categoria:categorias(nome), plano:planos(nome_plano)')
+          .select('*, categoria:categorias(nome), plano:planos(nome_plano)').limit(10000)
           .in('extrato_id', ids).order('data', { ascending: false })
         setMovs(movsData || [])
         const lista = movsData || []

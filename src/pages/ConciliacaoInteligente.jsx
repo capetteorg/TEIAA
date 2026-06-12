@@ -50,13 +50,13 @@ export default function ConciliacaoInteligente() {
 
     const { data: movData } = await supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome)')
+      .select('*, categoria:categorias(nome)').limit(10000)
       .eq('extrato_id', ext.id)
       .order('data')
 
     const { data: lancData } = await supabase
       .from('lancamentos')
-      .select('*, categoria:categorias(nome)')
+      .select('*, categoria:categorias(nome)').limit(10000)
       .eq('conta_id', ext.conta?.id)
       .order('data')
 

@@ -74,7 +74,7 @@ export default function ControleDividas() {
   async function carregar() {
     const [pesRes, movRes, compRes, eqRes] = await Promise.all([
       supabase.from('pessoas_recorrentes').select('*').order('nome'),
-      supabase.from('divida_movimentacoes').select('*, pessoa:pessoas_recorrentes(nome)').order('data_movimentacao', { ascending: false }),
+      supabase.from('divida_movimentacoes').select('*, pessoa:pessoas_recorrentes(nome)').limit(10000).order('data_movimentacao', { ascending: false }),
       supabase.from('competencias_mensais').select('*, pessoa:pessoas_recorrentes(nome)').order('competencia', { ascending: false }),
       supabase.from('equipe').select('id,nome,funcao,cpf').eq('situacao','ativo').order('nome'),
     ])
@@ -253,7 +253,7 @@ export default function ControleDividas() {
   }
 
   async function recalcularSaldo(pessoaId) {
-    const { data: movs } = await supabase.from('divida_movimentacoes').select('tipo,valor').eq('pessoa_id', pessoaId)
+    const { data: movs } = await supabase.from('divida_movimentacoes').select('tipo,valor').limit(10000).eq('pessoa_id', pessoaId)
     const saldo = (movs||[]).reduce((acc, m) => {
       if (m.tipo === 'divida_inicial' || m.tipo === 'acrescimo') return acc + Number(m.valor)
       if (m.tipo === 'abatimento') return acc - Number(m.valor)

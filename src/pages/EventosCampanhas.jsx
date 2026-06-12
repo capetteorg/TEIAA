@@ -98,7 +98,7 @@ export default function EventosCampanhas() {
     setLoadingMovs(true)
     const campo = item.tipo === 'evento' ? 'evento_id' : 'campanha_id'
     const { data } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo)')
+      .select('*, categoria:categorias(nome,tipo)').limit(10000)
       .eq(campo, item.id)
       .order('data')
     setMovs(data || [])

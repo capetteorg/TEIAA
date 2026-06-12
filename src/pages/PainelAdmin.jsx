@@ -44,7 +44,7 @@ export default function PainelAdmin() {
     async function carregarEvolucao() {
       const hoje = new Date()
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
-      const { data } = await supabase.from('extrato_movs').select('data,valor').gte('data', inicio)
+      const { data } = await supabase.from('extrato_movs').select('data,valor').limit(10000).gte('data', inicio)
       const porMes = {}
       ;(data||[]).forEach(m => {
         const ym = m.data.slice(0,7)
@@ -93,7 +93,7 @@ export default function PainelAdmin() {
 
   async function carregarResumo() {
     const [{ data: movs }, { data: exts }] = await Promise.all([
-      supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes(mes)),
+      supabase.from('extrato_movs').select('valor').limit(10000).gte('data', mes+'-01').lte('data', fimMes(mes)),
       supabase.from('extratos').select('saldo_inicial,saldo_final').eq('competencia', mes),
     ])
     const lista = movs || []
@@ -116,7 +116,7 @@ export default function PainelAdmin() {
   const cardStyle = {
     background: 'rgba(255,255,255,0.92)',
     borderRadius: 16,
-    border: '0.5px solid #E0DDD5',
+    border: '0.5px solid #E8E6DE',
     padding: '1.25rem 1.5rem',
     boxShadow: '0 2px 24px rgba(0,0,0,0.06)',
     marginBottom: 0,

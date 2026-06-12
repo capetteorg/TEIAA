@@ -72,13 +72,13 @@ export default function Conciliacao() {
     setExtratoSel(ext)
     setMatchMap({})
     const { data } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
       .eq('extrato_id', ext.id).order('data')
     setMovs(data || [])
 
     // Buscar lançamentos da conta para cruzamento
     const { data: lancs } = await supabase.from('lancamentos')
-      .select('*, categoria:categorias(nome,tipo)')
+      .select('*, categoria:categorias(nome,tipo)').limit(10000)
       .eq('conta_id', ext.conta?.id).order('data')
     setLancamentos(lancs || [])
 
@@ -86,7 +86,7 @@ export default function Conciliacao() {
     const ids = (data||[]).map(m => m.id)
     if (ids.length > 0) {
       const { data: divMovs } = await supabase.from('divida_movimentacoes')
-        .select('*, pessoa:pessoas_recorrentes(id,nome,valor_mensal_normal)')
+        .select('*, pessoa:pessoas_recorrentes(id,nome,valor_mensal_normal)').limit(10000)
         .in('extrato_mov_id', ids)
       const mapa = {}
       ;(divMovs||[]).forEach(dm => {
@@ -258,7 +258,7 @@ export default function Conciliacao() {
     const totalPagoMensal = jaPageMensal+valMensal
     const totalAbatido = jaAbateu+valAbat
     const valorNaoPago = Math.max(0, valorMensalDevido-totalPagoMensal)
-    const { data: todasMovs } = await supabase.from('divida_movimentacoes').select('tipo,valor,competencia').eq('pessoa_id', parseInt(pessoa_id))
+    const { data: todasMovs } = await supabase.from('divida_movimentacoes').select('tipo,valor,competencia').limit(10000).eq('pessoa_id', parseInt(pessoa_id))
     const saldoBase = (todasMovs||[]).reduce((acc,m) => {
       if (m.competencia===competencia&&m.tipo==='acrescimo') return acc
       if (m.tipo==='divida_inicial'||m.tipo==='acrescimo') return acc+Number(m.valor)
@@ -332,7 +332,7 @@ export default function Conciliacao() {
     }
     setDividirAberto(null)
     const { data } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
       .eq('extrato_id', extratoSel.id).order('data')
     setMovs(data || [])
     setMsg('Movimentação dividida com sucesso!')

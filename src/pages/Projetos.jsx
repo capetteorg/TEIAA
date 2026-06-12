@@ -159,7 +159,7 @@ export default function Projetos() {
   async function carregarFinanceiro(projetoId) {
     const [orcRes, lancRes] = await Promise.all([
       supabase.from('projeto_orcamento').select('*').eq('projeto_id', projetoId).order('categoria'),
-      supabase.from('lancamentos').select('*, conta:contas(nome)').eq('projeto_id', projetoId).order('data', { ascending: false }),
+      supabase.from('lancamentos').select('*, conta:contas(nome)').limit(10000).eq('projeto_id', projetoId).order('data', { ascending: false }),
     ])
     setOrcamento(orcRes.data || [])
     setLancamentosProjeto(lancRes.data || [])

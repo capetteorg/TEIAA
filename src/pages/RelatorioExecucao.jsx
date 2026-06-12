@@ -58,7 +58,7 @@ export default function RelatorioExecucao() {
     let atendimentos = []
     if (projetoId) {
       let q = supabase.from('atendimentos')
-        .select('*, profissional:equipe(nome,funcao)')
+        .select('*, profissional:equipe(nome,funcao)').limit(10000)
         .eq('projeto_id', projetoId)
         .order('data_atend')
       if (dataInicio) q = q.gte('data_atend', dataInicio)
@@ -98,7 +98,7 @@ export default function RelatorioExecucao() {
         const { data: extratos } = await supabase.from('extratos').select('id').eq('conta_id', parceria.conta_id)
         if (extratos?.length) {
           const ids = extratos.map(e => e.id)
-          let qMovs = supabase.from('extrato_movs').select('valor').in('extrato_id', ids)
+          let qMovs = supabase.from('extrato_movs').select('valor').limit(10000).in('extrato_id', ids)
           if (dataInicio) qMovs = qMovs.gte('data', dataInicio)
           if (dataFim) qMovs = qMovs.lte('data', dataFim)
           const { data: movs } = await qMovs
@@ -204,8 +204,8 @@ export default function RelatorioExecucao() {
   .secao { margin-bottom: 14px; }
   .secao-titulo { font-size: 12px; font-weight: bold; color: #2C2C2A; border-left: 3px solid #6BBF2B; padding-left: 8px; margin-bottom: 8px; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 10px; }
-  th { background: #F8F7F2; padding: 5px 7px; text-align: left; font-weight: 600; border-bottom: 1px solid #E0DDD5; color: #5F5E5A; }
-  td { padding: 5px 7px; border-bottom: 0.5px solid #E0DDD5; vertical-align: middle; }
+  th { background: #F8F7F2; padding: 5px 7px; text-align: left; font-weight: 600; border-bottom: 1px solid #E8E6DE; color: #5F5E5A; }
+  td { padding: 5px 7px; border-bottom: 0.5px solid #E8E6DE; vertical-align: middle; }
   tr:nth-child(even) { background: #FAFAF8; }
   .num { text-align: right; }
   .center { text-align: center; }
@@ -221,7 +221,7 @@ export default function RelatorioExecucao() {
   .assinaturas { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 30px; }
   .assinatura { text-align: center; }
   .assinatura-linha { border-top: 1px solid #2C2C2A; padding-top: 5px; font-size: 9px; color: #5F5E5A; }
-  .rodape { margin-top: 20px; padding-top: 8px; border-top: 1px solid #E0DDD5; font-size: 9px; color: #B4B2A9; text-align: center; }
+  .rodape { margin-top: 20px; padding-top: 8px; border-top: 1px solid #E8E6DE; font-size: 9px; color: #B4B2A9; text-align: center; }
   @media print { body { padding: 10px; } }
 </style>
 </head>
@@ -407,8 +407,8 @@ ${financeiroResumo ? `
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8' },
-    td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8' },
+    td: { padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'7px 16px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap', fontWeight:500 }),
   }

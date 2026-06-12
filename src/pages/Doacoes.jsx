@@ -61,7 +61,7 @@ export default function Doacoes() {
   async function carregar() {
     setLoading(true)
     let q = supabase.from('doacoes')
-      .select('*, projeto:projetos(nome)')
+      .select('*, projeto:projetos(nome)').limit(10000)
       .order('data_doacao', { ascending: false })
     if (filtros.dataInicio) q = q.gte('data_doacao', filtros.dataInicio)
     if (filtros.dataFim) q = q.lte('data_doacao', filtros.dataFim)

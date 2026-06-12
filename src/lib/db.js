@@ -24,11 +24,11 @@ export const lancamentos = {
   listar: (filtros = {}) => {
     let q = supabase
       .from('lancamentos')
-      .select(`*, conta:contas(nome, banco), categoria:categorias(nome, tipo)`)
+      .select(`*, conta:contas(nome, banco), categoria:categorias(nome, tipo)`).limit(10000)
       .order('data', { ascending: false })
     if (filtros.conta_id) q = q.eq('conta_id', filtros.conta_id)
     if (filtros.tipo) q = q.eq('tipo', filtros.tipo)
-    if (filtros.mes) q = q.gte('data', filtros.mes + '-01').lte('data', filtros.mes + '-31')
+    if (filtros.mes) { const [y,mo] = filtros.mes.split('-'); q = q.gte('data', filtros.mes + '-01').lte('data', `${filtros.mes}-${new Date(+y,+mo,0).getDate()}`) }
     if (filtros.conciliado !== undefined) q = q.eq('conciliado', filtros.conciliado)
     return q
   },
