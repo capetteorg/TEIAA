@@ -14,6 +14,7 @@ const STATUS_META_COR = {
 
 export default function RelatorioExecucao() {
   const [planos, setPlanos] = useState([])
+  const [incluirAss, setIncluirAss] = useState(false)
   const [projetos, setProjetos] = useState([])
   const [planoSel, setPlanoSel] = useState('')
   const [projetoSel, setProjetoSel] = useState('')
@@ -380,11 +381,11 @@ ${financeiroResumo ? `
   </div>
 </div>
 
-<div class="assinaturas">
+${incluirAss ? `<div class="assinaturas">
   <div class="assinatura"><div style="height:40px"></div><div class="assinatura-linha">Responsável Técnico</div></div>
   <div class="assinatura"><div style="height:40px"></div><div class="assinatura-linha">Representante Legal / Presidente</div></div>
   <div class="assinatura"><div style="height:40px"></div><div class="assinatura-linha">Responsável pela Conferência</div></div>
-</div>
+</div>` : ''}
 
 <div class="rodape">
   FinOSC Capette · Sistema de Gestão para OSCs · ${new Date().toLocaleDateString('pt-BR')}
@@ -445,6 +446,11 @@ ${financeiroResumo ? `
           </div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
+          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#5F5E5A', cursor:'pointer' }}>
+
+            <input type="checkbox" checked={incluirAss} onChange={e=>setIncluirAss(e.target.checked)} style={{ accentColor:'#0E7EA8' }} /> Para assinatura
+
+          </label>
           <button onClick={gerar} disabled={loading || (!planoSel && !projetoSel)} style={s.btn(loading||(!planoSel&&!projetoSel)?'#D3D1C7':AZUL)}>
             {loading ? 'Gerando...' : 'Gerar relatório'}
           </button>

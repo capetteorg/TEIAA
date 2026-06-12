@@ -13,6 +13,7 @@ export default function Campanhas() {
   const [msg, setMsg] = useState('')
   const [campanhaSel, setCampanhaSel] = useState(null)
   const [movs, setMovs] = useState([])
+  const [incluirAss, setIncluirAss] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => { carregar() }, [])
@@ -73,8 +74,12 @@ export default function Campanhas() {
           <button onClick={() => { setCampanhaSel(null); setMovs([]) }}
             style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>← Voltar</button>
           <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>{campanhaSel.nome}</div>
-          <button onClick={() => gerarPDFCampanha(campanhaSel, entradas, saidas)}
-            style={{ padding: '5px 13px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer', marginLeft: 'auto' }}>
+          <label style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#5F5E5A', cursor:'pointer', marginLeft:'auto' }}>
+              <input type="checkbox" checked={incluirAss} onChange={e=>setIncluirAss(e.target.checked)} style={{ accentColor:'#0E7EA8' }} /> Para assinatura
+
+          </label>
+          <button onClick={() => gerarPDFCampanha(campanhaSel, entradas, saidas, { assinaturas: incluirAss })}
+            style={{ padding: '5px 13px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
             Exportar PDF
           </button>
         </div>

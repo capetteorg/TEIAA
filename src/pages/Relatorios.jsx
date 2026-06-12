@@ -15,6 +15,7 @@ export default function Relatorios() {
   const [contaId, setContaId] = useState('todas')
   const [contas, setContas] = useState([])
   const [dados, setDados] = useState(null)
+  const [incluirAss, setIncluirAss] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function Relatorios() {
   function exportarPDF() {
     if (!dados) return
     const contaNome = contaId === 'todas' ? 'Todas as contas' : contas.find(c=>String(c.id)===String(contaId))?.nome
-    gerarPDFRelatorio(dados, { periodo, mes, ano, contaNome })
+    gerarPDFRelatorio(dados, { periodo, mes, ano, contaNome }, undefined, { assinaturas: incluirAss })
   }
 
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
@@ -102,6 +103,11 @@ export default function Relatorios() {
               {[2026,2025,2024,2023].map(a=><option key={a}>{a}</option>)}
             </select>
         }
+        <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#5F5E5A', cursor:'pointer' }}>
+              <input type="checkbox" checked={incluirAss} onChange={e=>setIncluirAss(e.target.checked)} style={{ accentColor:'#0E7EA8' }} />
+              Para assinatura
+            </label>
+
         <button onClick={exportarPDF} disabled={!dados} style={{padding:'6px 14px',fontSize:12,borderRadius:8,border:'none',background:dados?'#0E7EA8':'#D3D1C7',color:'#fff',cursor:dados?'pointer':'default'}}>
           Exportar PDF
         </button>

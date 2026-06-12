@@ -113,7 +113,7 @@ function htmlCabecalho() {
   <div class="cabecalho">
     <div class="cab-esq">
       <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:60px;width:auto;object-fit:contain;display:block"
-        onerror="this.outerHTML='<div style=\'display:flex;flex-direction:column;gap:2px\'><div style=\'display:flex;gap:1px\'><span style=\'font-size:20px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:20px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:20px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:20px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:20px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:20px;font-weight:900;color:#4A8FD4\'>T</span><span style=\'font-size:20px;font-weight:900;color:#E8207A\'>E</span></div><div style=\'font-size:9px;color:#888\'>Desde 1974</div></div>'" />
+        onerror="this.outerHTML='<div style=\'display:flex;flex-direction:column;gap:2px\'><div style=\'display:flex;gap:1px\'><span style=\'font-size:20px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:20px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:20px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:20px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:20px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:20px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:20px;font-weight:900;color:#E8207A\'>E</span></div><div style=\'font-size:9px;color:#888\'>Desde 1974</div></div>'" />
     </div>
     <div class="cab-dir">
       <strong>${CAPETTE_INFO.nome}</strong>
@@ -182,7 +182,7 @@ ${paisagem ? '@page { size: A4 landscape; margin: 10mm; }' : ''}
 // =============================================
 // RELATÓRIO DE CONCILIAÇÃO
 // =============================================
-export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
+export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
   const { lista, totalEnt, totalSai, saldo, contaDados } = dados
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
@@ -263,7 +263,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
     </table>
   </div>
 
-  ${htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal'])}
+  ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal']) : ''}
   ${htmlRodape()}`
 
   abrirImpressao(html, 'Relatório de Conciliação', true)
@@ -272,7 +272,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim) {
 // =============================================
 // RELATÓRIO FINANCEIRO GERAL
 // =============================================
-export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
+export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
   const { entradas, saidas, totalEnt, totalSai, saldo, lista, contaDados } = dados
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
@@ -432,7 +432,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim) {
     </table>
   </div>
 
-  ${htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal'])}
+  ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal']) : ''}
   ${htmlRodape()}`
 
   abrirImpressao(html, 'Relatório Financeiro', true)
@@ -499,7 +499,7 @@ export function gerarPDFTransparencia(dados, mes) {
 // =============================================
 // RELATÓRIO DE EVENTO
 // =============================================
-export function gerarPDFEvento(evento, entradas, saidas) {
+export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
   const totalEnt = entradas.reduce((a,m)=>a+Number(m.valor||0),0)
   const totalSai = Math.abs(saidas.reduce((a,m)=>a+Number(m.valor||0),0))
   const saldo = totalEnt - totalSai
@@ -566,7 +566,7 @@ export function gerarPDFEvento(evento, entradas, saidas) {
     </table>
   </div>
 
-  ${htmlAssinaturas(['Responsável pelo Evento', 'Responsável Financeiro', 'Diretoria'])}
+  ${opts.assinaturas ? htmlAssinaturas(['Responsável pelo Evento', 'Responsável Financeiro', 'Diretoria']) : ''}
   ${htmlRodape()}`
 
   abrirImpressao(html, `Evento — ${evento.nome}`)
@@ -575,7 +575,7 @@ export function gerarPDFEvento(evento, entradas, saidas) {
 // =============================================
 // RELATÓRIO DE CAMPANHA
 // =============================================
-export function gerarPDFCampanha(campanha, entradas, saidas) {
+export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
   const totalEnt = entradas.reduce((a,m)=>a+Number(m.valor||0),0)
   const totalSai = Math.abs(saidas.reduce((a,m)=>a+Number(m.valor||0),0))
   const saldo = totalEnt - totalSai
@@ -643,7 +643,7 @@ export function gerarPDFCampanha(campanha, entradas, saidas) {
     </table>
   </div>
 
-  ${htmlAssinaturas(['Responsável pela Campanha', 'Responsável Financeiro', 'Diretoria'])}
+  ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Campanha', 'Responsável Financeiro', 'Diretoria']) : ''}
   ${htmlRodape()}`
 
   abrirImpressao(html, `Campanha — ${campanha.nome}`)
@@ -706,7 +706,7 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
 // =============================================
 // PRESTAÇÃO DE CONTA — EMENDA / EDITAL
 // =============================================
-export function gerarPDFPrestacaoContas(dados, pendencias, tipo) {
+export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
   const { conta, entradas, saidas, totalRepasses, totalRendimentos, totalDisponivel, totalDespesas, saldoFinal, bens, rateadas, porPlano, totalMovs, totalConciliados } = dados
 
   const isPreliminar = tipo === 'preliminar'
@@ -937,7 +937,7 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo) {
     </div>
   </div>
 
-  ${htmlAssinaturas(['Responsável Financeiro', 'Representante Legal / Diretoria', 'Responsável pela Conferência'])}
+  ${opts.assinaturas ? htmlAssinaturas(['Responsável Financeiro', 'Representante Legal / Diretoria', 'Responsável pela Conferência']) : ''}
   ${htmlRodape()}`
 
   abrirImpressao(html, `Prestação de Conta — ${conta.nome}`, true)

@@ -25,6 +25,7 @@ export default function PrestacaoContas() {
   const [dados, setDados] = useState(null)
   const [loading, setLoading] = useState(false)
   const [pendencias, setPendencias] = useState([])
+  const [incluirAss, setIncluirAss] = useState(false)
 
   useEffect(() => {
     supabase.from('contas').select('*')
@@ -409,13 +410,17 @@ export default function PrestacaoContas() {
                 <i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Existem {pendCriticas} pendências críticas. O relatório final não pode ser emitido.
               </div>
             )}
-            <button onClick={() => gerarPDFPrestacaoContas(dados, pendencias, 'preliminar')}
+            <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#5F5E5A', cursor:'pointer' }}>
+              <input type="checkbox" checked={incluirAss} onChange={e=>setIncluirAss(e.target.checked)} style={{ accentColor:'#0E7EA8' }} />
+              Para assinatura
+            </label>
+            <button onClick={() => gerarPDFPrestacaoContas(dados, pendencias, 'preliminar', { assinaturas: incluirAss })}
               style={s.btn('#0E7EA8')}>
               Exportar PDF Preliminar
             </button>
             <button onClick={() => {
               if (!podeGerarFinal) { alert('Resolva as pendências críticas antes de gerar o relatório final.'); return }
-              gerarPDFPrestacaoContas(dados, pendencias, 'final')
+              gerarPDFPrestacaoContas(dados, pendencias, 'final', { assinaturas: incluirAss })
             }}
               style={s.btn(podeGerarFinal ? '#0E7EA8' : '#D3D1C7')}>
               Exportar PDF Final Consolidado

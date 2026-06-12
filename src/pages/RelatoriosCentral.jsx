@@ -30,6 +30,7 @@ export default function RelatoriosCentral() {
   const [planoSel, setPlanoSel] = useState('')
   const [contaSel, setContaSel] = useState('todas')
   const [dataInicio, setDataInicio] = useState('')
+  const [incluirAss, setIncluirAss] = useState(false)
   const [modoConc, setModoConc] = useState('mes') // 'mes' | 'ano'
   const [anoConc, setAnoConc] = useState(new Date().getFullYear().toString())
   const [dataFim, setDataFim] = useState('')
@@ -376,8 +377,8 @@ export default function RelatoriosCentral() {
 
   function exportarPDF() {
     if (!dados) return
-    if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim)
-    else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, modoConc==='ano' ? `${anoConc}-01-01` : dataInicio, modoConc==='ano' ? `${anoConc}-12-31` : dataFim)
+    if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim, { assinaturas: incluirAss })
+    else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, modoConc==='ano' ? `${anoConc}-01-01` : dataInicio, modoConc==='ano' ? `${anoConc}-12-31` : dataFim, { assinaturas: incluirAss })
     else alert('PDF para este relatório em breve!')
   }
 
@@ -486,6 +487,12 @@ export default function RelatoriosCentral() {
           <button onClick={gerar} disabled={loading} style={s.btn(loading?'#D3D1C7':AZUL)}>
             {loading ? 'Gerando...' : 'Gerar relatório'}
           </button>
+          {dados && (
+            <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#5F5E5A', cursor:'pointer' }}>
+              <input type="checkbox" checked={incluirAss} onChange={e=>setIncluirAss(e.target.checked)} style={{ accentColor:'#0E7EA8' }} />
+              Para assinatura (inclui bloco de assinaturas no PDF)
+            </label>
+          )}
           {dados && <button onClick={exportarPDF} style={s.btn('#0E7EA8')}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
         </div>
       </div>
