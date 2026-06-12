@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
+import { auditar } from '../lib/auditoria'
 import { useNavigate } from 'react-router-dom'
 import { confirmar } from '../lib/ui'
 
@@ -298,10 +299,27 @@ export default function Conciliacao() {
   async function confirmarDivisao(m) {
     const total = partesDivisao.reduce((a, p) => a + (parseFloat(p.valor) || 0), 0)
     const original = Math.abs(Number(m.valor))
-    const diff = Math.abs(total - original)
-    if (diff > 0.01) {
-      const ok = await confirmar(`A soma das partes (R$ ${total.toFixed(2)}) difere do valor original (R$ ${original.toFixed(2)}) em R$ ${diff.toFixed(2)}.\n\nDeseja confirmar mesmo assim?`, { titulo:'Divergência de valores', confirmarLabel:'Confirmar mesmo assim', perigo:false })
+    const diff = total - original
+    if (Math.abs(diff) > 0.01) {
+      // REGRA: a soma das partes DEVE fechar exatamente com o extrato — divergência distorce os relatórios
+      const ok = await confirmar(
+        `A soma das partes (R$ ${total.toFixed(2)}) difere do valor original do extrato (R$ ${original.toFixed(2)}) em R$ ${Math.abs(diff).toFixed(2)}.\n\nA divisão só pode ser salva quando a soma fecha EXATAMENTE — caso contrário os relatórios deixam de bater com o banco.\n\nDeseja ajustar a última parte automaticamente para fechar a diferença?`,
+        { titulo:'Soma não fecha com o extrato', confirmarLabel:'Ajustar última parte', perigo:false }
+      )
       if (!ok) return
+      const partes = [...partesDivisao]
+      const ult = partes.length - 1
+      const novoValor = Math.round((parseFloat(partes[ult].valor || 0) - diff) * 100) / 100
+      if (novoValor <= 0) {
+        setMsg('Erro: o ajuste deixaria a última parte com valor zero ou negativo. Revise os valores manualmente.')
+        setTimeout(() => setMsg(x => x && x.includes('Erro') ? x : ''), 4000)
+        return
+      }
+      partes[ult] = { ...partes[ult], valor: novoValor }
+      setPartesDivisao(partes)
+      setMsg(`Última parte ajustada para R$ ${novoValor.toFixed(2)}. Confira os valores e confirme novamente.`)
+      setTimeout(() => setMsg(x => x && x.includes('Erro') ? x : ''), 6000)
+      return
     }
     if (partesDivisao.some(p => !p.categoria_id)) {
       setMsg('Todas as partes precisam ter categoria.')
@@ -338,6 +356,36 @@ export default function Conciliacao() {
     setMovs(data || [])
     setMsg('Movimentação dividida com sucesso!')
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
+  }
+
+  async function desfazerDivisao(pai) {
+    // Trava: exercícios anteriores a 2026 estão fechados e conciliados — não podem ser alterados
+    if (pai.data < '2026-01-01') {
+      setMsg('Erro: movimentações de exercícios anteriores a 2026 estão fechadas e não podem ser alteradas.')
+      setTimeout(() => setMsg(x => x && x.includes('Erro') ? x : ''), 5000)
+      return
+    }
+    const filhas = movs.filter(f => f.parent_id === pai.id)
+    const ok = await confirmar(
+      `Desfazer a divisão de "${pai.descricao}" (${fmt(Math.abs(Number(pai.valor)))})?\n\nAs ${filhas.length} partes serão excluídas e a movimentação original voltará como não conciliada, para você refazer a divisão corretamente.`,
+      { titulo:'Desfazer divisão', confirmarLabel:'Desfazer' }
+    )
+    if (!ok) return
+    const idsFilhas = filhas.map(f => f.id)
+    // Desvincular lançamentos apontando para as partes
+    if (idsFilhas.length > 0) {
+      await supabase.from('lancamentos').update({ extrato_mov_id: null, status_lanc: 'aberto' }).in('extrato_mov_id', idsFilhas)
+      const { error: errDel } = await supabase.from('extrato_movs').delete().in('id', idsFilhas)
+      if (errDel) { setMsg('Erro ao excluir partes: ' + errDel.message); return }
+    }
+    await supabase.from('extrato_movs').update({ dividida: false, conciliado: false }).eq('id', pai.id)
+    auditar('Divisão desfeita (divergência)', `${pai.descricao} — ${fmt(Math.abs(Number(pai.valor)))}`)
+    const { data } = await fetchAll(() => supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .eq('extrato_id', extratoSel.id).order('data'))
+    setMovs(data || [])
+    setMsg('Divisão desfeita. Refaça a divisão com os valores corretos.')
+    setTimeout(() => setMsg(x => x && x.includes('Erro') ? x : ''), 5000)
   }
 
   const [vincularAberto, setVincularAberto] = useState(null)
@@ -487,6 +535,42 @@ export default function Conciliacao() {
           {totalPendentes>0 && <button onClick={conciliarTodos} style={s.btn('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> Conciliar todos ({totalPendentes})</button>}
         </div>
       </div>
+
+      {/* Verificador de integridade das divisões */}
+      {(() => {
+        // Exercícios anteriores a 2026 estão fechados e conferidos — não tocar
+        const LIMITE_CONGELADO = '2026-01-01'
+        const divergentes = movs.filter(p => p.dividida && p.data >= LIMITE_CONGELADO).map(p => {
+          const filhas = movs.filter(f => f.parent_id === p.id)
+          const soma = filhas.reduce((a, f) => a + Number(f.valor), 0)
+          return { pai: p, soma, diff: Number(p.valor) - soma, nFilhas: filhas.length }
+        }).filter(d => Math.abs(d.diff) > 0.01)
+        if (divergentes.length === 0) return null
+        return (
+          <div style={{ background:'#FEF2F2', border:'0.5px solid #F7C1C1', borderRadius:12, padding:'1rem 1.25rem', marginBottom:'1rem' }}>
+            <div style={{ fontSize:13, fontWeight:600, color:'#A32D2D', marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
+              <i className="ti ti-alert-triangle" style={{fontSize:16}} />
+              {divergentes.length} divisão(ões) com soma divergente do extrato
+            </div>
+            <div style={{ fontSize:11.5, color:'#5F5E5A', marginBottom:10 }}>
+              A soma das partes precisa fechar exatamente com o valor original — divergências distorcem os relatórios financeiros. Desfaça e refaça a divisão.
+            </div>
+            {divergentes.map(d => (
+              <div key={d.pai.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 10px', background:'rgba(255,255,255,0.7)', borderRadius:8, marginBottom:5, fontSize:12 }}>
+                <span style={{ color:'#888780', fontSize:11 }}>{new Date(d.pai.data+'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{d.pai.descricao}</span>
+                <span>original <strong>{fmt(Math.abs(Number(d.pai.valor)))}</strong></span>
+                <span>partes <strong>{fmt(Math.abs(d.soma))}</strong></span>
+                <span style={{ color:'#A32D2D', fontWeight:600 }}>dif {fmt(Math.abs(d.diff))}</span>
+                <button onClick={() => desfazerDivisao(d.pai)}
+                  style={{ padding:'3px 10px', fontSize:11, borderRadius:7, border:'0.5px solid #E8212A', background:'transparent', color:'#C0392B', cursor:'pointer', whiteSpace:'nowrap' }}>
+                  Desfazer divisão
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Métricas */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))', gap:8, marginBottom:'1rem' }}>
