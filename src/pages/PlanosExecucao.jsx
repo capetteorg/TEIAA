@@ -395,8 +395,8 @@ export default function PlanosExecucao() {
     tabSec: ativo => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background:ativo?AZUL:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     secaoCnas: { fontSize:11, fontWeight:600, color:'#185FA5', borderLeft:`3px solid ${AZUL}`, paddingLeft:8, margin:'16px 0 8px', textTransform:'uppercase', letterSpacing:'.05em' },
     infoBox: { background:'#F8F7F2', borderRadius:8, padding:'8px 10px', marginBottom:8 },
     infoLabel: { fontSize:10, color:'#888780', marginBottom:2 },
@@ -412,7 +412,7 @@ export default function PlanosExecucao() {
         </div>
         {aba !== 'detalhe' && (
           <div style={{ display:'flex', gap:6 }}>
-            <button onClick={novoPlanoAcao} style={{ ...s.btn(ROXO), fontSize:11 }}>+ Plano de Ação Institucional</button>
+            <button onClick={novoPlanoAcao} style={{ ...s.btn('#0E7EA8'), fontSize:11 }}>+ Plano de Ação Institucional</button>
             <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
               style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
               {mostrarForm ? 'Cancelar' : '+ Outro plano'}
@@ -544,7 +544,7 @@ export default function PlanosExecucao() {
                     <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
                       {ORIGENS_RECURSOS_OPCOES.map(origem => (
                         <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
-                          style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff', color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
+                          style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?'#0E7EA8':'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#E6F1FB':'#fff', color:form.origens_recursos.includes(origem)?'#0E7EA8':'#5F5E5A' }}>
                           {form.origens_recursos.includes(origem)?'✓ ':''}{origem}
                         </button>
                       ))}
@@ -596,7 +596,7 @@ export default function PlanosExecucao() {
                   <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':isPlanoAcao?ROXO:VERDE)}>
+                  <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
                     {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Salvar e vincular projetos →'}
                   </button>
                   <button type="button" onClick={() => { setMostrarForm(false); setEditando(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
@@ -618,9 +618,9 @@ export default function PlanosExecucao() {
                 return (
                   <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:`0.5px solid ${isPai?'#C9B3E8':'#E8E6DE'}`, borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                     onClick={() => abrirDetalhe(p)}>
-                    <div style={{ background:isPai?`${ROXO}10`:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                    <div style={{ background:isPai?`${ROXO}10`:`${VERDE}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:10, color:isPai?ROXO:'#888780', marginBottom:2, fontWeight:isPai?600:400 }}>{p.tipo_plano}</div>
+                        <div style={{ fontSize:10, color:isPai?'#0E7EA8':'#888780', marginBottom:2, fontWeight:isPai?600:400 }}>{p.tipo_plano}</div>
                         <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome_plano}</div>
                       </div>
                       <span style={s.badge(bg,cor)}>{p.situacao}</span>
@@ -651,9 +651,9 @@ export default function PlanosExecucao() {
                         </div>
                       )}
                       <div style={{ display:'flex', gap:6 }}>
-                        <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn(isPai?ROXO:VERDE), flex:1, fontSize:11 }}>Ver plano completo →</button>
+                        <button onClick={e=>{e.stopPropagation();abrirDetalhe(p)}} style={{ ...s.btn('#0E7EA8'), flex:1, fontSize:11 }}>Ver plano completo →</button>
                         <button onClick={e=>{e.stopPropagation();editarPlano(p)}} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
-                        <button onClick={e=>{e.stopPropagation();setConfirmandoExcluir({id:p.id,tipo:'plano'})}} style={{ ...s.btn('#FEF2F2','#E8212A'), fontSize:11 }}>Excluir</button>
+                        <button onClick={e=>{e.stopPropagation();setConfirmandoExcluir({id:p.id,tipo:'plano'})}} style={{ ...{ ...s.btn('#FEF2F2','#E8212A'), background:'transparent', border:'none', color:'#C0392B' }, fontSize:11 }}>Excluir</button>
                       </div>
                     </div>
                   </div>
@@ -759,8 +759,8 @@ export default function PlanosExecucao() {
                       const SITUACAO_COR_P = { 'ativo':['#EAF3DE','#3B6D11'], 'em planejamento':['#E6F1FB','#185FA5'], 'suspenso':['#FAEEDA','#854F0B'], 'encerrado':['#F1EFE8','#5F5E5A'] }
                       const [bg,cor] = SITUACAO_COR_P[p?.situacao] || ['#F1EFE8','#888780']
                       return (
-                        <div key={pv.id} style={{ border:'0.5px solid #E0DDD5', borderRadius:10, overflow:'hidden' }}>
-                          <div style={{ background:`${VERDE}08`, borderBottom:'0.5px solid #E0DDD5', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                        <div key={pv.id} style={{ border:'0.5px solid #E8E6DE', borderRadius:10, overflow:'hidden' }}>
+                          <div style={{ background:`${VERDE}08`, borderBottom:'0.5px solid #E8E6DE', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                               <span style={{ fontSize:12, fontWeight:600, color:'#888780' }}>{idx+1}.</span>
                               <div>
@@ -887,7 +887,7 @@ export default function PlanosExecucao() {
                                   </td>
                                   <td style={s.td}>
                                     <button onClick={() => { setFormOrc({...o, valor_previsto:o.valor_previsto||'', valor_realizado:o.valor_realizado||''}); setEditandoOrc(o.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                                    <button onClick={() => excluirOrcamento(o.id)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                                    <button onClick={() => excluirOrcamento(o.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                                   </td>
                                 </tr>
                               )
@@ -930,7 +930,7 @@ export default function PlanosExecucao() {
                                   </td>
                                   <td style={s.td}>
                                     <button onClick={() => { setFormOrc({...o, valor_previsto:o.valor_previsto||'', valor_realizado:o.valor_realizado||''}); setEditandoOrc(o.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                                    <button onClick={() => excluirOrcamento(o.id)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                                    <button onClick={() => excluirOrcamento(o.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                                   </td>
                                 </tr>
                               )
@@ -1001,7 +1001,7 @@ export default function PlanosExecucao() {
                           <td style={s.td}><span style={s.badge(bg,cor)}>{m.status_meta}</span></td>
                           <td style={s.td}>
                             <button onClick={() => { setFormMeta({...m, quantidade_prevista:m.quantidade_prevista||'', quantidade_realizada:m.quantidade_realizada||'', projeto_id:m.projeto_id||''}); setEditandoMeta(m.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                            <button onClick={() => excluirMeta(m.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
+                            <button onClick={() => excluirMeta(m.id)} style={{ ...s.btn('#FEF2F2','#E8212A'), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                           </td>
                         </tr>
                       )
@@ -1052,7 +1052,7 @@ export default function PlanosExecucao() {
                         <td style={s.td}><span style={s.badge(a.status==='realizada'?'#EAF3DE':a.status==='cancelada'?'#FCEBEB':'#E6F1FB', a.status==='realizada'?'#3B6D11':a.status==='cancelada'?'#A32D2D':'#185FA5')}>{a.status}</span></td>
                         <td style={s.td}>
                           <button onClick={() => { setFormAtiv({...a, periodo_inicio:a.periodo_inicio||'', periodo_fim:a.periodo_fim||'', projeto_id:a.projeto_id||''}); setEditandoAtiv(a.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                          <button onClick={() => excluirAtividade(a.id)} style={s.btn('#FEF2F2','#E8212A')}>Excluir</button>
+                          <button onClick={() => excluirAtividade(a.id)} style={{ ...s.btn('#FEF2F2','#E8212A'), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                         </td>
                       </tr>
                     ))}
@@ -1185,7 +1185,7 @@ export default function PlanosExecucao() {
                   </div>
                 ) : null)}
                 <div style={{ marginTop:14 }}>
-                  <button onClick={() => editarPlano(planoSel)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button>
+                  <button onClick={() => editarPlano(planoSel)} style={s.btn('#0E7EA8')}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button>
                 </div>
               </div>
               {metas.length > 0 && (

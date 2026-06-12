@@ -99,8 +99,8 @@ export default function Fornecedores() {
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
     grupo: cols => ({ display:'grid', gridTemplateColumns:cols, gap:10, marginBottom:10 }),
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
   }
@@ -265,7 +265,7 @@ export default function Fornecedores() {
                       <div style={{ display:'flex', gap:4 }}>
                         <button onClick={() => navigate(`/historico-fornecedor?id=${f.id}`)} style={s.btn('#EAF3DE',VERDE)}>Histórico</button>
                         <button onClick={() => editar(f)} style={s.btn('#E6F1FB',AZUL)}>Editar</button>
-                        <button onClick={() => setConfirmandoExcluir(f)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                        <button onClick={() => setConfirmandoExcluir(f)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                       </div>
                     </td>
                   </tr>

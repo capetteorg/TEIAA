@@ -70,8 +70,8 @@ export default function Pendencias() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     tab: ativo => ({ padding:'5px 14px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:ativo?AZUL:'transparent', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
@@ -99,7 +99,7 @@ export default function Pendencias() {
           { label:'Informativas', val:informativas, cor:'#185FA5', bg:'#E6F1FB' },
           { label:'Total pendentes', val:criticas+atencao+informativas, cor:'#5F5E5A', bg:'#F1EFE8' },
         ].map(m => (
-          <div key={m.label} style={{ background:m.bg, borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E0DDD5' }}>
+          <div key={m.label} style={{ background:m.bg, borderRadius:10, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
             <div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div>
           </div>
@@ -171,10 +171,10 @@ export default function Pendencias() {
                     <td style={s.td}>
                       <div style={{ display:'flex', gap:4 }}>
                         {p.rota_resolucao && !p.resolvida && (
-                          <button onClick={() => navigate(p.rota_resolucao)} style={s.btn(AZUL)}>Resolver →</button>
+                          <button onClick={() => navigate(p.rota_resolucao)} style={{ ...s.btn(AZUL), padding:'4px 12px', fontSize:11 }}>Resolver →</button>
                         )}
                         {!p.resolvida && (
-                          <button onClick={() => resolver(p.id)} style={s.btn('#EAF3DE','#3B6D11')}><i className="ti ti-check" style={{marginRight:4}} /> Marcar resolvida</button>
+                          <button onClick={() => resolver(p.id)} style={{ padding:'4px 10px', fontSize:11, borderRadius:7, border:'0.5px solid #C0DD97', background:'transparent', color:'#3B6D11', cursor:'pointer' }}><i className="ti ti-check" style={{marginRight:4}} /> Marcar resolvida</button>
                         )}
                         {p.resolvida && (
                           <button onClick={() => reabrirPendencia(p.id)} style={s.btn('#F1EFE8','#5F5E5A')}>Reabrir</button>

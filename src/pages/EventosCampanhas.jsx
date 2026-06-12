@@ -144,8 +144,8 @@ export default function EventosCampanhas() {
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     tab: (ativo,cor=AZUL) => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?cor:'#D3D1C7'}`, background:ativo?cor:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8' },
-    td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8' },
+    td: { padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
   }
 
   async function excluir(id) {
@@ -157,7 +157,7 @@ export default function EventosCampanhas() {
 
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Eventos e Campanhas</div>
@@ -232,7 +232,7 @@ export default function EventosCampanhas() {
         <button onClick={()=>setFiltroTipo('todos')} style={s.tab(filtroTipo==='todos')}>Todos ({lista.length})</button>
         <button onClick={()=>setFiltroTipo('evento')} style={s.tab(filtroTipo==='evento', LARANJA)}>Eventos ({lista.filter(i=>i.tipo==='evento').length})</button>
         <button onClick={()=>setFiltroTipo('campanha')} style={s.tab(filtroTipo==='campanha', ROXO)}>Campanhas ({lista.filter(i=>i.tipo==='campanha').length})</button>
-        <div style={{ width:1, background:'#E0DDD5', margin:'0 4px' }} />
+        <div style={{ width:1, background:'#E8E6DE', margin:'0 4px' }} />
         {['planejado','em andamento','ativa','concluído','concluída'].map(st => {
           const count = lista.filter(i=>i.status===st).length
           if (!count) return null
@@ -320,7 +320,7 @@ export default function EventosCampanhas() {
             return (
               <div key={`${item.tipo}-${item.id}`} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                 onClick={() => abrirDetalhe(item)}>
-                <div style={{ background:item.tipo==='evento'?`${LARANJA}15`:`${ROXO}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <div style={{ background:item.tipo==='evento'?`${LARANJA}15`:`${ROXO}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                   <div>
                     <span style={s.badge(item.tipo==='evento'?'#FAEEDA':'#EEEDFE', item.tipo==='evento'?'#854F0B':'#534AB7')}>{TIPO_LABEL[item.tipo]}</span>
                     <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginTop:4 }}>{item.nome}</div>
@@ -340,7 +340,7 @@ export default function EventosCampanhas() {
                   </div>
                   {item.descricao && <div style={{ fontSize:11, color:'#888780', marginBottom:10, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.descricao}</div>}
                   <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={e=>{e.stopPropagation();abrirDetalhe(item)}} style={{ ...s.btn(item.tipo==='evento'?LARANJA:ROXO), flex:1, fontSize:11 }}>Ver detalhes →</button>
+                    <button onClick={e=>{e.stopPropagation();abrirDetalhe(item)}} style={{ ...s.btn('#0E7EA8'), flex:1, fontSize:11 }}>Ver detalhes →</button>
                     <button onClick={e=>{e.stopPropagation();editar(item)}} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
                   </div>
                 </div>

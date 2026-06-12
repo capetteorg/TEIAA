@@ -103,8 +103,8 @@ export default function Documentos() {
     card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 13, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box' },
-    th: { textAlign: 'left', padding: '6px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' },
-    td: { padding: '8px 10px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12, verticalAlign: 'middle' },
+    th: { textAlign: 'left', padding: '6px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE' },
+    td: { padding: '8px 10px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12, verticalAlign: 'middle' },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 8px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
     btn: (bg, cor='#fff') => ({ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer' }),
   }
@@ -221,7 +221,7 @@ export default function Documentos() {
                     {new Date(doc.criado_em).toLocaleDateString('pt-BR')}
                   </td>
                   <td style={s.td}>
-                    <button onClick={() => excluir(doc)} style={s.btn('#FEF2F2', VERMELHO)}>Excluir</button>
+                    <button onClick={() => excluir(doc)} style={{ ...s.btn('#FEF2F2', VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                   </td>
                 </tr>
               ))}

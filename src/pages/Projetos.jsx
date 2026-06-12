@@ -270,15 +270,15 @@ export default function Projetos() {
     grupo: cols => ({ display:'grid', gridTemplateColumns:cols, gap:10, marginBottom:10 }),
     tab: ativo => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?VERDE:'#D3D1C7'}`, background:ativo?VERDE:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
     tabForm: ativo => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background:ativo?AZUL:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
-    tabDet: ativo => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?ROXO:'#D3D1C7'}`, background:ativo?ROXO:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
+    tabDet: ativo => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?'#0E7EA8':'#D3D1C7'}`, background:ativo?'#0E7EA8':'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     secao: cor => ({ fontSize:11, fontWeight:600, color:cor||ROXO, borderLeft:`3px solid ${cor||ROXO}`, paddingLeft:8, margin:'16px 0 8px', textTransform:'uppercase', letterSpacing:'.05em' }),
     infoBox: { background:'#F8F7F2', borderRadius:8, padding:'8px 10px', marginBottom:8 },
     infoLabel: { fontSize:10, color:'#888780', marginBottom:2 },
     infoVal: { fontSize:12, lineHeight:1.6, whiteSpace:'pre-line' },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
   }
 
   // ===== TELA DETALHE =====
@@ -472,7 +472,7 @@ export default function Projetos() {
                         <td style={s.td}>
                           <div style={{ display:'flex', gap:4 }}>
                             <button onClick={() => { setFormEquipe({ equipe_id:String(pe.equipe_id), funcao_no_projeto:pe.funcao_no_projeto||'', tipo_vinculo:pe.tipo_vinculo||'', carga_horaria:pe.carga_horaria||'', data_inicio:pe.data_inicio||'', data_fim:pe.data_fim||'', exclusivo:pe.exclusivo||false, atividades_desempenhadas:pe.atividades_desempenhadas||'', observacoes:pe.observacoes||'' }); setEditandoEquipe(pe.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                            <button onClick={() => removerEquipe(pe.id)} style={s.btn('#FEF2F2',VERMELHO)}>Remover</button>
+                            <button onClick={() => removerEquipe(pe.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Remover</button>
                           </div>
                         </td>
                       </tr>
@@ -588,7 +588,7 @@ export default function Projetos() {
                         <td style={s.td}>
                           <div style={{ display:'flex', gap:4 }}>
                             <button onClick={() => { setFormOrc({ categoria:o.categoria, subcategoria:o.subcategoria||'', fonte_recurso:o.fonte_recurso||'', valor_previsto:o.valor_previsto||'', valor_recebido:o.valor_recebido||'', observacoes:o.observacoes||'', ano:o.ano||2026 }); setEditandoOrc(o.id) }} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                            <button onClick={() => excluirOrcamento(o.id)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>
+                            <button onClick={() => excluirOrcamento(o.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                           </div>
                         </td>
                       </tr>
@@ -667,7 +667,7 @@ export default function Projetos() {
             </>}
             {p.participacao_usuarios && <><div style={s.secao(ROXO)}>Participação dos usuários e famílias</div><div style={s.infoBox}><div style={s.infoVal}>{p.participacao_usuarios}</div></div></>}
             {p.monitoramento_avaliacao && <><div style={s.secao(ROXO)}>Monitoramento e avaliação</div><div style={s.infoBox}><div style={s.infoVal}>{p.monitoramento_avaliacao}</div></div></>}
-            <div style={{ marginTop:14 }}><button onClick={() => editar(p)} style={s.btn(ROXO)}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button></div>
+            <div style={{ marginTop:14 }}><button onClick={() => editar(p)} style={s.btn('#0E7EA8')}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar campos CNAS</button></div>
           </div>
         )}
       </div>
@@ -733,7 +733,7 @@ export default function Projetos() {
                 <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:4 }}>
                   {ORIGENS_RECURSOS_OPCOES.map(origem => (
                     <button key={origem} type="button" onClick={() => toggleOrigem(origem)}
-                      style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?ROXO:'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#F0EAFA':'#fff', color:form.origens_recursos.includes(origem)?ROXO:'#5F5E5A' }}>
+                      style={{ fontSize:11, padding:'4px 10px', borderRadius:8, cursor:'pointer', border:`0.5px solid ${form.origens_recursos.includes(origem)?'#0E7EA8':'#D3D1C7'}`, background:form.origens_recursos.includes(origem)?'#E6F1FB':'#fff', color:form.origens_recursos.includes(origem)?'#0E7EA8':'#5F5E5A' }}>
                       {form.origens_recursos.includes(origem)?'✓ ':''}{origem}
                     </button>
                   ))}
@@ -796,7 +796,7 @@ export default function Projetos() {
             const temCnas = p.atividades_previstas || p.recursos_humanos || p.participacao_usuarios
             return (
               <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
-                <div style={{ background:`${VERDE}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                <div style={{ background:`${VERDE}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{p.tipo}</div>
                     <div style={{ fontSize:13, fontWeight:600 }}>{p.nome}</div>
@@ -817,7 +817,7 @@ export default function Projetos() {
                   <div style={{ display:'flex', gap:6 }}>
                     <button onClick={() => abrirDetalhe(p)} style={{ ...s.btn('#0E7EA8'), flex:1, fontSize:11 }}>Ver ficha →</button>
                     <button onClick={() => editar(p)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
-                    <button onClick={() => setConfirmandoExcluir(p.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:11 }}>Excluir</button>
+                    <button onClick={() => setConfirmandoExcluir(p.id)} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, fontSize:11 }}>Excluir</button>
                   </div>
                 </div>
               </div>

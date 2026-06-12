@@ -163,7 +163,7 @@ export default function Parcerias() {
     textarea: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box', resize:'vertical' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
-    tab: ativo => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?LARANJA:'#D3D1C7'}`, background:ativo?LARANJA:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
+    tab: ativo => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:`0.5px solid ${ativo?'#0E7EA8':'#D3D1C7'}`, background:ativo?'#0E7EA8':'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
     secao: { fontSize:11, fontWeight:600, color:'#5F5E5A', borderLeft:`3px solid ${LARANJA}`, paddingLeft:8, margin:'14px 0 8px' },
   }
 
@@ -176,7 +176,7 @@ export default function Parcerias() {
 
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Parcerias, Emendas e Editais</div>
@@ -319,7 +319,7 @@ export default function Parcerias() {
           return (
             <div key={grupo} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
               <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{grupo}</div>
-              <div style={{ fontSize:18, fontWeight:600, color:grupo==='Ativa'?LARANJA:grupo==='Encerrada'?'#888780':AZUL }}>{count}</div>
+              <div style={{ fontSize:18, fontWeight:600, color:grupo==='Encerrada'?'#888780':'#2C2C2A' }}>{count}</div>
             </div>
           )
         })}
@@ -355,7 +355,7 @@ export default function Parcerias() {
             return (
               <div key={p.id} style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden', cursor:'pointer' }}
                 onClick={() => navigate(`/parcerias/${p.id}`)}>
-                <div style={{ background:`${LARANJA}10`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                <div style={{ background:`${LARANJA}10`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                   <div>
                     <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{TIPO_LABEL[p.tipo]||p.tipo}</div>
                     <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A' }}>{p.nome_projeto}</div>
@@ -402,7 +402,7 @@ export default function Parcerias() {
                     </div>
                   )}
                   <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={e=>{e.stopPropagation();navigate(`/parcerias/${p.id}`)}} style={{ ...s.btn(LARANJA), flex:1, fontSize:11 }}>Ver detalhes →</button>
+                    <button onClick={e=>{e.stopPropagation();navigate(`/parcerias/${p.id}`)}} style={{ ...s.btn('#0E7EA8'), flex:1, fontSize:11 }}>Ver detalhes →</button>
                     <button onClick={e=>{e.stopPropagation();editar(p)}} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>
                   </div>
                 </div>

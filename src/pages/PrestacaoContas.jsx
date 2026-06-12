@@ -144,14 +144,14 @@ export default function PrestacaoContas() {
 
   const s = {
     card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
-    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E0DDD5' },
-    td: { padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5', fontSize: 12 },
+    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE' },
+    td: { padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12 },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
     btn: (bg, cor = '#fff') => ({ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: bg, color: cor, cursor: 'pointer' }),
   }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div style={{ padding: '1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Prestação de Conta — Emenda / Edital</div>
 
       {/* Seleção de conta e período */}

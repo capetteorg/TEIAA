@@ -110,8 +110,8 @@ export default function Patrimonio() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
@@ -122,7 +122,7 @@ export default function Patrimonio() {
   const corEstado = { 'Ótimo':VERDE, 'Bom':'#6BBF2B', 'Regular':LARANJA, 'Ruim':VERMELHO, 'Inativo':'#888780' }
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Controle de Patrimônio</div>
@@ -260,7 +260,7 @@ export default function Patrimonio() {
                         {isAdmin && (
                           <div style={{ display:'flex', gap:4 }}>
                             <button onClick={() => abrirForm(b)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), padding:'4px 8px', fontSize:11 }}>Editar</button>
-                            <button onClick={() => excluir(b.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'4px 8px', fontSize:11 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
+                            <button onClick={() => excluir(b.id)} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, padding:'4px 8px', fontSize:11 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                           </div>
                         )}
                       </td>

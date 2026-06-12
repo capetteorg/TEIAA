@@ -389,8 +389,8 @@ export default function Conciliacao() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', whiteSpace:'nowrap' },
-    td: { padding:'7px 8px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', whiteSpace:'nowrap' },
+    td: { padding:'7px 8px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 7px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'5px 10px', fontSize:11, borderRadius:7, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     select: { fontSize:11, padding:'4px 6px', border:'0.5px solid #D3D1C7', borderRadius:6, width:'100%' },
@@ -475,7 +475,7 @@ export default function Conciliacao() {
           </div>
         </div>
         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-          <button onClick={cruzarAutomatico} disabled={cruzando} style={s.btn(ROXO)}>
+          <button onClick={cruzarAutomatico} disabled={cruzando} style={s.btn('#0E7EA8')}>
             {cruzando ? 'Cruzando...' : 'Cruzar com lançamentos'}
           </button>
           {autoCount>0 && (
@@ -618,7 +618,7 @@ export default function Conciliacao() {
                           <div style={{ color:'#888780', marginTop:2 }}>{match.lancamento.categoria?.nome||'sem cat.'}</div>
                           <div style={{ display:'flex', gap:4, marginTop:4 }}>
                             <button onClick={() => confirmarMatch(m.id)} style={{ ...s.btn(match.auto?VERDE:LARANJA), fontSize:9, padding:'2px 6px' }}><i className="ti ti-check" style={{marginRight:4}} /> Confirmar</button>
-                            <button onClick={() => rejeitarMatch(m.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:9, padding:'2px 6px' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
+                            <button onClick={() => rejeitarMatch(m.id)} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, fontSize:9, padding:'2px 6px' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                           </div>
                         </div>
                       ) : lancVinc ? (
@@ -698,7 +698,7 @@ export default function Conciliacao() {
                   {/* Lançamento vinculado expandido */}
                   {lancVinculadoAberto===m.id && lancVinc && (
                     <tr>
-                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#F2FAE8', padding:'10px 16px', borderLeft:`3px solid ${VERDE}` }}>
                           <div style={{ fontSize:11, fontWeight:600, color:'#3B6D11', marginBottom:6 }}><i className="ti ti-link" style={{marginRight:4}} /> Lançamento vinculado</div>
                           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:8, fontSize:11 }}>
@@ -717,7 +717,7 @@ export default function Conciliacao() {
                   {/* Dados complementares */}
                   {isAberto && (
                     <tr>
-                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#F8F7F2', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}><i className="ti ti-clipboard-list" style={{marginRight:4}} /> Dados complementares</div>
                           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8, marginBottom:10 }}>
@@ -790,7 +790,7 @@ export default function Conciliacao() {
                   {/* Vincular lançamento */}
                   {vincularAberto===m.id && (
                     <tr>
-                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#F2FAE8', padding:'12px 16px', borderLeft:`3px solid ${VERDE}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:VERDE }}>
                             <i className="ti ti-link" style={{marginRight:4}} /> Vincular lançamento — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
@@ -815,7 +815,7 @@ export default function Conciliacao() {
                             return (
                               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                                 <thead><tr>
-                                  {['Data','Descrição','Categoria','Valor',''].map(h=><th key={h} style={{ textAlign:'left', padding:'5px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5' }}>{h}</th>)}
+                                  {['Data','Descrição','Categoria','Valor',''].map(h=><th key={h} style={{ textAlign:'left', padding:'5px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE' }}>{h}</th>)}
                                 </tr></thead>
                                 <tbody>
                                   {candidatos.map(l => (
@@ -844,7 +844,7 @@ export default function Conciliacao() {
                   {/* Divisão de movimentação */}
                   {dividirAberto===m.id && (
                     <tr>
-                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#E6F1FB', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:AZUL }}>
                             <i className="ti ti-cut" style={{marginRight:4}} /> Dividir movimentação — {m.descricao?.slice(0,40)} ({fmt(m.valor)})
@@ -898,7 +898,7 @@ export default function Conciliacao() {
                                     Parte {i+1} {parte.lancamento_id ? 'vinculado ao lançamento' : ''}
                                   </span>
                                   {partesDivisao.length > 2 && (
-                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...s.btn('#FEF2F2',VERMELHO), padding:'2px 8px', fontSize:10 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
+                                    <button onClick={() => setPartesDivisao(prev => prev.filter((_,j)=>j!==i))} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, padding:'2px 8px', fontSize:10 }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                                   )}
                                 </div>
                                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 2fr', gap:8 }}>
@@ -953,7 +953,7 @@ export default function Conciliacao() {
                   {/* Pagamento de funcionário */}
                   {pagFuncAberto===m.id && (
                     <tr>
-                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={11} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#F5F0FF', padding:'12px 16px', borderLeft:`3px solid ${ROXO}` }}>
                           <div style={{ fontSize:12, fontWeight:500, marginBottom:10, color:ROXO }}>
                             <i className="ti ti-user" style={{marginRight:4}} /> Pagamento de funcionário / prestador — {m.descricao?.slice(0,40)}
@@ -1060,7 +1060,7 @@ export default function Conciliacao() {
                             )
                           })()}
                           <div style={{ display:'flex', gap:8 }}>
-                            <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn(ROXO)}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar pagamento</button>
+                            <button onClick={() => salvarPagamentoFuncionario(m.id, m)} style={s.btn('#0E7EA8')}><i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar pagamento</button>
                             <button onClick={() => { setPagFuncAberto(null); setFormPagFunc({}) }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
                           </div>
                         </div>

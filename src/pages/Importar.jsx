@@ -202,7 +202,7 @@ export default function Importar() {
   }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div style={{ padding: '1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Importar extrato</div>
 
       {/* Abas */}

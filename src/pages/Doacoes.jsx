@@ -162,8 +162,8 @@ export default function Doacoes() {
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?VERDE:'#D3D1C7'}`, background:ativo?VERDE:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
   }
 
   async function excluir(id) {
@@ -175,7 +175,7 @@ export default function Doacoes() {
 
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Doações recebidas</div>
@@ -287,7 +287,7 @@ export default function Doacoes() {
                   </div>
                   <div style={{ paddingBottom:2 }}>
                     {itens.length > 1 && (
-                      <button type="button" onClick={() => removeItem(i)} style={{ ...s.btn('#FEF2F2', VERMELHO), padding:'7px 10px' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
+                      <button type="button" onClick={() => removeItem(i)} style={{ ...{ ...s.btn('#FEF2F2', VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, padding:'7px 10px' }}><i className="ti ti-x" style={{fontSize:14}} /></button>
                     )}
                   </div>
                 </div>

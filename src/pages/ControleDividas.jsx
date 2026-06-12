@@ -281,8 +281,8 @@ export default function ControleDividas() {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     tab: ativo => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?VERMELHO:'#D3D1C7'}`, background:ativo?VERMELHO:'transparent', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
@@ -418,7 +418,7 @@ export default function ControleDividas() {
             const ultimaMov = movPessoa[0]
             return (
               <div key={pe.id} style={{ background:'rgba(255,255,255,0.92)', border:`1.5px solid ${saldo>0?VERMELHO+'40':'#E8E6DE'}`, borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
-                <div style={{ background:saldo>0?`${VERMELHO}08`:`${VERDE}08`, borderBottom:'0.5px solid #E0DDD5', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <div style={{ background:saldo>0?`${VERMELHO}08`:`${VERDE}08`, borderBottom:'0.5px solid #E8E6DE', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                   <div>
                     <div style={{ fontSize:13, fontWeight:600 }}>{pe.nome}</div>
                     <div style={{ fontSize:11, color:'#888780' }}>{TIPO_VINCULO_LABEL[pe.tipo_vinculo]} · Mensal: {fmt(pe.valor_mensal_normal||0)}</div>
@@ -447,7 +447,7 @@ export default function ControleDividas() {
                     <button onClick={() => { setPessoaFiltro(String(pe.id)); setTab('historico') }} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Histórico</button>
                     <button onClick={() => { setPessoaFiltro(String(pe.id)); setTab('competencias') }} style={{ ...s.btn('#E6F1FB',AZUL), fontSize:11 }}>Competências</button>
                     {isAdmin && <button onClick={() => editarPessoa(pe)} style={{ ...s.btn('#F1EFE8','#5F5E5A'), fontSize:11 }}>Editar</button>}
-                    {isAdmin && <button onClick={() => excluirPessoa(pe)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:11 }}>Excluir</button>}
+                    {isAdmin && <button onClick={() => excluirPessoa(pe)} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, fontSize:11 }}>Excluir</button>}
                   </div>
                 </div>
               </div>
@@ -577,7 +577,7 @@ export default function ControleDividas() {
                       <td style={s.td}><span style={s.badge(pe.ativo?'#EAF3DE':'#F1EFE8', pe.ativo?'#3B6D11':'#888780')}>{pe.ativo?'Sim':'Não'}</span></td>
                       <td style={s.td}>
                         {isAdmin && <button onClick={() => editarPessoa(pe)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}
-                        {isAdmin && <button onClick={() => excluirPessoa(pe)} style={{ ...s.btn('#FEF2F2',VERMELHO), marginLeft:4 }}>Excluir</button>}
+                        {isAdmin && <button onClick={() => excluirPessoa(pe)} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, marginLeft:4 }}>Excluir</button>}
                       </td>
                     </tr>
                   )

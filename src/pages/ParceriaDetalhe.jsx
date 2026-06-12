@@ -62,8 +62,8 @@ export default function ParceriaDetalhe() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?LARANJA:'#D3D1C7'}`, background:ativo?LARANJA:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer', whiteSpace:'nowrap' }),
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
   }
@@ -245,7 +245,7 @@ export default function ParceriaDetalhe() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:8 }}>
               {documentos.map(doc => (
                 <a key={doc.id} href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                  style={{ display:'block', background:'#F8F7F2', border:'0.5px solid #E0DDD5', borderRadius:10, padding:'1rem', textDecoration:'none' }}>
+                  style={{ display:'block', background:'#F8F7F2', border:'0.5px solid #E8E6DE', borderRadius:10, padding:'1rem', textDecoration:'none' }}>
                   <div style={{ fontSize:22, marginBottom:6 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                   <div style={{ fontSize:12, fontWeight:500, color:'#2C2C2A', marginBottom:2 }}>{doc.titulo}</div>
                   <div style={{ fontSize:10, color:'#888780' }}>{doc.categoria}</div>
@@ -264,7 +264,7 @@ export default function ParceriaDetalhe() {
             <strong>ℹ</strong> A prestação de contas completa com PDF MROSC está disponível na tela específica, filtrada por esta conta.
           </div>
           <button onClick={() => navigate('/prestacao-contas')}
-            style={{ padding:'8px 20px', fontSize:13, borderRadius:8, border:'none', background:LARANJA, color:'#fff', cursor:'pointer', fontWeight:500 }}>
+            style={{ padding:'8px 20px', fontSize:13, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', fontWeight:500 }}>
             Ir para Prestação de Contas →
           </button>
         </div>

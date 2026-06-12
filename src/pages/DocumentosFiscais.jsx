@@ -325,8 +325,8 @@ export default function DocumentosFiscais() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'6px 14px', fontSize:12, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
@@ -337,7 +337,7 @@ export default function DocumentosFiscais() {
   const tipos = tiposPorAba[aba] || []
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em' }}>Documentos Fiscais e Institucionais</div>
@@ -408,7 +408,7 @@ export default function DocumentosFiscais() {
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         {ABAS.map(a => (
           <button key={a.id} onClick={() => setAba(a.id)}
-            style={{ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${aba===a.id?VERDE:'#D3D1C7'}`, background:aba===a.id?VERDE:'transparent', color:aba===a.id?'#fff':'#5F5E5A', cursor:'pointer' }}>
+            style={{ padding:'6px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${aba===a.id?'#0E7EA8':'#D3D1C7'}`, background:aba===a.id?'#0E7EA8':'transparent', color:aba===a.id?'#fff':'#5F5E5A', cursor:'pointer' }}>
             {a.label}
           </button>
         ))}
@@ -423,7 +423,7 @@ export default function DocumentosFiscais() {
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:6, marginBottom:12 }}>
             {TIPOS_DECLARACOES.filter(t => TEXTOS_DECLARACOES[t]).map(tipo => (
-              <label key={tipo} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, cursor:'pointer', padding:'6px 10px', borderRadius:8, background: declaracoesSel.includes(tipo)?'#EAF3DE':'#F8F7F2', border:`0.5px solid ${declaracoesSel.includes(tipo)?VERDE:'#E0DDD5'}` }}>
+              <label key={tipo} style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, cursor:'pointer', padding:'6px 10px', borderRadius:8, background: declaracoesSel.includes(tipo)?'#EAF3DE':'#F8F7F2', border:`0.5px solid ${declaracoesSel.includes(tipo)?VERDE:'#E8E6DE'}` }}>
                 <input type="checkbox" checked={declaracoesSel.includes(tipo)}
                   onChange={e => setDeclaracoesSel(prev => e.target.checked ? [...prev, tipo] : prev.filter(t=>t!==tipo))} />
                 {tipo}
@@ -486,7 +486,7 @@ export default function DocumentosFiscais() {
                     </td>
                     <td style={s.td}><span style={s.badge(d.publico?'#EAF3DE':'#F1EFE8', d.publico?VERDE:'#888780')}>{d.publico?'Sim':'Não'}</span></td>
                     <td style={s.td}>
-                      {isAdmin && <button onClick={() => excluir(d.id)} style={{ ...s.btn('#FEF2F2',VERMELHO), fontSize:11 }}>Excluir</button>}
+                      {isAdmin && <button onClick={() => excluir(d.id)} style={{ ...{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }, fontSize:11 }}>Excluir</button>}
                     </td>
                   </tr>
                 )
@@ -570,7 +570,7 @@ export default function DocumentosFiscais() {
                       </td>
                       <td style={{ ...s.td, color:'#888780', fontSize:11 }}>{new Date(doc.criado_em).toLocaleDateString('pt-BR')}</td>
                       <td style={s.td}>
-                        {isAdmin && <button onClick={() => excluirArquivo(doc)} style={s.btn('#FEF2F2',VERMELHO)}>Excluir</button>}
+                        {isAdmin && <button onClick={() => excluirArquivo(doc)} style={{ ...s.btn('#FEF2F2',VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>}
                       </td>
                     </tr>
                   ))}

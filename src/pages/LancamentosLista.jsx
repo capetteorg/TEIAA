@@ -102,8 +102,8 @@ export default function LancamentosLista() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     badge: (bg,cor) => ({ display:'inline-block', padding:'2px 8px', borderRadius:99, fontSize:10, fontWeight:500, background:bg, color:cor }),
     btn: (bg,cor='#fff') => ({ padding:'5px 12px', fontSize:11, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     input: { fontSize:12, padding:'6px 9px', border:'0.5px solid #D3D1C7', borderRadius:8 },
@@ -240,7 +240,7 @@ export default function LancamentosLista() {
                             })
                           }} style={s.btn('#E6F1FB', AZUL)}>Editar</button>
                           {p === 'admin' && (
-                            <button onClick={() => setConfirmandoExcluir(l)} style={s.btn('#FEF2F2', VERMELHO)}>Excluir</button>
+                            <button onClick={() => setConfirmandoExcluir(l)} style={{ ...s.btn('#FEF2F2', VERMELHO), background:'transparent', border:'none', color:'#C0392B' }}>Excluir</button>
                           )}
                         </div>
                       </td>
