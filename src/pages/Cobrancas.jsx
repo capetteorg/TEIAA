@@ -106,9 +106,12 @@ export default function Cobrancas() {
 
   async function carregar() {
     setLoading(true)
-    let q = supabase.from('cobrancas').select('*').limit(10000).order('data_vencimento')
-    if (!isAdmin) q = q.not('status', 'in', '("pago confirmado no extrato","cancelado","incobrável")')
-    const { data } = await q
+    const montar = () => {
+      let q = supabase.from('cobrancas').select('*').order('data_vencimento')
+      if (!isAdmin) q = q.not('status', 'in', '("pago confirmado no extrato","cancelado","incobrável")')
+      return q
+    }
+    const { data } = await fetchAll(montar)
     setCobrancas(data || [])
     setLoading(false)
   }

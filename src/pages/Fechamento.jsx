@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 import { gerarPDFParecer, gerarPDFParecerAnual } from '../lib/pdf'
 import { auditar } from '../lib/auditoria'
@@ -65,8 +66,8 @@ export default function Fechamento() {
 
   async function parecerAnual(ano) {
     setGerandoPDF('anual-'+ano)
-    const { data: movData } = await supabase.from('extrato_movs')
-      .select('valor').gte('data', `${ano}-01-01`).lte('data', `${ano}-12-31`)
+    const { data: movData } = await fetchAll(() => supabase.from('extrato_movs')
+      .select('valor').gte('data', `${ano}-01-01`).lte('data', `${ano}-12-31`))
     const { data: inst } = await supabase.from('instituicao').select('*').limit(1).single()
     const fechAno = fechamentos.filter(f => f.competencia.startsWith(ano) && ['aprovado','aprovado_ressalva'].includes(f.status))
     gerarPDFParecerAnual({ ano, fechamentos: fechAno, movs: movData||[], instituicao: inst||{} })
@@ -191,8 +192,8 @@ export default function Fechamento() {
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
-    th: { textAlign:'left', padding:'7px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' },
-    td: { padding:'8px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:12, verticalAlign:'middle' },
+    th: { textAlign:'left', padding:'7px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' },
+    td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
     btn: (bg,cor='#fff') => ({ padding:'5px 12px', fontSize:11, borderRadius:7, border:'none', background:bg, color:cor, cursor:'pointer', whiteSpace:'nowrap' }),
     input: { width:'100%', fontSize:12, padding:'7px 9px', border:'0.5px solid #D3D1C7', borderRadius:8, boxSizing:'border-box' },
     label: { fontSize:11, color:'#5F5E5A', display:'block', marginBottom:3 },
@@ -326,7 +327,7 @@ export default function Fechamento() {
                   {/* Painel de aprovação */}
                   {isAprovAberto && (
                     <tr>
-                      <td colSpan={8} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={8} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#F2FAE8', padding:'16px', borderLeft:`3px solid ${VERDE}` }}>
                           <div style={{ fontSize:13, fontWeight:500, marginBottom:12, color:VERDE }}>
                             <i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Registrar aprovação do Conselho Fiscal — {fmtMes(competencia)}
@@ -367,7 +368,7 @@ export default function Fechamento() {
                                   const selecionados = (formAprov.membros_presentes_ids || [])
                                   const sel = selecionados.includes(m.id)
                                   return (
-                                    <label key={m.id} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer', padding:'5px 10px', borderRadius:8, background:sel?'#EAF3DE':'#F8F7F2', border:`0.5px solid ${sel?VERDE:'#E0DDD5'}` }}>
+                                    <label key={m.id} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor:'pointer', padding:'5px 10px', borderRadius:8, background:sel?'#EAF3DE':'#F8F7F2', border:`0.5px solid ${sel?VERDE:'#E8E6DE'}` }}>
                                       <input type="checkbox" checked={sel} onChange={e => {
                                         const ids = formAprov.membros_presentes_ids || []
                                         const novos = e.target.checked ? [...ids, m.id] : ids.filter(i=>i!==m.id)
@@ -408,7 +409,7 @@ export default function Fechamento() {
                   {/* Detalhes expandidos */}
                   {isExpand && fechamento && (
                     <tr>
-                      <td colSpan={8} style={{ padding:0, borderBottom:'0.5px solid #E0DDD5' }}>
+                      <td colSpan={8} style={{ padding:0, borderBottom:'0.5px solid #E8E6DE' }}>
                         <div style={{ background:'#F8F7F2', padding:'12px 16px', borderLeft:`3px solid ${AZUL}` }}>
                           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:10, fontSize:12 }}>
                             {fechamento.ressalvas && <div><span style={{ color:'#888780' }}>Ressalvas:</span><br/><strong>{fechamento.ressalvas}</strong></div>}

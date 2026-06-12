@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { gerarPDFRelatorio } from '../lib/pdf'
 
 const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
@@ -26,16 +27,18 @@ export default function Relatorios() {
 
   async function carregar() {
     setLoading(true)
-    let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, competencia)').limit(10000)
+    const montar = () => {
+      let q = supabase.from('extrato_movs')
+        .select('*, categoria:categorias(nome,tipo), extrato:extratos(conta_id, competencia)')
 
-    if (periodo === 'mes') {
-      q = q.gte('data', mes+'-01').lte('data', fimMes(mes))
-    } else {
-      q = q.gte('data', ano+'-01-01').lte('data', ano+'-12-31')
+      if (periodo === 'mes') {
+        q = q.gte('data', mes+'-01').lte('data', fimMes(mes))
+      } else {
+        q = q.gte('data', ano+'-01-01').lte('data', ano+'-12-31')
+      }
+      return q
     }
-
-    const { data: movs } = await q
+    const { data: movs } = await fetchAll(montar)
     let lista = movs || []
 
     if (contaId !== 'todas') {

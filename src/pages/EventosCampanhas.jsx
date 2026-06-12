@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F', ROXO = '#8B2FC9'
@@ -97,10 +98,10 @@ export default function EventosCampanhas() {
     setSel(item)
     setLoadingMovs(true)
     const campo = item.tipo === 'evento' ? 'evento_id' : 'campanha_id'
-    const { data } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo)').limit(10000)
+    const { data } = await fetchAll(() => supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo)')
       .eq(campo, item.id)
-      .order('data')
+      .order('data'))
     setMovs(data || [])
     setLoadingMovs(false)
   }

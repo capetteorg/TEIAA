@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 
 const fimDe = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 import { gerarPDFPrestacaoContas } from '../lib/pdf'
@@ -39,10 +40,10 @@ export default function PrestacaoContas() {
     setLoading(true)
 
     // Busca extratos da conta
-    const { data: extratos } = await supabase
+    const { data: extratos } = await fetchAll(() => supabase
       .from('extratos')
       .select('id, competencia, saldo_final')
-      .eq('conta_id', contaSel.id)
+      .eq('conta_id', contaSel.id))
 
     if (!extratos || extratos.length === 0) {
       setLoading(false)
@@ -54,18 +55,19 @@ export default function PrestacaoContas() {
     const extratoIds = extratos.map(e => e.id)
 
     // Busca movimentações
-    let q = supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano, valor_total_previsto)').limit(10000)
-      .in('extrato_id', extratoIds)
-      .order('data')
-
-    if (periodo === 'mes' && mesInicio) {
-      q = q.gte('data', mesInicio + '-01').lte('data', fimDe(mesInicio))
-    } else if (periodo === 'personalizado' && mesInicio && mesFim) {
-      q = q.gte('data', mesInicio + '-01').lte('data', fimDe(mesFim))
+    const montarMovs = () => {
+      let q = supabase.from('extrato_movs')
+        .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome), plano:planos(nome_plano, valor_total_previsto)')
+        .in('extrato_id', extratoIds)
+        .order('data')
+      if (periodo === 'mes' && mesInicio) {
+        q = q.gte('data', mesInicio + '-01').lte('data', fimDe(mesInicio))
+      } else if (periodo === 'personalizado' && mesInicio && mesFim) {
+        q = q.gte('data', mesInicio + '-01').lte('data', fimDe(mesFim))
+      }
+      return q
     }
-
-    const { data: movs } = await q
+    const { data: movs } = await fetchAll(montarMovs)
     const lista = movs || []
 
     // Separa entradas e saídas

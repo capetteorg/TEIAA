@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { Line } from 'react-chartjs-2'
 import 'chart.js/auto'
 
@@ -24,7 +25,7 @@ export default function PainelDiretoria() {
     async function carregarEvolucao() {
       const hoje = new Date()
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
-      const { data } = await supabase.from('extrato_movs').select('data,valor').limit(10000).gte('data', inicio)
+      const { data } = await fetchAll(() => supabase.from('extrato_movs').select('data,valor').gte('data', inicio))
       const porMes = {}
       ;(data||[]).forEach(m => {
         const ym = m.data.slice(0,7)
@@ -83,13 +84,13 @@ export default function PainelDiretoria() {
     }
 
     // Busca movimentações do mês selecionado
-    const { data: movsData } = await supabase
+    const { data: movsData } = await fetchAll(() => supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
       .in('extrato_id', extratoIds)
       .gte('data', mes + '-01')
       .lte('data', fimMes(mes))
-      .order('data', { ascending: false })
+      .order('data', { ascending: false }))
 
     const lista = (movsData || []).map(m => ({ ...m, extrato: extratoMap[m.extrato_id] || null }))
     setMovs(lista)

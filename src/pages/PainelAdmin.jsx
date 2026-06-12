@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { Line } from 'react-chartjs-2'
 import 'chart.js/auto'
 
@@ -44,7 +45,7 @@ export default function PainelAdmin() {
     async function carregarEvolucao() {
       const hoje = new Date()
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
-      const { data } = await supabase.from('extrato_movs').select('data,valor').limit(10000).gte('data', inicio)
+      const { data } = await fetchAll(() => supabase.from('extrato_movs').select('data,valor').gte('data', inicio))
       const porMes = {}
       ;(data||[]).forEach(m => {
         const ym = m.data.slice(0,7)
@@ -93,7 +94,7 @@ export default function PainelAdmin() {
 
   async function carregarResumo() {
     const [{ data: movs }, { data: exts }] = await Promise.all([
-      supabase.from('extrato_movs').select('valor').limit(10000).gte('data', mes+'-01').lte('data', fimMes(mes)),
+      fetchAll(() => supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes(mes))),
       supabase.from('extratos').select('saldo_inicial,saldo_final').eq('competencia', mes),
     ])
     const lista = movs || []

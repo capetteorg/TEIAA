@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 const LOGO = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#0E7EA8'],['E','#E8207A']]
@@ -58,9 +59,9 @@ export default function Sociedade() {
     const ultimoDia = new Date(parseInt(anoMes), parseInt(mmMes), 0).getDate()
     const fimMes = `${mes}-${String(ultimoDia).padStart(2,'0')}`
     const [movMes, movAno, todas] = await Promise.all([
-      supabase.from('extrato_movs').select('valor').limit(10000).gte('data', mes+'-01').lte('data', fimMes),
-      supabase.from('extrato_movs').select('*, categoria:categorias(nome,tipo)').limit(10000).gte('data', ano+'-01-01').lte('data', ano+'-12-31').order('data', { ascending:false }),
-      supabase.from('extrato_movs').select('valor').limit(10000),
+      fetchAll(() => supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes)),
+      fetchAll(() => supabase.from('extrato_movs').select('*, categoria:categorias(nome,tipo)').gte('data', ano+'-01-01').lte('data', ano+'-12-31').order('data', { ascending:false })),
+      fetchAll(() => supabase.from('extrato_movs').select('valor')),
     ])
     const entMes = (movMes.data||[]).filter(m=>Number(m.valor)>0).reduce((a,m)=>a+Number(m.valor),0)
     const saiMes = Math.abs((movMes.data||[]).filter(m=>Number(m.valor)<0).reduce((a,m)=>a+Number(m.valor),0))

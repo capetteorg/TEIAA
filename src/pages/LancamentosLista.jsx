@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { exportarCSV } from '../lib/ui'
@@ -40,23 +41,25 @@ export default function LancamentosLista() {
 
   async function carregar() {
     setLoading(true)
-    let q = supabase.from('lancamentos')
-      .select('*, conta:contas(nome), categoria:categorias(nome,tipo), projeto:projetos(nome), fornecedor:fornecedores(nome)').limit(10000)
-      .order('data', { ascending: false })
-    if (p === 'operacional') q = q.eq('criado_por', user.id)
-    if (filtroTipo !== 'todos') {
-      if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
-      else q = q.eq('tipo', filtroTipo)
+    const montar = () => {
+      let q = supabase.from('lancamentos')
+        .select('*, conta:contas(nome), categoria:categorias(nome,tipo), projeto:projetos(nome), fornecedor:fornecedores(nome)')
+        .order('data', { ascending: false })
+      if (p === 'operacional') q = q.eq('criado_por', user.id)
+      if (filtroTipo !== 'todos') {
+        if (filtroTipo === 'despesa') q = q.in('tipo', ['despesa','saida'])
+        else q = q.eq('tipo', filtroTipo)
+      }
+      if (filtroPeriodo) {
+        const [ano, mes] = filtroPeriodo.split('-')
+        const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
+        q = q.gte('data', filtroPeriodo+'-01').lte('data', `${filtroPeriodo}-${ultimoDia}`)
+      }
+      if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
+      if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
+      return q
     }
-    if (filtroPeriodo) {
-      const [ano, mes] = filtroPeriodo.split('-')
-      const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate()
-      q = q.gte('data', filtroPeriodo+'-01').lte('data', `${filtroPeriodo}-${ultimoDia}`)
-    }
-    if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
-    if (filtroProjeto) q = q.eq('projeto_id', parseInt(filtroProjeto))
-    q = q.limit(limite + 1)
-    const { data } = await q
+    const { data } = await fetchAll(montar, 1000, limite + 1)
     const recebidos = data || []
     setTemMais(recebidos.length > limite)
     setLista(recebidos.slice(0, limite))

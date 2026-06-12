@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useNavigate } from 'react-router-dom'
 import { confirmar } from '../lib/ui'
 
@@ -71,23 +72,23 @@ export default function Conciliacao() {
     setLoading(true)
     setExtratoSel(ext)
     setMatchMap({})
-    const { data } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
-      .eq('extrato_id', ext.id).order('data')
+    const { data } = await fetchAll(() => supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .eq('extrato_id', ext.id).order('data'))
     setMovs(data || [])
 
     // Buscar lançamentos da conta para cruzamento
-    const { data: lancs } = await supabase.from('lancamentos')
-      .select('*, categoria:categorias(nome,tipo)').limit(10000)
-      .eq('conta_id', ext.conta?.id).order('data')
+    const { data: lancs } = await fetchAll(() => supabase.from('lancamentos')
+      .select('*, categoria:categorias(nome,tipo)')
+      .eq('conta_id', ext.conta?.id).order('data'))
     setLancamentos(lancs || [])
 
     // Buscar movimentações de dívida
     const ids = (data||[]).map(m => m.id)
     if (ids.length > 0) {
-      const { data: divMovs } = await supabase.from('divida_movimentacoes')
-        .select('*, pessoa:pessoas_recorrentes(id,nome,valor_mensal_normal)').limit(10000)
-        .in('extrato_mov_id', ids)
+      const { data: divMovs } = await fetchAll(() => supabase.from('divida_movimentacoes')
+        .select('*, pessoa:pessoas_recorrentes(id,nome,valor_mensal_normal)')
+        .in('extrato_mov_id', ids))
       const mapa = {}
       ;(divMovs||[]).forEach(dm => {
         if (!mapa[dm.extrato_mov_id]) mapa[dm.extrato_mov_id] = { pessoa: dm.pessoa, competencia: dm.competencia, abatimento:0, mensal_nao_pago:0 }
@@ -258,7 +259,7 @@ export default function Conciliacao() {
     const totalPagoMensal = jaPageMensal+valMensal
     const totalAbatido = jaAbateu+valAbat
     const valorNaoPago = Math.max(0, valorMensalDevido-totalPagoMensal)
-    const { data: todasMovs } = await supabase.from('divida_movimentacoes').select('tipo,valor,competencia').limit(10000).eq('pessoa_id', parseInt(pessoa_id))
+    const { data: todasMovs } = await fetchAll(() => supabase.from('divida_movimentacoes').select('tipo,valor,competencia').eq('pessoa_id', parseInt(pessoa_id)))
     const saldoBase = (todasMovs||[]).reduce((acc,m) => {
       if (m.competencia===competencia&&m.tipo==='acrescimo') return acc
       if (m.tipo==='divida_inicial'||m.tipo==='acrescimo') return acc+Number(m.valor)
@@ -331,9 +332,9 @@ export default function Conciliacao() {
       }
     }
     setDividirAberto(null)
-    const { data } = await supabase.from('extrato_movs')
-      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
-      .eq('extrato_id', extratoSel.id).order('data')
+    const { data } = await fetchAll(() => supabase.from('extrato_movs')
+      .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
+      .eq('extrato_id', extratoSel.id).order('data'))
     setMovs(data || [])
     setMsg('Movimentação dividida com sucesso!')
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)

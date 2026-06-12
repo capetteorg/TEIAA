@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { gerarPDFRelatorio, gerarPDFConciliacao } from '../lib/pdf'
@@ -96,17 +97,17 @@ export default function RelatoriosCentral() {
       return
     }
 
-    const { data: movs } = await supabase.from('extrato_movs')
+    const { data: movs } = await fetchAll(() => supabase.from('extrato_movs')
       .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
-      .in('extrato_id', extratosIds).order('data').limit(10000)
+      .in('extrato_id', extratosIds).order('data'))
 
     // Buscar lançamentos vinculados
     const movIds = (movs||[]).map(m => m.id)
     let lancMap = {}
     if (movIds.length > 0) {
-      const { data: lancs } = await supabase.from('lancamentos')
-        .select('extrato_mov_id, fornecedor, num_nota, cpf_cnpj').limit(10000)
-        .in('extrato_mov_id', movIds)
+      const { data: lancs } = await fetchAll(() => supabase.from('lancamentos')
+        .select('extrato_mov_id, fornecedor, num_nota, cpf_cnpj')
+        .in('extrato_mov_id', movIds))
       ;(lancs||[]).forEach(l => { lancMap[l.extrato_mov_id] = l })
     }
 
@@ -154,7 +155,7 @@ export default function RelatoriosCentral() {
     const pageSize = 1000
     while (true) {
       let q = supabase.from('extrato_movs')
-        .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)').limit(10000)
+        .select('*, categoria:categorias(nome,tipo), subcategoria:subcategorias(nome)')
         .gte('data', dataInicio).lte('data', dataFim)
         .order('data').range(from, from + pageSize - 1)
       const { data: page } = await q
@@ -241,10 +242,16 @@ export default function RelatoriosCentral() {
     const projetoId = pId || plano?.projeto_id
     let atendimentos = [], usuarios = []
     if (projetoId) {
-      let qA = supabase.from('atendimentos').select('*, profissional:equipe(nome,funcao)').limit(10000).eq('projeto_id', projetoId).order('data_atend')
-      if (dataInicio) qA = qA.gte('data_atend', dataInicio)
-      if (dataFim) qA = qA.lte('data_atend', dataFim)
-      const [a, u] = await Promise.all([qA, supabase.from('usuarios_atendidos').select('*').eq('projeto_id', projetoId)])
+      const montarA = () => {
+        let qA = supabase.from('atendimentos').select('*, profissional:equipe(nome,funcao)').eq('projeto_id', projetoId).order('data_atend')
+        if (dataInicio) qA = qA.gte('data_atend', dataInicio)
+        if (dataFim) qA = qA.lte('data_atend', dataFim)
+        return qA
+      }
+      const [a, u] = await Promise.all([
+        fetchAll(montarA),
+        fetchAll(() => supabase.from('usuarios_atendidos').select('*').eq('projeto_id', projetoId)),
+      ])
       atendimentos = a.data || []
       usuarios = u.data || []
     }
@@ -309,9 +316,9 @@ export default function RelatoriosCentral() {
         supabase.from('projeto_equipe').select('*, membro:equipe(nome,funcao,tipo_vinculo)').eq('projeto_id', projetoId),
         supabase.from('projeto_orcamento').select('*').eq('projeto_id', projetoId),
         supabase.from('metas_plano').select('*').eq('plano_id', plId),
-        supabase.from('atendimentos').select('*').limit(10000).eq('projeto_id', projetoId).gte('data_atend', anoInicio).lte('data_atend', anoFim),
+        fetchAll(() => supabase.from('atendimentos').select('*').eq('projeto_id', projetoId).gte('data_atend', anoInicio).lte('data_atend', anoFim)),
         supabase.from('usuarios_atendidos').select('*').eq('projeto_id', projetoId).eq('situacao','ativo'),
-        supabase.from('lancamentos').select('*, categoria:categorias(nome)').limit(10000).eq('projeto_id', projetoId).gte('data', anoInicio).lte('data', anoFim),
+        fetchAll(() => supabase.from('lancamentos').select('*, categoria:categorias(nome)').eq('projeto_id', projetoId).gte('data', anoInicio).lte('data', anoFim)),
       ])
       const lancs = lancRes.data || []
       const totalEntradas = lancs.filter(l=>l.tipo==='entrada').reduce((a,l)=>a+Number(l.valor||0),0)
@@ -382,11 +389,14 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarAtendimentos(pId) {
-    let q = supabase.from('atendimentos')
-      .select('*, projeto:projetos(nome), profissional:equipe(nome,funcao)').limit(10000)
-      .gte('data_atend', dataInicio).lte('data_atend', dataFim).order('data_atend')
-    if (pId) q = q.eq('projeto_id', pId)
-    const { data } = await q
+    const montar = () => {
+      let q = supabase.from('atendimentos')
+        .select('*, projeto:projetos(nome), profissional:equipe(nome,funcao)')
+        .gte('data_atend', dataInicio).lte('data_atend', dataFim).order('data_atend')
+      if (pId) q = q.eq('projeto_id', pId)
+      return q
+    }
+    const { data } = await fetchAll(montar)
     const lista = data || []
     const totalPart = lista.reduce((a,m) => a+(Number(m.qtd_participantes)||0), 0)
     const porTipo = {}
@@ -402,11 +412,14 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarDoacoes(pId) {
-    let q = supabase.from('doacoes')
-      .select('*, projeto:projetos(nome), itens:doacoes_itens(*)').limit(10000)
-      .gte('data_doacao', dataInicio).lte('data_doacao', dataFim).order('data_doacao', { ascending:false })
-    if (pId) q = q.eq('projeto_id', pId)
-    const { data } = await q
+    const montar = () => {
+      let q = supabase.from('doacoes')
+        .select('*, projeto:projetos(nome), itens:doacoes_itens(*)')
+        .gte('data_doacao', dataInicio).lte('data_doacao', dataFim).order('data_doacao', { ascending:false })
+      if (pId) q = q.eq('projeto_id', pId)
+      return q
+    }
+    const { data } = await fetchAll(montar)
     const lista = data || []
     const totalEstimado = lista.reduce((a,d) => a+Number(d.valor_estimado||0), 0)
     const porCategoria = {}

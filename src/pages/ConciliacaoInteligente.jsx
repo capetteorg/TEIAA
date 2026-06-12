@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -48,17 +49,17 @@ export default function ConciliacaoInteligente() {
     setResultado([])
     setStats(null)
 
-    const { data: movData } = await supabase
+    const { data: movData } = await fetchAll(() => supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome)').limit(10000)
+      .select('*, categoria:categorias(nome)')
       .eq('extrato_id', ext.id)
-      .order('data')
+      .order('data'))
 
-    const { data: lancData } = await supabase
+    const { data: lancData } = await fetchAll(() => supabase
       .from('lancamentos')
-      .select('*, categoria:categorias(nome)').limit(10000)
+      .select('*, categoria:categorias(nome)')
       .eq('conta_id', ext.conta?.id)
-      .order('data')
+      .order('data'))
 
     setMovs(movData || [])
     setLancamentos(lancData || [])

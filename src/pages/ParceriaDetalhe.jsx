@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 const TIPO_LABEL = { emenda:'Emenda Parlamentar', edital:'Edital', fomento:'Termo de Fomento', colaboracao:'Termo de Colaboração', convenio:'Convênio', projeto:'Projeto Específico' }
@@ -31,9 +32,9 @@ export default function ParceriaDetalhe() {
       const { data: extratos } = await supabase.from('extratos').select('id').eq('conta_id', parc.conta_id)
       if (extratos?.length) {
         const ids = extratos.map(e => e.id)
-        const { data: movsData } = await supabase.from('extrato_movs')
-          .select('*, categoria:categorias(nome), plano:planos(nome_plano)').limit(10000)
-          .in('extrato_id', ids).order('data', { ascending: false })
+        const { data: movsData } = await fetchAll(() => supabase.from('extrato_movs')
+          .select('*, categoria:categorias(nome), plano:planos(nome_plano)')
+          .in('extrato_id', ids).order('data', { ascending: false }))
         setMovs(movsData || [])
         const lista = movsData || []
         const ent = lista.filter(m => Number(m.valor) > 0).reduce((a,m) => a+Number(m.valor), 0)

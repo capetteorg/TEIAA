@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 
@@ -66,18 +67,19 @@ export default function Atendimentos() {
 
   async function carregar() {
     setLoading(true)
-    let q = supabase.from('atendimentos')
-      .select('*, projeto:projetos(nome,tipo), profissional:equipe(nome,funcao)').limit(10000)
-      .order('data_atend', { ascending: false })
-    if (filtros.dataInicio) q = q.gte('data_atend', filtros.dataInicio)
-    if (filtros.dataFim) q = q.lte('data_atend', filtros.dataFim)
-    if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
-    if (filtros.tipo_atend) q = q.eq('tipo_atend', filtros.tipo_atend)
-    if (filtros.profissional_id) q = q.eq('profissional_id', parseInt(filtros.profissional_id))
-    if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
-    q = q.limit(limite + 1)
-
-    const { data } = await q
+    const montar = () => {
+      let q = supabase.from('atendimentos')
+        .select('*, projeto:projetos(nome,tipo), profissional:equipe(nome,funcao)')
+        .order('data_atend', { ascending: false })
+      if (filtros.dataInicio) q = q.gte('data_atend', filtros.dataInicio)
+      if (filtros.dataFim) q = q.lte('data_atend', filtros.dataFim)
+      if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
+      if (filtros.tipo_atend) q = q.eq('tipo_atend', filtros.tipo_atend)
+      if (filtros.profissional_id) q = q.eq('profissional_id', parseInt(filtros.profissional_id))
+      if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
+      return q
+    }
+    const { data } = await fetchAll(montar, 1000, limite + 1)
     const recebidos = data || []
     setTemMais(recebidos.length > limite)
     setAtendimentos(recebidos.slice(0, limite))

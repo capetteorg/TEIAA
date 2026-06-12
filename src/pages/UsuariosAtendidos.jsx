@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
@@ -46,16 +47,17 @@ export default function UsuariosAtendidos() {
 
   async function carregar() {
     setLoading(true)
-    let q = supabase.from('usuarios_atendidos')
-      .select('*, projeto:projetos(nome,tipo)')
-      .order('nome')
-    if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
-    if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
-    if (filtros.dataInicio) q = q.gte('data_ingresso', filtros.dataInicio)
-    if (filtros.dataFim) q = q.lte('data_ingresso', filtros.dataFim)
-    q = q.limit(limite + 1)
-
-    const { data } = await q
+    const montar = () => {
+      let q = supabase.from('usuarios_atendidos')
+        .select('*, projeto:projetos(nome,tipo)')
+        .order('nome')
+      if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
+      if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
+      if (filtros.dataInicio) q = q.gte('data_ingresso', filtros.dataInicio)
+      if (filtros.dataFim) q = q.lte('data_ingresso', filtros.dataFim)
+      return q
+    }
+    const { data } = await fetchAll(montar, 1000, limite + 1)
     const recebidos = data || []
     setTemMais(recebidos.length > limite)
     setUsuarios(recebidos.slice(0, limite))

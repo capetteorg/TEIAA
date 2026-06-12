@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -58,13 +59,16 @@ export default function RelatorioExecucao() {
     // Atendimentos realizados
     let atendimentos = []
     if (projetoId) {
-      let q = supabase.from('atendimentos')
-        .select('*, profissional:equipe(nome,funcao)').limit(10000)
-        .eq('projeto_id', projetoId)
-        .order('data_atend')
-      if (dataInicio) q = q.gte('data_atend', dataInicio)
-      if (dataFim) q = q.lte('data_atend', dataFim)
-      const { data } = await q
+      const montar = () => {
+        let q = supabase.from('atendimentos')
+          .select('*, profissional:equipe(nome,funcao)')
+          .eq('projeto_id', projetoId)
+          .order('data_atend')
+        if (dataInicio) q = q.gte('data_atend', dataInicio)
+        if (dataFim) q = q.lte('data_atend', dataFim)
+        return q
+      }
+      const { data } = await fetchAll(montar)
       atendimentos = data || []
     }
 
@@ -99,10 +103,13 @@ export default function RelatorioExecucao() {
         const { data: extratos } = await supabase.from('extratos').select('id').eq('conta_id', parceria.conta_id)
         if (extratos?.length) {
           const ids = extratos.map(e => e.id)
-          let qMovs = supabase.from('extrato_movs').select('valor').limit(10000).in('extrato_id', ids)
-          if (dataInicio) qMovs = qMovs.gte('data', dataInicio)
-          if (dataFim) qMovs = qMovs.lte('data', dataFim)
-          const { data: movs } = await qMovs
+          const montar = () => {
+            let qMovs = supabase.from('extrato_movs').select('valor').in('extrato_id', ids)
+            if (dataInicio) qMovs = qMovs.gte('data', dataInicio)
+            if (dataFim) qMovs = qMovs.lte('data', dataFim)
+            return qMovs
+          }
+          const { data: movs } = await fetchAll(montar)
           const lista = movs || []
           const ent = lista.filter(m => Number(m.valor) > 0).reduce((a,m) => a+Number(m.valor), 0)
           const sai = Math.abs(lista.filter(m => Number(m.valor) < 0).reduce((a,m) => a+Number(m.valor), 0))

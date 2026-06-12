@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useSearchParams } from 'react-router-dom'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8'
@@ -38,17 +39,20 @@ export default function FornecedorHistorico() {
 
   async function carregarLancamentos(fid) {
     setLoading(true)
-    let q = supabase.from('lancamentos')
-      .select('*, conta:contas(nome), categoria:categorias(nome)').limit(10000)
-      .eq('fornecedor_id', fid || fornecedorId)
-      .order('data', { ascending: false })
-    if (filtroPeriodo) {
-      const [fy, fm] = filtroPeriodo.split('-')
-      q = q.gte('data', filtroPeriodo+'-01').lte('data', `${filtroPeriodo}-${new Date(+fy, +fm, 0).getDate()}`)
+    const montar = () => {
+      let q = supabase.from('lancamentos')
+        .select('*, conta:contas(nome), categoria:categorias(nome)')
+        .eq('fornecedor_id', fid || fornecedorId)
+        .order('data', { ascending: false })
+      if (filtroPeriodo) {
+        const [fy, fm] = filtroPeriodo.split('-')
+        q = q.gte('data', filtroPeriodo+'-01').lte('data', `${filtroPeriodo}-${new Date(+fy, +fm, 0).getDate()}`)
+      }
+      if (filtroTipo !== 'todos') q = q.eq('tipo', filtroTipo)
+      if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
+      return q
     }
-    if (filtroTipo !== 'todos') q = q.eq('tipo', filtroTipo)
-    if (filtroCategoria) q = q.eq('categoria_id', parseInt(filtroCategoria))
-    const { data } = await q
+    const { data } = await fetchAll(montar)
     setLancamentos(data || [])
     setLoading(false)
   }

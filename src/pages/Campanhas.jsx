@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 import { gerarPDFCampanha } from '../lib/pdf'
 
@@ -40,11 +41,11 @@ export default function Campanhas() {
   async function abrirCampanha(camp) {
     setLoading(true)
     setCampanhaSel(camp)
-    const { data } = await supabase
+    const { data } = await fetchAll(() => supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome), subcategoria:subcategorias(nome)').limit(10000)
+      .select('*, categoria:categorias(nome), subcategoria:subcategorias(nome)')
       .eq('campanha_id', camp.id)
-      .order('data')
+      .order('data'))
     setMovs(data || [])
     setLoading(false)
   }

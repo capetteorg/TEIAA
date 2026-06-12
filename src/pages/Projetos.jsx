@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
@@ -159,7 +160,7 @@ export default function Projetos() {
   async function carregarFinanceiro(projetoId) {
     const [orcRes, lancRes] = await Promise.all([
       supabase.from('projeto_orcamento').select('*').eq('projeto_id', projetoId).order('categoria'),
-      supabase.from('lancamentos').select('*, conta:contas(nome)').limit(10000).eq('projeto_id', projetoId).order('data', { ascending: false }),
+      fetchAll(() => supabase.from('lancamentos').select('*, conta:contas(nome)').eq('projeto_id', projetoId).order('data', { ascending: false })),
     ])
     setOrcamento(orcRes.data || [])
     setLancamentosProjeto(lancRes.data || [])

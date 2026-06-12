@@ -1,5 +1,25 @@
 import { supabase } from './supabase'
 
+// =============================================
+// fetchAll: busca TODOS os registros paginando em lotes de 1000
+// (contorna o teto Max Rows do Supabase/PostgREST)
+// Uso: const { data, error } = await fetchAll(() => supabase.from('t').select('...').eq(...).order(...))
+// =============================================
+export async function fetchAll(montarQuery, lote = 1000, max = Infinity) {
+  let tudo = []
+  let de = 0
+  while (tudo.length < max) {
+    const tam = Math.min(lote, max - tudo.length)
+    const { data, error } = await montarQuery().range(de, de + tam - 1)
+    if (error) return { data: tudo, error }
+    tudo = tudo.concat(data || [])
+    if (!data || data.length < tam) break
+    de += tam
+  }
+  return { data: tudo, error: null }
+}
+
+
 // ---- CONTAS ----
 export const contas = {
   listar: () => supabase.from('contas').select('*').order('nome'),
@@ -21,17 +41,17 @@ export const categorias = {
 
 // ---- LANÇAMENTOS ----
 export const lancamentos = {
-  listar: (filtros = {}) => {
+  listar: (filtros = {}) => fetchAll(() => {
     let q = supabase
       .from('lancamentos')
-      .select(`*, conta:contas(nome, banco), categoria:categorias(nome, tipo)`).limit(10000)
+      .select(`*, conta:contas(nome, banco), categoria:categorias(nome, tipo)`)
       .order('data', { ascending: false })
     if (filtros.conta_id) q = q.eq('conta_id', filtros.conta_id)
     if (filtros.tipo) q = q.eq('tipo', filtros.tipo)
     if (filtros.mes) { const [y,mo] = filtros.mes.split('-'); q = q.gte('data', filtros.mes + '-01').lte('data', `${filtros.mes}-${new Date(+y,+mo,0).getDate()}`) }
     if (filtros.conciliado !== undefined) q = q.eq('conciliado', filtros.conciliado)
     return q
-  },
+  }),
   criar: (dados) => supabase.from('lancamentos').insert(dados).select().single(),
   atualizar: (id, dados) => supabase.from('lancamentos').update(dados).eq('id', id),
   conciliar: (id) => supabase.from('lancamentos').update({ conciliado: true }).eq('id', id),

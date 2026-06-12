@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
@@ -60,15 +61,18 @@ export default function Doacoes() {
 
   async function carregar() {
     setLoading(true)
-    let q = supabase.from('doacoes')
-      .select('*, projeto:projetos(nome)').limit(10000)
-      .order('data_doacao', { ascending: false })
-    if (filtros.dataInicio) q = q.gte('data_doacao', filtros.dataInicio)
-    if (filtros.dataFim) q = q.lte('data_doacao', filtros.dataFim)
-    if (filtros.categoria) q = q.eq('categoria', filtros.categoria)
-    if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
-    if (filtros.doador) q = q.ilike('doador', `%${filtros.doador}%`)
-    const { data } = await q
+    const montar = () => {
+      let q = supabase.from('doacoes')
+        .select('*, projeto:projetos(nome)')
+        .order('data_doacao', { ascending: false })
+      if (filtros.dataInicio) q = q.gte('data_doacao', filtros.dataInicio)
+      if (filtros.dataFim) q = q.lte('data_doacao', filtros.dataFim)
+      if (filtros.categoria) q = q.eq('categoria', filtros.categoria)
+      if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
+      if (filtros.doador) q = q.ilike('doador', `%${filtros.doador}%`)
+      return q
+    }
+    const { data } = await fetchAll(montar)
     setDoacoes(data || [])
     setLoading(false)
   }

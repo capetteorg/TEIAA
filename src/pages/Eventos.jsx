@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 import { gerarPDFEvento } from '../lib/pdf'
 
@@ -40,11 +41,11 @@ export default function Eventos() {
   async function abrirEvento(ev) {
     setLoading(true)
     setEventoSel(ev)
-    const { data } = await supabase
+    const { data } = await fetchAll(() => supabase
       .from('extrato_movs')
-      .select('*, categoria:categorias(nome), subcategoria:subcategorias(nome)').limit(10000)
+      .select('*, categoria:categorias(nome), subcategoria:subcategorias(nome)')
       .eq('evento_id', ev.id)
-      .order('data')
+      .order('data'))
     setMovs(data || [])
     setLoading(false)
   }
