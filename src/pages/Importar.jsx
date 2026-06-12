@@ -16,6 +16,7 @@ export default function Importar() {
   const [movs, setMovs] = useState([])
   const [salvando, setSalvando] = useState(false)
   const [msg, setMsg] = useState('')
+  const [avisoSaldo, setAvisoSaldo] = useState('')
   const [step, setStep] = useState(1)
   const [aba, setAba] = useState('importar')
   const [historico, setHistorico] = useState([])
@@ -123,10 +124,30 @@ export default function Importar() {
       }
     }
 
+    // Saldo inicial derivado: saldo_final − resultado das movimentações do período
+    const somaMovs = movs.reduce((a, m) => a + Number(m.valor || 0), 0)
+    const saldoInicial = Math.round((Number(extrato.saldoFinal || 0) - somaMovs) * 100) / 100
+
+    // Verificação de continuidade: saldo inicial deve bater com o final do mês anterior
+    let avisoContinuidade = ''
+    const { data: anterior } = await supabase.from('extratos')
+      .select('competencia, saldo_final')
+      .eq('conta_id', parseInt(contaSel))
+      .lt('competencia', competencia)
+      .order('competencia', { ascending: false })
+      .limit(1)
+    if (anterior?.[0]?.saldo_final !== null && anterior?.[0]?.saldo_final !== undefined) {
+      const diff = Math.abs(Number(anterior[0].saldo_final) - saldoInicial)
+      if (diff > 0.01) {
+        avisoContinuidade = `O saldo inicial deste extrato (R$ ${saldoInicial.toLocaleString('pt-BR',{minimumFractionDigits:2})}) difere do saldo final de ${anterior[0].competencia} (R$ ${Number(anterior[0].saldo_final).toLocaleString('pt-BR',{minimumFractionDigits:2})}) em R$ ${diff.toLocaleString('pt-BR',{minimumFractionDigits:2})}.`
+      }
+    }
+
     const { data: ext, error } = await supabase.from('extratos').insert({
       conta_id: parseInt(contaSel),
       competencia,
       arquivo_nome: extrato.arquivo,
+      saldo_inicial: saldoInicial,
       saldo_final: extrato.saldoFinal,
       total_movs: movs.length,
       importado_por: user.id,
@@ -136,6 +157,7 @@ export default function Importar() {
     }).select().single()
 
     if (error) { setMsg('Erro: ' + error.message); setSalvando(false); return }
+    setAvisoSaldo(avisoContinuidade)
 
     const itens = movs.map(m => {
       const direcao = m.tipo === 'entrada' ? 'entrada' : 'saida'
@@ -166,8 +188,8 @@ export default function Importar() {
 
   const s = {
     card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
-    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', fontWeight: 500, borderBottom: '0.5px solid #E0DDD5' },
-    td: { padding: '7px 8px', borderBottom: '0.5px solid #E0DDD5', verticalAlign: 'middle', fontSize: 12 },
+    th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', fontWeight: 500, borderBottom: '0.5px solid #E8E6DE' },
+    td: { padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE', verticalAlign: 'middle', fontSize: 12 },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
     tab: ativo => ({ padding:'7px 14px', fontSize:12, borderRadius:8, border:`0.5px solid ${ativo?AZUL:'#D3D1C7'}`, background:ativo?AZUL:'#fff', color:ativo?'#fff':'#5F5E5A', cursor:'pointer' }),
   }
@@ -280,6 +302,12 @@ export default function Importar() {
             <div style={{ ...s.card, textAlign: 'center', padding: '3rem' }}>
               <div style={{ marginBottom: '1rem' }}><i className="ti ti-circle-check" style={{fontSize:48, color:'#3B6D11'}} /></div>
               <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
+              {avisoSaldo && (
+                <div style={{ fontSize:12, color:'#854F0B', background:'#FAEEDA', border:'0.5px solid #EDD9A3', borderRadius:10, padding:'10px 14px', margin:'0 auto 1rem', maxWidth:520, textAlign:'left', display:'flex', gap:8, alignItems:'flex-start' }}>
+                  <i className="ti ti-alert-triangle" style={{fontSize:15, flexShrink:0, marginTop:1}} />
+                  <span>{avisoSaldo} Pode haver extrato faltando entre os períodos.</span>
+                </div>
+              )}
               <div style={{ fontSize: 13, color: '#888780', marginBottom: '1.5rem' }}>
                 Agora vá em <strong>Conciliação</strong> para categorizar e validar as movimentações.
               </div>
