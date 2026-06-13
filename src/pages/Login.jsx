@@ -81,7 +81,7 @@ export default function Login() {
           <div style={{
             background: 'rgba(255,255,255,0.92)',
             borderRadius: 16,
-            border: '0.5px solid #E0DDD5',
+            border: '0.5px solid #E8E6DE',
             padding: '1.5rem',
             boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
             display: 'flex',
@@ -102,7 +102,7 @@ export default function Login() {
               <div style={{ fontSize: 12, color: '#888780' }}>Sistema financeiro e controle interno</div>
             </div>
 
-            <div style={{ height: '0.5px', background: '#E0DDD5', marginBottom: '1.25rem' }} />
+            <div style={{ height: '0.5px', background: '#E8E6DE', marginBottom: '1.25rem' }} />
 
             <form onSubmit={handleSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
@@ -125,7 +125,7 @@ export default function Login() {
               )}
 
               <button type="submit" disabled={loading} style={{
-                width: '100%', padding: '10px', background: loading ? '#9DD466' : '#6BBF2B',
+                width: '100%', padding: '10px', background: loading ? '#5BA8C4' : '#0E7EA8',
                 color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: loading ? 'default' : 'pointer', marginTop: 4, letterSpacing: '.02em',
               }}>
@@ -133,7 +133,7 @@ export default function Login() {
               </button>
 
               {msgRecuperacao && (
-                <div style={{ fontSize: 12, color: '#3B6D11', background: '#F2FAE8', border: '0.5px solid #C0DD97', padding: '7px 10px', borderRadius: 8 }}>
+                <div style={{ fontSize: 12, color: '#185FA5', background: '#E6F1FB', border: '0.5px solid #B5D4F4', padding: '7px 10px', borderRadius: 8 }}>
                   {msgRecuperacao}
                 </div>
               )}
@@ -144,13 +144,13 @@ export default function Login() {
             </form>
 
             <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#B4B2A9' }}>
-              🔒 Acesso restrito à equipe autorizada.
+              <i className="ti ti-lock" style={{fontSize:12, marginRight:4}} />Acesso restrito à equipe autorizada.
             </div>
           </div>
 
           {/* Card 2 — Transparência Pública */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(234,243,222,0.95) 0%, rgba(230,241,251,0.95) 100%)',
+            background: 'linear-gradient(135deg, rgba(230,241,251,0.95) 0%, rgba(240,246,250,0.95) 100%)',
             borderRadius: 16,
             border: '0.5px solid #C0DD97',
             padding: '1.5rem',
@@ -173,12 +173,12 @@ export default function Login() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
                 {[
-                  { icon: '📊', texto: 'Receitas e despesas por período' },
-                  { icon: '📄', texto: 'Relatórios e documentos de prestação de contas' },
-                  { icon: '🔍', texto: 'Consulta pública, livre e sem cadastro' },
+                  { icon: 'ti-chart-bar', texto: 'Receitas e despesas por período' },
+                  { icon: 'ti-file', texto: 'Relatórios e documentos de prestação de contas' },
+                  { icon: 'ti-search', texto: 'Consulta pública, livre e sem cadastro' },
                 ].map(item => (
                   <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#3B6D11' }}>
-                    <span style={{ fontSize: 14 }}>{item.icon}</span>
+                    <i className={`ti ${item.icon}`} style={{ fontSize: 14 }} />
                     {item.texto}
                   </div>
                 ))}
@@ -190,14 +190,14 @@ export default function Login() {
 
             <a href="/transparencia" style={{
               display: 'block', textAlign: 'center', padding: '10px',
-              background: '#fff', color: '#3B6D11', border: '1.5px solid #6BBF2B',
+              background: '#fff', color: '#0E7EA8', border: '1.5px solid #0E7EA8',
               borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
               cursor: 'pointer', letterSpacing: '.02em',
             }}>
               Acessar Transparência →
             </a>
-            <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#6BBF2B' }}>
-              🌿 Sem necessidade de login
+            <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: 11, color: '#0E7EA8' }}>
+              <i className="ti ti-leaf" style={{fontSize:12, marginRight:4}} />Sem necessidade de login
             </div>
           </div>
         </div>
