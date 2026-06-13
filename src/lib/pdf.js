@@ -23,112 +23,351 @@ const CAPETTE_INFO = {
 
 // CSS base para todos os relatórios
 const CSS_BASE = `
+  /* === RESET E BASE === */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Arial', sans-serif; font-size: 11px; color: #2C2C2A; padding: 20px; background: #fff; }
 
-  /* Cabeçalho */
-  .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 3px solid #6BBF2B; }
-  .cab-esq { display: flex; flex-direction: column; gap: 2px; }
-  .cab-logo { display: flex; gap: 1px; align-items: center; margin-bottom: 2px; }
-  .cab-logo span { font-size: 20px; font-weight: 900; line-height: 1; }
-  .cab-desde { font-size: 9px; color: #888; }
-  .cab-dir { text-align: right; font-size: 9px; color: #666; max-width: 380px; }
-  .cab-dir strong { font-size: 13px; color: #2C2C2A; display: block; margin-bottom: 3px; }
-  .cab-dir .cnpj { font-size: 10px; font-weight: 600; color: #2C2C2A; margin-bottom: 4px; }
-  .cab-registros { font-size: 8px; color: #999; line-height: 1.5; text-align: right; }
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  @page landscape {
+    size: A4 landscape;
+    margin: 0;
+  }
+  @media print {
+    html, body { background: #fff; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { page-break-inside: avoid; }
+  }
 
-  /* Título */
-  .titulo-bloco { text-align: center; margin-bottom: 16px; padding: 12px; background: linear-gradient(135deg, #F2FAE8, #E6F1FB); border-radius: 8px; border: 1px solid #C0DD97; }
-  .titulo-principal { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #2C2C2A; }
-  .titulo-sub { font-size: 11px; color: #5F5E5A; margin-top: 3px; }
-  .titulo-status { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; margin-top: 4px; }
+  /* Variáveis */
+  :root {
+    --agendo: #0E7EA8;
+    --agendo-dark: #06344F;
+    --agendo-soft: #EAF5F8;
+    --ink: #171A1F;
+    --muted: #626B76;
+    --soft: #F5F2EA;
+    --line: #D7D0C2;
+    --line-soft: #ECE6DA;
+    --paper: #FFFEFA;
+    --green: #2E6F3E;
+    --red: #A7352C;
+    --sans: Inter, Arial, sans-serif;
+    --serif: Georgia, 'Times New Roman', serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--ink);
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* === WRAPPER DA PÁGINA === */
+  .pg {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 16mm 17mm 18mm;
+    position: relative;
+    background: #fff;
+    margin: 0 auto;
+  }
+  .pg-landscape {
+    width: 297mm;
+    min-height: 210mm;
+    padding: 12mm 14mm 14mm;
+  }
+
+  /* === FAIXA AZUL LATERAL (identidade) === */
+  .pg::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--agendo), var(--agendo-dark));
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* === CABEÇALHO INTERNO === */
+  .cab {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+  .cab-nome {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--agendo-dark);
+    letter-spacing: -.01em;
+    margin-bottom: 2px;
+  }
+  .cab-sub {
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .cab-dir {
+    text-align: right;
+    font-size: 8.5px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    line-height: 1.6;
+  }
+  .cab-dir span {
+    display: block;
+    color: var(--agendo);
+  }
+
+  /* === CABEÇALHO LOGO COMPLETO (capa e 1ª página) === */
+  .cab-full {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--agendo);
+  }
+  .cab-full-dir {
+    text-align: right;
+    font-size: 9px;
+    color: #5F6874;
+    max-width: 380px;
+    line-height: 1.5;
+  }
+  .cab-full-dir strong {
+    font-size: 12px;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .cab-full-dir .cnpj {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .cab-registros {
+    font-size: 7.5px;
+    color: #9199A2;
+    line-height: 1.5;
+    text-align: right;
+  }
+
+  /* === TÍTULO DO DOCUMENTO === */
+  .titulo-bloco {
+    text-align: center;
+    margin-bottom: 18px;
+    padding: 14px;
+    background: var(--agendo-soft);
+    border-radius: 4px;
+    border-top: 3px solid var(--agendo);
+  }
+  .titulo-principal {
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--agendo-dark);
+  }
+  .titulo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .titulo-status {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 9.5px;
+    font-weight: 700;
+    margin-top: 5px;
+  }
   .status-preliminar { background: #FAEEDA; color: #854F0B; }
-  .status-final { background: #EAF3DE; color: #3B6D11; }
+  .status-final { background: #E8F4E8; color: #2E6F3E; }
 
-  /* Info do relatório */
+  /* === GRIDS DE INFO === */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 10px; }
   .info-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 10px; }
-  .info-item { background: #F8F7F2; border-radius: 6px; padding: 6px 10px; border: 0.5px solid #E8E6DE; }
-  .info-label { color: #888; font-size: 8px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .3px; }
-  .info-valor { font-weight: 600; color: #2C2C2A; }
+  .info-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 14px; font-size: 10px; }
+  .info-item {
+    background: #F8F7F2;
+    border-radius: 4px;
+    padding: 7px 10px;
+    border: 1px solid var(--line-soft);
+  }
+  .info-label {
+    color: #6B7280;
+    font-size: 7.5px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  .info-valor { font-weight: 700; color: var(--ink); }
 
-  /* Resumo financeiro */
-  .resumo-box { border: 1px solid #C0DD97; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; background: #F2FAE8; }
-  .resumo-titulo { font-size: 11px; font-weight: 700; margin-bottom: 10px; color: #3B6D11; text-transform: uppercase; letter-spacing: .3px; }
-  .resumo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-  .resumo-item { text-align: center; background: #fff; border-radius: 6px; padding: 8px 6px; border: 0.5px solid #E8E6DE; }
-  .resumo-label { font-size: 8px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .3px; }
-  .resumo-valor { font-size: 14px; font-weight: 700; }
-  .verde { color: #3B6D11; }
-  .vermelho { color: #A32D2D; }
-  .azul { color: #185FA5; }
+  /* === RESUMO FINANCEIRO === */
+  .resumo-box {
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--agendo);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    background: var(--paper);
+  }
+  .resumo-titulo {
+    font-size: 9px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--agendo-dark);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .resumo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .resumo-item {
+    text-align: center;
+    background: #fff;
+    border-radius: 4px;
+    padding: 8px 6px;
+    border: 1px solid var(--line-soft);
+  }
+  .resumo-label { font-size: 7.5px; color: #6B7280; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .3px; }
+  .resumo-valor { font-size: 13px; font-weight: 700; }
+  .verde { color: var(--green); }
+  .vermelho { color: var(--red); }
+  .azul { color: var(--agendo); }
 
-  /* Seção */
+  /* === SEÇÕES === */
   .secao { margin-bottom: 18px; }
-  .secao-titulo { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; padding: 5px 10px; background: #2C2C2A; color: #fff; border-radius: 4px; display: flex; align-items: center; gap: 6px; }
-  .secao-titulo-verde { background: #3B6D11; }
-  .secao-titulo-vermelho { background: #A32D2D; }
-  .secao-titulo-azul { background: #185FA5; }
+  .secao-titulo {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 10px;
+    padding: 6px 10px 6px 14px;
+    border-left: 3px solid var(--agendo);
+    background: var(--agendo-soft);
+    color: var(--agendo-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .secao-titulo-verde { border-left-color: var(--green); background: #EEF8F1; color: var(--green); }
+  .secao-titulo-vermelho { border-left-color: var(--red); background: #FFF0F0; color: var(--red); }
+  .secao-titulo-azul { border-left-color: var(--agendo); background: var(--agendo-soft); color: var(--agendo-dark); }
 
-  /* Tabelas */
-  table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 8px; }
-  thead tr { background: #F8F7F2; }
-  th { padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; color: #5F5E5A; border-bottom: 2px solid #E8E6DE; letter-spacing: .2px; text-transform: uppercase; }
-  td { padding: 5px 8px; border-bottom: 0.5px solid #F1EFE8; vertical-align: top; }
-  tr:nth-child(even) td { background: #FAFAF8; }
-  .total-row td { background: #F8F7F2 !important; font-weight: 700; border-top: 1.5px solid #D3D1C7; border-bottom: none; }
-  .num { text-align: right; }
+  /* === TABELAS EDITORIAIS === */
+  table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  thead tr { background: #F2F6F7; }
+  th {
+    padding: 8px 9px;
+    text-align: left;
+    font-size: 8px;
+    font-weight: 700;
+    color: #525B66;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 7px 9px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+    color: #20252C;
+  }
+  .total-row td {
+    background: #F5F2EA !important;
+    font-weight: 700;
+    border-top: 1.5px solid var(--line);
+    border-bottom: none;
+  }
+  .num { text-align: right; white-space: nowrap; }
   .center { text-align: center; }
+  .muted { color: var(--muted); }
 
-  /* Extrato — linha verde (entrada) */
-  .ext-entrada td { border-left: 3px solid #6BBF2B; }
-  /* Extrato — linha vermelha (saída) */
-  .ext-saida td { border-left: 3px solid #E8212A; }
+  /* Extrato — indicador entrada/saída */
+  .ext-entrada td:first-child { border-left: 2px solid var(--green); }
+  .ext-saida td:first-child { border-left: 2px solid var(--red); }
 
-  /* Alertas */
-  .alerta { padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; font-size: 10px; }
-  .alerta-critico { background: #FEF2F2; border-left: 3px solid #E8212A; color: #A32D2D; }
-  .alerta-aviso { background: #FAEEDA; border-left: 3px solid #F4821F; color: #854F0B; }
-  .alerta-ok { background: #EAF3DE; border-left: 3px solid #6BBF2B; color: #3B6D11; }
+  /* === ALERTAS === */
+  .alerta { padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; font-size: 10px; }
+  .alerta-critico { background: #FFF0F0; border-left: 3px solid var(--red); color: var(--red); }
+  .alerta-aviso { background: #FFF6E8; border-left: 3px solid #C07A1A; color: #854F0B; }
+  .alerta-ok { background: #EEF8F1; border-left: 3px solid var(--green); color: var(--green); }
 
-  /* Assinaturas */
-  .assinaturas { margin-top: 28px; padding-top: 14px; border-top: 1.5px solid #E8E6DE; }
-  .assin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 14px; }
+  /* === ASSINATURAS === */
+  .assinaturas { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .assin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; margin-top: 16px; }
   .assin-item { text-align: center; }
-  .assin-linha { border-bottom: 1px solid #2C2C2A; margin-bottom: 5px; height: 32px; }
-  .assin-label { font-size: 9px; color: #444; font-weight: 600; }
-  .assin-cargo { font-size: 9px; color: #888; }
+  .assin-linha { border-bottom: 1px solid #9199A2; margin-bottom: 6px; height: 44px; }
+  .assin-label { font-size: 9px; color: var(--agendo-dark); font-weight: 700; }
+  .assin-cargo { font-size: 8.5px; color: var(--muted); margin-top: 2px; }
 
-  /* Rodapé */
-  .rodape { margin-top: 18px; padding-top: 10px; border-top: 1px solid #E8E6DE; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #888; }
-  .rodape-sistema { font-size: 8px; color: #aaa; }
-
-  @page { margin: 15mm; }
-  @media print { body { padding: 0; } .no-print { display: none; } }
+  /* === RODAPÉ PRÓPRIO === */
+  .rodape {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5px;
+    color: var(--muted);
+  }
+  .rodape-sistema { font-size: 7.5px; color: #9199A2; }
 `
 
 // Gera o HTML do cabeçalho
-function htmlCabecalho() {
-  return `
-  <div class="cabecalho">
-    <div class="cab-esq">
-      <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:60px;width:auto;object-fit:contain;display:block"
+function htmlCabecalho(opts = {}) {
+  const tipo = opts.tipo || 'cab'  // 'cab' = compacto, 'full' = com logo e registros
+  if (tipo === 'full') {
+    return `
+  <div class="cab-full">
+    <div>
+      <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:56px;width:auto;object-fit:contain;display:block"
         onerror="this.outerHTML='<div style=\'display:flex;flex-direction:column;gap:2px\'><div style=\'display:flex;gap:1px\'><span style=\'font-size:20px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:20px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:20px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:20px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:20px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:20px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:20px;font-weight:900;color:#E8207A\'>E</span></div><div style=\'font-size:9px;color:#888\'>Desde 1974</div></div>'" />
     </div>
-    <div class="cab-dir">
+    <div class="cab-full-dir">
       <strong>${CAPETTE_INFO.nome}</strong>
       <div class="cnpj">CNPJ: ${CAPETTE_INFO.cnpj}</div>
       <div class="cab-registros">${CAPETTE_INFO.registros.join('<br>')}</div>
     </div>
   </div>`
+  }
+  // compacto: cabeçalho de página interna
+  return `
+  <div class="cab">
+    <div>
+      <div class="cab-nome">${opts.titulo || 'Relatório Financeiro'}</div>
+      <div class="cab-sub">${CAPETTE_INFO.nome} · ${opts.sub || 'CAPETTE'}</div>
+    </div>
+    <div class="cab-dir">
+      AGENDO Integra<span>${opts.ref || ''}</span>
+    </div>
+  </div>`
 }
 
 // Gera o HTML do rodapé
-function htmlRodape() {
+function htmlRodape(opts = {}) {
+  const protocolo = opts.protocolo || ''
   return `
   <div class="rodape">
-    <div>${CAPETTE_INFO.endereco} · WhatsApp: ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email} · @${CAPETTE_INFO.instagram}</div>
-    <div class="rodape-sistema">AGENDO Integra · Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · Desenvolvido por Agendo (CNPJ: 56.059.476/0001-52) — Rangel Pinheiro</div>
+    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div class="rodape-sistema">AGENDO Integra · Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${protocolo ? ' · ' + protocolo : ''}</div>
   </div>`
 }
 
@@ -160,10 +399,10 @@ function abrirImpressao(html, titulo, paisagem = false) {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>${titulo} — Capette</title>
+<title>${titulo}</title>
 <style>
 ${CSS_BASE}
-${paisagem ? '@page { size: A4 landscape; margin: 10mm; }' : ''}
+${paisagem ? '@page { size: A4 landscape; margin: 0; } .pg { width: 297mm; min-height: 210mm; padding: 12mm 14mm; }' : ''}
 </style>
 </head>
 <body>${html}</body>
@@ -225,7 +464,8 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
   }).join('')
 
   const html = `
-  ${htmlCabecalho()}
+  <div class="pg">
+  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório de Conciliação Bancária</div>
     <div class="titulo-sub">Período: ${periodoLabel}</div>
@@ -362,93 +602,283 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
     ` : ''
   const colunasResumo = temSaldoBancario ? 6 : 4
 
+  const anoRelatorio = dataFim ? new Date(dataFim+'T12:00:00').getFullYear() : new Date().getFullYear()
+  const protocolo = `AG-CAP-${anoRelatorio}-RF`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const contaNome = contaDados?.nome || 'Todas as contas'
+  const bancNome = contaDados?.banco || '—'
+  const agNome = contaDados?.agencia || '—'
+  const ctNum = contaDados?.conta_num || contaDados?.numero || '—'
+
+  // Demonstrativo mensal (agrupa por mês)
+  const mesesMap = {}
+  lista.forEach(m => {
+    const mes = m.data?.slice(0,7)
+    if (!mes) return
+    if (!mesesMap[mes]) mesesMap[mes] = { ent: 0, sai: 0, qtd: 0 }
+    const v = Number(m.valor)
+    if (v > 0) mesesMap[mes].ent += v
+    else mesesMap[mes].sai += Math.abs(v)
+    mesesMap[mes].qtd++
+  })
+  const linhasMensais = Object.entries(mesesMap).sort().map(([mes, d]) => {
+    const [ano, mo] = mes.split('-')
+    const nomeMes = new Date(+ano, +mo-1, 1).toLocaleDateString('pt-BR', { month:'long', year:'numeric' })
+    const resultado = d.ent - d.sai
+    return `<tr>
+      <td style="text-transform:capitalize">${nomeMes}</td>
+      <td class="num verde">${fmt(d.ent)}</td>
+      <td class="num vermelho">${fmt(d.sai)}</td>
+      <td class="num ${resultado>=0?'verde':'vermelho'}">${resultado>=0?'+':'-'} ${fmt(resultado)}</td>
+      <td class="num">${d.qtd}</td>
+    </tr>`
+  }).join('')
+
   const html = `
-  ${htmlCabecalho()}
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório Financeiro</div>
-    <div class="titulo-sub">Período: ${periodoLabel}</div>
-  </div>
+  <div class="pg">
+    <!-- CAPA -->
+    ${htmlCabecalho({ tipo: 'full' })}
 
-  ${infoConta}
+    <div style="margin-top:48px">
+      <div style="font-size:10px;font-weight:700;color:var(--agendo);letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px">
+        Documento institucional
+      </div>
+      <div style="font-family:Georgia,serif;font-size:52px;line-height:.96;font-weight:400;letter-spacing:-.04em;color:var(--agendo-dark);margin-bottom:20px">
+        Relatório<br>Financeiro
+      </div>
+      <div style="width:120px;height:2px;background:#A98E54;margin-bottom:28px"></div>
+      <div style="font-size:14px;color:#303944;line-height:1.55;margin-bottom:36px">
+        Exercício ${anoRelatorio} &nbsp;·&nbsp; Período: ${periodoLabel}
+      </div>
+    </div>
 
-  <div class="resumo-box">
-    <div class="resumo-titulo">Resumo do Período</div>
-    <div class="resumo-grid" style="grid-template-columns:repeat(${colunasResumo},1fr)">
-      ${cardsSaldoBancario}
-      <div class="resumo-item"><div class="resumo-label">Total Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total Saídas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Resultado do Período</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor azul">${lista.length}</div></div>
+    <div style="margin-top:40px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div style="padding:16px 20px 16px 0;border-right:1px solid var(--line-soft)">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:7px">Instituição</div>
+          <div style="font-size:13px;color:#20252C;font-weight:600">${CAPETTE_INFO.nome}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+        </div>
+        <div style="padding:16px 0 16px 20px">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:7px">Conta analisada</div>
+          <div style="font-size:13px;color:#20252C;font-weight:600">${contaNome}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${bancNome} · Ag. ${agNome} · Cc. ${ctNum}</div>
+        </div>
+        <div style="padding:16px 20px 16px 0;border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft)">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:7px">Sistema gerador</div>
+          <div style="font-size:13px;color:#20252C">AGENDO Integra</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Gestão integrada para OSCs</div>
+        </div>
+        <div style="padding:16px 0 16px 20px;border-top:1px solid var(--line-soft)">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:7px">Protocolo de emissão</div>
+          <div style="font-size:13px;color:#20252C;font-weight:600">${protocolo}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Emitido em ${dataEmissao}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;bottom:40px;left:17mm;right:17mm;border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;color:#59636F;font-size:10px">
+      <div><strong style="color:var(--agendo-dark)">AGENDO Integra</strong> · Gestão integrada para OSCs</div>
+      <div>${protocolo}</div>
     </div>
   </div>
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-verde">▲ Entradas por Categoria</div>
-    <table>
-      <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
+  <!-- PÁGINA 2: FICHA TÉCNICA + RESUMO EXECUTIVO -->
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:20px;letter-spacing:-.02em">Ficha técnica</div>
+
+    <table style="margin-bottom:24px;font-size:11px">
       <tbody>
-        ${linhasResEnt || '<tr><td colspan="4" style="text-align:center;color:#888">Sem entradas</td></tr>'}
-        <tr class="total-row"><td><strong>TOTAL ENTRADAS</strong></td><td></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr>
+        <tr><td style="color:#6B7280;width:40%;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Instituição titular</td><td style="font-weight:600;border-bottom:1px solid var(--line-soft)">${CAPETTE_INFO.nome}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">CNPJ</td><td style="border-bottom:1px solid var(--line-soft)">${CAPETTE_INFO.cnpj}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Sistema gerador</td><td style="border-bottom:1px solid var(--line-soft)">AGENDO Integra — Gestão integrada para OSCs</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Protocolo de emissão</td><td style="font-weight:600;border-bottom:1px solid var(--line-soft)">${protocolo}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Conta analisada</td><td style="border-bottom:1px solid var(--line-soft)">${contaNome} · ${bancNome} · Ag. ${agNome} · Cc. ${ctNum}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Período</td><td style="border-bottom:1px solid var(--line-soft)">${periodoLabel}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Tipo de emissão</td><td style="border-bottom:1px solid var(--line-soft)">${opts.assinaturas ? 'Para assinatura e arquivo' : 'Conferência interna'}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0">Data de emissão</td><td>${dataEmissao}</td></tr>
       </tbody>
     </table>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-vermelho">▼ Saídas por Categoria</div>
-    <table>
-      <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
+    <div style="border-left:3px solid var(--agendo);padding-left:16px;margin:20px 0 28px;color:#3B444F;font-size:11.5px;line-height:1.6">
+      Este documento é uma consolidação sistêmica das informações financeiras registradas no AGENDO Integra.
+      A aprovação institucional depende de conferência documental, extratos bancários, comprovantes e análise dos responsáveis competentes.
+    </div>
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:16px;letter-spacing:-.02em">Resumo executivo</div>
+
+    <div style="font-size:12px;line-height:1.65;color:#303842;margin-bottom:20px">
+      O presente relatório consolida as movimentações financeiras registradas na ${contaNome} da CAPETTE, conforme dados lançados no sistema AGENDO Integra, para fins de conferência interna, acompanhamento institucional e suporte à prestação de contas.
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);margin:20px 0 28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+      ${temSaldoBancario ? `
+      <div style="padding:16px 14px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Saldo Bancário Inicial</div>
+        <div style="font-family:Georgia,serif;font-size:20px;color:var(--agendo)">${fmt(saldoInicialBancario)}</div>
+      </div>
+      <div style="padding:16px 14px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Saldo Bancário Final</div>
+        <div style="font-family:Georgia,serif;font-size:20px;color:var(--agendo)">${fmt(saldoFinalBancario)}</div>
+      </div>` : ''}
+      <div style="padding:16px 14px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Total de Entradas</div>
+        <div style="font-family:Georgia,serif;font-size:20px;color:var(--green)">${fmt(totalEnt)}</div>
+      </div>
+      <div style="padding:16px 14px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Total de Saídas</div>
+        <div style="font-family:Georgia,serif;font-size:20px;color:var(--red)">${fmt(totalSai)}</div>
+      </div>
+      <div style="padding:16px 14px">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Resultado do Período</div>
+        <div style="font-family:Georgia,serif;font-size:20px;color:${saldo>=0?'var(--green)':'var(--red)'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div>
+      </div>
+    </div>
+
+    <table style="font-size:10.5px;margin-bottom:16px">
+      <thead><tr><th>Quadro de conferência</th><th>Observação</th></tr></thead>
       <tbody>
-        ${linhasResSai || '<tr><td colspan="4" style="text-align:center;color:#888">Sem saídas</td></tr>'}
-        <tr class="total-row"><td><strong>TOTAL SAÍDAS</strong></td><td></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr>
+        <tr><td>Extrato bancário do período</td><td style="color:#6B7280">Conciliar com extrato oficial do banco</td></tr>
+        <tr><td>Classificação das categorias</td><td style="color:#6B7280">Conferir agrupamento por categoria</td></tr>
+        <tr><td>Documentos fiscais e comprovantes</td><td style="color:#6B7280">Verificar comprovantes anexados</td></tr>
+        <tr><td>Análise do Conselho Fiscal</td><td style="color:#6B7280">Parecer de aprovação do Conselho</td></tr>
       </tbody>
     </table>
+
+    ${htmlRodape({ protocolo })}
   </div>
 
-  <div class="secao" style="page-break-before:always">
-    <div class="secao-titulo secao-titulo-verde">▲ Detalhamento de Entradas (${entradas.length})</div>
-    <table>
-      <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
-      <tbody>
-        ${linhasDetEnt || '<tr><td colspan="5" style="text-align:center;color:#888">Sem entradas no período</td></tr>'}
-        <tr class="total-row"><td colspan="4"><strong>TOTAL ENTRADAS</strong></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td></tr>
-      </tbody>
-    </table>
+  <!-- PÁGINA 3: CATEGORIAS -->
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
+
+    <div class="secao">
+      <div class="secao-titulo secao-titulo-verde">▲ Entradas por Categoria</div>
+      <table>
+        <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
+        <tbody>
+          ${linhasResEnt || '<tr><td colspan="4" style="text-align:center;color:#888">Sem entradas</td></tr>'}
+          <tr class="total-row"><td><strong>TOTAL ENTRADAS</strong></td><td></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td class="num"><strong>100%</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="secao" style="margin-top:20px">
+      <div class="secao-titulo secao-titulo-vermelho">▼ Saídas por Categoria</div>
+      <table>
+        <thead><tr><th>Categoria</th><th class="center">Qtd</th><th class="num">Total</th><th class="num">%</th></tr></thead>
+        <tbody>
+          ${linhasResSai || '<tr><td colspan="4" style="text-align:center;color:#888">Sem saídas</td></tr>'}
+          <tr class="total-row"><td><strong>TOTAL SAÍDAS</strong></td><td></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td class="num"><strong>100%</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    ${htmlRodape({ protocolo })}
   </div>
 
-  <div class="secao" style="page-break-before:always">
-    <div class="secao-titulo secao-titulo-vermelho">▼ Detalhamento de Saídas (${saidas.length})</div>
-    <table>
-      <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
-      <tbody>
-        ${linhasDetSai || '<tr><td colspan="5" style="text-align:center;color:#888">Sem saídas no período</td></tr>'}
-        <tr class="total-row"><td colspan="4"><strong>TOTAL SAÍDAS</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td></tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- PÁGINA 4: DEMONSTRATIVO MENSAL -->
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
 
-  <div class="secao" style="page-break-before:always">
-    <div class="secao-titulo secao-titulo-azul">⇅ Extrato Cronológico — Todas as Movimentações (${lista.length})</div>
-    <table>
-      <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:16px;letter-spacing:-.02em">Demonstrativo mensal</div>
+
+    <table style="font-size:11px">
+      <thead>
+        <tr style="background:var(--agendo-dark)">
+          <th style="color:#fff;background:var(--agendo-dark)">Mês</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Entradas</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Saídas</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Resultado</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Movs.</th>
+        </tr>
+      </thead>
       <tbody>
-        ${linhasExtrato || '<tr><td colspan="6" style="text-align:center;color:#888">Sem movimentações</td></tr>'}
+        ${linhasMensais || '<tr><td colspan="5" style="text-align:center;color:#888">Sem movimentações</td></tr>'}
         <tr class="total-row">
-          <td colspan="5"><strong>RESULTADO DO PERÍODO</strong></td>
-          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':''}${fmt(saldo)}</strong></td>
+          <td><strong>TOTAL DO PERÍODO</strong></td>
+          <td class="num verde"><strong>${fmt(totalEnt)}</strong></td>
+          <td class="num vermelho"><strong>${fmt(totalSai)}</strong></td>
+          <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':'-'} ${fmt(saldo)}</strong></td>
+          <td class="num"><strong>${lista.length}</strong></td>
         </tr>
       </tbody>
     </table>
+
+    ${htmlRodape({ protocolo })}
   </div>
 
-  ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal']) : ''}
-  ${htmlRodape()}`
+  <!-- PÁGINAS SEGUINTES: DETALHAMENTO -->
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
 
-  abrirImpressao(html, 'Relatório Financeiro', true)
+    <div class="secao">
+      <div class="secao-titulo secao-titulo-verde">▲ Detalhamento de Entradas (${entradas.length} registros)</div>
+      <table style="font-size:9.5px">
+        <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+          ${linhasDetEnt || '<tr><td colspan="5" style="text-align:center;color:#888">Sem entradas</td></tr>'}
+          <tr class="total-row"><td colspan="4"><strong>TOTAL ENTRADAS</strong></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    ${htmlRodape({ protocolo })}
+  </div>
+
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
+
+    <div class="secao">
+      <div class="secao-titulo secao-titulo-vermelho">▼ Detalhamento de Saídas (${saidas.length} registros)</div>
+      <table style="font-size:9.5px">
+        <thead><tr><th>Data</th><th>Categoria</th><th>Subcategoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+          ${linhasDetSai || '<tr><td colspan="5" style="text-align:center;color:#888">Sem saídas</td></tr>'}
+          <tr class="total-row"><td colspan="4"><strong>TOTAL SAÍDAS</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    ${htmlRodape({ protocolo })}
+  </div>
+
+  <!-- PÁGINA FINAL: ENCAMINHAMENTO E ASSINATURAS -->
+  ${opts.assinaturas ? `
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:20px;letter-spacing:-.02em">Encaminhamento institucional</div>
+
+    <div style="font-size:12px;line-height:1.7;color:#303842;margin-bottom:24px">
+      Declaramos, para fins de conferência interna, prestação de contas e acompanhamento institucional, que o presente relatório consolida as movimentações financeiras registradas no sistema AGENDO Integra referentes ao período de <strong>${periodoLabel}</strong>.
+    </div>
+
+    <div style="font-size:11.5px;color:#303842;margin:32px 0 52px">
+      Teresópolis — RJ, _______ de _________________________ de _______.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:52px 40px">
+      ${['Presidente / Representante Legal','Responsável pela Emissão','Responsável Financeiro','Conselho Fiscal — Membro 1','Conselho Fiscal — Membro 2','Conselho Fiscal — Membro 3'].map(n => `
+      <div>
+        <div style="height:50px;border-bottom:1px solid #9199A2;margin-bottom:8px"></div>
+        <div style="font-size:11px;font-weight:700;color:var(--agendo-dark)">${n}</div>
+      </div>`).join('')}
+    </div>
+
+    <div style="margin-top:40px;border:1px dashed #A8A08F;padding:16px 18px;color:#555E6A;font-size:11px;line-height:1.55;background:#FFFEFA">
+      <div style="font-weight:700;margin-bottom:6px;color:var(--agendo-dark)">Espaço reservado para assinatura eletrônica</div>
+      Assinatura eletrônica GOV.BR ou certificação digital, quando aplicável.
+    </div>
+
+    ${htmlRodape({ protocolo })}
+  </div>` : ''}
+`
+  abrirImpressao(html, 'Relatório Financeiro')
 }
 
-// =============================================
-// RELATÓRIO DE TRANSPARÊNCIA PÚBLICA
-// =============================================
 export function gerarPDFTransparencia(dados, mes) {
   const { totalEnt, totalSai, grupoEnt, grupoSai } = dados
   const mesLabel = new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})
@@ -464,7 +894,8 @@ export function gerarPDFTransparencia(dados, mes) {
   }).join('')
 
   const html = `
-  ${htmlCabecalho()}
+  <div class="pg">
+  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório de Transparência Financeira</div>
     <div class="titulo-sub">Período: ${mesLabel}</div>
@@ -534,7 +965,8 @@ export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
   </tr>`).join('')
 
   const html = `
-  ${htmlCabecalho()}
+  <div class="pg">
+  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório Financeiro de Evento</div>
     <div class="titulo-sub">${evento.nome}</div>
@@ -609,7 +1041,8 @@ export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
   </tr>`).join('')
 
   const html = `
-  ${htmlCabecalho()}
+  <div class="pg">
+  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório Financeiro de Campanha</div>
     <div class="titulo-sub">${campanha.nome}</div>
@@ -677,7 +1110,8 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
   </tr>`).join('')
 
   const html = `
-  ${htmlCabecalho()}
+  <div class="pg">
+  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório de Cobranças / Boletos Vencidos</div>
     <div class="titulo-sub">Período: ${filtros.periodo||'Todos'} · Status: ${filtros.status||'Todos'}</div>
