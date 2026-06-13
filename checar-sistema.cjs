@@ -27,10 +27,21 @@ existe('src/lib/auditoria.js', 'auditoria.js')
 existe('src/lib/pdf.js', 'pdf.js')
 existe('src/components/Layout.jsx', 'Layout.jsx')
 
-console.log('\n2. PÁGINAS PRINCIPAIS')
-;['PainelAdmin','PainelOperacional','PainelDiretoria','Fechamento','Conciliacao',
-  'LancamentosLista','Sociedade','Configuracoes','Usuarios','Backup'].forEach(p =>
-  existe(`src/pages/${p}.jsx`, p))
+console.log('\n2. TODAS AS PÁGINAS (46)')
+;['Aplicacoes','Atendimentos','Backup','Campanhas','Categorias','Classificacoes','Cobrancas',
+  'Conciliacao','ConciliacaoInteligente','Configuracoes','Contas','ControleDividas','Doacoes',
+  'Documentos','DocumentosFiscais','Entradas','Equipe','Eventos','EventosCampanhas','Fechamento',
+  'FornecedorHistorico','Fornecedores','Importar','Instituicao','Lancamentos','LancamentosLista',
+  'Login','NovaSenha','Painel','PainelAdmin','PainelDiretoria','PainelOperacional','ParceriaDetalhe',
+  'Parcerias','Patrimonio','Pendencias','PlanoTrabalho','PlanosExecucao','PrestacaoContas','Projetos',
+  'RelatorioExecucao','Relatorios','RelatoriosCentral','Sociedade','Usuarios','UsuariosAtendidos'
+].forEach(p => existe(`src/pages/${p}.jsx`, p))
+existe('src/App.jsx', 'App.jsx')
+existe('src/components/CatSelect.jsx', 'CatSelect')
+existe('src/hooks/useAuth.js', 'useAuth')
+existe('src/hooks/useIsMobile.js', 'useIsMobile')
+existe('src/lib/supabase.js', 'supabase.js')
+existe('src/lib/db.js', 'db.js')
 
 console.log('\n3. FUNCIONALIDADES NOVAS PRESENTES')
 contem('src/components/Layout.jsx', 'buscaAberta', 'Busca global Ctrl+K')
