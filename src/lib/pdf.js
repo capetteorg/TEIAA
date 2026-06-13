@@ -466,11 +466,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Conciliação Bancária', sub: contaDados?.nome || 'CAPETTE', ref: 'Período: ' + periodoLabel })}
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório de Conciliação Bancária</div>
-    <div class="titulo-sub">Período: ${periodoLabel}</div>
-  </div>
+  ${htmlCabecalho({ titulo: 'Relatório de Conciliação Bancária', sub: (contaDados?.nome || 'Conta') + ' · ' + periodoLabel, ref: 'AGENDO Integra' })}
 
   ${infoConta}
 
@@ -882,7 +878,7 @@ export function gerarPDFTransparencia(dados, mes) {
 
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
+  ${htmlCabecalho({ titulo: 'Transparência Financeira', sub: 'CAPETTE · ' + CAPETTE_INFO.nome, ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório de Transparência Financeira</div>
     <div class="titulo-sub">Período: ${mesLabel}</div>
@@ -954,7 +950,7 @@ export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
 
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
+  ${htmlCabecalho({ titulo: 'Prestação de Contas — Emenda/Edital', sub: (dados.conta?.nome || 'Emenda/Edital') + ' · CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório Financeiro de Evento</div>
     <div class="titulo-sub">${evento.nome}</div>
@@ -1031,7 +1027,7 @@ export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
 
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
+  ${htmlCabecalho({ titulo: 'Prestação de Contas — Emenda/Edital', sub: (dados.conta?.nome || 'Emenda/Edital') + ' · CAPETTE', ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório Financeiro de Campanha</div>
     <div class="titulo-sub">${campanha.nome}</div>
@@ -1101,7 +1097,7 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
 
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
+  ${htmlCabecalho({ titulo: 'Relatório de Cobranças', sub: 'CAPETTE · ' + CAPETTE_INFO.nome, ref: 'AGENDO Integra' })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório de Cobranças / Boletos Vencidos</div>
     <div class="titulo-sub">Período: ${filtros.periodo||'Todos'} · Status: ${filtros.status||'Todos'}</div>
