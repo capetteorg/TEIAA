@@ -702,11 +702,6 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
       </tbody>
     </table>
 
-    <div style="border-left:3px solid var(--agendo);padding-left:16px;margin:20px 0 28px;color:#3B444F;font-size:11.5px;line-height:1.6">
-      Este documento é uma consolidação sistêmica das informações financeiras registradas no AGENDO Integra.
-      A aprovação institucional depende de conferência documental, extratos bancários, comprovantes e análise dos responsáveis competentes.
-    </div>
-
     <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:16px;letter-spacing:-.02em">Resumo executivo</div>
 
     <div style="font-size:12px;line-height:1.65;color:#303842;margin-bottom:20px">
@@ -736,16 +731,6 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
         <div style="font-family:Georgia,serif;font-size:20px;color:${saldo>=0?'var(--green)':'var(--red)'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div>
       </div>
     </div>
-
-    <table style="font-size:10.5px;margin-bottom:16px">
-      <thead><tr><th>Quadro de conferência</th><th>Observação</th></tr></thead>
-      <tbody>
-        <tr><td>Extrato bancário do período</td><td style="color:#6B7280">Conciliar com extrato oficial do banco</td></tr>
-        <tr><td>Classificação das categorias</td><td style="color:#6B7280">Conferir agrupamento por categoria</td></tr>
-        <tr><td>Documentos fiscais e comprovantes</td><td style="color:#6B7280">Verificar comprovantes anexados</td></tr>
-        <tr><td>Análise do Conselho Fiscal</td><td style="color:#6B7280">Parecer de aprovação do Conselho</td></tr>
-      </tbody>
-    </table>
 
     ${htmlRodape({ protocolo })}
   </div>
