@@ -427,19 +427,41 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const periodoLabel = `${fmtData(dataInicio)} a ${fmtData(dataFim)}`
-
-  const infoConta = contaDados ? `
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-    <div class="info-item"><div class="info-label">Conta</div><div class="info-valor">${contaDados.nome||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Banco</div><div class="info-valor">${contaDados.banco||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Agência</div><div class="info-valor">${contaDados.agencia||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Número da conta</div><div class="info-valor">${contaDados.conta_num||'—'}</div></div>
-  </div>` : ''
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-CONC`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const contaNome = contaDados?.nome || 'Conta'
+  const bancNome = contaDados?.banco || '—'
+  const agNome = contaDados?.agencia || '—'
+  const ctNum = contaDados?.conta_num || '—'
 
   const conciliadas = lista.filter(m => m.conciliado).length
   const pendentes = lista.filter(m => !m.conciliado).length
 
-  const linhas = lista.map((m,i) => {
+  // Demonstrativo mensal
+  const mesesMap = {}
+  lista.forEach(m => {
+    const mes = m.data?.slice(0,7)
+    if (!mes) return
+    if (!mesesMap[mes]) mesesMap[mes] = { ent: 0, sai: 0, qtd: 0 }
+    const v = Number(m.valor)
+    if (v > 0) mesesMap[mes].ent += v
+    else mesesMap[mes].sai += Math.abs(v)
+    mesesMap[mes].qtd++
+  })
+  const linhasMensais = Object.entries(mesesMap).sort().map(([mes, d]) => {
+    const [ano, mo] = mes.split('-')
+    const nomeMes = new Date(+ano, +mo-1, 1).toLocaleDateString('pt-BR', { month:'long', year:'numeric' }).replace(/^(\w)/, ch => ch.toLowerCase())
+    const resultado = d.ent - d.sai
+    return `<tr>
+      <td style="text-transform:capitalize">${nomeMes}</td>
+      <td class="num verde">${fmt(d.ent)}</td>
+      <td class="num vermelho">${fmt(d.sai)}</td>
+      <td class="num ${resultado>=0?'verde':'vermelho'}">${resultado>=0?'+':'-'} ${fmt(resultado)}</td>
+      <td class="num">${d.qtd}</td>
+    </tr>`
+  }).join('')
+
+  const linhas = lista.map(m => {
     const isEnt = Number(m.valor) > 0
     const partes = m._partes || []
     const fornecedor = m.fornecedor || m.lancamento?.fornecedor || '—'
@@ -454,54 +476,126 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
       </tr>`).join('')
     return `<tr>
       <td style="white-space:nowrap">${fmtData(m.data)}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}${partes.length>0?` <span style="font-size:9px;color:#185FA5">(${partes.length} itens)</span>`:''}</td>
-      <td>${partes.length>0?'<em style="color:#888;font-size:9px">ver abaixo</em>':(m.categoria?.nome||'—')}</td>
-      <td style="color:#888;font-size:9px">${partes.length>0?'':m.subcategoria?.nome||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}${partes.length>0?` <span style="font-size:9px;color:#185FA5">(${partes.length} itens)</span>`:''}</td>
+      <td style="font-size:9px">${partes.length>0?'<em style="color:#888">ver abaixo</em>':(m.categoria?.nome||'—')}</td>
+      <td style="font-size:9px;color:#888">${partes.length>0?'':m.subcategoria?.nome||'—'}</td>
       <td style="font-size:9px">${fornecedor}</td>
       <td style="font-family:monospace;font-size:9px">${numNota}</td>
-      <td class="num" style="font-weight:600;color:${isEnt?'#3B6D11':'#A32D2D'}">${isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
-      <td class="center"><span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${m.conciliado?'#EAF3DE':'#FAEEDA'};color:${m.conciliado?'#3B6D11':'#854F0B'}">${m.conciliado?'✓ OK':'Pendente'}</span></td>
+      <td class="num" style="font-weight:600;color:${isEnt?'var(--green)':'var(--red)'}">${isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
+      <td class="center"><span style="font-size:9px;font-weight:600;color:${m.conciliado?'var(--green)':'#854F0B'}">${m.conciliado?'✓':'⏳'}</span></td>
     </tr>${subLinhas}`
   }).join('')
 
+  const cab = (sub) => htmlCabecalho({ titulo: 'Relatório de Conciliação Bancária', sub: sub || contaNome + ' · ' + periodoLabel, ref: protocolo })
+
   const html = `
+  <!-- PG 1: CABEÇALHO + RESUMO + DEMONSTRATIVO MENSAL -->
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Relatório de Conciliação Bancária', sub: (contaDados?.nome || 'Conta') + ' · ' + periodoLabel, ref: 'AGENDO Integra' })}
+    ${htmlCabecalho({ tipo: 'full' })}
 
-  ${infoConta}
-
-  <div class="resumo-box">
-    <div class="resumo-titulo">Resumo do Período</div>
-    <div class="resumo-grid" style="grid-template-columns:repeat(6,1fr)">
-      <div class="resumo-item"><div class="resumo-label">Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Saídas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Saldo</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${fmt(saldo)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor azul">${lista.length}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Conciliadas</div><div class="resumo-valor verde">${conciliadas}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Pendentes</div><div class="resumo-valor" style="color:${pendentes>0?'#854F0B':'#3B6D11'}">${pendentes}</div></div>
+    <div style="margin-top:20px">
+      <div style="font-size:10px;font-weight:700;color:var(--agendo);letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px">Documento operacional</div>
+      <div style="font-family:Georgia,serif;font-size:42px;line-height:.98;font-weight:400;letter-spacing:-.04em;color:var(--agendo-dark);margin-bottom:14px">Conciliação<br>Bancária</div>
+      <div style="width:80px;height:2px;background:#A98E54;margin-bottom:18px"></div>
+      <div style="font-size:13px;color:#303944;line-height:1.5">Período: ${periodoLabel}</div>
     </div>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-azul">⇅ Movimentações (${lista.length})</div>
-    <table>
-      <thead><tr>
-        <th>Data</th><th>Descrição</th><th>Categoria</th><th>Subcategoria</th>
-        <th>Fornecedor</th><th>Nº Nota</th><th class="num">Valor</th><th class="center">Situação</th>
-      </tr></thead>
+    <div style="margin-top:20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div style="padding:14px 18px 14px 0;border-right:1px solid var(--line-soft)">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:6px">Instituição</div>
+          <div style="font-size:12px;color:#20252C;font-weight:600">${CAPETTE_INFO.nome}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+        </div>
+        <div style="padding:14px 0 14px 18px">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:6px">Conta analisada</div>
+          <div style="font-size:12px;color:#20252C;font-weight:600">${contaNome}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${bancNome} · Ag. ${agNome} · Cc. ${ctNum}</div>
+        </div>
+        <div style="padding:14px 18px 14px 0;border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft)">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:6px">Protocolo</div>
+          <div style="font-size:12px;color:#20252C;font-weight:600">${protocolo}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Emitido em ${dataEmissao}</div>
+        </div>
+        <div style="padding:14px 0 14px 18px;border-top:1px solid var(--line-soft)">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:6px">Status</div>
+          <div style="font-size:12px;color:${pendentes>0?'#854F0B':'var(--green)'};font-weight:600">${pendentes>0?pendentes+' pendente(s)':'Totalmente conciliado'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${conciliadas} conciliadas · ${pendentes} pendentes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicadores -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);margin:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+      <div style="padding:14px 12px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Total Entradas</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:var(--green)">${fmt(totalEnt)}</div>
+      </div>
+      <div style="padding:14px 12px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Total Saídas</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:var(--red)">${fmt(totalSai)}</div>
+      </div>
+      <div style="padding:14px 12px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Saldo do Período</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:${saldo>=0?'var(--green)':'var(--red)'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div>
+      </div>
+      <div style="padding:14px 12px">
+        <div style="font-size:8.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:8px">Movimentações</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo)">${lista.length}</div>
+      </div>
+    </div>
+
+    <!-- Demonstrativo mensal -->
+    <div style="font-family:Georgia,serif;font-size:22px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Demonstrativo mensal</div>
+    <table style="font-size:10.5px">
+      <thead>
+        <tr style="background:var(--agendo-dark)">
+          <th style="color:#fff;background:var(--agendo-dark)">Mês</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Entradas</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Saídas</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Resultado</th>
+          <th class="num" style="color:#fff;background:var(--agendo-dark)">Movs.</th>
+        </tr>
+      </thead>
       <tbody>
-        ${linhas}
+        ${linhasMensais}
         <tr class="total-row">
-          <td colspan="6"><strong>SALDO DO PERÍODO</strong></td>
+          <td><strong>TOTAL DO PERÍODO</strong></td>
+          <td class="num verde"><strong>${fmt(totalEnt)}</strong></td>
+          <td class="num vermelho"><strong>${fmt(totalSai)}</strong></td>
           <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':'-'} ${fmt(saldo)}</strong></td>
-          <td></td>
+          <td class="num"><strong>${lista.length}</strong></td>
         </tr>
       </tbody>
     </table>
+
+    ${htmlRodape({ protocolo })}
   </div>
 
-  ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal']) : ''}
-  ${htmlRodape()}
+  <!-- PG 2+: DETALHAMENTO -->
+  <div class="pg page-break">
+    ${cab()}
+
+    <div class="secao">
+      <div class="secao-titulo secao-titulo-azul">⇅ Detalhamento das Movimentações (${lista.length})</div>
+      <table style="font-size:9px">
+        <thead><tr>
+          <th>Data</th><th>Descrição</th><th>Categoria</th><th>Subcategoria</th>
+          <th>Fornecedor</th><th>Nº Nota</th><th class="num">Valor</th><th class="center">OK</th>
+        </tr></thead>
+        <tbody>
+          ${linhas}
+          <tr class="total-row">
+            <td colspan="6"><strong>SALDO DO PERÍODO</strong></td>
+            <td class="num ${saldo>=0?'verde':'vermelho'}"><strong>${saldo>=0?'+':'-'} ${fmt(saldo)}</strong></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal']) : ''}
+    ${htmlRodape({ protocolo })}
   </div>`
 
   abrirImpressao(html, 'Relatório de Conciliação', true)
@@ -510,6 +604,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 // =============================================
 // RELATÓRIO FINANCEIRO GERAL
 // =============================================
+
 export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
   const { entradas, saidas, totalEnt, totalSai, saldo, lista, contaDados, saldoInicialBancario, saldoFinalBancario } = dados
 
