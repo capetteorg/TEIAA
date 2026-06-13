@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFRelatorio, gerarPDFConciliacao } from '../lib/pdf'
+import { gerarPDFRelatorio, gerarPDFConciliacao, gerarPDFPlanoAcao, gerarPDFRelatAnual, gerarPDFEquipe, gerarPDFUsuariosAtendidos, gerarPDFAtendimentos, gerarPDFDoacoes } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
@@ -485,89 +485,13 @@ export default function RelatoriosCentral() {
     if (!dados) return
     if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim, { assinaturas: incluirAss })
     else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, modoConc==='ano' ? `${anoConc}-01-01` : dataInicio, modoConc==='ano' ? `${anoConc}-12-31` : dataFim, { assinaturas: incluirAss })
-    else {
-      const fmtV = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})
-      const fmtD = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
-      const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
-      const periodoLabel = dataInicio && dataFim ? fmtD(dataInicio)+' a '+fmtD(dataFim) : 'Período selecionado'
-      const LOGO = "this.outerHTML='<div style=\'display:flex;gap:1px\'><span style=\'font-size:14px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:14px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:14px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:14px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:14px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:14px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:14px;font-weight:900;color:#E8207A\'>E</span></div>'"
-      const CAB = `<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0E7EA8;padding-bottom:11px;margin-bottom:18px"><div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:44px;width:auto;object-fit:contain;display:block" onerror="` + LOGO + `" /></div><div style="text-align:right;font-size:9px;color:#5F6874;max-width:240px;line-height:1.5"><div style="font-size:11px;font-weight:700;color:#20252C">Casa do Pequeno Trabalhador de Teresópolis</div><div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: 29.213.717/0001-01</div></div></div>`
-      const ROD = `<div style="border-top:1px solid #D7D0C2;padding-top:8px;display:flex;justify-content:space-between;color:#66717E;font-size:8.5px;margin-top:14px"><div>Rua Juruena, 73 · Teresópolis — RJ · capette@capette.org</div><div><strong style="color:#06344F">AGENDO Integra</strong> · ${dataEmissao}</div></div>`
-      const TH = cols => '<thead><tr>'+cols.map(c=>`<th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:${c.a||'left'}">${c.l}</th>`).join('')+'</tr></thead>'
-      const TITULO = (kicker,t1,t2,per) => `<div style="font-size:9px;font-weight:700;color:#0E7EA8;letter-spacing:.18em;text-transform:uppercase;margin-bottom:7px">${kicker}</div><div style="font-family:Georgia,serif;font-size:38px;line-height:.95;font-weight:400;letter-spacing:-.04em;color:#06344F;margin-bottom:9px">${t1}${t2?'<br>'+t2:''}</div><div style="width:65px;height:2px;background:#A98E54;margin-bottom:11px"></div><div style="font-size:12px;color:#303944;margin-bottom:14px">${per}</div>`
-      const FIGS = (itens,cols) => `<div style="display:grid;grid-template-columns:repeat(${cols||itens.length},1fr);border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin:12px 0">${itens.map((it,i)=>`<div style="padding:11px 8px;${i<itens.length-1?'border-right:1px solid #ECE6DA;':''}"><div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:5px">${it[0]}</div><div style="font-family:Georgia,serif;font-size:15px;color:${it[2]||'#0E7EA8'}">${it[1]}</div></div>`).join('')}</div>`
-      const PGCSS = `*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,Arial,sans-serif;font-size:11px;color:#171A1F;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4 portrait;margin:0}@media print{body{background:#fff}thead{display:table-header-group}tr{page-break-inside:avoid}}.pg{width:210mm;min-height:297mm;padding:14mm 16mm 16mm;margin:0 auto;border-left:5px solid #0E7EA8}table{width:100%;border-collapse:collapse;font-size:9px}th{background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:left}td{padding:5px;border-bottom:1px solid #EEE9DF;color:#20252C;vertical-align:top}.num{text-align:right;white-space:nowrap}.center{text-align:center}.tr{background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2}.sec{font-family:Georgia,serif;font-size:17px;color:#06344F;margin:14px 0 9px;letter-spacing:-.02em}.txb{background:#F8F7F2;border-left:3px solid #0E7EA8;padding:10px 14px;font-size:10px;line-height:1.65;color:#303842;margin:10px 0}.green{color:#2E6F3E}.red{color:#A7352C}`
-
-      const abrir = (html, titulo) => {
-        const win = window.open('', '_blank')
-        if (!win) { alert('Permita pop-ups para gerar o PDF.'); return }
-        win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${titulo}</title><style>${PGCSS}</style></head><body><div class="pg">${CAB}${html}${ROD}</div></body></html>`)
-        win.document.close()
-        win.focus()
-        const imgs = Array.from(win.document.images)
-        Promise.race([Promise.all(imgs.map(i=>i.complete?Promise.resolve():new Promise(r=>{i.onload=r;i.onerror=r}))),new Promise(r=>setTimeout(r,2500))]).then(()=>setTimeout(()=>win.print(),200))
-      }
-
-      if (dados.tipo === 'execucao') {
-        const { plano, projeto, metas, ativsPrev, atendimentos, usuarios, totalPart } = dados
-        abrir(
-          TITULO('Relatório de execução','Execução','do Objeto',`${plano?.nome_plano||projeto?.nome||'—'} · ${periodoLabel}`) +
-          FIGS([['Atendimentos',atendimentos.length],['Participantes',totalPart.toLocaleString('pt-BR')],['Usuários ativos',usuarios.filter(u=>u.situacao==='ativo').length,'#2E6F3E'],['Metas',metas.length]]) +
-          (metas.length>0?`<div class="sec">Metas</div><table>${TH([{l:'Meta'},{l:'Indicador'},{l:'Previsto',a:'right'},{l:'Realizado',a:'right'},{l:'%',a:'center'},{l:'Status',a:'center'}])}<tbody>${metas.map(m=>`<tr><td>${m.descricao||'—'}</td><td style="font-size:8.5px">${m.indicador||'—'}</td><td class="num">${m.valor_previsto||'—'}</td><td class="num">${m.valor_realizado||'—'}</td><td class="center">${m.valor_previsto>0?Math.round((m.valor_realizado||0)/m.valor_previsto*100):0}%</td><td class="center" style="color:${m.situacao==='concluido'?'#2E6F3E':'#854F0B'}">${m.situacao||'—'}</td></tr>`).join('')}</tbody></table>`:''),
-          'Relatório de Execução'
-        )
-      } else if (dados.tipo === 'plano_acao') {
-        const { plano, projetosCompletos } = dados
-        abrir(
-          TITULO('Documento institucional','Plano','de Ação',`${plano?.nome_plano||'—'} · ${plano?.periodo_inicio?fmtD(plano.periodo_inicio)+' a '+fmtD(plano.periodo_fim):periodoLabel}`) +
-          (plano?.objeto?`<div class="txb"><strong style="font-size:8.5px;color:#06344F;display:block;margin-bottom:4px">Objeto</strong>${plano.objeto}</div>`:'') +
-          (plano?.objetivo_geral?`<div class="txb"><strong style="font-size:8.5px;color:#06344F;display:block;margin-bottom:4px">Objetivo Geral</strong>${plano.objetivo_geral}</div>`:'') +
-          `<div class="sec">Projetos / Serviços vinculados</div><table>${TH([{l:'Projeto / Serviço'},{l:'Público-alvo'},{l:'Capacidade',a:'center'},{l:'Situação',a:'center'},{l:'Orçamento',a:'right'}])}<tbody>${(projetosCompletos||[]).map(pv=>`<tr><td><strong style="font-size:9px">${pv.projeto?.nome||'—'}</strong><div style="font-size:8px;color:#626B76">${pv.projeto?.tipo_servico||'—'}</div></td><td style="font-size:8.5px">${pv.projeto?.publico_alvo||'—'}</td><td class="center">${pv.projeto?.capacidade_atendimento||'—'}</td><td class="center" style="color:${pv.projeto?.situacao==='ativo'?'#2E6F3E':'#626B76'}">${pv.projeto?.situacao||'—'}</td><td class="num">${pv.orcamento?fmtV(pv.orcamento):'—'}</td></tr>`).join('')}<tr class="tr"><td colspan="4" style="padding:5px;border-bottom:none">Total previsto</td><td class="num" style="padding:5px;border-bottom:none">${fmtV((projetosCompletos||[]).reduce((a,p)=>a+(Number(p.orcamento)||0),0))}</td></tr></tbody></table>`,
-          'Plano de Ação'
-        )
-      } else if (dados.tipo === 'relat_anual') {
-        const { plano, projetosCompletos, totalEntGeral, totalDespGeral, totalAtendGeral, totalUsersGeral } = dados
-        const sG = (totalEntGeral||0)-(totalDespGeral||0)
-        abrir(
-          TITULO('Relatório anual','Relatório','Anual',`${plano?.nome_plano||'—'} · Exercício ${plano?.periodo_inicio?.slice(0,4)||new Date().getFullYear()}`) +
-          FIGS([['Total entradas',fmtV(totalEntGeral||0),'#2E6F3E'],['Total despesas',fmtV(totalDespGeral||0),'#A7352C'],['Resultado',(sG>=0?'+ ':'- ')+fmtV(sG),sG>=0?'#2E6F3E':'#A7352C'],['Atendimentos',totalAtendGeral||0]]) +
-          `<div class="sec">Execução por projeto</div><table>${TH([{l:'Projeto'},{l:'Atendimentos',a:'center'},{l:'Usuários',a:'center'},{l:'Entradas',a:'right'},{l:'Despesas',a:'right'},{l:'Saldo',a:'right'}])}<tbody>${(projetosCompletos||[]).map(pv=>{const sP=(pv.totalEnt||0)-(pv.totalDesp||0);return`<tr><td><strong style="font-size:9px">${pv.projeto?.nome||'—'}</strong></td><td class="center">${pv.totalAtend||0}</td><td class="center">${pv.totalUsers||0}</td><td class="num" style="color:#2E6F3E">${fmtV(pv.totalEnt||0)}</td><td class="num" style="color:#A7352C">${fmtV(pv.totalDesp||0)}</td><td class="num" style="color:${sP>=0?'#2E6F3E':'#A7352C'}">${sP>=0?'+ ':'- '}${fmtV(sP)}</td></tr>`}).join('')}<tr class="tr"><td style="padding:5px;border-bottom:none">Total</td><td class="center" style="padding:5px;border-bottom:none">${totalAtendGeral||0}</td><td class="center" style="padding:5px;border-bottom:none">${totalUsersGeral||0}</td><td class="num" style="color:#2E6F3E;padding:5px;border-bottom:none">${fmtV(totalEntGeral||0)}</td><td class="num" style="color:#A7352C;padding:5px;border-bottom:none">${fmtV(totalDespGeral||0)}</td><td class="num" style="color:${sG>=0?'#2E6F3E':'#A7352C'};padding:5px;border-bottom:none">${sG>=0?'+ ':'- '}${fmtV(sG)}</td></tr></tbody></table>`,
-          'Relatório Anual'
-        )
-      } else if (dados.tipo === 'equipe') {
-        const { lista } = dados
-        abrir(
-          TITULO('Relatório de equipe','Equipe','',`Emitido em ${dataEmissao}`) +
-          FIGS([['Total',lista.length],['Ativos',lista.filter(e=>e.situacao==='ativo').length,'#2E6F3E'],['Inativos',lista.filter(e=>e.situacao!=='ativo').length,'#A7352C'],['Tipos de vínculo',[...new Set(lista.map(e=>e.tipo_vinculo))].filter(Boolean).length]]) +
-          `<div class="sec">Membros da equipe</div><table>${TH([{l:'Nome'},{l:'Função'},{l:'Tipo de vínculo'},{l:'Situação',a:'center'},{l:'Ingresso',a:'center'}])}<tbody>${lista.map(e=>`<tr><td><strong style="font-size:9px">${e.nome||'—'}</strong>${e.email?`<div style="font-size:8px;color:#626B76">${e.email}</div>`:''}</td><td style="font-size:8.5px">${e.funcao||'—'}</td><td style="font-size:8.5px">${e.tipo_vinculo||'—'}</td><td class="center" style="font-size:8px;font-weight:600;color:${e.situacao==='ativo'?'#2E6F3E':'#626B76'}">${e.situacao||'—'}</td><td class="center" style="font-size:8.5px">${e.data_ingresso?fmtD(e.data_ingresso):'—'}</td></tr>`).join('')}</tbody></table>`,
-          'Relatório de Equipe'
-        )
-      } else if (dados.tipo === 'usuarios') {
-        const { lista, ativos, desligados } = dados
-        abrir(
-          TITULO('Relatório de usuários','Usuários','Atendidos',periodoLabel) +
-          FIGS([['Total',lista.length],['Ativos',ativos,'#2E6F3E'],['Desligados',desligados,'#A7352C'],['Projetos',[...new Set(lista.map(u=>u.projeto?.nome))].filter(Boolean).length]]) +
-          `<div class="sec">Lista de usuários atendidos</div><table>${TH([{l:'Nome'},{l:'Nascimento',a:'center'},{l:'Situação',a:'center'},{l:'Projeto'},{l:'Ingresso',a:'center'}])}<tbody>${lista.map(u=>`<tr><td><strong style="font-size:9px">${u.nome||'—'}</strong></td><td class="center" style="font-size:8.5px">${u.data_nascimento?fmtD(u.data_nascimento):'—'}</td><td class="center" style="font-size:8px;font-weight:600;color:${u.situacao==='ativo'?'#2E6F3E':'#626B76'}">${u.situacao||'—'}</td><td style="font-size:8.5px">${u.projeto?.nome||'—'}</td><td class="center" style="font-size:8.5px">${u.data_ingresso?fmtD(u.data_ingresso):'—'}</td></tr>`).join('')}</tbody></table>`,
-          'Usuários Atendidos'
-        )
-      } else if (dados.tipo === 'atendimentos') {
-        const { lista, totalPart } = dados
-        abrir(
-          TITULO('Relatório de atendimentos','Atendimentos','',periodoLabel) +
-          FIGS([['Atendimentos',lista.length],['Participantes',totalPart.toLocaleString('pt-BR')],['Tipos',[...new Set(lista.map(a=>a.tipo_atend))].filter(Boolean).length],['Projetos',[...new Set(lista.map(a=>a.projeto?.nome))].filter(Boolean).length]]) +
-          `<div class="sec">Atendimentos realizados</div><table>${TH([{l:'Data',a:'center'},{l:'Tipo'},{l:'Tema / Descrição'},{l:'Participantes',a:'center'},{l:'Profissional'},{l:'Projeto'}])}<tbody>${lista.map(a=>`<tr><td class="center" style="white-space:nowrap;color:#626B76">${fmtD(a.data_atend)}</td><td style="font-size:8.5px">${a.tipo_atend||'—'}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tema||a.descricao||'—'}</td><td class="center">${a.qtd_participantes||'—'}</td><td style="font-size:8.5px">${a.profissional?.nome||'—'}</td><td style="font-size:8.5px">${a.projeto?.nome||'—'}</td></tr>`).join('')}<tr class="tr"><td colspan="3" style="padding:5px;border-bottom:none">Total participantes</td><td class="center" style="padding:5px;border-bottom:none">${totalPart}</td><td colspan="2" style="border-bottom:none"></td></tr></tbody></table>`,
-          'Relatório de Atendimentos'
-        )
-      } else if (dados.tipo === 'doacoes') {
-        const { lista, totalEstimado } = dados
-        abrir(
-          TITULO('Relatório de doações','Doações','Recebidas',periodoLabel) +
-          FIGS([['Doações',lista.length],['Valor estimado',fmtV(totalEstimado),'#2E6F3E'],['Categorias',[...new Set(lista.map(d=>d.categoria))].filter(Boolean).length],['Doadores',[...new Set(lista.map(d=>d.doador))].filter(Boolean).length]]) +
-          `<div class="sec">Doações recebidas</div><table>${TH([{l:'Data',a:'center'},{l:'Doador'},{l:'Categoria'},{l:'Projeto'},{l:'Valor estimado',a:'right'}])}<tbody>${lista.map(d=>`<tr><td class="center" style="white-space:nowrap;color:#626B76">${fmtD(d.data_doacao)}</td><td>${d.doador||'—'}</td><td style="font-size:8.5px">${d.categoria||'—'}</td><td style="font-size:8.5px">${d.projeto?.nome||'—'}</td><td class="num" style="color:#2E6F3E">${d.valor_estimado?fmtV(d.valor_estimado):'—'}</td></tr>`).join('')}<tr class="tr"><td colspan="4" style="padding:5px;border-bottom:none">Total estimado</td><td class="num" style="color:#2E6F3E;padding:5px;border-bottom:none">${fmtV(totalEstimado)}</td></tr></tbody></table>`,
-          'Relatório de Doações'
-        )
-      }
-    }
+    else if (dados.tipo === 'plano_acao')  gerarPDFPlanoAcao(dados, { assinaturas: incluirAss })
+    else if (dados.tipo === 'relat_anual') gerarPDFRelatAnual(dados, { assinaturas: incluirAss })
+    else if (dados.tipo === 'equipe')      gerarPDFEquipe(dados)
+    else if (dados.tipo === 'usuarios')    gerarPDFUsuariosAtendidos(dados, dataInicio && dataFim ? fmtData(dataInicio)+' a '+fmtData(dataFim) : 'Período selecionado')
+    else if (dados.tipo === 'atendimentos') gerarPDFAtendimentos(dados, dataInicio && dataFim ? fmtData(dataInicio)+' a '+fmtData(dataFim) : 'Período selecionado')
+    else if (dados.tipo === 'doacoes')     gerarPDFDoacoes(dados, dataInicio && dataFim ? fmtData(dataInicio)+' a '+fmtData(dataFim) : 'Período selecionado')
+    else if (dados.tipo === 'execucao')    gerarPDFPlanoAcao({ plano: dados.plano, projetosCompletos: [] })
   }
 
   const fmt = v => 'R$ '+Math.abs(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})

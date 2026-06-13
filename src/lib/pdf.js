@@ -1776,3 +1776,527 @@ export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
 
   abrirImpressao(html, `Parecer Anual CF — ${ano}`)
 }
+
+// =============================================
+// RELATÓRIOS DA CENTRAL — PLANO DE AÇÃO
+// =============================================
+export function gerarPDFPlanoAcao(dados, opts = {}) {
+  const { plano, projetosCompletos, presidente } = dados
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-PA`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const periodoLabel = plano?.periodo_inicio ? `${fmtData(plano.periodo_inicio)} a ${fmtData(plano.periodo_fim)}` : '—'
+  const totalOrc = (projetosCompletos||[]).reduce((a,pv) => a + (pv.orcamento||[]).reduce((b,o)=>b+Number(o.valor_previsto||0),0), 0)
+
+  const linhasProjetos = (projetosCompletos||[]).map(pv => {
+    const orcTotal = (pv.orcamento||[]).reduce((a,o)=>a+Number(o.valor_previsto||0),0)
+    const equipeNomes = (pv.equipe||[]).map(e=>e.membro?.nome||'—').slice(0,3).join(', ') + ((pv.equipe||[]).length>3?' ...':'')
+    return `<tr>
+      <td><strong style="font-size:9px">${pv.projeto?.nome||'—'}</strong><div style="font-size:8px;color:#626B76;margin-top:2px">${pv.projeto?.tipo_servico||'—'}</div></td>
+      <td style="font-size:8.5px">${pv.projeto?.publico_alvo||'—'}</td>
+      <td class="center">${pv.projeto?.capacidade_atendimento||'—'}</td>
+      <td style="font-size:8.5px">${equipeNomes||'—'}</td>
+      <td class="num">${fmt(orcTotal)}</td>
+      <td class="center" style="color:${pv.projeto?.situacao==='ativo'?'var(--green)':'var(--muted)'}">${pv.projeto?.situacao||'—'}</td>
+    </tr>`
+  }).join('')
+
+  const linhasOrc = (projetosCompletos||[]).flatMap(pv =>
+    (pv.orcamento||[]).map(o => `<tr>
+      <td style="font-size:8.5px">${pv.projeto?.nome||'—'}</td>
+      <td>${o.categoria||'—'}</td>
+      <td style="font-size:8.5px">${o.elemento_despesa||'—'}</td>
+      <td class="num">${fmt(o.valor_previsto||0)}</td>
+      <td style="font-size:8.5px;color:var(--muted)">${o.justificativa||'—'}</td>
+    </tr>`)
+  ).join('')
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ tipo:'full' })}
+    <div style="font-size:9px;font-weight:700;color:var(--agendo);letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Documento institucional</div>
+    <div style="font-family:Georgia,serif;font-size:42px;line-height:.95;font-weight:400;letter-spacing:-.04em;color:var(--agendo-dark);margin-bottom:10px">Plano<br>de Ação</div>
+    <div style="width:70px;height:2px;background:#A98E54;margin-bottom:12px"></div>
+    <div style="font-size:12px;color:#303944;margin-bottom:18px">${plano?.nome_plano||'—'} · ${periodoLabel}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:16px">
+      <div style="padding:11px 16px 11px 0;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Tipo de instrumento</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${plano?.tipo_plano||'—'}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">${plano?.orgao_ou_parceiro||'—'}</div>
+      </div>
+      <div style="padding:11px 0 11px 16px;border-bottom:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Período de execução</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${periodoLabel}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Protocolo: ${protocolo}</div>
+      </div>
+      <div style="padding:11px 16px 11px 0;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Valor total previsto</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo)">${fmt(totalOrc)}</div>
+      </div>
+      <div style="padding:11px 0 11px 16px">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Projetos / Serviços vinculados</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo)">${(projetosCompletos||[]).length}</div>
+      </div>
+    </div>
+
+    ${plano?.objeto ? `<div style="border-left:3px solid var(--agendo);padding:10px 14px;background:var(--agendo-soft);font-size:10px;line-height:1.65;color:#303842;margin-bottom:14px"><strong style="font-size:8.5px;color:var(--agendo-dark);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px">Objeto</strong>${plano.objeto}</div>` : ''}
+    ${plano?.objetivo_geral ? `<div style="border-left:3px solid var(--line);padding:10px 14px;background:#F8F7F2;font-size:10px;line-height:1.65;color:#303842;margin-bottom:14px"><strong style="font-size:8.5px;color:var(--agendo-dark);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px">Objetivo Geral</strong>${plano.objetivo_geral}</div>` : ''}
+
+    <div style="font-family:Georgia,serif;font-size:20px;color:var(--agendo-dark);margin-bottom:11px;letter-spacing:-.02em">Projetos e serviços vinculados</div>
+    <table style="font-size:9px;border-collapse:collapse;width:100%">
+      <thead><tr>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto / Serviço</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Público-alvo</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Capacidade</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Equipe</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Orçamento</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Situação</th>
+      </tr></thead>
+      <tbody>
+        ${linhasProjetos||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum projeto vinculado</td></tr>'}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid var(--line)">
+          <td colspan="4" style="padding:6px 5px;border-bottom:none">Total previsto</td>
+          <td style="padding:6px 5px;text-align:right;color:var(--agendo);border-bottom:none">${fmt(totalOrc)}</td>
+          <td style="border-bottom:none"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${linhasOrc ? `
+    <div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo-dark);margin:18px 0 10px;letter-spacing:-.02em">Detalhamento orçamentário</div>
+    <table style="font-size:8.5px;border-collapse:collapse;width:100%">
+      <thead><tr>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Categoria</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Elemento</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Valor previsto</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Justificativa</th>
+      </tr></thead>
+      <tbody>${linhasOrc}</tbody>
+    </table>` : ''}
+
+    ${opts.assinaturas ? `
+    <div style="margin-top:20px;font-size:11px;color:#303842">Teresópolis — RJ, _______ de _________________________ de ${new Date().getFullYear()}.</div>
+    ${htmlAssinaturas(['Responsável Técnico / Coordenador', 'Representante Legal / Presidente', 'Responsável pela Conferência'])}` : ''}
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Plano de Ação')
+}
+
+// =============================================
+// RELATÓRIO ANUAL
+// =============================================
+export function gerarPDFRelatAnual(dados, opts = {}) {
+  const { plano, projetosCompletos, totalEntGeral, totalDespGeral, totalAtendGeral, totalUsersGeral } = dados
+  const protocolo = `AG-CAP-${plano?.periodo_inicio?.slice(0,4)||new Date().getFullYear()}-RA`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const ano = plano?.periodo_inicio?.slice(0,4) || new Date().getFullYear()
+  const saldoGeral = (totalEntGeral||0) - (totalDespGeral||0)
+
+  const linhasProjetos = (projetosCompletos||[]).map(pv => {
+    const sP = (pv.totalEnt||0) - (pv.totalDesp||0)
+    return `<tr>
+      <td><strong style="font-size:9px">${pv.projeto?.nome||'—'}</strong><div style="font-size:8px;color:#626B76">${pv.projeto?.tipo_servico||'—'}</div></td>
+      <td class="center">${pv.totalAtend||0}</td>
+      <td class="center">${pv.totalUsers||0}</td>
+      <td class="num" style="color:var(--green)">${fmt(pv.totalEnt||0)}</td>
+      <td class="num" style="color:var(--red)">${fmt(pv.totalDesp||0)}</td>
+      <td class="num" style="color:${sP>=0?'var(--green)':'var(--red)'}">${sP>=0?'+ ':'- '}${fmt(sP)}</td>
+    </tr>`
+  }).join('')
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ tipo:'full' })}
+    <div style="font-size:9px;font-weight:700;color:var(--agendo);letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Relatório anual</div>
+    <div style="font-family:Georgia,serif;font-size:42px;line-height:.95;font-weight:400;letter-spacing:-.04em;color:var(--agendo-dark);margin-bottom:10px">Relatório<br>Anual</div>
+    <div style="width:70px;height:2px;background:#A98E54;margin-bottom:12px"></div>
+    <div style="font-size:12px;color:#303944;margin-bottom:18px">${plano?.nome_plano||'—'} · Exercício ${ano}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:16px">
+      <div style="padding:11px 16px 11px 0;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Instrumento</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${plano?.tipo_plano||'—'}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">${plano?.orgao_ou_parceiro||'—'}</div>
+      </div>
+      <div style="padding:11px 0 11px 16px;border-bottom:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Exercício</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${ano}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">${fmtData(plano?.periodo_inicio)} a ${fmtData(plano?.periodo_fim)}</div>
+      </div>
+      <div style="padding:11px 16px 11px 0;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Protocolo</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${protocolo}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Emitido em ${dataEmissao}</div>
+      </div>
+      <div style="padding:11px 0 11px 16px">
+        <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">Projetos analisados</div>
+        <div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo)">${(projetosCompletos||[]).length}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:20px">
+      <div style="padding:13px 10px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:7px">Total entradas</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--green)">${fmt(totalEntGeral||0)}</div>
+      </div>
+      <div style="padding:13px 10px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:7px">Total despesas</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--red)">${fmt(totalDespGeral||0)}</div>
+      </div>
+      <div style="padding:13px 10px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:7px">Resultado</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:${saldoGeral>=0?'var(--green)':'var(--red)'}">${saldoGeral>=0?'+ ':'- '}${fmt(saldoGeral)}</div>
+      </div>
+      <div style="padding:13px 10px">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:7px">Atendimentos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${totalAtendGeral||0}</div>
+      </div>
+    </div>
+
+    <div style="font-family:Georgia,serif;font-size:20px;color:var(--agendo-dark);margin-bottom:11px;letter-spacing:-.02em">Execução por projeto / serviço</div>
+    <table style="font-size:9px;border-collapse:collapse;width:100%">
+      <thead><tr>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto / Serviço</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Atendimentos</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Usuários</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Entradas</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Despesas</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Saldo</th>
+      </tr></thead>
+      <tbody>
+        ${linhasProjetos||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum projeto encontrado</td></tr>'}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid var(--line)">
+          <td style="padding:6px 5px;border-bottom:none">Total</td>
+          <td style="padding:6px 5px;text-align:center;border-bottom:none">${totalAtendGeral||0}</td>
+          <td style="padding:6px 5px;text-align:center;border-bottom:none">${totalUsersGeral||0}</td>
+          <td style="padding:6px 5px;text-align:right;color:var(--green);border-bottom:none">${fmt(totalEntGeral||0)}</td>
+          <td style="padding:6px 5px;text-align:right;color:var(--red);border-bottom:none">${fmt(totalDespGeral||0)}</td>
+          <td style="padding:6px 5px;text-align:right;color:${saldoGeral>=0?'var(--green)':'var(--red)'};border-bottom:none">${saldoGeral>=0?'+ ':'- '}${fmt(saldoGeral)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${opts.assinaturas ? `
+    <div style="margin-top:20px;font-size:11px;color:#303842">Teresópolis — RJ, _______ de _________________________ de ${new Date().getFullYear()}.</div>
+    ${htmlAssinaturas(['Responsável Técnico', 'Representante Legal / Presidente', 'Conselho Fiscal'])}` : ''}
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, `Relatório Anual ${ano}`)
+}
+
+// =============================================
+// EQUIPE
+// =============================================
+export function gerarPDFEquipe(dados, opts = {}) {
+  const { lista, porTipo, porSit } = dados
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-EQ`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const ativos = lista.filter(e=>e.situacao==='ativo').length
+
+  const linhas = lista.map(e => `<tr>
+    <td><strong style="font-size:9px">${e.nome||'—'}</strong>${e.email?`<div style="font-size:8px;color:#626B76">${e.email}</div>`:''}</td>
+    <td style="font-size:8.5px">${e.funcao||'—'}</td>
+    <td style="font-size:8.5px">${e.tipo_vinculo||'—'}</td>
+    <td style="font-size:8.5px">${e.orgao_origem||'—'}</td>
+    <td class="center" style="font-size:8px;font-weight:600;color:${e.situacao==='ativo'?'var(--green)':'var(--muted)'}">${e.situacao||'—'}</td>
+    <td class="center" style="font-size:8.5px">${e.data_ingresso?fmtData(e.data_ingresso):'—'}</td>
+  </tr>`).join('')
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ titulo:'Relatório de Equipe', sub:`${CAPETTE_INFO.nome} · Emitido em ${dataEmissao}`, ref:protocolo })}
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Equipe</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:18px">
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Total</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${lista.length}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Ativos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--green)">${ativos}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Inativos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--red)">${lista.length-ativos}</div>
+      </div>
+      <div style="padding:12px 8px">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Tipos de vínculo</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porTipo||{}).length}</div>
+      </div>
+    </div>
+
+    <table style="font-size:9px;border-collapse:collapse;width:100%">
+      <thead><tr>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Nome</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Função</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Tipo de vínculo</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Órgão origem</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Situação</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Ingresso</th>
+      </tr></thead>
+      <tbody>${linhas||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum membro encontrado</td></tr>'}</tbody>
+    </table>
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Relatório de Equipe')
+}
+
+// =============================================
+// USUÁRIOS ATENDIDOS
+// =============================================
+export function gerarPDFUsuariosAtendidos(dados, periodoLabel, opts = {}) {
+  const { lista, ativos, desligados, faixas } = dados
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-UA`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+
+  const linhas = lista.map(u => `<tr>
+    <td><strong style="font-size:9px">${u.nome||'—'}</strong></td>
+    <td class="center" style="font-size:8.5px">${u.data_nascimento?fmtData(u.data_nascimento):'—'}</td>
+    <td class="center" style="font-size:8px;font-weight:600;color:${u.situacao==='ativo'?'var(--green)':'var(--muted)'}">${u.situacao||'—'}</td>
+    <td style="font-size:8.5px">${u.projeto?.nome||'—'}</td>
+    <td style="font-size:8.5px">${u.publico_alvo||'—'}</td>
+    <td class="center" style="font-size:8.5px">${u.data_ingresso?fmtData(u.data_ingresso):'—'}</td>
+  </tr>`).join('')
+
+  const linhasFaixas = Object.entries(faixas||{}).map(([f,v]) => `<tr><td>${f}</td><td class="num">${v}</td><td class="num">${lista.length>0?Math.round(v/lista.length*100):0}%</td></tr>`).join('')
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ titulo:'Usuários Atendidos', sub:`${CAPETTE_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Usuários Atendidos</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:18px">
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Total</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${lista.length}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Ativos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--green)">${ativos}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Desligados</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--red)">${desligados}</div>
+      </div>
+      <div style="padding:12px 8px">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Projetos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${[...new Set(lista.map(u=>u.projeto?.nome))].filter(Boolean).length}</div>
+      </div>
+    </div>
+
+    ${linhasFaixas ? `
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px">
+      <div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Faixa etária</div>
+        <table style="font-size:9px;border-collapse:collapse;width:100%">
+          <thead><tr>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px">Faixa</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">Qtd</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">%</th>
+          </tr></thead>
+          <tbody>${linhasFaixas}</tbody>
+        </table>
+      </div>
+      <div>` : '<div>'}
+    <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Lista de usuários</div>
+    <table style="font-size:9px;border-collapse:collapse;width:100%">
+      <thead><tr>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Nome</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Nascimento</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Situação</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Público-alvo</th>
+        <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Ingresso</th>
+      </tr></thead>
+      <tbody>${linhas||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum usuário encontrado</td></tr>'}</tbody>
+    </table>
+    ${linhasFaixas ? '</div></div>' : ''}
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Usuários Atendidos', true)
+}
+
+// =============================================
+// ATENDIMENTOS
+// =============================================
+export function gerarPDFAtendimentos(dados, periodoLabel, opts = {}) {
+  const { lista, totalPart, porTipo, porProjeto } = dados
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-AT`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+
+  const linhas = lista.map(a => `<tr>
+    <td style="white-space:nowrap;color:#626B76">${fmtData(a.data_atend)}</td>
+    <td style="font-size:8.5px">${a.tipo_atend||'—'}</td>
+    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tema||a.descricao||'—'}</td>
+    <td class="center">${a.qtd_participantes||'—'}</td>
+    <td style="font-size:8.5px">${a.profissional?.nome||'—'}</td>
+    <td style="font-size:8.5px">${a.projeto?.nome||'—'}</td>
+  </tr>`).join('')
+
+  const linhasTipo = Object.entries(porTipo||{}).sort((a,b)=>b[1]-a[1]).map(([t,v]) =>
+    `<tr><td>${t}</td><td class="num">${v}</td><td class="num">${lista.length>0?Math.round(v/lista.length*100):0}%</td></tr>`
+  ).join('')
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ titulo:'Relatório de Atendimentos', sub:`${CAPETTE_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Atendimentos</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:18px">
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Atendimentos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${lista.length}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Participantes</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${totalPart.toLocaleString('pt-BR')}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Tipos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porTipo||{}).length}</div>
+      </div>
+      <div style="padding:12px 8px">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Projetos</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porProjeto||{}).length}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px">
+      <div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Por tipo</div>
+        <table style="font-size:9px;border-collapse:collapse;width:100%">
+          <thead><tr>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px">Tipo</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">Qtd</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">%</th>
+          </tr></thead>
+          <tbody>${linhasTipo||'<tr><td colspan="3" style="text-align:center;color:#9199A2;padding:8px">—</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Atendimentos realizados</div>
+        <table style="font-size:9px;border-collapse:collapse;width:100%">
+          <thead><tr>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Data</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Tipo</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Tema</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Part.</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Profissional</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto</th>
+          </tr></thead>
+          <tbody>
+            ${linhas||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum atendimento</td></tr>'}
+            <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid var(--line)">
+              <td colspan="3" style="padding:5px;border-bottom:none">Total participantes</td>
+              <td class="center" style="padding:5px;border-bottom:none">${totalPart}</td>
+              <td colspan="2" style="border-bottom:none"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Relatório de Atendimentos', true)
+}
+
+// =============================================
+// DOAÇÕES
+// =============================================
+export function gerarPDFDoacoes(dados, periodoLabel, opts = {}) {
+  const { lista, totalEstimado, porCategoria, porDoador } = dados
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-DO`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+
+  const linhas = lista.map(d => `<tr>
+    <td style="white-space:nowrap;color:#626B76">${fmtData(d.data_doacao)}</td>
+    <td>${d.doador||'—'}</td>
+    <td style="font-size:8.5px">${d.categoria||'—'}</td>
+    <td style="font-size:8.5px">${d.projeto?.nome||'—'}</td>
+    <td style="font-size:8.5px">${d.forma_doacao||'—'}</td>
+    <td class="num" style="color:var(--green)">${d.valor_estimado?fmt(d.valor_estimado):'—'}</td>
+  </tr>`).join('')
+
+  const linhasCat = Object.entries(porCategoria||{}).sort((a,b)=>b[1]-a[1]).map(([c,v]) =>
+    `<tr><td>${c}</td><td class="num">${v}</td><td class="num" style="color:var(--green)">${fmt(v)}</td></tr>`
+  ).join('')
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ titulo:'Relatório de Doações', sub:`${CAPETTE_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+
+    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Doações Recebidas</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:18px">
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Doações</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${lista.length}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Valor estimado</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--green)">${fmt(totalEstimado)}</div>
+      </div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Categorias</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porCategoria||{}).length}</div>
+      </div>
+      <div style="padding:12px 8px">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Doadores</div>
+        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porDoador||{}).length}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px">
+      <div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Por categoria</div>
+        <table style="font-size:9px;border-collapse:collapse;width:100%">
+          <thead><tr>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px">Categoria</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">Qtd</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">Valor</th>
+          </tr></thead>
+          <tbody>${linhasCat||'<tr><td colspan="3" style="text-align:center;color:#9199A2;padding:8px">—</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Detalhamento</div>
+        <table style="font-size:9px;border-collapse:collapse;width:100%">
+          <thead><tr>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Data</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Doador</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Categoria</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Forma</th>
+            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Valor est.</th>
+          </tr></thead>
+          <tbody>
+            ${linhas||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhuma doação</td></tr>'}
+            <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid var(--line)">
+              <td colspan="5" style="padding:5px;border-bottom:none">Total estimado</td>
+              <td class="num" style="color:var(--green);padding:5px;border-bottom:none">${fmt(totalEstimado)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Relatório de Doações', true)
+}
