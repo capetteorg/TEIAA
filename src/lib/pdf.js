@@ -466,7 +466,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas', sub: dados.conta?.nome || 'CAPETTE', ref: 'AGENDO Integra' })}
+  ${htmlCabecalho({ titulo: 'Conciliação Bancária', sub: contaDados?.nome || 'CAPETTE', ref: 'Período: ' + periodoLabel })}
   <div class="titulo-bloco">
     <div class="titulo-principal">Relatório de Conciliação Bancária</div>
     <div class="titulo-sub">Período: ${periodoLabel}</div>
@@ -505,7 +505,8 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
   </div>
 
   ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Administração', 'Representante Legal', 'Conselho Fiscal']) : ''}
-  ${htmlRodape()}`
+  ${htmlRodape()}
+  </div>`
 
   abrirImpressao(html, 'Relatório de Conciliação', true)
 }
@@ -916,7 +917,8 @@ export function gerarPDFTransparencia(dados, mes) {
     atualizado mensalmente após a conciliação bancária. Para informações detalhadas, entre em contato com a administração.
   </div>
 
-  ${htmlRodape()}`
+  ${htmlRodape()}
+  </div>`
 
   abrirImpressao(html, 'Transparência Financeira')
 }
@@ -993,7 +995,8 @@ export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
   </div>
 
   ${opts.assinaturas ? htmlAssinaturas(['Responsável pelo Evento', 'Responsável Financeiro', 'Diretoria']) : ''}
-  ${htmlRodape()}`
+  ${htmlRodape()}
+  </div>`
 
   abrirImpressao(html, `Evento — ${evento.nome}`)
 }
@@ -1071,7 +1074,8 @@ export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
   </div>
 
   ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Campanha', 'Responsável Financeiro', 'Diretoria']) : ''}
-  ${htmlRodape()}`
+  ${htmlRodape()}
+  </div>`
 
   abrirImpressao(html, `Campanha — ${campanha.nome}`)
 }
@@ -1126,7 +1130,8 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
     </table>
   </div>
 
-  ${htmlRodape()}`
+  ${htmlRodape()}
+  </div>`
 
   abrirImpressao(html, 'Relatório de Cobranças', true)
 }
@@ -1226,6 +1231,7 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
   const pctConc = totalMovs > 0 ? Math.round(totalConciliados/totalMovs*100) : 0
 
   const html = `
+  <div class="pg">
   ${htmlCabecalho()}
 
   <div class="titulo-bloco">
@@ -1395,6 +1401,7 @@ export function gerarPDFParecer({ fechamento, movs, instituicao }) {
   const membros = (fechamento.membros_presentes||'').split(',').map(s=>s.trim()).filter(Boolean)
 
   const html = `
+  <div class="pg">
   ${htmlCabecalho()}
 
   <div class="titulo-bloco">
@@ -1506,6 +1513,7 @@ export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
     }).join('')
 
   const html = `
+  <div class="pg">
   ${htmlCabecalho()}
 
   <div class="titulo-bloco">
@@ -1566,7 +1574,8 @@ export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
     </div>
   </div>
 
-  ${htmlRodape()}`
+  ${htmlRodape()}
+  </div>`
 
   abrirImpressao(html, `Parecer Anual ${ano} — Conselho Fiscal`)
 }
