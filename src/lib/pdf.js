@@ -42,6 +42,7 @@ const CSS_BASE = `
     tfoot { display: table-footer-group; }
     tr { page-break-inside: avoid; }
   }
+  thead { display: table-header-group; }
 
   /* Variáveis */
   :root {
@@ -73,7 +74,7 @@ const CSS_BASE = `
   .pg {
     width: 210mm;
     min-height: 297mm;
-    padding: 16mm 17mm 18mm;
+    padding: 16mm 17mm 18mm 14mm;
     position: relative;
     background: #fff;
     margin: 0 auto;
@@ -830,7 +831,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
     ${htmlRodape({ protocolo })}
   </div>
 
-  <!-- PÁGINA FINAL: ENCAMINHAMENTO E ASSINATURAS -->
+<!-- PÁGINA FINAL: ENCAMINHAMENTO E ASSINATURAS -->
   ${opts.assinaturas ? `
   <div class="pg page-break">
     ${htmlCabecalho({ titulo: 'Relatório Financeiro — ' + anoRelatorio, sub: periodoLabel, ref: protocolo })}
