@@ -196,197 +196,84 @@ export default function RelatorioExecucao() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<title>Relatório de Execução</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 11px; color: #2C2C2A; padding: 20px; }
-  .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #6BBF2B; padding-bottom: 10px; margin-bottom: 14px; }
-  .cab-logo { font-size: 18px; font-weight: bold; color: #2C2C2A; }
-  .cab-info { text-align: right; font-size: 9px; color: #888780; }
-  .titulo-bloco { text-align: center; margin-bottom: 14px; padding: 10px; background: #F8F7F2; border-radius: 6px; }
-  .titulo-principal { font-size: 15px; font-weight: bold; color: #2C2C2A; }
-  .titulo-sub { font-size: 11px; color: #5F5E5A; margin-top: 3px; }
-  .info-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 12px; }
-  .info-item { background: #F8F7F2; border-radius: 4px; padding: 6px 8px; }
-  .info-label { font-size: 9px; color: #888780; margin-bottom: 2px; }
-  .info-valor { font-weight: 500; }
-  .secao { margin-bottom: 14px; }
-  .secao-titulo { font-size: 12px; font-weight: bold; color: #2C2C2A; border-left: 3px solid #6BBF2B; padding-left: 8px; margin-bottom: 8px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 10px; }
-  th { background: #F8F7F2; padding: 5px 7px; text-align: left; font-weight: 600; border-bottom: 1px solid #E8E6DE; color: #5F5E5A; }
-  td { padding: 5px 7px; border-bottom: 0.5px solid #E8E6DE; vertical-align: middle; }
-  tr:nth-child(even) { background: #FAFAF8; }
-  .num { text-align: right; }
-  .center { text-align: center; }
-  .resumo-box { background: #EAF3DE; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
-  .resumo-titulo { font-size: 11px; font-weight: bold; color: #3B6D11; margin-bottom: 8px; }
-  .resumo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
-  .resumo-item { background: #fff; border-radius: 4px; padding: 6px 8px; }
-  .resumo-label { font-size: 9px; color: #888780; margin-bottom: 2px; }
-  .resumo-valor { font-size: 14px; font-weight: bold; }
-  .verde { color: #6BBF2B; }
-  .vermelho { color: #E8212A; }
-  .azul { color: #0E7EA8; }
-  .assinaturas { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 30px; }
+  body { font-family: Inter, Arial, sans-serif; font-size: 11px; color: #171A1F; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: A4 portrait; margin: 0; }
+  @media print { body { background: #fff; } .no-print { display: none !important; } thead { display: table-header-group; } tr { page-break-inside: avoid; } }
+  .pg { width: 210mm; min-height: 297mm; padding: 14mm 16mm 16mm; margin: 0 auto; border-left: 5px solid #0E7EA8; }
+  .logo-row { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0E7EA8; padding-bottom: 11px; margin-bottom: 18px; }
+  .kicker { font-size: 9px; font-weight: 700; color: #0E7EA8; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 7px; }
+  .title { font-family: Georgia, serif; font-size: 38px; line-height: .95; font-weight: 400; letter-spacing: -.04em; color: #06344F; margin-bottom: 9px; }
+  .rule { width: 65px; height: 2px; background: #A98E54; margin-bottom: 11px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #D7D0C2; border-bottom: 1px solid #D7D0C2; margin: 12px 0; }
+  .meta { padding: 10px 0; border-bottom: 1px solid #ECE6DA; }
+  .meta:nth-last-child(-n+2) { border-bottom: 0; }
+  .meta:nth-child(odd) { padding-right: 16px; border-right: 1px solid #ECE6DA; }
+  .meta:nth-child(even) { padding-left: 16px; }
+  .meta b { display: block; font-size: 7.5px; text-transform: uppercase; color: #6B7280; letter-spacing: .12em; margin-bottom: 3px; }
+  .meta span { font-size: 11px; color: #20252C; font-weight: 600; }
+  .meta small { display: block; font-size: 9px; color: #626B76; margin-top: 2px; }
+  .figures { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid #D7D0C2; border-bottom: 1px solid #D7D0C2; margin: 12px 0; }
+  .fig { padding: 11px 8px; border-right: 1px solid #ECE6DA; }
+  .fig:last-child { border-right: 0; }
+  .fig b { display: block; font-size: 7.5px; text-transform: uppercase; color: #6B7280; letter-spacing: .1em; margin-bottom: 5px; }
+  .fig span { font-family: Georgia, serif; font-size: 16px; }
+  .blue { color: #0E7EA8; } .green { color: #2E6F3E; } .red { color: #A7352C; }
+  .sec-title { font-family: Georgia, serif; font-size: 17px; color: #06344F; margin: 14px 0 9px; letter-spacing: -.02em; }
+  .texto-box { background: #F8F7F2; border-left: 3px solid #0E7EA8; padding: 10px 14px; font-size: 10px; line-height: 1.65; color: #303842; margin: 10px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { background: #F2F6F7; color: #525B66; border-top: 1px solid #D7D0C2; border-bottom: 1px solid #D7D0C2; font-size: 7px; text-transform: uppercase; letter-spacing: .08em; padding: 6px 5px; text-align: left; }
+  td { padding: 5px; border-bottom: 1px solid #EEE9DF; color: #20252C; vertical-align: middle; }
+  .num { text-align: right; white-space: nowrap; } .center { text-align: center; }
+  .total-r td { background: #F5F2EA; font-weight: 700; border-top: 1.5px solid #D7D0C2; border-bottom: none; }
+  .footer { border-top: 1px solid #D7D0C2; padding-top: 8px; display: flex; justify-content: space-between; color: #66717E; font-size: 8.5px; margin-top: 14px; }
+  .footer strong { color: #06344F; }
+  .assinaturas { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 20px; }
   .assinatura { text-align: center; }
-  .assinatura-linha { border-top: 1px solid #2C2C2A; padding-top: 5px; font-size: 9px; color: #5F5E5A; }
-  .rodape { margin-top: 20px; padding-top: 8px; border-top: 1px solid #E8E6DE; font-size: 9px; color: #B4B2A9; text-align: center; }
-  @media print { body { padding: 10px; } }
+  .assinatura-linha { height: 36px; border-bottom: 1px solid #9199A2; margin-bottom: 5px; }
+  .assinatura-label { font-size: 8.5px; font-weight: 700; color: #06344F; }
 </style>
 </head>
 <body>
-<div class="cabecalho">
-  <div>
-    <div class="cab-logo">${instituicao?.nome_fantasia || 'CAPETTE'}</div>
-    <div style="font-size:9px;color:#888780">${instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}</div>
-    <div style="font-size:9px;color:#888780">CNPJ: ${instituicao?.cnpj || '29.213.717/0001-01'}</div>
-  </div>
-  <div class="cab-info">
-    <div>Relatório de Execução do Objeto</div>
-    <div>Emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
-    ${dataInicio || dataFim ? `<div>Período: ${dataInicio ? fmtData(dataInicio) : 'início'} a ${dataFim ? fmtData(dataFim) : 'atual'}</div>` : ''}
+<div class="pg">
+
+<div class="logo-row">
+  <div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:44px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='<div style=\'display:flex;gap:1px\'><span style=\'font-size:14px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:14px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:14px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:14px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:14px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:14px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:14px;font-weight:900;color:#E8207A\'>E</span></div>'" /></div>
+  <div style="text-align:right;font-size:9px;color:#5F6874;max-width:240px;line-height:1.5">
+    <div style="font-size:11px;font-weight:700;color:#20252C">${instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}</div>
+    <div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${instituicao?.cnpj || '29.213.717/0001-01'}</div>
   </div>
 </div>
 
-<div class="titulo-bloco">
-  <div class="titulo-principal">Relatório de Execução do Objeto</div>
-  <div class="titulo-sub">${plano ? plano.nome_plano : projeto?.nome || '—'}</div>
-</div>
+<div class="kicker">Relatório de execução</div>
+<div class="title">Execução<br>do Objeto</div>
+<div class="rule"></div>
+<div style="font-size:12px;color:#303944;margin-bottom:14px">${plano ? plano.nome_plano : projeto?.nome || '—'}${dataInicio ? ' · ' + fmtData(dataInicio) + ' a ' + (dataFim ? fmtData(dataFim) : 'atual') : ''}</div>
 
-<div class="info-grid">
+<div class="meta-grid">
   ${plano ? `
-  <div class="info-item"><div class="info-label">Tipo de plano</div><div class="info-valor">${plano.tipo_plano}</div></div>
-  <div class="info-item"><div class="info-label">Instrumento vinculado</div><div class="info-valor">${plano.parceria?.nome_projeto||'—'}</div></div>
-  <div class="info-item"><div class="info-label">Situação do plano</div><div class="info-valor">${plano.situacao}</div></div>
-  <div class="info-item"><div class="info-label">Órgão / parceiro</div><div class="info-valor">${plano.orgao_ou_parceiro||'—'}</div></div>
-  <div class="info-item"><div class="info-label">Período de execução</div><div class="info-valor">${plano.periodo_inicio ? `${fmtData(plano.periodo_inicio)} a ${fmtData(plano.periodo_fim)}` : '—'}</div></div>
-  <div class="info-item"><div class="info-label">Valor total previsto</div><div class="info-valor">${plano.valor_total_previsto ? fmt(plano.valor_total_previsto) : '—'}</div></div>
-  ` : ''}
-  <div class="info-item"><div class="info-label">Projeto / Serviço / Ação</div><div class="info-valor">${projeto?.nome||'—'}</div></div>
-  <div class="info-item"><div class="info-label">Público-alvo</div><div class="info-valor">${plano?.publico_alvo||'—'}</div></div>
-  <div class="info-item"><div class="info-label">Capacidade prevista</div><div class="info-valor">${plano?.capacidade_prevista||'—'}</div></div>
+  <div class="meta"><b>Instrumento</b><span>${plano.tipo_plano||'—'}</span><small>${plano.parceria?.nome_projeto||'—'}</small></div>
+  <div class="meta"><b>Período</b><span>${plano.periodo_inicio ? fmtData(plano.periodo_inicio) + ' a ' + fmtData(plano.periodo_fim) : '—'}</span><small>Execução</small></div>
+  <div class="meta"><b>Situação</b><span>${plano.situacao||'—'}</span></div>
+  <div class="meta"><b>Valor previsto</b><span>${plano.valor_total_previsto ? fmt(plano.valor_total_previsto) : '—'}</span></div>
+  ` : `
+  <div class="meta"><b>Projeto / Serviço</b><span>${projeto?.nome||'—'}</span></div>
+  <div class="meta"><b>Público-alvo</b><span>${projeto?.publico_alvo||'—'}</span></div>
+  `}
 </div>
 
-${plano?.objeto ? `
-<div class="secao">
-  <div class="secao-titulo">Objeto</div>
-  <div style="background:#F8F7F2;padding:8px 10px;border-radius:4px;line-height:1.6">${plano.objeto}</div>
-</div>` : ''}
+${plano?.objeto ? `<div class="texto-box"><strong style="font-size:8.5px;color:#06344F;display:block;margin-bottom:4px">Objeto</strong>${plano.objeto}</div>` : ''}
 
-${plano?.objetivo_geral ? `
-<div class="secao">
-  <div class="secao-titulo">Objetivo Geral</div>
-  <div style="background:#F8F7F2;padding:8px 10px;border-radius:4px;line-height:1.6">${plano.objetivo_geral}</div>
-</div>` : ''}
-
-<!-- RESUMO DE EXECUÇÃO -->
-<div class="resumo-box">
-  <div class="resumo-titulo">Resumo da Execução</div>
-  <div class="resumo-grid">
-    <div class="resumo-item"><div class="resumo-label">Atendimentos realizados</div><div class="resumo-valor azul">${atendimentos.length}</div></div>
-    <div class="resumo-item"><div class="resumo-label">Total de participantes</div><div class="resumo-valor verde">${totalParticipantes.toLocaleString('pt-BR')}</div></div>
-    <div class="resumo-item"><div class="resumo-label">Usuários cadastrados</div><div class="resumo-valor azul">${usuarios.filter(u=>u.situacao==='ativo').length} ativos</div></div>
-    <div class="resumo-item"><div class="resumo-label">Equipe envolvida</div><div class="resumo-valor azul">${equipe.length} pessoa${equipe.length!==1?'s':''}</div></div>
-  </div>
+<div class="figures">
+  <div class="fig"><b>Atendimentos</b><span class="blue">${atendimentos.length}</span></div>
+  <div class="fig"><b>Participantes</b><span class="blue">${totalParticipantes.toLocaleString('pt-BR')}</span></div>
+  <div class="fig"><b>Usuários ativos</b><span class="green">${usuarios.filter(u=>u.situacao==='ativo').length}</span></div>
+  <div class="fig"><b>Equipe</b><span class="blue">${equipe.length}</span></div>
 </div>
 
-${metas.length > 0 ? `
-<div class="secao">
-  <div class="secao-titulo">1. Metas — Previsto x Realizado</div>
-  <table>
-    <thead><tr><th>Meta</th><th>Indicador</th><th class="num">Previsto</th><th class="num">Realizado</th><th class="center">% Exec.</th><th class="center">Status</th><th>Justificativa</th></tr></thead>
-    <tbody>${linhasMetas}</tbody>
-  </table>
-</div>` : ''}
 
-${ativsPrevistas.length > 0 ? `
-<div class="secao">
-  <div class="secao-titulo">2. Atividades Previstas x Status de Execução</div>
-  <table>
-    <thead><tr><th>Atividade</th><th>Descrição</th><th class="center">Período</th><th>Responsável</th><th class="center">Status</th></tr></thead>
-    <tbody>${linhasAtivsPrev}</tbody>
-  </table>
-</div>` : ''}
-
-${atendimentos.length > 0 ? `
-<div class="secao">
-  <div class="secao-titulo">3. Atividades e Atendimentos Realizados (${atendimentos.length})</div>
-  <table>
-    <thead><tr><th>Data</th><th>Tipo</th><th>Tema</th><th class="num center">Participantes</th><th>Público</th><th>Profissional</th></tr></thead>
-    <tbody>${linhasAtends}</tbody>
-    <tfoot><tr style="background:#EAF3DE"><td colspan="3"><strong>TOTAL</strong></td><td class="num center"><strong>${totalParticipantes}</strong></td><td colspan="2"></td></tr></tfoot>
-  </table>
-  ${atendimentos.length > 100 ? `<div style="font-size:9px;color:#888780;text-align:center">* Exibindo 100 de ${atendimentos.length} registros</div>` : ''}
-
-  ${Object.keys(porTipo).length > 0 ? `
-  <div style="margin-top:8px">
-    <div style="font-size:10px;font-weight:600;margin-bottom:4px;color:#5F5E5A">Por tipo de atividade:</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px">
-      ${Object.entries(porTipo).sort((a,b)=>b[1]-a[1]).map(([tipo,qtd])=>`<span style="padding:2px 8px;border-radius:99px;font-size:9px;background:#E6F1FB;color:#185FA5">${tipo}: ${qtd}</span>`).join('')}
-    </div>
-  </div>` : ''}
-</div>` : ''}
-
-${usuarios.length > 0 ? `
-<div class="secao">
-  <div class="secao-titulo">4. Público Atendido — Quantitativo</div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
-    <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
-      <div style="font-size:9px;color:#888780;margin-bottom:2px">Total cadastrado</div>
-      <div style="font-size:18px;font-weight:bold;color:#0E7EA8">${usuarios.length}</div>
-    </div>
-    <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
-      <div style="font-size:9px;color:#888780;margin-bottom:2px">Ativos</div>
-      <div style="font-size:18px;font-weight:bold;color:#6BBF2B">${usuarios.filter(u=>u.situacao==='ativo').length}</div>
-    </div>
-    <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
-      <div style="font-size:9px;color:#888780;margin-bottom:2px">Desligados/Encerrados</div>
-      <div style="font-size:18px;font-weight:bold;color:#E8212A">${usuarios.filter(u=>u.situacao==='desligado'||u.situacao==='encerrado').length}</div>
-    </div>
-  </div>
-  ${dados.users_com_nasc > 0 ? `
-  <div style="font-size:10px;font-weight:600;margin-bottom:4px;color:#5F5E5A">Distribuição por faixa etária (${dados.users_com_nasc} com data de nascimento):</div>
-  <div style="display:flex;gap:4px;flex-wrap:wrap">
-    ${Object.entries(dados.faixas).filter(([,v])=>v>0).map(([f,v])=>`<span style="padding:3px 10px;border-radius:99px;font-size:9px;background:#EAF3DE;color:#3B6D11">${f} anos: ${v}</span>`).join('')}
-  </div>` : ''}
-</div>` : ''}
-
-${equipe.length > 0 ? `
-<div class="secao">
-  <div class="secao-titulo">5. Equipe Envolvida (${equipe.length})</div>
-  <table>
-    <thead><tr><th>Nome</th><th>Função</th><th>Tipo de vínculo</th></tr></thead>
-    <tbody>${linhasEquipe}</tbody>
-  </table>
-</div>` : ''}
-
-${financeiroResumo ? `
-<div class="secao">
-  <div class="secao-titulo">6. Resumo Financeiro — ${financeiroResumo.conta||'Conta vinculada'}</div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-    <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
-      <div style="font-size:9px;color:#888780;margin-bottom:2px">Entradas</div>
-      <div style="font-size:14px;font-weight:bold;color:#6BBF2B">${fmt(financeiroResumo.entradas)}</div>
-    </div>
-    <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
-      <div style="font-size:9px;color:#888780;margin-bottom:2px">Saídas</div>
-      <div style="font-size:14px;font-weight:bold;color:#E8212A">${fmt(financeiroResumo.saidas)}</div>
-    </div>
-    <div style="background:#F8F7F2;border-radius:4px;padding:8px 10px">
-      <div style="font-size:9px;color:#888780;margin-bottom:2px">Saldo</div>
-      <div style="font-size:14px;font-weight:bold;color:${financeiroResumo.saldo>=0?'#6BBF2B':'#E8212A'}">${fmt(financeiroResumo.saldo)}</div>
-    </div>
-  </div>
-</div>` : ''}
-
-<div class="secao">
-  <div class="secao-titulo">Declaração</div>
-  <div style="background:#F8F7F2;padding:10px;border-radius:4px;font-size:10px;line-height:1.7">
-    Declaramos que as informações apresentadas neste relatório refletem fielmente as atividades desenvolvidas pela 
-    <strong>${instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis — CAPETTE'}</strong>,
-    ${dataInicio||dataFim ? `no período de ${dataInicio?fmtData(dataInicio):'início'} a ${dataFim?fmtData(dataFim):'atual'},` : ''}
-    em conformidade com o planejado${plano ? ` no ${plano.nome_plano}` : ''}, observadas as disposições legais aplicáveis às Organizações da Sociedade Civil.
-  </div>
-</div>
 
 ${incluirAss ? `<div class="assinaturas">
   <div class="assinatura"><div style="height:40px"></div><div class="assinatura-linha">Responsável Técnico</div></div>
@@ -394,12 +281,15 @@ ${incluirAss ? `<div class="assinaturas">
   <div class="assinatura"><div style="height:40px"></div><div class="assinatura-linha">Responsável pela Conferência</div></div>
 </div>` : ''}
 
-<div class="rodape">
-  FinOSC Capette · Sistema de Gestão para OSCs · ${new Date().toLocaleDateString('pt-BR')}
+<div class="footer">
+  <div>Rua Juruena, 73 · Teresópolis — RJ · capette@capette.org</div>
+  <div><strong>AGENDO Integra</strong> · Relatório de Execução</div>
 </div>
 
+</div>
 <script>window.onload = () => window.print()</script>
 </body></html>`
+
 
     const w = window.open('', '_blank')
     if (!w) { alert('O navegador bloqueou a janela do relatório. Permita pop-ups para este site e tente novamente.'); return }

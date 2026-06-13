@@ -298,11 +298,28 @@ export default function DocumentosFiscais() {
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>
-      body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.8; color: #2C2C2A; }
-      .declaracao { page-break-after: always; padding: 60px; min-height: 100vh; display: flex; flex-direction: column; }
-      .declaracao:last-child { page-break-after: auto; }
-      pre { white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.8; }
-      h2 { font-size: 14px; text-align: center; margin-bottom: 40px; letter-spacing: 1px; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Inter, Arial, sans-serif; font-size: 12px; color: #171A1F; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      @page { size: A4 portrait; margin: 0; }
+      @media print { body { background: #fff; } }
+      .decl-pg { width: 210mm; min-height: 297mm; padding: 18mm 20mm; margin: 0 auto; border-left: 5px solid #0E7EA8; page-break-after: always; }
+      .decl-pg:last-child { page-break-after: auto; }
+      .logo-row { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0E7EA8; padding-bottom: 11px; margin-bottom: 36px; }
+      .logo-name { font-size: 15px; font-weight: 900; color: #06344F; letter-spacing: .04em; }
+      .logo-sub { font-size: 8px; color: #888; margin-top: 2px; }
+      .logo-right { text-align: right; font-size: 9px; color: #5F6874; max-width: 220px; line-height: 1.5; }
+      h2 { font-size: 12px; font-weight: 700; text-align: center; color: #06344F; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; line-height: 1.5; }
+      .decl-subtitle { text-align: center; font-size: 10px; color: #626B76; margin-bottom: 40px; }
+      pre { white-space: pre-wrap; font-family: Georgia, 'Times New Roman', serif; font-size: 12px; line-height: 1.85; color: #303842; }
+      .decl-date { font-size: 11px; color: #303842; margin: 32px 0 48px; }
+      .decl-assin { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 8px; }
+      .assin-item { text-align: center; }
+      .assin-line { height: 44px; border-bottom: 1px solid #9199A2; margin-bottom: 7px; }
+      .assin-name { font-size: 10px; font-weight: 700; color: #06344F; }
+      .assin-role { font-size: 9px; color: #626B76; margin-top: 2px; }
+      .decl-footer { margin-top: 32px; border-top: 1px solid #D7D0C2; padding-top: 9px; display: flex; justify-content: space-between; color: #66717E; font-size: 8.5px; }
+      .decl-footer strong { color: #06344F; }
+      .decl-nota { font-size: 8.5px; color: #9199A2; margin-top: 3px; font-style: italic; }
     </style></head><body>
     ${declaracoesSel.map(tipo => {
       const fn = TEXTOS_DECLARACOES[tipo]
@@ -310,7 +327,27 @@ export default function DocumentosFiscais() {
       const linhas = texto.split('\n')
       const titulo = linhas[0]
       const corpo = linhas.slice(1).join('\n')
-      return `<div class="declaracao"><h2>${titulo}</h2><pre>${corpo}</pre></div>`
+      return `<div class="decl-pg">
+        <div class="logo-row">
+          <div><div class="logo-name">CAPETTE</div><div class="logo-sub">Desde 1974</div></div>
+          <div class="logo-right">
+            <div style="font-size:10px;font-weight:700;color:#20252C">${instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}</div>
+            <div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${instituicao?.cnpj || '29.213.717/0001-01'}</div>
+          </div>
+        </div>
+        <h2>${titulo}</h2>
+        <div class="decl-subtitle">Art. 34 da Lei nº 13.019/2014 — MROSC</div>
+        <pre>${corpo}</pre>
+        <div class="decl-date">Teresópolis — RJ, _______ de _________________________ de ${new Date().getFullYear()}.</div>
+        <div class="decl-assin">
+          <div class="assin-item"><div class="assin-line"></div><div class="assin-name">${representante?.nome || '[Nome do Representante Legal]'}</div><div class="assin-role">Presidente / Representante Legal</div></div>
+          <div class="assin-item"><div class="assin-line"></div><div class="assin-name">[Nome da Testemunha]</div><div class="assin-role">Testemunha · CPF: [CPF]</div></div>
+        </div>
+        <div class="decl-footer">
+          <div>AGENDO Integra · Gestão integrada para OSCs<div class="decl-nota">Documento gerado automaticamente — verificar dados antes de assinar</div></div>
+          <div><strong>CAPETTE</strong> · ${new Date().toLocaleDateString('pt-BR')}</div>
+        </div>
+      </div>`
     }).join('')}
     </body></html>`
 

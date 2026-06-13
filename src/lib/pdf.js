@@ -419,6 +419,91 @@ ${paisagem ? '@page { size: A4 landscape; margin: 0; } .pg { width: 297mm; min-h
   Promise.race([prontas, timeout]).then(() => setTimeout(() => win.print(), 200))
 }
 
+
+// Cabeçalho completo com logo (capa de todos os documentos)
+function cabFull(subtitulo) {
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0E7EA8;padding-bottom:11px;margin-bottom:18px">
+    <div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:46px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='<div style=\'display:flex;gap:1px\'><span style=\'font-size:16px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:16px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:16px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:16px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:16px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:16px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:16px;font-weight:900;color:#E8207A\'>E</span></div><div style=\'font-size:8px;color:#888\'>Desde 1974</div>'" /></div>
+    <div style="text-align:right;font-size:9px;color:#5F6874;max-width:260px;line-height:1.5">
+      <div style="font-size:11px;font-weight:700;color:#20252C">${CAPETTE_INFO.nome}</div>
+      <div style="font-size:9.5px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+      <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
+    </div>
+  </div>
+  ${subtitulo ? `<div style="font-size:9px;color:#626B76;margin-bottom:12px">${subtitulo}</div>` : ''}
+  `
+}
+
+// Cabeçalho compacto (páginas internas)
+function cabCompact(titulo, sub, ref) {
+  return `
+  <div style="display:grid;grid-template-columns:1fr auto;gap:16px;border-bottom:1px solid #D7D0C2;padding-bottom:10px;margin-bottom:16px">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#06344F;letter-spacing:-.01em">${titulo}</div>
+      <div style="margin-top:3px;color:#66717E;font-size:9px">${sub}</div>
+    </div>
+    <div style="text-align:right;font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#06344F">
+      AGENDO Integra<span style="display:block;margin-top:3px;color:#0E7EA8;font-weight:400;text-transform:none;letter-spacing:0">${ref}</span>
+    </div>
+  </div>`
+}
+
+// Título editorial (serif grande + linha dourada)
+function tituloEditorial(kicker, linha1, linha2, periodo, badge) {
+  return `
+  <div style="font-size:9px;font-weight:700;color:#0E7EA8;letter-spacing:.18em;text-transform:uppercase;margin-bottom:7px">${kicker}</div>
+  <div style="font-family:Georgia,serif;font-size:40px;line-height:.95;font-weight:400;letter-spacing:-.04em;color:#06344F;margin-bottom:9px">${linha1}${linha2?'<br>'+linha2:''}</div>
+  <div style="width:65px;height:2px;background:#A98E54;margin-bottom:11px"></div>
+  <div style="font-size:12px;color:#303944;margin-bottom:${badge?'10px':'16px'}">${periodo}</div>
+  ${badge ? `<div style="margin-bottom:16px">${badge}</div>` : ''}
+  `
+}
+
+// Grid de identificação 2x2
+function metaGrid(itens) {
+  const cells = itens.map((it, i) => {
+    const odd = i % 2 === 0
+    const lastTwo = i >= itens.length - 2
+    return `<div style="padding:10px ${odd?'16px':'0'} 10px ${odd?'0':'16px'};${odd?'border-right:1px solid #ECE6DA;':''}${!lastTwo?'border-bottom:1px solid #ECE6DA;':''}">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:3px">${it.label}</div>
+      <div style="font-size:11px;color:${it.cor||'#20252C'};font-weight:600">${it.val}</div>
+      ${it.sub ? `<div style="font-size:9px;color:#626B76;margin-top:2px">${it.sub}</div>` : ''}
+    </div>`
+  }).join('')
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin:12px 0">${cells}</div>`
+}
+
+// Indicadores financeiros
+function figuras(itens, cols) {
+  const cells = itens.map((it, i) => `
+    <div style="padding:11px 8px;${i<itens.length-1?'border-right:1px solid #ECE6DA;':''}">
+      <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:5px">${it.label}</div>
+      <div style="font-family:Georgia,serif;font-size:16px;color:${it.cor||'#20252C'}">${it.val}</div>
+    </div>`).join('')
+  return `<div style="display:grid;grid-template-columns:repeat(${cols||itens.length},1fr);border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin:12px 0">${cells}</div>`
+}
+
+// Cabeçalho de seção
+function secTitle(texto) {
+  return `<div style="font-family:Georgia,serif;font-size:17px;color:#06344F;margin:14px 0 9px;letter-spacing:-.02em">${texto}</div>`
+}
+
+// Rodapé
+function rodape(protocolo) {
+  return `
+  <div style="border-top:1px solid #D7D0C2;padding-top:8px;display:flex;justify-content:space-between;color:#66717E;font-size:8.5px;margin-top:14px">
+    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div><strong style="color:#06344F">AGENDO Integra</strong> · ${protocolo}</div>
+  </div>`
+}
+
+// Tabela padrão
+function tabelaHeader(colunas) {
+  const ths = colunas.map(c => `<th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:${c.align||'left'}">${c.label}</th>`).join('')
+  return `<thead><tr>${ths}</tr></thead>`
+}
+
 // =============================================
 // RELATÓRIO DE CONCILIAÇÃO
 // =============================================
@@ -1006,52 +1091,61 @@ export function gerarPDFTransparencia(dados, mes) {
     return `<tr><td>${cat}</td><td class="num vermelho">${fmt(val)}</td><td class="num">${total>0?Math.round(val/total*100):0}%</td></tr>`
   }).join('')
 
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-TP`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
+  const saldo = totalEnt - totalSai
+
+  const linhasEnt2 = Object.entries(grupoEnt).sort((a,b)=>b[1]-a[1]).map(([cat,val]) =>
+    `<tr><td>${cat}</td><td style="text-align:right;color:#2E6F3E;white-space:nowrap">${fmt(val)}</td><td style="text-align:right">${totalEnt>0?Math.round(val/totalEnt*100):0}%</td></tr>`
+  ).join('')
+
+  const linhasSai2 = Object.entries(grupoSai).sort((a,b)=>b[1]-a[1]).map(([cat,val]) =>
+    `<tr><td>${cat}</td><td style="text-align:right;color:#A7352C;white-space:nowrap">${fmt(val)}</td><td style="text-align:right">${totalSai>0?Math.round(val/totalSai*100):0}%</td></tr>`
+  ).join('')
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Transparência Financeira', sub: 'CAPETTE · ' + CAPETTE_INFO.nome, ref: 'AGENDO Integra' })}
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório de Transparência Financeira</div>
-    <div class="titulo-sub">Período: ${mesLabel}</div>
-  </div>
+    ${cabFull()}
+    ${tituloEditorial('Documento público','Transparência','Financeira',`Competência: ${mesLabel}`)}
 
-  <div class="resumo-box">
-    <div class="resumo-grid">
-      <div class="resumo-item"><div class="resumo-label">Total Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total Gastos</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Resultado</div><div class="resumo-valor ${totalEnt-totalSai>=0?'verde':'vermelho'}">${fmt(totalEnt-totalSai)}</div></div>
+    <div style="border-left:3px solid #0E7EA8;padding:10px 14px;background:#EAF5F8;margin:12px 0;font-size:10px;color:#06344F;line-height:1.55">
+      Este relatório é disponibilizado publicamente pela CAPETTE em cumprimento às obrigações de transparência previstas na Lei nº 13.019/2014 e demais normas aplicáveis às organizações da sociedade civil.
     </div>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo">De onde veio o dinheiro</div>
-    <table>
-      <thead><tr><th>Categoria</th><th class="num">Total</th><th class="num">%</th></tr></thead>
-      <tbody>${linhasEnt}<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr></tbody>
+    ${figuras([
+      { label:'Total entradas', val:fmt(totalEnt), cor:'#2E6F3E' },
+      { label:'Total saídas', val:fmt(totalSai), cor:'#A7352C' },
+      { label:'Resultado do período', val:(saldo>=0?'+ ':'- ')+fmt(saldo), cor:saldo>=0?'#2E6F3E':'#A7352C' },
+    ], 3)}
+
+    ${secTitle('Entradas por categoria')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px;margin-bottom:14px">
+      ${tabelaHeader([{label:'Categoria'},{label:'Total',align:'right'},{label:'%',align:'right'}])}
+      <tbody>
+        ${linhasEnt2}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2"><td style="padding:5px;border-bottom:none">Total entradas</td><td style="text-align:right;color:#2E6F3E;padding:5px;border-bottom:none">${fmt(totalEnt)}</td><td style="text-align:right;padding:5px;border-bottom:none">100%</td></tr>
+      </tbody>
     </table>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo">Como foi gasto</div>
-    <table>
-      <thead><tr><th>Categoria</th><th class="num">Total</th><th class="num">%</th></tr></thead>
-      <tbody>${linhasSai}<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr></tbody>
+    ${secTitle('Saídas por categoria')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px">
+      ${tabelaHeader([{label:'Categoria'},{label:'Total',align:'right'},{label:'%',align:'right'}])}
+      <tbody>
+        ${linhasSai2}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2"><td style="padding:5px;border-bottom:none">Total saídas</td><td style="text-align:right;color:#A7352C;padding:5px;border-bottom:none">${fmt(totalSai)}</td><td style="text-align:right;padding:5px;border-bottom:none">100%</td></tr>
+      </tbody>
     </table>
-  </div>
 
-  <div style="font-size:9px;color:#888;margin-top:12px;padding:8px;background:#F8F7F2;border-radius:4px;">
-    <strong>Nota de transparência:</strong> Este relatório apresenta um resumo das movimentações financeiras da ${CAPETTE_INFO.nome}, 
-    atualizado mensalmente após a conciliação bancária. Para informações detalhadas, entre em contato com a administração.
-  </div>
+    <div style="margin-top:14px;font-size:9px;color:#9199A2;line-height:1.55">
+      Informações disponibilizadas em conformidade com a Lei nº 13.019/2014 — MROSC. Os valores apresentados correspondem às movimentações registradas no sistema AGENDO Integra, conforme dados conciliados com o extrato bancário.
+    </div>
 
-  ${htmlRodape()}
+    ${rodape(protocolo)}
   </div>`
-
-  abrirImpressao(html, 'Transparência Financeira')
+  abrirImpressao(html, 'Transparência Pública')
 }
 
-// =============================================
-// RELATÓRIO DE EVENTO
-// =============================================
+
 export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
   const totalEnt = entradas.reduce((a,m)=>a+Number(m.valor||0),0)
   const totalSai = Math.abs(saidas.reduce((a,m)=>a+Number(m.valor||0),0))
@@ -1078,58 +1172,55 @@ export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
     <td class="center">${m.conciliado?'✓ Conciliado':'Pendente'}</td>
   </tr>`).join('')
 
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-EV`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
+  const periodoLabel = evento.data_inicio ? (new Date(evento.data_inicio+'T12:00:00').toLocaleDateString('pt-BR') + (evento.data_fim && evento.data_fim!==evento.data_inicio ? ' a '+new Date(evento.data_fim+'T12:00:00').toLocaleDateString('pt-BR') : '')) : '—'
+  const pctMeta = evento.meta_financeira > 0 ? Math.round(totalEnt/evento.meta_financeira*100) : null
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas — Emenda/Edital', sub: (dados.conta?.nome || 'Emenda/Edital') + ' · CAPETTE', ref: 'AGENDO Integra' })}
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório Financeiro de Evento</div>
-    <div class="titulo-sub">${evento.nome}</div>
-  </div>
+    ${cabFull()}
+    ${tituloEditorial('Relatório de evento', evento.nome||'Evento', '', periodoLabel)}
 
-  <div class="info-grid-3">
-    <div class="info-item"><div class="info-label">Evento</div><div class="info-valor">${evento.nome}</div></div>
-    <div class="info-item"><div class="info-label">Período</div><div class="info-valor">${evento.data_inicio||'—'} ${evento.data_fim?'a '+evento.data_fim:''}</div></div>
-    <div class="info-item"><div class="info-label">Status</div><div class="info-valor">${evento.status||'—'}</div></div>
-  </div>
+    ${metaGrid([
+      { label:'Tipo', val:'Evento institucional', sub:'Realização CAPETTE' },
+      { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
+      { label:'Período', val:periodoLabel, sub:'Data de realização' },
+      { label:'Meta financeira', val:evento.meta_financeira?fmt(evento.meta_financeira):'—', sub:pctMeta!=null?pctMeta+'% atingido':'' },
+    ])}
 
-  <div class="resumo-box">
-    <div class="resumo-grid">
-      <div class="resumo-item"><div class="resumo-label">Total Entradas</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total Despesas</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Saldo do Evento</div><div class="resumo-valor ${saldo>=0?'verde':'vermelho'}">${fmt(saldo)}</div></div>
-    </div>
-  </div>
+    ${figuras([
+      { label:'Total entradas', val:fmt(totalEnt), cor:'#2E6F3E' },
+      { label:'Total saídas', val:fmt(totalSai), cor:'#A7352C' },
+      { label:'Resultado', val:(saldo>=0?'+ ':'- ')+fmt(saldo), cor:saldo>=0?'#2E6F3E':'#A7352C' },
+      { label:'Meta atingida', val:pctMeta!=null?pctMeta+'%':'—', cor:'#A98E54' },
+    ])}
 
-  <div class="secao">
-    <div class="secao-titulo">Entradas do Evento</div>
-    <table>
-      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Subcategoria</th><th>Pagador/Doador</th><th class="num">Valor</th><th class="center">Situação</th></tr></thead>
-      <tbody>${linhasEnt||'<tr><td colspan="7" style="text-align:center;color:#888">Sem entradas</td></tr>'}
-        <tr class="total-row"><td colspan="5"><strong>TOTAL ENTRADAS</strong></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr>
+    ${secTitle('Entradas realizadas')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px;margin-bottom:12px">
+      ${tabelaHeader([{label:'Data'},{label:'Descrição'},{label:'Categoria'},{label:'Valor',align:'right'}])}
+      <tbody>
+        ${entradas.map(m=>`<tr><td style="white-space:nowrap;color:#626B76">${new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR')}</td><td>${m.descricao||'—'}</td><td style="font-size:8.5px">${m.categoria?.nome||'—'}</td><td style="text-align:right;color:#2E6F3E;white-space:nowrap">+ ${fmt(m.valor)}</td></tr>`).join('')}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2"><td colspan="3" style="padding:5px;border-bottom:none">Total entradas</td><td style="text-align:right;color:#2E6F3E;padding:5px;border-bottom:none">${fmt(totalEnt)}</td></tr>
       </tbody>
     </table>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo">Despesas do Evento</div>
-    <table>
-      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Subcategoria</th><th>Fornecedor</th><th>Nota/Doc</th><th class="num">Valor</th><th class="center">Situação</th></tr></thead>
-      <tbody>${linhasSai||'<tr><td colspan="8" style="text-align:center;color:#888">Sem despesas</td></tr>'}
-        <tr class="total-row"><td colspan="6"><strong>TOTAL DESPESAS</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr>
+    ${secTitle('Saídas realizadas')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px">
+      ${tabelaHeader([{label:'Data'},{label:'Descrição'},{label:'Categoria'},{label:'Valor',align:'right'}])}
+      <tbody>
+        ${saidas.map(m=>`<tr><td style="white-space:nowrap;color:#626B76">${new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR')}</td><td>${m.descricao||'—'}</td><td style="font-size:8.5px">${m.categoria?.nome||'—'}</td><td style="text-align:right;color:#A7352C;white-space:nowrap">- ${fmt(Math.abs(Number(m.valor)))}</td></tr>`).join('')}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2"><td colspan="3" style="padding:5px;border-bottom:none">Total saídas</td><td style="text-align:right;color:#A7352C;padding:5px;border-bottom:none">${fmt(totalSai)}</td></tr>
       </tbody>
     </table>
-  </div>
 
-  ${opts.assinaturas ? htmlAssinaturas(['Responsável pelo Evento', 'Responsável Financeiro', 'Diretoria']) : ''}
-  ${htmlRodape()}
+    ${opts.assinaturas ? htmlAssinaturas(['Responsável pelo Evento','Responsável Financeiro','Diretoria']) : ''}
+    ${rodape(protocolo)}
   </div>`
-
-  abrirImpressao(html, `Evento — ${evento.nome}`)
+  abrirImpressao(html, 'Relatório de Evento')
 }
 
-// =============================================
-// RELATÓRIO DE CAMPANHA
-// =============================================
+
 export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
   const totalEnt = entradas.reduce((a,m)=>a+Number(m.valor||0),0)
   const totalSai = Math.abs(saidas.reduce((a,m)=>a+Number(m.valor||0),0))
@@ -1155,60 +1246,59 @@ export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
     <td class="center">${m.conciliado?'✓':'Pendente'}</td>
   </tr>`).join('')
 
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-CA`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
+  const periodoLabel = campanha.data_inicio ? (new Date(campanha.data_inicio+'T12:00:00').toLocaleDateString('pt-BR') + (campanha.data_fim?' a '+new Date(campanha.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):'')) : '—'
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Prestação de Contas — Emenda/Edital', sub: (dados.conta?.nome || 'Emenda/Edital') + ' · CAPETTE', ref: 'AGENDO Integra' })}
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório Financeiro de Campanha</div>
-    <div class="titulo-sub">${campanha.nome}</div>
-  </div>
+    ${cabFull()}
+    ${tituloEditorial('Relatório de campanha', campanha.nome||'Campanha', '', periodoLabel)}
 
-  <div class="info-grid">
-    <div class="info-item"><div class="info-label">Campanha</div><div class="info-valor">${campanha.nome}</div></div>
-    <div class="info-item"><div class="info-label">Objetivo</div><div class="info-valor">${campanha.objetivo||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Período</div><div class="info-valor">${campanha.data_inicio||'—'} ${campanha.data_fim?'a '+campanha.data_fim:''}</div></div>
-    <div class="info-item"><div class="info-label">Status</div><div class="info-valor">${campanha.status||'—'}</div></div>
-  </div>
+    ${metaGrid([
+      { label:'Tipo', val:'Campanha de arrecadação', sub:'Realização CAPETTE' },
+      { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
+      { label:'Período', val:periodoLabel, sub:'Duração da campanha' },
+      { label:'Meta financeira', val:campanha.meta_financeira?fmt(campanha.meta_financeira):'—', sub:pctMeta>0?pctMeta+'% atingido':'' },
+    ])}
 
-  <div class="resumo-box">
-    <div class="resumo-grid">
-      <div class="resumo-item"><div class="resumo-label">Meta Financeira</div><div class="resumo-valor azul">${fmt(campanha.meta_financeira)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total Arrecadado</div><div class="resumo-valor verde">${fmt(totalEnt)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total Gasto</div><div class="resumo-valor vermelho">${fmt(totalSai)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">% da Meta</div><div class="resumo-valor ${pctMeta>=100?'verde':'azul'}">${pctMeta}%</div></div>
-    </div>
-  </div>
+    ${campanha.meta_financeira > 0 ? `
+    <div style="margin:12px 0;background:#F5F2EA;border-radius:4px;padding:12px 14px;display:flex;align-items:center;gap:14px">
+      <div style="font-size:9px;color:#06344F;font-weight:700;white-space:nowrap">Meta: ${pctMeta}%</div>
+      <div style="flex:1;height:7px;background:#D7D0C2;border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(pctMeta,100)}%;background:#0E7EA8;border-radius:99px"></div>
+      </div>
+      <div style="font-size:9px;color:#626B76;white-space:nowrap">${fmt(totalEnt)} / ${fmt(campanha.meta_financeira)}</div>
+    </div>` : ''}
 
-  <div class="secao">
-    <div class="secao-titulo">Entradas da Campanha</div>
-    <table>
-      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Doador/Pagador</th><th class="num">Valor</th><th class="center">Situação</th></tr></thead>
-      <tbody>${linhasEnt||'<tr><td colspan="6" style="text-align:center;color:#888">Sem entradas</td></tr>'}
-        <tr class="total-row"><td colspan="4"><strong>TOTAL ARRECADADO</strong></td><td class="num verde"><strong>${fmt(totalEnt)}</strong></td><td></td></tr>
+    ${figuras([
+      { label:'Total arrecadado', val:fmt(totalEnt), cor:'#2E6F3E' },
+      { label:'Total despesas', val:fmt(totalSai), cor:'#A7352C' },
+      { label:'Resultado', val:(saldo>=0?'+ ':'- ')+fmt(saldo), cor:saldo>=0?'#2E6F3E':'#A7352C' },
+      { label:'Meta atingida', val:pctMeta>0?pctMeta+'%':'—', cor:'#A98E54' },
+    ])}
+
+    ${secTitle('Movimentações')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px">
+      ${tabelaHeader([{label:'Data'},{label:'Descrição'},{label:'Tipo'},{label:'Valor',align:'right'}])}
+      <tbody>
+        ${[...entradas.map(m=>({...m,isEnt:true})),...saidas.map(m=>({...m,isEnt:false}))].sort((a,b)=>a.data.localeCompare(b.data)).map(m=>`<tr>
+          <td style="white-space:nowrap;color:#626B76">${new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR')}</td>
+          <td>${m.descricao||'—'}</td>
+          <td style="font-size:8.5px;color:${m.isEnt?'#2E6F3E':'#A7352C'}">${m.isEnt?'Entrada':'Saída'}</td>
+          <td style="text-align:right;color:${m.isEnt?'#2E6F3E':'#A7352C'};white-space:nowrap">${m.isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
+        </tr>`).join('')}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2"><td colspan="3" style="padding:5px;border-bottom:none">Resultado</td><td style="text-align:right;color:${saldo>=0?'#2E6F3E':'#A7352C'};padding:5px;border-bottom:none">${saldo>=0?'+ ':'- '}${fmt(saldo)}</td></tr>
       </tbody>
     </table>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo">Despesas da Campanha</div>
-    <table>
-      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Fornecedor</th><th>Nota/Doc</th><th class="num">Valor</th><th class="center">Situação</th></tr></thead>
-      <tbody>${linhasSai||'<tr><td colspan="7" style="text-align:center;color:#888">Sem despesas</td></tr>'}
-        <tr class="total-row"><td colspan="5"><strong>TOTAL GASTO</strong></td><td class="num vermelho"><strong>${fmt(totalSai)}</strong></td><td></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Campanha', 'Responsável Financeiro', 'Diretoria']) : ''}
-  ${htmlRodape()}
+    ${opts.assinaturas ? htmlAssinaturas(['Responsável pela Campanha','Responsável Financeiro','Diretoria']) : ''}
+    ${rodape(protocolo)}
   </div>`
-
-  abrirImpressao(html, `Campanha — ${campanha.nome}`)
+  abrirImpressao(html, 'Relatório de Campanha')
 }
 
-// =============================================
-// RELATÓRIO DE COBRANÇAS
-// =============================================
+
 export function gerarPDFCobrancas(cobrancas, filtros) {
   const totalAberto = cobrancas.filter(c=>!c.pago_confirmado).reduce((a,c)=>a+Number(c.valor),0)
   const totalConfirmado = cobrancas.filter(c=>c.pago_confirmado).reduce((a,c)=>a+Number(c.valor),0)
@@ -1225,46 +1315,54 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
     <td>${c.ultima_obs||'—'}</td>
   </tr>`).join('')
 
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-COB`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
+  const statusCor = { 'pago confirmado no extrato':'#2E6F3E', 'pago - aguardando confirmação':'#854F0B', 'em aberto':'#626B76', 'vencido':'#A7352C', 'cancelado':'#9199A2', 'incobrável':'#9199A2' }
+  const statusBg  = { 'pago confirmado no extrato':'#EEF8F1', 'pago - aguardando confirmação':'#FFF6E8', 'em aberto':'#F1EFE8', 'vencido':'#FEF2F2', 'cancelado':'#F5F2EA', 'incobrável':'#F5F2EA' }
+  const hoje = new Date().toISOString().slice(0,10)
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho({ titulo: 'Relatório de Cobranças', sub: 'CAPETTE · ' + CAPETTE_INFO.nome, ref: 'AGENDO Integra' })}
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório de Cobranças / Boletos Vencidos</div>
-    <div class="titulo-sub">Período: ${filtros.periodo||'Todos'} · Status: ${filtros.status||'Todos'}</div>
-  </div>
+    ${cabFull()}
+    ${tituloEditorial('Relatório de cobranças','Cobranças','e Boletos',`Emitido em ${dataEmissao}`)}
 
-  <div class="resumo-box">
-    <div class="resumo-grid">
-      <div class="resumo-item"><div class="resumo-label">Total Boletos</div><div class="resumo-valor azul">${cobrancas.length}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Valor em Aberto</div><div class="resumo-valor vermelho">${fmt(totalAberto)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Pago Informado</div><div class="resumo-valor" style="color:#854F0B">${fmt(totalInformado)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Pago Confirmado</div><div class="resumo-valor verde">${fmt(totalConfirmado)}</div></div>
-    </div>
-  </div>
+    ${figuras([
+      { label:'Em aberto', val:fmt(totalAberto), cor:'#A7352C' },
+      { label:'Informado pago', val:fmt(totalInformado), cor:'#854F0B' },
+      { label:'Confirmado', val:fmt(totalConfirmado), cor:'#2E6F3E' },
+      { label:'Total cobranças', val:cobrancas.length, cor:'#0E7EA8' },
+    ])}
 
-  <div class="secao">
-    <div class="secao-titulo">Relação de Boletos</div>
-    <table>
-      <thead><tr><th class="center">Nº</th><th>Pagador</th><th class="center">Vencimento</th><th class="num">Valor</th><th class="center">Status</th><th class="center">Pagamento</th><th class="center">Promessa</th><th>Observação</th></tr></thead>
-      <tbody>${linhas||'<tr><td colspan="8" style="text-align:center;color:#888">Sem registros</td></tr>'}
-        <tr class="total-row">
-          <td colspan="3"><strong>TOTAIS</strong></td>
-          <td class="num"><strong>${fmt(cobrancas.reduce((a,c)=>a+Number(c.valor),0))}</strong></td>
-          <td colspan="4"></td>
+    ${secTitle('Detalhamento das cobranças')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px">
+      ${tabelaHeader([{label:'Devedor'},{label:'Descrição'},{label:'Vencimento'},{label:'Valor',align:'right'},{label:'Status',align:'center'}])}
+      <tbody>
+        ${cobrancas.map(cob => {
+          const st = cob.status||'em aberto'
+          const venc = cob.data_vencimento
+          const isVenc = venc && venc < hoje && st==='em aberto'
+          const stReal = isVenc ? 'vencido' : st
+          return `<tr>
+            <td>${cob.devedor||'—'}</td>
+            <td style="font-size:8.5px">${cob.descricao||'—'}</td>
+            <td style="white-space:nowrap;color:${isVenc?'#A7352C':'#626B76'}">${venc?new Date(venc+'T12:00:00').toLocaleDateString('pt-BR'):'—'}</td>
+            <td style="text-align:right;white-space:nowrap">${fmt(cob.valor)}</td>
+            <td style="text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:7.5px;font-weight:700;background:${statusBg[stReal]||'#F1EFE8'};color:${statusCor[stReal]||'#626B76'}">${stReal}</span></td>
+          </tr>`
+        }).join('')}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2">
+          <td colspan="3" style="padding:5px;border-bottom:none">Total em aberto</td>
+          <td style="text-align:right;color:#A7352C;padding:5px;border-bottom:none;white-space:nowrap">${fmt(totalAberto)}</td>
+          <td style="border-bottom:none"></td>
         </tr>
       </tbody>
     </table>
-  </div>
-
-  ${htmlRodape()}
+    ${rodape(protocolo)}
   </div>`
-
-  abrirImpressao(html, 'Relatório de Cobranças', true)
+  abrirImpressao(html, 'Relatório de Cobranças')
 }
 
-// =============================================
-// PRESTAÇÃO DE CONTA — EMENDA / EDITAL
-// =============================================
+
 export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
   const { conta, entradas, saidas, totalRepasses, totalRendimentos, totalDisponivel, totalDespesas, saldoFinal, bens, rateadas, porPlano, totalMovs, totalConciliados } = dados
 
@@ -1356,156 +1454,172 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
 
   const pctConc = totalMovs > 0 ? Math.round(totalConciliados/totalMovs*100) : 0
 
+  const protocolo = `AG-CAP-${new Date().getFullYear()}-PC`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+  const tipoLabel2 = TIPO_LABEL[conta.tipo_conta] || conta.tipo_conta
+
+  const logoFallback = `<div style="display:flex;gap:1px"><span style="font-size:16px;font-weight:900;color:#F5C800">C</span><span style="font-size:16px;font-weight:900;color:#F4821F">A</span><span style="font-size:16px;font-weight:900;color:#8B2FC9">P</span><span style="font-size:16px;font-weight:900;color:#E8212A">E</span><span style="font-size:16px;font-weight:900;color:#6BBF2B">T</span><span style="font-size:16px;font-weight:900;color:#0E7EA8">T</span><span style="font-size:16px;font-weight:900;color:#E8207A">E</span></div><div style="font-size:8px;color:#888">Desde 1974</div>`
+
+  const cabFull = `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0E7EA8;padding-bottom:11px;margin-bottom:20px">
+    <div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:46px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='${logoFallback}'" /></div>
+    <div style="text-align:right;font-size:9px;color:#5F6874;max-width:260px;line-height:1.5">
+      <div style="font-size:11px;font-weight:700;color:#20252C">${CAPETTE_INFO.nome}</div>
+      <div style="font-size:9.5px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+      <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
+    </div>
+  </div>`
+
+  const cabCompact = `
+  <div style="display:grid;grid-template-columns:1fr auto;gap:16px;border-bottom:1px solid #D7D0C2;padding-bottom:10px;margin-bottom:16px">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#06344F;letter-spacing:-.01em">Prestação de Contas — ${tipoLabel2}</div>
+      <div style="margin-top:4px;color:#66717E;font-size:9px">${CAPETTE_INFO.nome} · ${protocolo}</div>
+    </div>
+    <div style="text-align:right;font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#06344F">
+      AGENDO Integra<span style="display:block;margin-top:3px;color:#0E7EA8;font-weight:400;text-transform:none;letter-spacing:0">${protocolo}</span>
+    </div>
+  </div>`
+
+  const rodapeHtml = `
+  <div style="border-top:1px solid #D7D0C2;padding-top:9px;display:flex;justify-content:space-between;color:#66717E;font-size:8.5px;margin-top:18px">
+    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div><strong style="color:#06344F">AGENDO Integra</strong> · ${protocolo}</div>
+  </div>`
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho()}
+    ${cabFull}
 
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Prestação de Conta — ${tipoLabel}</div>
-    <div class="titulo-sub">Relatório de Execução Financeira</div>
-    <span class="titulo-status ${isPreliminar?'status-preliminar':'status-final'}">
-      ${isPreliminar ? 'RELATÓRIO PRELIMINAR' : 'RELATÓRIO FINAL CONSOLIDADO'}
-    </span>
-    ${isPreliminar ? '<div style="font-size:10px;color:#854F0B;margin-top:4px">Este relatório contém movimentações pendentes de consolidação bancária.</div>' : ''}
-  </div>
-
-  <div class="info-grid">
-    <div class="info-item"><div class="info-label">Conta / Parceria</div><div class="info-valor">${conta.nome}</div></div>
-    <div class="info-item"><div class="info-label">Banco / Agência / Conta</div><div class="info-valor">${conta.banco||'—'} / ${conta.agencia||'—'} / ${conta.conta_num||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Parlamentar / Origem</div><div class="info-valor">${conta.parlamentar||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Órgão concedente</div><div class="info-valor">${conta.orgao_concedente||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Nº Termo / Processo</div><div class="info-valor">${conta.num_termo||'—'} / ${conta.num_processo||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Vigência</div><div class="info-valor">${fmtData(conta.vigencia_inicio)} a ${fmtData(conta.vigencia_fim)}</div></div>
-    <div class="info-item"><div class="info-label">Responsável financeiro</div><div class="info-valor">${conta.responsavel_financeiro||'—'}</div></div>
-    <div class="info-item"><div class="info-label">Representante legal</div><div class="info-valor">${conta.representante_legal||'—'}</div></div>
-  </div>
-
-  ${conta.objeto ? `<div style="background:#F8F7F2;border-radius:4px;padding:6px 10px;margin-bottom:12px;font-size:10px"><strong>Objeto:</strong> ${conta.objeto}</div>` : ''}
-
-  <div class="resumo-box">
-    <div class="resumo-titulo">Resumo Financeiro</div>
-    <div class="resumo-grid">
-      <div class="resumo-item"><div class="resumo-label">Repasses recebidos</div><div class="resumo-valor verde">${fmt(totalRepasses)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Rendimentos</div><div class="resumo-valor azul">${fmt(totalRendimentos)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total disponível</div><div class="resumo-valor azul">${fmt(totalDisponivel)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Total despesas</div><div class="resumo-valor vermelho">${fmt(totalDespesas)}</div></div>
+    <div style="font-size:9px;font-weight:700;color:#0E7EA8;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Documento institucional</div>
+    <div style="font-family:Georgia,serif;font-size:42px;line-height:.95;font-weight:400;letter-spacing:-.04em;color:#06344F;margin-bottom:10px">Prestação<br>de Contas</div>
+    <div style="width:70px;height:2px;background:#A98E54;margin-bottom:12px"></div>
+    <div style="font-size:12px;color:#303944;margin-bottom:14px">${tipoLabel2} · Exercício ${new Date().getFullYear()}</div>
+    <div style="margin-bottom:16px;display:flex;gap:8px;align-items:center">
+      <span style="display:inline-block;padding:3px 12px;border-radius:4px;font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:${isPreliminar?'#FAEEDA':'#EEF8F1'};color:${isPreliminar?'#854F0B':'#2E6F3E'}">${isPreliminar?'RELATÓRIO PRELIMINAR':'RELATÓRIO FINAL CONSOLIDADO'}</span>
+      ${isPreliminar?`<span style="font-size:9px;color:#854F0B">Aguardando consolidação bancária</span>`:''}
     </div>
-    <div class="resumo-grid" style="margin-top:8px">
-      <div class="resumo-item"><div class="resumo-label">Saldo remanescente</div><div class="resumo-valor ${saldoFinal>=0?'verde':'vermelho'}">${fmt(saldoFinal)}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Movimentações</div><div class="resumo-valor">${totalMovs}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Conciliado</div><div class="resumo-valor ${pctConc===100?'verde':'vermelho'}">${pctConc}%</div></div>
-      <div class="resumo-item"><div class="resumo-label">Situação</div><div class="resumo-valor" style="font-size:11px">${pendCriticas>0?'⚠ Com pendências críticas':pctConc<100?'Com pendências':'✓ Consolidado'}</div></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin-bottom:16px">
+      <div style="padding:11px 18px 11px 0;border-right:1px solid #ECE6DA;border-bottom:1px solid #ECE6DA">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:4px">Instrumento</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${tipoLabel2}</div>
+        <div style="font-size:9px;color:#626B76;margin-top:2px">${conta.nome||'—'}</div>
+      </div>
+      <div style="padding:11px 0 11px 18px;border-bottom:1px solid #ECE6DA">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:4px">Período</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${conta.data_inicio ? fmt(conta.data_inicio) : '—'} a ${conta.data_fim ? fmt(conta.data_fim) : '—'}</div>
+        <div style="font-size:9px;color:#626B76;margin-top:2px">Exercício de execução</div>
+      </div>
+      <div style="padding:11px 18px 11px 0;border-right:1px solid #ECE6DA">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:4px">Protocolo</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${protocolo}</div>
+        <div style="font-size:9px;color:#626B76;margin-top:2px">Emitido em ${dataEmissao}</div>
+      </div>
+      <div style="padding:11px 0 11px 18px">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#6B7280;margin-bottom:4px">Conciliação bancária</div>
+        <div style="font-size:11px;color:#20252C;font-weight:600">${pctConc}% conciliado</div>
+        <div style="font-size:9px;color:#626B76;margin-top:2px">${totalConciliados} de ${totalMovs} movimentações</div>
+      </div>
     </div>
-  </div>
 
-  ${pendencias.length > 0 ? `
-  <div class="alerta ${pendCriticas>0?'alerta-critico':'alerta-aviso'}">
-    <strong>⚠ Pendências encontradas:</strong> ${pendencias.length} movimentações com pendências — ${pendCriticas} críticas.
-    ${pendCriticas>0&&!isPreliminar?'<strong>Este relatório não deveria ser emitido como Final Consolidado com pendências críticas.</strong>':''}
-  </div>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin-bottom:18px">
+      <div style="padding:11px 8px;border-right:1px solid #ECE6DA">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Total repasses</div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:#0E7EA8">${fmt(totalRepasses)}</div>
+      </div>
+      <div style="padding:11px 8px;border-right:1px solid #ECE6DA">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Total despesas</div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:#A7352C">${fmt(totalDespesas)}</div>
+      </div>
+      <div style="padding:11px 8px;border-right:1px solid #ECE6DA">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Saldo disponível</div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:${saldoFinal>=0?'#2E6F3E':'#A7352C'}">${fmt(saldoFinal)}</div>
+      </div>
+      <div style="padding:11px 8px">
+        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Movimentações</div>
+        <div style="font-family:Georgia,serif;font-size:16px;color:#0E7EA8">${totalMovs}</div>
+      </div>
+    </div>
 
-  <div class="secao">
-    <div class="secao-titulo">1. Relação de Receitas</div>
-    <table>
-      <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Doc. Bancário</th><th class="num">Valor</th><th>Obs.</th></tr></thead>
+    <div style="font-family:Georgia,serif;font-size:20px;color:#06344F;margin-bottom:11px;letter-spacing:-.02em">Execução por plano de trabalho</div>
+    <table style="font-size:9.5px;border-collapse:collapse;width:100%">
+      <thead>
+        <tr>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:left">Plano / Meta</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Previsto</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Executado</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:right">Saldo</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">%</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:left">Situação</th>
+        </tr>
+      </thead>
       <tbody>
-        ${linhasReceitas||'<tr><td colspan="6" style="text-align:center;color:#888">Sem receitas</td></tr>'}
-        <tr class="total-row"><td colspan="4"><strong>TOTAL RECEITAS</strong></td><td class="num verde"><strong>${fmt(totalDisponivel)}</strong></td><td></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="secao">
-    <div class="secao-titulo">2. Relação de Pagamentos Efetuados</div>
-    <table>
-      <thead><tr><th class="center">Nº</th><th>Data</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Categoria</th><th>Subcategoria</th><th>Item do Plano</th><th>Nota/Recibo</th><th>Data Doc.</th><th class="num">Valor</th><th>Local Comprovante</th><th class="center">Status</th></tr></thead>
-      <tbody>
-        ${linhasDespesas||'<tr><td colspan="12" style="text-align:center;color:#888">Sem despesas</td></tr>'}
-        <tr class="total-row"><td colspan="9"><strong>TOTAL DESPESAS</strong></td><td class="num vermelho"><strong>${fmt(totalDespesas)}</strong></td><td colspan="2"></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  ${Object.keys(porPlano).length > 0 ? `
-  <div class="secao">
-    <div class="secao-titulo">3. Execução por Item do Plano de Trabalho</div>
-    <table>
-      <thead><tr><th>Item do Plano</th><th class="num">Valor Previsto</th><th class="num">Executado</th><th class="num">Saldo</th><th class="center">% Exec.</th><th class="center">Situação</th></tr></thead>
-      <tbody>
-        ${linhasPlano}
-        <tr class="total-row">
-          <td><strong>TOTAL</strong></td>
-          <td class="num"><strong>${fmt(Object.values(porPlano).reduce((a,p)=>a+p.valor_previsto,0))}</strong></td>
-          <td class="num vermelho"><strong>${fmt(Object.values(porPlano).reduce((a,p)=>a+p.executado,0))}</strong></td>
-          <td class="num"><strong>${fmt(Object.values(porPlano).reduce((a,p)=>a+(p.valor_previsto-p.executado),0))}</strong></td>
-          <td colspan="2"></td>
+        ${linhasPlano || '<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:10px">Sem planos vinculados</td></tr>'}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2">
+          <td style="padding:6px 5px;border-bottom:none">Total</td>
+          <td style="padding:6px 5px;text-align:right;border-bottom:none">${fmt(totalDisponivel)}</td>
+          <td style="padding:6px 5px;text-align:right;color:#A7352C;border-bottom:none">${fmt(totalDespesas)}</td>
+          <td style="padding:6px 5px;text-align:right;color:${saldoFinal>=0?'#2E6F3E':'#A7352C'};border-bottom:none">${fmt(saldoFinal)}</td>
+          <td style="padding:6px 5px;text-align:center;border-bottom:none">${totalDisponivel>0?Math.round(totalDespesas/totalDisponivel*100):0}%</td>
+          <td style="border-bottom:none"></td>
         </tr>
       </tbody>
     </table>
-  </div>` : ''}
 
-  <div class="secao">
-    <div class="secao-titulo">4. Conciliação Bancária</div>
-    <table>
-      <thead><tr><th>Item</th><th class="num">Valor / Qtd</th></tr></thead>
-      <tbody>
-        <tr><td>Total de movimentações importadas</td><td class="num">${totalMovs}</td></tr>
-        <tr><td>Total conciliado</td><td class="num verde">${totalConciliados}</td></tr>
-        <tr><td>Total pendente</td><td class="num ${totalMovs-totalConciliados>0?'vermelho':'verde'}">${totalMovs-totalConciliados}</td></tr>
-        <tr><td>Percentual conciliado</td><td class="num">${pctConc}%</td></tr>
-        <tr class="total-row"><td><strong>Situação da conciliação</strong></td><td class="num"><strong>${pendCriticas>0?'⚠ Com pendências críticas':pctConc<100?'Com pendências':'✓ Conciliado'}</strong></td></tr>
-      </tbody>
-    </table>
+    ${pendCriticas > 0 ? `<div style="margin-top:14px;padding:10px 14px;border-left:3px solid #A7352C;background:#FEF2F2;font-size:10px;color:#A7352C"><strong>${pendCriticas} pendência(s) crítica(s)</strong> identificada(s) neste período — verificar antes da aprovação final.</div>` : ''}
+
+    ${rodapeHtml}
   </div>
 
-  ${bens.length > 0 ? `
-  <div class="secao">
-    <div class="secao-titulo">5. Relação de Bens Adquiridos</div>
-    <table>
-      <thead><tr><th class="center">Nº</th><th>Especificação do Bem</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Nota</th><th>Data</th><th class="num">Valor</th><th>Item do Plano</th><th>Local de Guarda</th></tr></thead>
+  <!-- PÁGINAS SEGUINTES: DESPESAS, RECEITAS, ETC -->
+  <div class="pg page-break">
+    ${cabCompact}
+
+    <div style="font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px 6px 13px;border-left:3px solid #A7352C;background:#FFF0F0;color:#A7352C;margin-bottom:12px">▼ Despesas realizadas (${saidas.length} registros)</div>
+    <table style="font-size:8.5px;border-collapse:collapse;width:100%">
+      <thead>
+        <tr>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px;text-align:center">Seq.</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px">Data</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px">Fornecedor</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px">CPF/CNPJ</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px">Categoria</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px">Plano</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px">Nº Doc.</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px;text-align:right">Valor</th>
+          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;padding:5px 4px;text-align:center">Conc.</th>
+        </tr>
+      </thead>
       <tbody>
-        ${linhasBens}
-        <tr class="total-row"><td colspan="6"><strong>TOTAL BENS</strong></td><td class="num vermelho"><strong>${fmt(bens.reduce((a,m)=>a+Math.abs(Number(m.valor)),0))}</strong></td><td colspan="2"></td></tr>
+        ${linhasDespesas || '<tr><td colspan="9" style="text-align:center;color:#9199A2;padding:10px">Sem despesas registradas</td></tr>'}
+        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2">
+          <td colspan="7" style="padding:5px 4px;border-bottom:none">Total despesas</td>
+          <td style="padding:5px 4px;text-align:right;color:#A7352C;border-bottom:none">${fmt(totalDespesas)}</td>
+          <td style="border-bottom:none"></td>
+        </tr>
       </tbody>
     </table>
-  </div>` : ''}
 
-  ${rateadas.length > 0 ? `
-  <div class="secao">
-    <div class="secao-titulo">6. Memória de Cálculo de Rateio de Despesas</div>
-    <table>
-      <thead><tr><th>Data</th><th>Descrição</th><th>Fornecedor</th><th>Nota</th><th class="num">Valor Total</th><th class="center">% Emenda</th><th class="num">Valor Emenda</th><th>Fonte Restante</th><th>Justificativa</th></tr></thead>
-      <tbody>${linhasRateio}</tbody>
-    </table>
-  </div>` : ''}
+    ${rodapeHtml}
+  </div>
 
-  ${pendencias.length > 0 ? `
-  <div class="secao">
-    <div class="secao-titulo">7. Pendências da Consolidação</div>
-    <table>
-      <thead><tr><th>Data</th><th>Descrição</th><th class="num">Valor</th><th>Pendência</th><th class="center">Gravidade</th></tr></thead>
-      <tbody>${linhasPend}</tbody>
-    </table>
-  </div>` : ''}
-
-  <div class="secao">
-    <div class="secao-titulo">Declaração Final</div>
-    <div style="font-size:10px;line-height:1.7;padding:10px;border:1px solid #E8E6DE;border-radius:4px;margin-bottom:12px">
-      Declaramos que as informações financeiras apresentadas neste relatório foram extraídas dos registros do sistema FinOSC Capette, 
-      com base nos extratos bancários importados, conciliações realizadas e dados informados pela equipe responsável. 
-      Os documentos comprobatórios físicos ou digitais encontram-se arquivados externamente, conforme referências indicadas neste relatório.
+  ${opts.assinaturas ? `
+  <div class="pg page-break">
+    ${cabCompact}
+    <div style="font-family:Georgia,serif;font-size:22px;color:#06344F;margin-bottom:16px;letter-spacing:-.02em">Encaminhamento e assinaturas</div>
+    <div style="font-size:11.5px;line-height:1.7;color:#303842;margin-bottom:24px">
+      Declaramos que o presente relatório consolida as movimentações financeiras referentes à execução do instrumento <strong>${tipoLabel2}</strong>, conforme registros no sistema AGENDO Integra.
     </div>
-  </div>
-
-  ${opts.assinaturas ? htmlAssinaturas(['Responsável Financeiro', 'Representante Legal / Diretoria', 'Responsável pela Conferência']) : ''}
-  ${htmlRodape()}`
-
-  abrirImpressao(html, `Prestação de Conta — ${conta.nome}`, true)
+    <div style="font-size:11px;color:#303842;margin:28px 0 44px">Teresópolis — RJ, _______ de _________________________ de _______.</div>
+    ${htmlAssinaturas(['Responsável Financeiro', 'Representante Legal / Diretoria', 'Responsável pela Conferência'])}
+    ${rodapeHtml}
+  </div>` : ''}
+`
+  abrirImpressao(html, `Prestação de Contas — ${tipoLabel}`)
 }
 
-// =============================================
-// RELATÓRIO DE PARECER DO CONSELHO FISCAL
-// =============================================
+
 export function gerarPDFParecer({ fechamento, movs, instituicao }) {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) : '—'
   const fmtMes = comp => {
@@ -1526,93 +1640,65 @@ export function gerarPDFParecer({ fechamento, movs, instituicao }) {
 
   const membros = (fechamento.membros_presentes||'').split(',').map(s=>s.trim()).filter(Boolean)
 
+  const vcor  = { aprovado:'#2E6F3E', aprovado_ressalva:'#854F0B', reprovado:'#A7352C' }
+  const vbg   = { aprovado:'#EEF8F1', aprovado_ressalva:'#FFF6E8', reprovado:'#FEF2F2' }
+  const vicon = { aprovado:'✓', aprovado_ressalva:'!', reprovado:'✗' }
+  const vlabel= { aprovado:'Aprovado', aprovado_ressalva:'Aprovado com ressalva', reprovado:'Reprovado' }
+  const tipo_apr = fechamento.tipo_aprovacao || 'aprovado'
+  const protocolo = `AG-CAP-${fechamento.competencia||new Date().getFullYear()}-CF`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho()}
+    ${cabFull()}
+    ${tituloEditorial('Documento do Conselho Fiscal','Parecer','Mensal',`Competência: ${fmtMes(fechamento.competencia)}`)}
 
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Relatório de Aprovação de Contas</div>
-    <div class="titulo-sub">Parecer do Conselho Fiscal — ${fmtMes(fechamento.competencia)}</div>
-  </div>
+    ${metaGrid([
+      { label:'Instituição', val:CAPETTE_INFO.nome, sub:'CNPJ: '+CAPETTE_INFO.cnpj },
+      { label:'Competência', val:fmtMes(fechamento.competencia), sub:'Período mensal' },
+      { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
+      { label:'Modalidade', val:modalLabel[fechamento.modalidade_reuniao]||fechamento.modalidade_reuniao||'—', sub:fechamento.data_reuniao?'Reunião em '+fmtData(fechamento.data_reuniao):'—' },
+    ])}
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-verde">1. Resumo Financeiro — ${fmtMes(fechamento.competencia)}</div>
-    <div class="resumo-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="resumo-item">
-        <div class="resumo-label">Entradas</div>
-        <div class="resumo-valor verde">${fmt(entradas)}</div>
-      </div>
-      <div class="resumo-item">
-        <div class="resumo-label">Saídas</div>
-        <div class="resumo-valor vermelho">${fmt(saidas)}</div>
-      </div>
-      <div class="resumo-item">
-        <div class="resumo-label">Resultado</div>
-        <div class="resumo-valor ${saldo>=0?'azul':'vermelho'}">${fmt(saldo)}</div>
+    <div style="border:1.5px solid ${vcor[tipo_apr]};background:${vbg[tipo_apr]};padding:18px 20px;margin:14px 0;display:flex;align-items:center;gap:18px">
+      <div style="width:44px;height:44px;border-radius:50%;background:${vcor[tipo_apr]};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;font-weight:900;color:#fff">${vicon[tipo_apr]}</div>
+      <div>
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:${vcor[tipo_apr]};font-weight:700;margin-bottom:4px">Decisão do Conselho Fiscal</div>
+        <div style="font-family:Georgia,serif;font-size:24px;color:${vcor[tipo_apr]};font-weight:400;line-height:1">${vlabel[tipo_apr]}</div>
+        ${fechamento.ressalvas ? `<div style="font-size:9px;color:${vcor[tipo_apr]};margin-top:5px;opacity:.85">${fechamento.ressalvas}</div>` : ''}
       </div>
     </div>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-azul">2. Reunião do Conselho Fiscal</div>
-    <div class="info-grid">
-      <div class="info-item">
-        <div class="info-label">Data da reunião</div>
-        <div class="info-valor">${fmtData(fechamento.reuniao_data)}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Modalidade</div>
-        <div class="info-valor">${modalLabel[fechamento.reuniao_modalidade]||'Presencial'}</div>
-      </div>
-    </div>
-    ${fechamento.reuniao_local ? `<div class="info-item" style="margin-bottom:10px">
-      <div class="info-label">Local / Plataforma</div>
-      <div class="info-valor">${fechamento.reuniao_local}</div>
+    ${figuras([
+      { label:'Total entradas', val:fmt(entradas), cor:'#2E6F3E' },
+      { label:'Total saídas', val:fmt(saidas), cor:'#A7352C' },
+      { label:'Resultado do período', val:(saldo>=0?'+ ':'- ')+fmt(saldo), cor:saldo>=0?'#2E6F3E':'#A7352C' },
+      { label:'Movimentações', val:movs.length, cor:'#0E7EA8' },
+    ])}
+
+    ${membros.length > 0 ? `
+    ${secTitle('Membros presentes')}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:10px">
+      ${membros.map(n=>`<div style="text-align:center">
+        <div style="height:36px;border-bottom:1px solid #9199A2;margin-bottom:6px"></div>
+        <div style="font-size:9px;font-weight:700;color:#06344F">${n}</div>
+        <div style="font-size:8.5px;color:#626B76;margin-top:2px">Conselho Fiscal</div>
+      </div>`).join('')}
     </div>` : ''}
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo">3. Parecer do Conselho Fiscal</div>
-    <div style="border:2px solid ${tipoCor[fechamento.tipo_aprovacao]};background:${tipoBg[fechamento.tipo_aprovacao]};border-radius:8px;padding:16px;text-align:center;margin-bottom:16px">
-      <div style="font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;color:${tipoCor[fechamento.tipo_aprovacao]}">${tipoLabel[fechamento.tipo_aprovacao]||'—'}</div>
-      <div style="font-size:12px;line-height:1.7">
-        Reunidos em ${fmtData(fechamento.reuniao_data)}, o Conselho Fiscal da ${CAPETTE_INFO.nome}
-        examinou as contas referentes ao mês de <strong>${fmtMes(fechamento.competencia)}</strong>
-        e deliberou pela <strong>${(tipoLabel[fechamento.tipo_aprovacao]||'—').toLowerCase()}</strong>
-        das contas apresentadas.
-      </div>
-    </div>
-    ${fechamento.ressalvas ? `<div class="alerta alerta-aviso">
-      <strong>Ressalvas / Observações:</strong><br/>${fechamento.ressalvas}
+    ${fechamento.observacoes ? `
+    <div style="margin-top:14px;border-left:3px solid #0E7EA8;padding:10px 14px;background:#EAF5F8;font-size:10px;color:#303842;line-height:1.6">
+      <strong style="font-size:8.5px;color:#06344F;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px">Observações</strong>
+      ${fechamento.observacoes}
     </div>` : ''}
-    ${fechamento.observacoes ? `<div style="font-size:11px;margin-bottom:12px;color:#5F5E5A">${fechamento.observacoes}</div>` : ''}
-  </div>
 
-  <div class="secao" style="break-inside:avoid">
-    <div class="secao-titulo">4. Assinaturas</div>
-    <div style="font-size:11px;color:#5F5E5A;margin-bottom:16px">
-      Teresópolis, ${fmtData(fechamento.reuniao_data)}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(${Math.min(membros.length||3,3)},1fr);gap:24px;margin-top:24px">
-      ${(membros.length > 0 ? membros : ['Membro do Conselho Fiscal','Membro do Conselho Fiscal','Membro do Conselho Fiscal']).map(nome => `
-        <div style="border-top:1px solid #2C2C2A;margin-top:40px;padding-top:6px;text-align:center">
-          <div style="font-size:11px;font-weight:600">${nome}</div>
-          <div style="font-size:10px;color:#888">Conselho Fiscal — ${CAPETTE_INFO.nome}</div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
+    ${rodape(protocolo)}
+  </div>`
 
-  ${htmlRodape()}`
-
-  abrirImpressao(html, `Parecer Conselho Fiscal — ${fechamento.competencia}`)
+  abrirImpressao(html, `Parecer CF — ${fmtMes(fechamento.competencia)}`)
 }
 
 
-// =============================================
-// PARECER ANUAL DO CONSELHO FISCAL
-// Gerado quando todos os 12 meses do ano estão aprovados
-// =============================================
 export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) : '—'
   const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -1638,70 +1724,55 @@ export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
       </tr>`
     }).join('')
 
+  const protocolo = `AG-CAP-${ano}-CFAN`
+  const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
+  const tipoLabel2 = { aprovado:'Aprovado', aprovado_ressalva:'Aprovado c/ ressalva', reprovado:'Reprovado' }
+  const tipoCor2 = { aprovado:'#2E6F3E', aprovado_ressalva:'#854F0B', reprovado:'#A7352C' }
+  const tipoBg2 = { aprovado:'#EEF8F1', aprovado_ressalva:'#FFF6E8', reprovado:'#FEF2F2' }
+
   const html = `
   <div class="pg">
-  ${htmlCabecalho()}
+    ${cabFull()}
+    ${tituloEditorial('Documento do Conselho Fiscal','Parecer','Anual',`Consolidação das aprovações mensais · Exercício ${ano}`)}
 
-  <div class="titulo-bloco">
-    <div class="titulo-principal">Parecer Anual do Conselho Fiscal</div>
-    <div class="titulo-sub">Consolidação das aprovações mensais — Exercício de ${ano}</div>
-  </div>
+    ${metaGrid([
+      { label:'Exercício', val:ano, sub:'Janeiro a Dezembro' },
+      { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
+      { label:'Meses analisados', val:`${fechamentos.length} de 12`, sub:'Exercício completo' },
+      { label:'Com ressalva', val:comRessalva.length > 0 ? comRessalva.length+' mês(es)' : 'Nenhum', cor:comRessalva.length>0?'#854F0B':'#2E6F3E', sub:comRessalva.length>0?'Verificar observações':'Exercício aprovado' },
+    ])}
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-verde">1. Resumo Financeiro Consolidado — ${ano}</div>
-    <div class="resumo-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="resumo-item">
-        <div class="resumo-label">Total de entradas</div>
-        <div class="resumo-valor verde">${fmt(entradas)}</div>
-      </div>
-      <div class="resumo-item">
-        <div class="resumo-label">Total de saídas</div>
-        <div class="resumo-valor vermelho">${fmt(saidas)}</div>
-      </div>
-      <div class="resumo-item">
-        <div class="resumo-label">Resultado do exercício</div>
-        <div class="resumo-valor ${saldo>=0?'azul':'vermelho'}">${fmt(saldo)}</div>
-      </div>
-    </div>
-  </div>
+    ${figuras([
+      { label:'Total entradas', val:fmt(entradas), cor:'#2E6F3E' },
+      { label:'Total saídas', val:fmt(saidas), cor:'#A7352C' },
+      { label:'Resultado do exercício', val:(saldo>=0?'+ ':'- ')+fmt(saldo), cor:saldo>=0?'#2E6F3E':'#A7352C' },
+      { label:'Movimentações', val:movs.length, cor:'#0E7EA8' },
+    ])}
 
-  <div class="secao">
-    <div class="secao-titulo secao-titulo-azul">2. Aprovações Mensais</div>
-    <table>
-      <thead><tr><th>Mês</th><th>Parecer</th><th>Aprovado em</th><th>Ressalvas</th></tr></thead>
-      <tbody>${linhasMeses}</tbody>
+    ${secTitle('Aprovações mensais')}
+    <table style="border-collapse:collapse;width:100%;font-size:9px">
+      ${tabelaHeader([{label:'Mês'},{label:'Parecer'},{label:'Data de aprovação'},{label:'Ressalvas'}])}
+      <tbody>
+        ${linhasMeses}
+      </tbody>
     </table>
-  </div>
 
-  <div class="secao">
-    <div class="secao-titulo">3. Parecer Consolidado</div>
-    <div style="border:2px solid #3B6D11;background:#EAF3DE;border-radius:8px;padding:16px;text-align:center;margin-bottom:16px">
-      <div style="font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;color:#3B6D11">CONTAS DO EXERCÍCIO ${ano} APROVADAS</div>
-      <div style="font-size:12px;line-height:1.7">
-        O Conselho Fiscal da ${CAPETTE_INFO.nome}, tendo examinado e aprovado as contas de todos
-        os 12 (doze) meses do exercício de <strong>${ano}</strong>, conforme registros mensais detalhados acima,
-        manifesta parecer pela <strong>regularidade das contas do exercício</strong>${comRessalva.length>0?`, registrando-se ${comRessalva.length} aprovação(ões) com ressalva conforme tabela`:''}.
-      </div>
-    </div>
-  </div>
+    ${membros.length > 0 ? `
+    ${secTitle('Assinaturas')}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:10px">
+      ${membros.map(n=>`<div style="text-align:center">
+        <div style="height:36px;border-bottom:1px solid #9199A2;margin-bottom:6px"></div>
+        <div style="font-size:9px;font-weight:700;color:#06344F">${n}</div>
+        <div style="font-size:8.5px;color:#626B76;margin-top:2px">Conselho Fiscal</div>
+      </div>`).join('')}
+    </div>` : ''}
 
-  <div class="secao" style="break-inside:avoid">
-    <div class="secao-titulo">4. Assinaturas</div>
-    <div style="font-size:11px;color:#5F5E5A;margin-bottom:16px">
-      Teresópolis, ${fmtData(new Date().toISOString().slice(0,10))}
+    <div style="margin-top:16px;font-size:10px;color:#303842;line-height:1.65">
+      Teresópolis — RJ, _______ de _________________________ de ${new Date().getFullYear()+1}.
     </div>
-    <div style="display:grid;grid-template-columns:repeat(${Math.min(membros.length||3,3)},1fr);gap:24px;margin-top:24px">
-      ${(membros.length > 0 ? membros : ['Membro do Conselho Fiscal','Membro do Conselho Fiscal','Membro do Conselho Fiscal']).map(nome => `
-        <div style="border-top:1px solid #2C2C2A;margin-top:40px;padding-top:6px;text-align:center">
-          <div style="font-size:11px;font-weight:600">${nome}</div>
-          <div style="font-size:10px;color:#888">Conselho Fiscal — ${CAPETTE_INFO.nome}</div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
 
-  ${htmlRodape()}
+    ${rodape(protocolo)}
   </div>`
 
-  abrirImpressao(html, `Parecer Anual ${ano} — Conselho Fiscal`)
+  abrirImpressao(html, `Parecer Anual CF — ${ano}`)
 }
