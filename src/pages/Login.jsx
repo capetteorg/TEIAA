@@ -150,7 +150,7 @@ export default function Login() {
 
           {/* Card 2 — Transparência Pública */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(230,241,251,0.95) 0%, rgba(240,246,250,0.95) 100%)',
+            background: 'linear-gradient(135deg, rgba(234,244,252,0.97) 0%, rgba(236,246,240,0.95) 60%, rgba(240,248,244,0.93) 100%)',
             borderRadius: 16,
             border: '0.5px solid #C0DD97',
             padding: '1.5rem',
@@ -177,7 +177,7 @@ export default function Login() {
                   { icon: 'ti-file', texto: 'Relatórios e documentos de prestação de contas' },
                   { icon: 'ti-search', texto: 'Consulta pública, livre e sem cadastro' },
                 ].map(item => (
-                  <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#3B6D11' }}>
+                  <div key={item.texto} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#0E7EA8' }}>
                     <i className={`ti ${item.icon}`} style={{ fontSize: 14 }} />
                     {item.texto}
                   </div>
