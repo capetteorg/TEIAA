@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8'
+const VERDE = '#0E7EA8', VERMELHO = '#E8212A', AZUL = '#0E7EA8'
 
 const CARGOS = [
   'Presidente', 'Vice-presidente',
@@ -179,7 +179,7 @@ export default function Instituicao() {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
   const s = {
-    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 12, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box' },
     textarea: { width: '100%', fontSize: 12, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box', resize: 'vertical' },
@@ -206,7 +206,7 @@ export default function Instituicao() {
         <div style={{ background: '#F0F6FA', border: '0.5px solid #C5DCEA', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 20 }}><i className="ti ti-user" style={{fontSize:14}} /></div>
           <div>
-            <div style={{ fontSize: 11, color: '#3B6D11', marginBottom: 2 }}>Presidente atual — mandato vigente</div>
+            <div style={{ fontSize: 11, color: '#0E7EA8', marginBottom: 2 }}>Presidente atual — mandato vigente</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#2C2C2A' }}>{presidenteAtual.nome}</div>
             <div style={{ fontSize: 11, color: '#5F5E5A' }}>
               CPF: {presidenteAtual.cpf || '—'} · RG: {presidenteAtual.rg || '—'} ·
@@ -376,7 +376,7 @@ export default function Instituicao() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
             <button onClick={() => { setMostrarFormDir(!mostrarFormDir); setEditandoDir(null); setFormDir(FORM_DIR_VAZIO) }}
-              style={s.btn(mostrarFormDir ? '#F1EFE8' : VERDE, mostrarFormDir ? '#5F5E5A' : '#fff')}>
+              style={s.btn(mostrarFormDir ? '#F1EFE8' : AZUL, mostrarFormDir ? '#5F5E5A' : '#fff')}>
               {mostrarFormDir ? 'Cancelar' : '+ Adicionar membro'}
             </button>
           </div>

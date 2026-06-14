@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { confirmar } from '../lib/ui'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
+const VERDE = '#0E7EA8', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
 const ABAS = [
   { id:'institucional', label:'Institucional', desc:'Estatuto, atas, CNPJ, certidões' },

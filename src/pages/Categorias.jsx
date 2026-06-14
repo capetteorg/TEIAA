@@ -64,7 +64,7 @@ export default function Categorias() {
             const subs = subcatsDa(c.id)
             const aberta = catAberta === c.id
             return (
-              <div key={c.id} style={{ borderBottom: '0.5px solid #E0DDD5', paddingBottom: aberta ? 10 : 0 }}>
+              <div key={c.id} style={{ borderBottom: '0.5px solid #E8E6DE', paddingBottom: aberta ? 10 : 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', fontSize: 12 }}>
                   <button onClick={() => setCatAberta(aberta ? null : c.id)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#888780', padding: 0 }}>
@@ -98,7 +98,7 @@ export default function Categorias() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Categorias e subcategorias</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Categorias e subcategorias</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
         <Lista cats={ent} tipo="entrada" />

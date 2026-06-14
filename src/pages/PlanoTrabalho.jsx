@@ -225,7 +225,7 @@ export default function PlanoTrabalho() {
         </div>
         {aba !== 'detalhe' && (
           <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-            style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+            style={s.btn(mostrarForm?'#F1EFE8':AZUL, mostrarForm?'#5F5E5A':'#fff')}>
             {mostrarForm ? 'Cancelar' : '+ Novo plano'}
           </button>
         )}

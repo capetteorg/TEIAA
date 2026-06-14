@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { confirmar } from '../lib/ui'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
+const VERDE = '#0E7EA8', VERMELHO = '#E8212A'
 
 const CATEGORIAS = [
   'Documentos institucionais',
@@ -100,7 +100,7 @@ export default function Documentos() {
   const fmt = n => n >= 1024 ? (n/1024).toFixed(1) + ' MB' : n + ' KB'
 
   const s = {
-    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 13, padding: '7px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8, boxSizing: 'border-box' },
     th: { textAlign: 'left', padding: '6px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE' },
@@ -112,9 +112,9 @@ export default function Documentos() {
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>Documentos Institucionais</div>
+        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em' }}>Documentos Institucionais</div>
         <button onClick={() => setMostrarForm(!mostrarForm)}
-          style={{ ...s.btn(mostrarForm ? '#F1EFE8' : VERDE), fontWeight: 500 }}>
+          style={{ ...s.btn(mostrarForm ? '#F1EFE8' : AZUL), fontWeight: 500 }}>
           {mostrarForm ? 'Cancelar' : '+ Publicar documento'}
         </button>
       </div>

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { confirmar } from '../lib/ui'
 import { auditar } from '../lib/auditoria'
 
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
+const VERDE = '#0E7EA8', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
 function csvDe(dados, campos) {
   if (!dados || dados.length === 0) return campos.join(';') + '\n'
@@ -160,7 +160,7 @@ export default function Backup() {
   }
 
   const s = {
-    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1.25rem', marginBottom:10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     btn: (bg, cor='#fff') => ({ padding:'10px 20px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:bg, color:cor, cursor:'pointer' }),
   }
 

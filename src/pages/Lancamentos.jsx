@@ -343,13 +343,13 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
 
   return (
     <div style={{ padding: isMobile ? '1rem' : '1.25rem 1.5rem' }}>
-      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>
+      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>
         {tipo === 'despesa' ? 'Lançar despesa' : 'Lançar entrada'}
       </div>
 
       {/* Bloco IA */}
       {tipo === 'despesa' && (
-        <div style={{ ...s.card, borderColor: modoIA ? '#C0DD97' : '#E0DDD5', marginBottom:10 }}>
+        <div style={{ ...s.card, borderColor: modoIA ? '#C0DD97' : '#E8E6DE', marginBottom:10 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: modoIA ? '1rem' : 0 }}>
             <div>
               <div style={{ fontSize:13, fontWeight:500 }}><i className="ti ti-file" style={{marginRight:4}} /> Adicionar documento fiscal</div>
@@ -388,7 +388,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                   ) : (
                     <div>
                       <img src={fotoPreview} alt="Nota fiscal"
-                        style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E0DDD5', marginBottom:10 }} />
+                        style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E8E6DE', marginBottom:10 }} />
                       <div style={{ display:'flex', gap:8, marginBottom:10 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':VERDE, color:'#fff', cursor:'pointer' }}>
@@ -417,7 +417,7 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                     </div>
                   ) : (
                     <div>
-                      {fotoPreview && <img src={fotoPreview} alt="PDF convertido" style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E0DDD5', marginBottom:10 }} />}
+                      {fotoPreview && <img src={fotoPreview} alt="PDF convertido" style={{ width:'100%', maxHeight:300, objectFit:'contain', borderRadius:8, border:'0.5px solid #E8E6DE', marginBottom:10 }} />}
                       <div style={{ display:'flex', gap:8 }}>
                         <button type="button" onClick={analisarNota} disabled={analisando}
                           style={{ flex:1, padding:'10px', fontSize:13, fontWeight:500, borderRadius:8, border:'none', background:analisando?'#D3D1C7':AZUL, color:'#fff', cursor:'pointer' }}>
@@ -670,22 +670,22 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead><tr>
                 {['Data','Descrição','Fornecedor','Projeto','Conta','Valor'].map(h=>(
-                  <th key={h} style={{ textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E0DDD5', background:'#FAFAF8', whiteSpace:'nowrap' }}>{h}</th>
+                  <th key={h} style={{ textAlign:'left', padding:'6px 10px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE', background:'#FAFAF8', whiteSpace:'nowrap' }}>{h}</th>
                 ))}
               </tr></thead>
               <tbody>
                 {lista.slice(0,10).map((l,i) => (
                   <tr key={l.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', whiteSpace:'nowrap' }}>{fmtData(l.data)}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.descricao}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:11, color:'#888780' }}>
                       {l.fornecedor_id ? (fornecedores.find(f=>f.id===l.fornecedor_id)?.nome?.split(' ')[0] || '—') : <span style={{ color:'#D3D1C7' }}>—</span>}
                     </td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:11, color:'#888780' }}>
                       {l.projeto_id ? (projetos.find(p=>p.id===l.projeto_id)?.nome || '—') : <span style={{ color:'#D3D1C7' }}>—</span>}
                     </td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', fontSize:11, color:'#888780' }}>{l.conta?.nome||'—'}</td>
-                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E0DDD5', color:tipo==='despesa'?VERMELHO:VERDE, fontWeight:500, textAlign:'right' }}>{fmtVal(l.valor)}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:11, color:'#888780' }}>{l.conta?.nome||'—'}</td>
+                    <td style={{ padding:'7px 10px', borderBottom:'0.5px solid #E8E6DE', color:tipo==='despesa'?VERMELHO:VERDE, fontWeight:500, textAlign:'right' }}>{fmtVal(l.valor)}</td>
                   </tr>
                 ))}
               </tbody>

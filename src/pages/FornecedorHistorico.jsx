@@ -77,7 +77,7 @@ export default function FornecedorHistorico() {
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:19, fontWeight:600, letterSpacing:'-0.02em', marginBottom:'1.25rem' }}>Histórico por fornecedor</div>
+      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>Histórico por fornecedor</div>
 
       {/* Seleção de fornecedor */}
       <div style={s.card}>
@@ -101,7 +101,7 @@ export default function FornecedorHistorico() {
       {/* Dados do fornecedor selecionado */}
       {fornecedor && (
         <>
-          <div style={{ ...s.card, background:'#F8F7F2', borderColor:'#D3D1C7' }}>
+          <div style={{ ...s.card, background: '#FAFAF8', borderColor:'#D3D1C7' }}>
             <div style={{ fontSize:13, fontWeight:600 }}>{fornecedor.nome}</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginTop:4, display:'flex', gap:16, flexWrap:'wrap' }}>
               {fornecedor.cpf_cnpj && <span style={{ fontFamily:'monospace' }}>{fornecedor.cpf_cnpj}</span>}

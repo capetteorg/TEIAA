@@ -246,7 +246,7 @@ export default function ParceriaDetalhe() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:8 }}>
               {documentos.map(doc => (
                 <a key={doc.id} href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                  style={{ display:'block', background:'#F8F7F2', border:'0.5px solid #E8E6DE', borderRadius:10, padding:'1rem', textDecoration:'none' }}>
+                  style={{ display:'block', background: '#FAFAF8', border:'0.5px solid #E8E6DE', borderRadius:10, padding:'1rem', textDecoration:'none' }}>
                   <div style={{ fontSize:22, marginBottom:6 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                   <div style={{ fontSize:12, fontWeight:500, color:'#2C2C2A', marginBottom:2 }}>{doc.titulo}</div>
                   <div style={{ fontSize:10, color:'#888780' }}>{doc.categoria}</div>

@@ -194,7 +194,7 @@ export default function Importar() {
   const fmtMes = m => m ? new Date(m+'-15').toLocaleDateString('pt-BR', { month:'long', year:'numeric' }) : '—'
 
   const s = {
-    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', fontWeight: 500, borderBottom: '0.5px solid #E8E6DE' },
     td: { padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE', verticalAlign: 'middle', fontSize: 12 },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
@@ -222,7 +222,7 @@ export default function Importar() {
         <>
           {step === 1 && (
             <div style={s.card}>
-              <div style={{ background: '#F8F7F2', borderLeft: '3px solid #0E7EA8', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
+              <div style={{ background: '#FAFAF8', borderLeft: '3px solid #0E7EA8', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
                 <strong>Sicredi · XLS</strong> — selecione o arquivo exportado pelo internet banking. Após importar, vá em <strong>Conciliação</strong> para categorizar e validar.
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: '1rem' }}>
@@ -424,7 +424,7 @@ export default function Importar() {
       {/* Modal de confirmação */}
       {confirmandoCancelar && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:380, width:'90%', textAlign:'center' }}>
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius:12, padding:'1.5rem', maxWidth:380, width:'90%', textAlign:'center' }}>
             <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Cancelar importação?</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:4 }}>

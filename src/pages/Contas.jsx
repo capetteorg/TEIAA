@@ -95,7 +95,7 @@ export default function Contas() {
   const s = {
     label: { fontSize: 12, color: '#5F5E5A', display: 'block', marginBottom: 3 },
     input: { width: '100%', fontSize: 13, padding: '6px 9px', border: '0.5px solid #D3D1C7', borderRadius: 8 },
-    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     secao: { fontSize: 11, fontWeight: 500, color: '#888780', textTransform: 'uppercase', letterSpacing: '.08em', margin: '12px 0 6px', paddingBottom: 4, borderBottom: '0.5px solid #E8E6DE' },
     grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
     grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 },
@@ -248,7 +248,7 @@ export default function Contas() {
                     <input value={form.representante_legal} onChange={e=>set('representante_legal',e.target.value)} placeholder="Nome" style={{ ...s.input, flex: 1 }} />
                     {presidente && (
                       <button type="button" onClick={() => set('representante_legal', presidente.nome)}
-                        style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #6BBF2B', background: '#F2FAE8', color: '#3B6D11', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #6BBF2B', background: '#F2FAE8', color: '#0E7EA8', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         ↑ Presidente atual
                       </button>
                     )}

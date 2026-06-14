@@ -105,7 +105,7 @@ export default function Usuarios() {
 
       <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem' }}>
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '1rem' }}>Adicionar usuário</div>
-        <div style={{ background: '#F8F7F2', borderLeft: '3px solid #0E7EA8', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
+        <div style={{ background: '#FAFAF8', borderLeft: '3px solid #0E7EA8', borderRadius: '0 8px 8px 0', padding: '.55rem .9rem', fontSize: 12, color: '#5F5E5A', marginBottom: '1rem' }}>
           O usuário receberá um e-mail de confirmação. Após confirmar, poderá fazer login com a senha definida aqui.
         </div>
         <form onSubmit={salvar}>
@@ -165,7 +165,7 @@ export default function Usuarios() {
                 {[adm, dir, op].map((v, i) => (
                   <td key={i} style={{ padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE' }}>
                     {v
-                      ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, fontWeight: 500, background: '#EAF3DE', color: '#3B6D11' }}><i className="ti ti-check" style={{fontSize:14}} /></span>
+                      ? <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, fontWeight: 500, background: '#EAF3DE', color: '#0E7EA8' }}><i className="ti ti-check" style={{fontSize:14}} /></span>
                       : <span style={{ fontSize: 10, color: '#B4B2A9' }}>—</span>
                     }
                   </td>

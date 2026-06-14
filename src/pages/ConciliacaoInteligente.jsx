@@ -209,7 +209,7 @@ export default function ConciliacaoInteligente() {
   })
 
   const s = {
-    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     th: { textAlign: 'left', padding: '5px 8px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE', whiteSpace: 'nowrap' },
     td: { padding: '7px 8px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12, verticalAlign: 'top' },
     badge: (bg, cor) => ({ display: 'inline-block', padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 500, background: bg, color: cor }),
@@ -219,7 +219,7 @@ export default function ConciliacaoInteligente() {
 
   if (!extratoSel) return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Conciliação inteligente</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Conciliação inteligente</div>
       <div style={{ background: '#E6F1FB', border: '0.5px solid #B3D1F0', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: '#185FA5' }}>
         <strong>Como funciona:</strong> O sistema cruza automaticamente as movimentações do extrato bancário com os lançamentos feitos pelo Operacional, usando valor, data e descrição como critérios. Você confirma, rejeita ou resolve os casos manualmente.
       </div>
@@ -258,7 +258,7 @@ export default function ConciliacaoInteligente() {
           style={{ padding: '5px 10px', fontSize: 12, borderRadius: 8, border: '0.5px solid #D3D1C7', background: 'transparent', cursor: 'pointer' }}>
           ← Voltar
         </button>
-        <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em' }}>
           Conciliação inteligente — {extratoSel.competencia} · {extratoSel.conta?.nome}
         </div>
         {resultado.length === 0 && !loading && (
@@ -317,7 +317,7 @@ export default function ConciliacaoInteligente() {
           </div>
 
           {msg && (
-            <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.5rem 1rem', marginBottom: '1rem', fontSize: 12, color: '#3B6D11' }}>
+            <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.5rem 1rem', marginBottom: '1rem', fontSize: 12, color: '#0E7EA8' }}>
               {msg}
             </div>
           )}

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFRelatorio, gerarPDFConciliacao, gerarPDFPlanoAcao, gerarPDFRelatAnual, gerarPDFEquipe, gerarPDFUsuariosAtendidos, gerarPDFAtendimentos, gerarPDFDoacoes } from '../lib/pdf'
+import { gerarPDFRelatorio, gerarPDFConciliacao } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F', ROXO = '#8B2FC9'
 
@@ -429,69 +429,11 @@ export default function RelatoriosCentral() {
     setDados({ tipo:'doacoes', lista, totalEstimado, porCategoria, porDoador })
   }
 
-
-  // Helper PDF local
-  function abrirPDFLocal(html, titulo) {
-    const win = window.open('', '_blank')
-    if (!win) { alert('Permita pop-ups para gerar o PDF.'); return }
-    const CSS = `
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: Inter, Arial, sans-serif; font-size: 11px; color: #171A1F; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      @page { size: A4 portrait; margin: 0; }
-      @media print { body { background: #fff; } .no-print { display: none !important; } thead { display: table-header-group; } tr { page-break-inside: avoid; } }
-      .pg { width: 210mm; min-height: 297mm; padding: 14mm 16mm 16mm; margin: 0 auto; border-left: 5px solid #0E7EA8; }
-      .logo-row { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0E7EA8; padding-bottom: 11px; margin-bottom: 18px; }
-      .kicker { font-size: 9px; font-weight: 700; color: #0E7EA8; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 7px; }
-      .doc-title { font-family: Georgia, serif; font-size: 38px; line-height: .95; font-weight: 400; letter-spacing: -.04em; color: #06344F; margin-bottom: 9px; }
-      .rule { width: 65px; height: 2px; background: #A98E54; margin-bottom: 11px; }
-      .sub-period { font-size: 12px; color: #303944; margin-bottom: 14px; }
-      .meta-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #D7D0C2; border-bottom: 1px solid #D7D0C2; margin: 12px 0; }
-      .meta { padding: 10px 0; border-bottom: 1px solid #ECE6DA; }
-      .meta:nth-last-child(-n+2) { border-bottom: 0; }
-      .meta:nth-child(odd) { padding-right: 16px; border-right: 1px solid #ECE6DA; }
-      .meta:nth-child(even) { padding-left: 16px; }
-      .meta b { display: block; font-size: 7.5px; text-transform: uppercase; color: #6B7280; letter-spacing: .12em; margin-bottom: 3px; }
-      .meta span { font-size: 11px; color: #20252C; font-weight: 600; }
-      .meta small { display: block; font-size: 9px; color: #626B76; margin-top: 2px; }
-      .figs { display: grid; border-top: 1px solid #D7D0C2; border-bottom: 1px solid #D7D0C2; margin: 12px 0; }
-      .fig { padding: 11px 8px; border-right: 1px solid #ECE6DA; }
-      .fig:last-child { border-right: 0; }
-      .fig b { display: block; font-size: 7.5px; text-transform: uppercase; color: #6B7280; letter-spacing: .1em; margin-bottom: 5px; }
-      .fig span { font-family: Georgia, serif; font-size: 15px; }
-      .blue { color: #0E7EA8; } .green { color: #2E6F3E; } .red { color: #A7352C; }
-      .sec { font-family: Georgia, serif; font-size: 17px; color: #06344F; margin: 14px 0 9px; letter-spacing: -.02em; }
-      .sec-bar { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px 5px 12px; border-left: 3px solid #0E7EA8; background: #EAF5F8; color: #06344F; margin-bottom: 10px; }
-      table { width: 100%; border-collapse: collapse; font-size: 9px; }
-      th { background: #F2F6F7; color: #525B66; border-top: 1px solid #D7D0C2; border-bottom: 1px solid #D7D0C2; font-size: 7px; text-transform: uppercase; letter-spacing: .08em; padding: 6px 5px; text-align: left; }
-      td { padding: 5px; border-bottom: 1px solid #EEE9DF; color: #20252C; vertical-align: top; }
-      .num { text-align: right; white-space: nowrap; } .center { text-align: center; }
-      .total-r td { background: #F5F2EA; font-weight: 700; border-top: 1.5px solid #D7D0C2; border-bottom: none; }
-      .footer { border-top: 1px solid #D7D0C2; padding-top: 8px; display: flex; justify-content: space-between; color: #66717E; font-size: 8.5px; margin-top: 14px; }
-      .footer strong { color: #06344F; }
-      .txt-box { background: #F8F7F2; border-left: 3px solid #0E7EA8; padding: 10px 14px; font-size: 10px; line-height: 1.65; color: #303842; margin: 10px 0; }
-      .page-break { page-break-before: always; }
-    `
-    win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${titulo}</title><style>${CSS}</style></head><body>${html}</body></html>`)
-    win.document.close()
-    win.focus()
-    const imgs = Array.from(win.document.images)
-    Promise.race([
-      Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r }))),
-      new Promise(r => setTimeout(r, 2500))
-    ]).then(() => setTimeout(() => win.print(), 200))
-  }
-
   function exportarPDF() {
     if (!dados) return
     if (dados.tipo === 'financeiro') gerarPDFRelatorio(dados, dataInicio, dataFim, { assinaturas: incluirAss })
     else if (dados.tipo === 'conciliacao') gerarPDFConciliacao(dados, modoConc==='ano' ? `${anoConc}-01-01` : dataInicio, modoConc==='ano' ? `${anoConc}-12-31` : dataFim, { assinaturas: incluirAss })
-    else if (dados.tipo === 'plano_acao')  gerarPDFPlanoAcao(dados, { assinaturas: incluirAss })
-    else if (dados.tipo === 'relat_anual') gerarPDFRelatAnual(dados, { assinaturas: incluirAss })
-    else if (dados.tipo === 'equipe')      gerarPDFEquipe(dados)
-    else if (dados.tipo === 'usuarios')    gerarPDFUsuariosAtendidos(dados, dataInicio && dataFim ? fmtData(dataInicio)+' a '+fmtData(dataFim) : 'Período selecionado')
-    else if (dados.tipo === 'atendimentos') gerarPDFAtendimentos(dados, dataInicio && dataFim ? fmtData(dataInicio)+' a '+fmtData(dataFim) : 'Período selecionado')
-    else if (dados.tipo === 'doacoes')     gerarPDFDoacoes(dados, dataInicio && dataFim ? fmtData(dataInicio)+' a '+fmtData(dataFim) : 'Período selecionado')
-    else if (dados.tipo === 'execucao')    gerarPDFPlanoAcao({ plano: dados.plano, projetosCompletos: [] })
+    else alert('PDF para este relatório em breve!')
   }
 
   const fmt = v => 'R$ '+Math.abs(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})

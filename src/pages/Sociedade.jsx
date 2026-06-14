@@ -533,7 +533,7 @@ export default function Sociedade() {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:10 }}>
                 {documentos.map(doc => (
                   <a key={doc.id} href={doc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                    style={{ display:'block', background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:12, boxShadow:'0 1px 8px rgba(0,0,0,0.04)', padding:'1rem', textDecoration:'none' }}>
+                    style={{ display:'block', background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 1px 8px rgba(0,0,0,0.04)', padding:'1rem', textDecoration:'none' }}>
                     <div style={{ fontSize:28, marginBottom:8 }}><i className="ti ti-file" style={{fontSize:14}} /></div>
                     <div style={{ fontSize:12, fontWeight:500, color:'#2C2C2A', marginBottom:3 }}>{doc.titulo}</div>
                     {doc.descricao && <div style={{ fontSize:11, color:'#888780', marginBottom:8 }}>{doc.descricao}</div>}

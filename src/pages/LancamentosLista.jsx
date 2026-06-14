@@ -267,7 +267,7 @@ export default function LancamentosLista() {
       {/* Modal editar */}
       {editando && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
-          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:580, width:'100%', maxHeight:'90vh', overflowY:'auto' }}>
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius:12, padding:'1.5rem', maxWidth:580, width:'100%', maxHeight:'90vh', overflowY:'auto' }}>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:'1rem' }}>Editar lançamento</div>
 
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
@@ -374,7 +374,7 @@ export default function LancamentosLista() {
       {/* Modal excluir */}
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
             <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Excluir lançamento?</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:4 }}>{confirmandoExcluir.descricao}</div>

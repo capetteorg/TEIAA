@@ -93,7 +93,7 @@ export default function Configuracoes() {
 
   return (
     <div style={{ padding: '1.25rem 1.5rem' }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>Configurações avançadas</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>Configurações avançadas</div>
 
       <div style={{ background: '#FEF2F2', border: '0.5px solid #F7C1C1', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: '#A32D2D', marginBottom: 4 }}><i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Zona de perigo</div>
@@ -115,7 +115,7 @@ export default function Configuracoes() {
         </div>
       ) : (
         <div>
-          <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.6rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: '#3B6D11' }}>
+          <div style={{ background: '#F2FAE8', border: '0.5px solid #C0DD97', borderRadius: 10, padding: '.6rem 1rem', marginBottom: '1.25rem', fontSize: 12, color: '#0E7EA8' }}>
             <i className="ti ti-check" style={{marginRight:4}} /> Senha verificada — você pode executar as ações abaixo.
           </div>
 

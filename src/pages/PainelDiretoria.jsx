@@ -117,7 +117,7 @@ export default function PainelDiretoria() {
   for (let y = new Date().getFullYear(); y >= 2023; y--) anos.push(String(y))
 
   const s = {
-    card: { background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: '1rem 1.25rem', marginBottom: 10 },
+    card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     th: { textAlign: 'left', padding: '7px 10px', fontSize: 11, color: '#888780', borderBottom: '0.5px solid #E8E6DE', background: '#FAFAF8', whiteSpace: 'nowrap' },
     td: { padding: '8px 10px', borderBottom: '0.5px solid #E8E6DE', fontSize: 12, verticalAlign: 'middle' },
     tab: ativo => ({
@@ -145,7 +145,7 @@ export default function PainelDiretoria() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-      <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '1.25rem' }}>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>
         Acompanhamento Financeiro — Diretoria
       </div>
 
@@ -158,7 +158,7 @@ export default function PainelDiretoria() {
         </div>
         {ultimoExtrato && ultimoExtrato !== mes && (
           <button onClick={() => setMes(ultimoExtrato)}
-            style={{ fontSize: 11, padding: '5px 10px', borderRadius: 8, border: '0.5px solid #6BBF2B', background: 'transparent', color: '#3B6D11', cursor: 'pointer', alignSelf: 'flex-end' }}>
+            style={{ fontSize: 11, padding: '5px 10px', borderRadius: 8, border: '0.5px solid #6BBF2B', background: 'transparent', color: '#0E7EA8', cursor: 'pointer', alignSelf: 'flex-end' }}>
             Último extrato ({ultimoExtrato})
           </button>
         )}
@@ -304,7 +304,7 @@ export default function PainelDiretoria() {
                         <span style={{ fontWeight: 500, color: VERDE, flexShrink: 0 }}>{fmt(val)} <span style={{ color: '#888780', fontWeight: 400 }}>({pct}%)</span></span>
                       </div>
                       <div style={{ height: 5, background: '#F1EFE8', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: pct + '%', background: VERDE, borderRadius: 99 }} />
+                        <div style={{ height: '100%', width: pct + '%', background: AZUL, borderRadius: 99 }} />
                       </div>
                     </div>
                   )

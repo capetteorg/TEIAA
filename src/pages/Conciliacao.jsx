@@ -497,7 +497,7 @@ export default function Conciliacao() {
                     <td style={{ ...s.td, color:'#888780', fontSize:11 }}>{fmtDataHora(e.importado_em)}</td>
                     <td style={{ ...s.td, fontSize:10, color:'#888780', fontFamily:'monospace' }}>{e.arquivo_nome||'—'}</td>
                     <td style={s.td}>
-                      <button onClick={ev=>{ev.stopPropagation();abrirExtrato(e)}} style={s.btn(fechado?'#F1EFE8':VERDE, fechado?'#5F5E5A':'#fff')}>
+                      <button onClick={ev=>{ev.stopPropagation();abrirExtrato(e)}} style={s.btn(fechado?'#F1EFE8':AZUL, fechado?'#5F5E5A':'#fff')}>
                         {fechado?'Ver':'Abrir →'}
                       </button>
                     </td>
@@ -726,7 +726,7 @@ export default function Conciliacao() {
                           {temCompl||movsDivida[m.id]?'':'⋯'} Ações {movsDivida[m.id]?'':''}
                         </button>
                         {menuAberto===m.id && (
-                          <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', border:'0.5px solid #E8E6DE', borderRadius:10, boxShadow:'0 4px 16px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
+                          <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background: 'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 4px 16px rgba(0,0,0,0.12)', minWidth:190, overflow:'hidden' }}>
                             <button onClick={() => { setMenuAberto(null); isAberto?setComplementarAberto(null):abrirComplementar(m) }}
                               style={{ width:'100%', textAlign:'left', padding:'8px 12px', fontSize:11, border:'none', borderBottom:'0.5px solid #F1EFE8', background:'transparent', cursor:'pointer', color:temCompl?'#3B6D11':'#2C2C2A' }}>
                               <i className="ti ti-clipboard-list" style={{marginRight:4}} /> {temCompl?'Dados complementares ✓':'Dados complementares'}
@@ -942,7 +942,7 @@ export default function Conciliacao() {
                             const lancNaoConcil = lancamentos.filter(l => !l.extrato_mov_id && l.data?.slice(0,7)===mes && l.tipo===tipoMov)
                             if (!lancNaoConcil.length) return null
                             return (
-                              <div style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:12, border:'0.5px solid #B3D1F0' }}>
+                              <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius:8, padding:'10px 12px', marginBottom:12, border:'0.5px solid #B3D1F0' }}>
                                 <div style={{ fontSize:11, fontWeight:600, color:AZUL, marginBottom:8 }}>
                                   <i className="ti ti-bulb" style={{marginRight:4}} /> Lançamentos não conciliados em {new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
                                 </div>
@@ -977,7 +977,7 @@ export default function Conciliacao() {
                           {partesDivisao.map((parte, i) => {
                             const subcats = subcatsDa(parte.categoria_id)
                             return (
-                              <div key={i} style={{ background:'#fff', borderRadius:8, padding:'10px 12px', marginBottom:8, border: parte.lancamento_id ? `1px solid ${VERDE}` : '0.5px solid #D3D1C7' }}>
+                              <div key={i} style={{ background: 'rgba(255,255,255,0.92)', borderRadius:8, padding:'10px 12px', marginBottom:8, border: parte.lancamento_id ? `1px solid ${VERDE}` : '0.5px solid #D3D1C7' }}>
                                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                                   <span style={{ fontSize:11, fontWeight:600, color:parte.lancamento_id?VERDE:AZUL }}>
                                     Parte {i+1} {parte.lancamento_id ? 'vinculado ao lançamento' : ''}

@@ -414,7 +414,7 @@ export default function PlanosExecucao() {
           <div style={{ display:'flex', gap:6 }}>
             <button onClick={novoPlanoAcao} style={{ ...s.btn('#0E7EA8'), fontSize:11 }}>+ Plano de Ação Institucional</button>
             <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-              style={s.btn(mostrarForm?'#F1EFE8':VERDE, mostrarForm?'#5F5E5A':'#fff')}>
+              style={s.btn(mostrarForm?'#F1EFE8':AZUL, mostrarForm?'#5F5E5A':'#fff')}>
               {mostrarForm ? 'Cancelar' : '+ Outro plano'}
             </button>
           </div>
@@ -864,7 +864,7 @@ export default function PlanosExecucao() {
                     {entradas.length > 0 && (
                       <div style={{ marginBottom:'1rem' }}>
                         <div style={{ fontSize:12, fontWeight:600, color:VERDE, marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
-                          <span style={{ display:'inline-block', width:10, height:10, borderRadius:99, background:VERDE }} /> Receitas / Entradas
+                          <span style={{ display:'inline-block', width:10, height:10, borderRadius:99, background:AZUL }} /> Receitas / Entradas
                         </div>
                         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                           <thead><tr>{['Descrição','Categoria','Previsto','Realizado','% Exec.',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
@@ -1223,7 +1223,7 @@ export default function PlanosExecucao() {
 
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background:'#fff', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
             <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>

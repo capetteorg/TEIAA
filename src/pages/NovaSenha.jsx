@@ -22,7 +22,7 @@ export default function NovaSenha() {
 
   return (
     <div style={{ minHeight:'100vh', background:'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
-      <div style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:16, boxShadow:'0 2px 24px rgba(0,0,0,0.08)', padding:'2rem', width:'100%', maxWidth:380 }}>
+      <div style={{ background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 24px rgba(0,0,0,0.08)', padding:'2rem', width:'100%', maxWidth:380 }}>
         <div style={{ fontSize:17, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Definir nova senha</div>
         <div style={{ fontSize:12, color:'#888780', marginBottom:'1.5rem' }}>Crie uma nova senha de acesso ao AGENDO Integra.</div>
         <form onSubmit={salvar} style={{ display:'flex', flexDirection:'column', gap:12 }}>
