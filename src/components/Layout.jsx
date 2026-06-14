@@ -337,7 +337,9 @@ export default function Layout() {
   )
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden', position: 'relative' }}>
+      {/* Marca d'água AGENDO */}
+      <img src="/agendo-logo.png" alt="" aria-hidden="true" style={{ position: 'fixed', bottom: 0, left: 0, width: '32vw', maxWidth: 420, opacity: 0.045, pointerEvents: 'none', zIndex: 0, userSelect: 'none' }} />
       <style>{`
         .nav-item:hover { background: rgba(14,126,168,0.06) !important; color: #0E7EA8 !important; }
         .sidebar-scroll::-webkit-scrollbar { width: 4px; }
