@@ -7,42 +7,57 @@ const AG_BLUE  = '#0E7EA8'
 const AG_GREEN = '#96C11F'
 const AG_RED   = '#E63214'
 
+// Altura do topo da sidebar — alinhada com a topbar de cada página
+const TOPBAR_H = 62
+
 function NavItem({ to, icon, label, visivel = true, onClick, badge, colapsado = false }) {
   if (!visivel) return null
   return (
     <NavLink to={to} onClick={onClick} className="nav-item" title={colapsado ? label : undefined} style={({ isActive }) => ({
-      display: 'flex', alignItems: 'center', gap: 9,
-      padding: colapsado ? '10px 0' : '9px 1.1rem',
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: colapsado ? '9px 0' : '8px 12px',
       justifyContent: colapsado ? 'center' : 'flex-start',
-      fontSize: 12.5,
-      color: isActive ? '#1A1F1C' : '#888780',
+      fontSize: 12,
+      color: isActive ? '#0E7EA8' : '#5F5E5A',
       background: isActive ? 'rgba(14,126,168,0.08)' : 'transparent',
-      borderRight: isActive ? `2px solid ${AG_BLUE}` : '2px solid transparent',
+      borderLeft: isActive ? `2px solid ${AG_BLUE}` : '2px solid transparent',
       textDecoration: 'none',
-      transition: 'background .15s ease, color .15s ease',
+      transition: 'background .12s ease, color .12s ease',
       fontWeight: isActive ? 500 : 400,
       position: 'relative',
     })}>
-      <i className={`ti ti-${icon}`} style={{ fontSize: colapsado ? 17 : 15, flexShrink: 0 }} />
+      <i className={`ti ti-${icon}`} style={{ fontSize: colapsado ? 17 : 14, flexShrink: 0, color: 'inherit' }} />
       {!colapsado && <span style={{ flex: 1 }}>{label}</span>}
       {!colapsado && badge > 0 && (
-        <span style={{ background: AG_RED, color: '#fff', fontSize: 9, fontWeight: 700, borderRadius: 99, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+        <span style={{ background: 'rgba(230,50,20,0.14)', color: '#A32D2D', fontSize: 8, fontWeight: 700, borderRadius: 99, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
           {badge > 99 ? '99+' : badge}
         </span>
       )}
       {colapsado && badge > 0 && (
-        <span style={{ position: 'absolute', top: 6, right: 10, width: 7, height: 7, borderRadius: '50%', background: AG_RED }} />
+        <span style={{ position: 'absolute', top: 6, right: 8, width: 6, height: 6, borderRadius: '50%', background: AG_RED }} />
       )}
     </NavLink>
   )
 }
 
-function NavSecao({ label, colapsado = false, aberta = true, onToggle }) {
-  if (colapsado) return <div style={{ height: 10, borderBottom: '0.5px solid #F1EFE8', marginBottom: 4 }} />
+function NavBloco({ label, colapsado, aberta, onToggle, children }) {
+  if (colapsado) {
+    return (
+      <div style={{ margin: '4px 0' }}>
+        <div style={{ height: 1, background: 'rgba(14,126,168,0.08)', margin: '4px 12px' }} />
+        {children}
+      </div>
+    )
+  }
   return (
-    <div onClick={onToggle} style={{ fontSize: 9.5, color: '#C8C6BC', padding: '10px 1.1rem 2px', textTransform: 'uppercase', letterSpacing: '.09em', fontWeight: 500, cursor: onToggle ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
-      {label}
-      {onToggle && <i className={`ti ti-chevron-${aberta ? 'down' : 'right'}`} style={{ fontSize: 11 }} />}
+    <div style={{ margin: '4px 10px' }}>
+      <div style={{ background: 'rgba(255,255,255,0.5)', border: '0.5px solid #E8E6DE', borderRadius: 12, overflow: 'hidden' }}>
+        <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px 5px', fontSize: 9, fontWeight: 700, color: '#B4B2A9', textTransform: 'uppercase', letterSpacing: '.1em', cursor: onToggle ? 'pointer' : 'default', userSelect: 'none' }}>
+          {label}
+          {onToggle && <i className={`ti ti-chevron-${aberta ? 'down' : 'right'}`} style={{ fontSize: 10 }} />}
+        </div>
+        {aberta && children}
+      </div>
     </div>
   )
 }
@@ -71,7 +86,6 @@ export default function Layout() {
     return () => window.removeEventListener('resize', fn)
   }, [])
 
-  // Busca global: Ctrl+K / Cmd+K
   useEffect(() => {
     const onKey = e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -124,7 +138,6 @@ export default function Layout() {
   }
   const secVisivel = nome => colapsado || !secFechadas.has(nome)
 
-  // Itens buscáveis (espelha o menu, respeitando o perfil)
   const itensBusca = [
     { to:'/painel-admin', label:'Painel', icon:'layout-dashboard', ok:p==='admin' },
     { to:'/painel-operacional', label:'Painel', icon:'layout-dashboard', ok:p==='operacional' },
@@ -173,116 +186,146 @@ export default function Layout() {
 
   const sidebar = (
     <div style={{
-      width: colapsado && !isMobile ? 64 : 228,
+      width: colapsado && !isMobile ? 64 : 252,
       transition: 'width .2s cubic-bezier(.2,.8,.3,1)',
-      background: 'rgba(255,255,255,0.92)',
-      borderRight: '0.5px solid #E8E6DE',
+      background: 'rgba(255,255,255,0.52)',
+      borderRight: '0.5px solid #E0DDD5',
       display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%',
-      boxShadow: '2px 0 16px rgba(0,0,0,0.04)',
     }}>
 
-      {/* Logo da OSC */}
-      <div style={{ padding: colapsado && !isMobile ? '1.15rem 0' : '1.15rem 1.1rem', borderBottom: '0.5px solid #E8E6DE', display: 'flex', alignItems: 'center', justifyContent: colapsado && !isMobile ? 'center' : 'space-between', minHeight: 70 }}>
-        {!(colapsado && !isMobile) && <img
-          src="/logo.png" alt="Logo"
-          style={{ height: 40, width: 'auto', objectFit: 'contain', maxWidth: 168, display: 'block' }}
-          onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-        />}
+      {/* TOPO — AGENDO Integra, altura = TOPBAR_H para alinhar com topbar */}
+      <div style={{
+        height: TOPBAR_H,
+        padding: colapsado && !isMobile ? '0' : '0 14px',
+        borderBottom: '0.5px solid #E0DDD5',
+        display: 'flex', alignItems: 'center',
+        justifyContent: colapsado && !isMobile ? 'center' : 'space-between',
+        flexShrink: 0,
+      }}>
+        {!(colapsado && !isMobile) && (
+          <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+            <div style={{ width:32, height:32, borderRadius:9, background:'#0E7EA8', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontWeight:900, fontSize:14, color:'#fff' }}>A</div>
+            <div>
+              <div style={{ fontSize:13, fontWeight:700, color:'#06344F', lineHeight:1.2 }}>AGENDO Integra</div>
+              <div style={{ fontSize:9.5, color:'#7A9AAA', marginTop:1 }}>Gestão integrada para OSCs</div>
+            </div>
+          </div>
+        )}
+        {colapsado && !isMobile && (
+          <div style={{ width:32, height:32, borderRadius:9, background:'#0E7EA8', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:14, color:'#fff' }}>A</div>
+        )}
         {!isMobile && (
           <button onClick={toggleColapsado} title={colapsado ? 'Expandir menu' : 'Recolher menu'}
-            style={{ border:'none', background:'none', cursor:'pointer', color:'#B4B2A9', padding:4, lineHeight:1, display:'flex' }}>
-            <i className={`ti ti-layout-sidebar-left-${colapsado ? 'expand' : 'collapse'}`} style={{ fontSize: 17 }} />
+            style={{ border:'none', background:'none', cursor:'pointer', color:'#B4B2A9', padding:4, lineHeight:1, display:'flex', flexShrink:0 }}>
+            <i className={`ti ti-layout-sidebar-left-${colapsado ? 'expand' : 'collapse'}`} style={{ fontSize: 16 }} />
           </button>
         )}
-        <div style={{ display:'none', gap:2, alignItems:'center' }}>
-          {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#0E7EA8'],['E','#E8207A']].map(([l,c])=>(
-            <span key={l+c} style={{ fontSize:16, fontWeight:700, color:c }}>{l}</span>
-          ))}
-        </div>
         {isMobile && (
-          <button onClick={() => setMenuAberto(false)} style={{ border:'none', background:'none', fontSize:18, cursor:"pointer", color:"#888780", padding:"4px", lineHeight:1 }}><i className="ti ti-x" style={{fontSize:18}} /></button>
+          <button onClick={() => setMenuAberto(false)} style={{ border:'none', background:'none', fontSize:18, cursor:'pointer', color:'#B4B2A9', padding:'4px', lineHeight:1 }}>
+            <i className="ti ti-x" style={{fontSize:18}} />
+          </button>
         )}
       </div>
+
+      {/* Card OSC — logo CAPETTE */}
+      {!(colapsado && !isMobile) && (
+        <div style={{ margin:'10px 12px', background:'rgba(255,255,255,0.8)', border:'0.5px solid #E0DDD5', borderRadius:14, padding:'10px 12px', boxShadow:'0 1px 4px rgba(0,0,0,.04)', flexShrink:0 }}>
+          <div style={{ height:30, display:'flex', alignItems:'center', marginBottom:6 }}>
+            <img src="/logo.png" alt="CAPETTE" style={{ maxHeight:26, maxWidth:110, objectFit:'contain', display:'block' }}
+              onError={e => {
+                e.target.style.display='none'
+                e.target.nextSibling.style.display='flex'
+              }}
+            />
+            <div style={{ display:'none', gap:1, alignItems:'center' }}>
+              {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#0E7EA8'],['E','#E8207A']].map(([l,cor])=>(
+                <span key={l+cor} style={{ fontSize:14, fontWeight:900, color:cor }}>{l}</span>
+              ))}
+            </div>
+          </div>
+          <div style={{ fontSize:10.5, fontWeight:600, color:'#1A1F1C', lineHeight:1.35 }}>Casa do Pequeno Trabalhador de Teresópolis</div>
+          <div style={{ fontSize:9, color:'#888780', marginTop:3 }}>CNPJ 29.213.717/0001-01</div>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:7, border:'0.5px solid rgba(14,126,168,.25)', background:'rgba(14,126,168,.07)', color:'#0E7EA8', padding:'3px 9px', borderRadius:99, fontSize:9.5, fontWeight:600 }}>
+            <i className="ti ti-shield-check" style={{ fontSize:10 }} />
+            Perfil {perfilLabel} · acesso completo
+          </div>
+        </div>
+      )}
 
       {/* Menu */}
       <div className="sidebar-scroll" style={{ overflowY: 'auto', flex: 1, paddingBottom: 8 }}>
 
-        <NavSecao colapsado={colapsado} label="Principal" />
-        <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/painel-operacional" icon="layout-dashboard"  label="Painel"              visivel={p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
+        <NavBloco label="Principal" colapsado={colapsado} aberta={true}>
+          <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/painel-operacional" icon="layout-dashboard"  label="Painel"              visivel={p==='operacional'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
+        </NavBloco>
 
-        <NavSecao colapsado={colapsado} label="Operação diária" aberta={secVisivel("Operação diária")} onToggle={() => toggleSec("Operação diária")} />
-        {secVisivel("Operação diária") && (<>
-        <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/cobrancas"          icon="receipt-2"         label="Cobranças"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
-        <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
+        <NavBloco label="Operação diária" colapsado={colapsado} aberta={secVisivel("Operação diária")} onToggle={() => toggleSec("Operação diária")}>
+          <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/cobrancas"          icon="receipt-2"         label="Cobranças"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
+          <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
+        </NavBloco>
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Gestão financeira" aberta={secVisivel("Gestão financeira")} onToggle={() => toggleSec("Gestão financeira")} />
-        {secVisivel("Gestão financeira") && (<>
-        <NavItem colapsado={colapsado} to="/fornecedores"       icon="building-store"    label="Fornecedores"        visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/historico-fornecedor" icon="history"         label="Histórico Fornecedor" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/controle-dividas"   icon="credit-card-off"   label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
-        <NavItem colapsado={colapsado} to="/aplicacoes"         icon="chart-line"        label="Aplicações"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavBloco label="Gestão financeira" colapsado={colapsado} aberta={secVisivel("Gestão financeira")} onToggle={() => toggleSec("Gestão financeira")}>
+          <NavItem colapsado={colapsado} to="/fornecedores"       icon="building-store"    label="Fornecedores"        visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/historico-fornecedor" icon="history"         label="Histórico Fornecedor" visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/controle-dividas"   icon="credit-card-off"   label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
+          <NavItem colapsado={colapsado} to="/aplicacoes"         icon="chart-line"        label="Aplicações"          visivel={p==='admin'} onClick={fecharMenu} />
+        </NavBloco>
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Programas e projetos" aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")} />
-        {secVisivel("Programas e projetos") && (<>
-        <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavBloco label="Programas e projetos" colapsado={colapsado} aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")}>
+          <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
+        </NavBloco>
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Relatórios" aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")} />
-        {secVisivel("Relatórios") && (<>
-        <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho"  visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/transparencia"      icon="world"             label="Transparência Pública"  visivel={p==='admin'} onClick={fecharMenu} />
+        <NavBloco label="Relatórios" colapsado={colapsado} aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")}>
+          <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho"  visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/transparencia"      icon="world"             label="Transparência Pública"  visivel={p==='admin'} onClick={fecharMenu} />
+        </NavBloco>
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Institucional" aberta={secVisivel("Institucional")} onToggle={() => toggleSec("Institucional")} />
-        {secVisivel("Institucional") && (<>
-        <NavItem colapsado={colapsado} to="/instituicao"        icon="building"           label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/parcerias"          icon="file-invoice"       label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/documentos-fiscais" icon="files"              label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavBloco label="Institucional" colapsado={colapsado} aberta={secVisivel("Institucional")} onToggle={() => toggleSec("Institucional")}>
+          <NavItem colapsado={colapsado} to="/instituicao"        icon="building"           label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/parcerias"          icon="file-invoice"       label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/documentos-fiscais" icon="files"              label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
+        </NavBloco>
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Configurações" aberta={secVisivel("Configurações")} onToggle={() => toggleSec("Configurações")} />
-        {secVisivel("Configurações") && (<>
-        <NavItem colapsado={colapsado} to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/configuracoes"      icon="alert-octagon"     label="Zona de perigo"      visivel={p==='admin'} onClick={fecharMenu} />
+        <NavBloco label="Configurações" colapsado={colapsado} aberta={secVisivel("Configurações")} onToggle={() => toggleSec("Configurações")}>
+          <NavItem colapsado={colapsado} to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/configuracoes"      icon="alert-octagon"     label="Zona de perigo"      visivel={p==='admin'} onClick={fecharMenu} />
+        </NavBloco>
 
-        </>)}
       </div>
 
       {/* Rodapé usuário */}
-      <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1.1rem', borderTop: '0.5px solid #E8E6DE', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: `${perfilCor}18`, border: `1px solid ${perfilCor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: perfilCor }}>
+      <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1rem', borderTop: '0.5px solid #E0DDD5', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 8, justifyContent: colapsado && !isMobile ? 'center' : 'flex-start', flexShrink: 0 }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(14,126,168,0.1)', border: '1px solid rgba(14,126,168,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#0E7EA8' }}>
             {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
           </span>
         </div>
         {!(colapsado && !isMobile) && <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, color: '#2C2C2A', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 11, color: '#1A1F1C', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {perfil?.nome || 'Usuário'}
           </div>
-          <div style={{ fontSize: 10, color: perfilCor }}>{perfilLabel}</div>
+          <div style={{ fontSize: 9.5, color: '#888780' }}>{perfilLabel} · última atualização: {new Date().toLocaleDateString('pt-BR')}</div>
         </div>}
         <button onClick={handleLogout} title="Sair"
-          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#B4B2A9', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#C8C6BC', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <i className="ti ti-logout" style={{ fontSize: 15 }} />
         </button>
       </div>
@@ -293,20 +336,53 @@ export default function Layout() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden' }}>
       <style>{`
-        .nav-item:hover { background: rgba(0,0,0,0.035) !important; color: #2C2C2A !important; }
-        .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+        .nav-item:hover { background: rgba(14,126,168,0.06) !important; color: #0E7EA8 !important; }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
         .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-scroll::-webkit-scrollbar-thumb { background: #DDDBD2; border-radius: 99px; }
-        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: #C8C6BC; }
-        .sidebar-scroll { scrollbar-width: thin; scrollbar-color: #DDDBD2 transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #D3D1C7; border-radius: 99px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: #B4B2A9; }
+        .sidebar-scroll { scrollbar-width: thin; scrollbar-color: #D3D1C7 transparent; }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .drawer-mobile { animation: drawerIn .22s cubic-bezier(.2,.8,.3,1); }
         .drawer-overlay { animation: fadeIn .18s ease; }
         .busca-item:hover { background: rgba(14,126,168,0.08) !important; }
+
+        /* Design system global — cards, inputs, botões, tabelas */
+        .card-sys {
+          background: rgba(255,255,255,0.92) !important;
+          border: 0.5px solid #E8E6DE !important;
+          border-radius: 16px !important;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.05) !important;
+        }
+        input, select, textarea {
+          background: #FAFAF8 !important;
+          border: 0.5px solid #D3D1C7 !important;
+          border-radius: 8px !important;
+          font-family: inherit !important;
+          color: #1A1F1C !important;
+        }
+        input:focus, select:focus, textarea:focus {
+          border-color: #0E7EA8 !important;
+          background: #fff !important;
+          outline: none !important;
+          box-shadow: 0 0 0 3px rgba(14,126,168,0.08) !important;
+        }
+        input::placeholder, textarea::placeholder { color: #B4B2A9 !important; }
+        table thead th {
+          background: rgba(0,0,0,0.018) !important;
+          color: #888780 !important;
+          font-size: 10px !important;
+          font-weight: 600 !important;
+          text-transform: uppercase !important;
+          letter-spacing: .06em !important;
+          border-bottom: 0.5px solid #E8E6DE !important;
+        }
+        table tbody tr { border-bottom: 0.5px solid rgba(0,0,0,0.04) !important; transition: background .1s; }
+        table tbody tr:hover { background: rgba(14,126,168,0.04) !important; }
       `}</style>
 
-      {/* Busca global — Ctrl+K */}
+      {/* Busca global Ctrl+K */}
       {buscaAberta && (
         <div onClick={e => { if (e.target === e.currentTarget) setBuscaAberta(false) }}
           style={{ position:'fixed', inset:0, background:'rgba(26,31,28,0.4)', zIndex:9999, display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'12vh', backdropFilter:'blur(2px)' }}>
@@ -316,7 +392,7 @@ export default function Layout() {
               <input autoFocus value={termoBusca} onChange={e => setTermoBusca(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && resultadosBusca[0]) irPara(resultadosBusca[0].to) }}
                 placeholder="Ir para... (digite o nome da tela)"
-                style={{ flex:1, border:'none', outline:'none', fontSize:14, background:'transparent', color:'#1A1F1C' }} />
+                style={{ flex:1, border:'none !important', outline:'none', fontSize:14, background:'transparent !important', color:'#1A1F1C' }} />
               <span style={{ fontSize:10, color:'#C8C6BC', border:'0.5px solid #E8E6DE', borderRadius:5, padding:'2px 6px' }}>Esc</span>
             </div>
             <div style={{ maxHeight:320, overflowY:'auto', padding:'6px 0' }}>
@@ -338,8 +414,8 @@ export default function Layout() {
 
       {isMobile && menuAberto && (
         <>
-          <div onClick={() => setMenuAberto(false)} className="drawer-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 99 }} />
-          <div className="drawer-mobile" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 240, overflowY: 'auto' }}>
+          <div onClick={() => setMenuAberto(false)} className="drawer-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 99 }} />
+          <div className="drawer-mobile" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 252, overflowY: 'auto' }}>
             {sidebar}
           </div>
         </>
@@ -348,20 +424,16 @@ export default function Layout() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {isMobile && (
-          <div style={{ background: 'rgba(255,255,255,0.92)', borderBottom: '0.5px solid #E8E6DE', padding: '.6rem 1rem', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderBottom: '0.5px solid #E8E6DE', padding: '.6rem 1rem', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, height: TOPBAR_H }}>
             <button onClick={() => setMenuAberto(true)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', color: '#888780', padding: '2px 4px', lineHeight: 1 }}>
               <i className="ti ti-menu-2" style={{ fontSize: 20 }} />
             </button>
             <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none' }} />
-            <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, fontWeight: 500, color: '#fff', background: perfilCor }}>
-              {perfilLabel}
-            </span>
           </div>
         )}
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          <div key={location.pathname} className="page-anim" style={{ maxWidth: 1240, margin: '0 auto', width: '100%' }}>
+          <div key={location.pathname} className="page-anim" style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
             <Outlet />
           </div>
         </div>

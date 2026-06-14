@@ -1,309 +1,351 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
-import { Line } from 'react-chartjs-2'
-import 'chart.js/auto'
 
-const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
-const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', ROXO = '#8B2FC9', LARANJA = '#F4821F'
-const AG_BLUE = '#0E7EA8', AG_RED = '#E63214'
+const AG_BLUE = '#0E7EA8'
+const AG_RED  = '#E63214'
+const TOPBAR_H = 62
 
-const SAUDACAO = () => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Bom dia'
-  if (h < 18) return 'Boa tarde'
-  return 'Boa noite'
+const cardStyle = {
+  background: 'rgba(255,255,255,0.92)',
+  border: '0.5px solid #E8E6DE',
+  borderRadius: 20,
+  boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
 }
 
 export default function PainelAdmin() {
   const navigate = useNavigate()
-  const [resumo, setResumo] = useState({ entradas:0, saidas:0, saldo:0, saldoConta:0, temExtrato:false })
-  const [mes, setMes] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [nome, setNome] = useState('')
-  const carregado = useRef(false)
+  const { perfil } = useAuth()
+  const [dados, setDados] = useState(null)
+  const [mesAtual, setMesAtual] = useState(new Date().toISOString().slice(0,7))
+  const [abaTabela, setAbaTabela] = useState('abertas')
 
-  // Alertas
-  const [cobrancasPendentes, setCobrancasPendentes] = useState(0)
-  const [dividasAbertas, setDividasAbertas] = useState(0)
-  const [totalDividaAberta, setTotalDividaAberta] = useState(0)
-  const [pendenciasAbertas, setPendenciasAbertas] = useState(0)
-  const [mesesSemFechar, setMesesSemFechar] = useState([])
+  useEffect(() => { carregarDados() }, [mesAtual])
 
-  useEffect(() => {
-    if (carregado.current) return
-    carregado.current = true
-    inicializar()
-  }, [])
+  async function carregarDados() {
+    const [ano, mes] = mesAtual.split('-')
+    const ini = `${ano}-${mes}-01`
+    const fim = `${ano}-${mes}-31`
 
-  useEffect(() => { if (mes) carregarResumo() }, [mes])
-
-  // Evolução dos últimos 6 meses
-  const [evolucao, setEvolucao] = useState(null)
-  useEffect(() => {
-    async function carregarEvolucao() {
-      const hoje = new Date()
-      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1).toISOString().slice(0,10)
-      const { data } = await fetchAll(() => supabase.from('extrato_movs').select('data,valor').gte('data', inicio))
-      const porMes = {}
-      ;(data||[]).forEach(m => {
-        const ym = m.data.slice(0,7)
-        if (!porMes[ym]) porMes[ym] = { ent:0, sai:0 }
-        const v = Number(m.valor)
-        v > 0 ? porMes[ym].ent += v : porMes[ym].sai += Math.abs(v)
-      })
-      const meses = []
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
-        meses.push(d.toISOString().slice(0,7))
-      }
-      setEvolucao({
-        labels: meses.map(m => new Date(m+'-15').toLocaleDateString('pt-BR',{month:'short'})),
-        ent: meses.map(m => porMes[m]?.ent || 0),
-        sai: meses.map(m => porMes[m]?.sai || 0),
-      })
-    }
-    carregarEvolucao()
-  }, [])
-
-
-  async function inicializar() {
-    const mesAtual = new Date().toISOString().slice(0,7)
-
-    const [extRes, usuRes, cobRes, dividasRes, pendRes, fechRes] = await Promise.all([
-      supabase.from('extratos').select('competencia').order('competencia', { ascending:false }).limit(1),
-      supabase.from('usuarios').select('nome').limit(1).single(),
+    const [
+      { count: cobPend },
+      { count: pendAbertas },
+      fechamentos,
+      movs,
+      dividas,
+    ] = await Promise.all([
       supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false),
-      supabase.from('dividas').select('valor_original,valor_pago').eq('status','aberta'),
       supabase.from('pendencias').select('id', { count:'exact', head:true }).eq('resolvida', false),
-      supabase.from('fechamentos').select('competencia,status').in('status',['aberto','fechado']).order('competencia', { ascending:false }).limit(3),
+      supabase.from('fechamentos_mensais').select('competencia, tipo_aprovacao').order('competencia', { ascending:false }).limit(6),
+      fetchAll(q => q.from('movimentacoes').select('valor, data').gte('data', ini).lte('data', fim)),
+      supabase.from('dividas').select('id', { count:'exact', head:true }).eq('status', 'aberta'),
     ])
 
-    const mesUso = extRes.data?.[0]?.competencia || mesAtual
-    setMes(mesUso)
-    setNome(usuRes.data?.nome?.split(' ')[0] || 'Admin')
-    setCobrancasPendentes(cobRes.count || 0)
-    const divs = dividasRes.data || []
-    setDividasAbertas(divs.length)
-    setTotalDividaAberta(divs.reduce((a,d) => a + (Number(d.valor_original||0) - Number(d.valor_pago||0)), 0))
-    setPendenciasAbertas(pendRes.count || 0)
-    setMesesSemFechar(fechRes.data || [])
-    setLoading(false)
+    const entradas = movs.filter(m => Number(m.valor) > 0).reduce((a,m) => a + Number(m.valor), 0)
+    const saidas   = Math.abs(movs.filter(m => Number(m.valor) < 0).reduce((a,m) => a + Number(m.valor), 0))
+    const mesesSemFechar = (fechamentos.data || []).filter(f => !f.tipo_aprovacao).length
+
+    // Checklist de fechamento
+    const { count: extratoCount } = await supabase.from('extratos').select('id', { count:'exact', head:true })
+      .gte('data', ini).lte('data', fim)
+    const { count: naoConc } = await supabase.from('movimentacoes').select('id', { count:'exact', head:true })
+      .eq('conciliado', false).gte('data', ini).lte('data', fim)
+    const { count: docPend } = await supabase.from('documentos_fiscais').select('id', { count:'exact', head:true })
+      .eq('status', 'pendente')
+
+    setDados({
+      cobPend: cobPend || 0,
+      pendAbertas: pendAbertas || 0,
+      mesesSemFechar: mesesSemFechar || 0,
+      entradas, saidas,
+      resultado: entradas - saidas,
+      pctComprometido: entradas > 0 ? Math.round(saidas / entradas * 100) : 0,
+      dividasAbertas: dividas.count || 0,
+      extratoOk: (extratoCount || 0) > 0,
+      naoConc: naoConc || 0,
+      docPend: docPend || 0,
+      mesesSemFechCF: mesesSemFechar,
+    })
   }
 
-  async function carregarResumo() {
-    const [{ data: movs }, { data: exts }] = await Promise.all([
-      fetchAll(() => supabase.from('extrato_movs').select('valor').gte('data', mes+'-01').lte('data', fimMes(mes))),
-      supabase.from('extratos').select('saldo_inicial,saldo_final').eq('competencia', mes),
-    ])
-    const lista = movs || []
-    const ent = lista.filter(m => Number(m.valor) > 0).reduce((a,m) => a+Number(m.valor), 0)
-    const sai = Math.abs(lista.filter(m => Number(m.valor) < 0).reduce((a,m) => a+Number(m.valor), 0))
-    // Saldo real em conta: usa saldo_final dos extratos; fallback: saldo_inicial + resultado do mês
-    const extratos = exts || []
-    const temSaldoFinal = extratos.some(e => e.saldo_final !== null && e.saldo_final !== undefined)
-    const saldoConta = temSaldoFinal
-      ? extratos.reduce((a,e) => a + Number(e.saldo_final||0), 0)
-      : extratos.reduce((a,e) => a + Number(e.saldo_inicial||0), 0) + (ent - sai)
-    setResumo({ entradas:ent, saidas:sai, saldo:ent-sai, saldoConta, temExtrato: extratos.length > 0 })
+  const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits:2 })
+  const fmtK = v => {
+    const n = Math.abs(Number(v)||0)
+    return n >= 1000 ? `R$ ${(n/1000).toFixed(1).replace('.',',')}k` : fmt(v)
   }
 
-  const fmt = v => 'R$ '+Math.abs(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})
-  const mesLabel = mes ? new Date(mes+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : ''
-  const dataHoje = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
-  const totalAlertas = (cobrancasPendentes>0?1:0)+(dividasAbertas>0?1:0)+(pendenciasAbertas>0?1:0)+(mesesSemFechar.length>0?1:0)
+  const d = dados
 
-  const cardStyle = {
-    background: 'rgba(255,255,255,0.92)',
-    borderRadius: 16,
-    border: '0.5px solid #E8E6DE',
-    padding: '1.25rem 1.5rem',
-    boxShadow: '0 2px 24px rgba(0,0,0,0.06)',
-    marginBottom: 0,
-  }
+  const prioridades = d ? [
+    { item:'Cobranças pendentes', desc:'pendentes de confirmação no extrato', modulo:'Cobranças', tipo:'Financeiro', status:'Crítico', statusColor:'red', qtd: d.cobPend, rota:'/cobrancas', show: d.cobPend > 0 },
+    { item:'Pendências abertas', desc:'aguardando resolução dos responsáveis', modulo:'Pendências', tipo:'Gestão', status:'Atenção', statusColor:'orange', qtd: d.pendAbertas, rota:'/pendencias', show: d.pendAbertas > 0 },
+    { item:'Fechamento sem aprovação', desc:'meses aguardando Conselho Fiscal', modulo:'Fechamento', tipo:'Relatórios', status:'Pendente', statusColor:'orange', qtd: d.mesesSemFechar, rota:'/fechamento', show: d.mesesSemFechar > 0 },
+    { item:'Dívidas em aberto', desc:'controle de dívidas e parcelamentos', modulo:'Dívidas', tipo:'Financeiro', status:'Atenção', statusColor:'orange', qtd: d.dividasAbertas, rota:'/controle-dividas', show: d.dividasAbertas > 0 },
+  ].filter(p => p.show) : []
 
-  const metricStyle = (bg) => ({
-    background: bg,
-    borderRadius: 12,
-    padding: '12px 16px',
-    border: '0.5px solid rgba(0,0,0,0.05)',
-  })
-
-  if (loading) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'60vh', flexDirection:'column', gap:12 }}>
-      <div style={{ width:28, height:28, border:`2.5px solid ${VERDE}`, borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite' }} />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  )
+  const badgeColor = { red:'#FEF2F2', orange:'#FFF6ED', blue:'#EAF4F8', green:'#EAF3DE', gray:'#F1EFE8' }
+  const badgeText  = { red:'#A32D2D', orange:'#854F0B', blue:'#0E7EA8', green:'#3B6D11', gray:'#888780' }
+  const badgeBorder= { red:'#F1C7C7', orange:'#EED2B3', blue:'#BFE1EE', green:'#C0DD97', gray:'#D3D1C7' }
 
   return (
-    <div style={{ padding:'1.75rem 2rem', maxWidth:900, margin:'0 auto', position:'relative' }}>
-
-      {/* Marca d'água Agendo */}
-      <div style={{ position:'fixed', right:'-6vw', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', zIndex:0, opacity:0.04, filter:'grayscale(100%)' }}>
-        <img src="/agendo-logo.png" alt="" style={{ width:'30vw', maxWidth:360 }} />
+    <div>
+      {/* TOPBAR — alinhada com o topo da sidebar */}
+      <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+        <div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#06344F', letterSpacing: '-.03em', lineHeight: 1 }}>
+            Boa {new Date().getHours() < 12 ? 'manhã' : new Date().getHours() < 18 ? 'tarde' : 'noite'}, {perfil?.nome?.split(' ')[0] || 'Admin'}.
+          </div>
+          <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>
+            {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · painel administrativo
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => {}} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <i className="ti ti-search" /> Busca rápida Ctrl+K
+          </button>
+          <button onClick={() => navigate('/relatorios')} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <i className="ti ti-report-analytics" /> Relatórios
+          </button>
+          <button onClick={() => navigate('/lancamentos')} style={{ padding: '7px 14px', border: 'none', borderRadius: 10, fontSize: 12, color: '#fff', background: '#0E7EA8', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600, boxShadow: '0 4px 12px rgba(14,126,168,.22)' }}>
+            <i className="ti ti-plus" /> Novo lançamento
+          </button>
+        </div>
       </div>
 
-      <div style={{ position:'relative', zIndex:1 }}>
+      <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Saudação */}
-      <div style={{ marginBottom:'1.75rem' }}>
-        <div style={{ fontSize:22, fontWeight:500, color:'#2C2C2A', marginBottom:3 }}>
-          {SAUDACAO()}, {nome}.
+        {/* ALERTAS */}
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            Precisa de atenção
+            <span style={{ fontSize: 10, color: '#C8C6BC', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>prioridades do ambiente CAPETTE</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+            {[
+              { num: d?.cobPend || 0, label: 'Cobranças pendentes', sub: 'confirmação no extrato', color: 'red', rota: '/cobrancas' },
+              { num: d?.pendAbertas || 0, label: 'Pendências abertas', sub: 'aguardando resolução', color: 'orange', rota: '/pendencias' },
+              { num: d?.mesesSemFechar || 0, label: 'Meses sem fechamento', sub: 'Conselho Fiscal', color: 'blue', rota: '/fechamento' },
+            ].map(a => (
+              <div key={a.label} onClick={() => navigate(a.rota)} style={{ background: badgeColor[a.color], border: `1px solid ${badgeBorder[a.color]}`, borderRadius: 18, padding: 15, display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', minHeight: 84, cursor: 'pointer' }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: 28, lineHeight: 1, letterSpacing: '-.04em', fontWeight: 800, marginBottom: 3, color: badgeText[a.color] }}>{a.num}</span>
+                  <strong style={{ display: 'block', fontSize: 12, color: '#2D3335' }}>{a.label}</strong>
+                  <span style={{ display: 'block', color: '#6A716D', fontSize: 10.5, marginTop: 2 }}>{a.sub}</span>
+                </div>
+                <div style={{ width: 26, height: 26, borderRadius: 9, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.6)', color: '#9AA09A', fontSize: 14 }}>
+                  <i className="ti ti-chevron-right" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ fontSize:13, color:'#888780' }}>{dataHoje}</div>
-      </div>
 
-      {/* Alertas */}
-      {totalAlertas > 0 && (
-        <div style={{ ...cardStyle, marginBottom:'1.5rem' }}>
-          <div style={{ fontSize:11, fontWeight:500, color:'#B4B2A9', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:10 }}>Precisa de atenção</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-            {cobrancasPendentes > 0 && (
-              <div onClick={() => navigate('/cobrancas')} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:10, background:'rgba(230,50,20,0.06)', border:'0.5px solid rgba(230,50,20,0.15)', cursor:'pointer' }}>
-                <i className="ti ti-receipt-2" style={{ fontSize:16, color:AG_RED }} />
-                <span style={{ fontSize:13, color:'#2C2C2A', flex:1 }}><strong>{cobrancasPendentes} cobranças</strong> pendentes de confirmação no extrato</span>
-                <i className="ti ti-chevron-right" style={{ fontSize:14, color:AG_RED }} />
-              </div>
-            )}
-            {pendenciasAbertas > 0 && (
-              <div onClick={() => navigate('/pendencias')} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:10, background:'rgba(230,120,20,0.06)', border:'0.5px solid rgba(230,120,20,0.15)', cursor:'pointer' }}>
-                <i className="ti ti-alert-triangle" style={{ fontSize:16, color:'#E67814' }} />
-                <span style={{ fontSize:13, color:'#2C2C2A', flex:1 }}><strong>{pendenciasAbertas} pendências</strong> em aberto aguardando resolução</span>
-                <i className="ti ti-chevron-right" style={{ fontSize:14, color:'#E67814' }} />
-              </div>
-            )}
-            {dividasAbertas > 0 && (
-              <div onClick={() => navigate('/controle-dividas')} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:10, background:'rgba(230,120,20,0.06)', border:'0.5px solid rgba(230,120,20,0.15)', cursor:'pointer' }}>
-                <i className="ti ti-credit-card-off" style={{ fontSize:16, color:'#E67814' }} />
-                <span style={{ fontSize:13, color:'#2C2C2A', flex:1 }}><strong>{dividasAbertas} dívida{dividasAbertas>1?'s':''}</strong> em aberto — {fmt(totalDividaAberta)}</span>
-                <i className="ti ti-chevron-right" style={{ fontSize:14, color:'#E67814' }} />
-              </div>
-            )}
-            {mesesSemFechar.length > 0 && (
-              <div onClick={() => navigate('/fechamento')} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:10, background:'rgba(14,126,168,0.06)', border:'0.5px solid rgba(14,126,168,0.15)', cursor:'pointer' }}>
-                <i className="ti ti-lock-open" style={{ fontSize:16, color:AG_BLUE }} />
-                <span style={{ fontSize:13, color:'#2C2C2A', flex:1 }}><strong>{mesesSemFechar.length} mês{mesesSemFechar.length>1?'es':''}</strong> sem fechamento aprovado pelo Conselho Fiscal</span>
-                <i className="ti ti-chevron-right" style={{ fontSize:14, color:AG_BLUE }} />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Resumo financeiro */}
-      <div style={{ ...cardStyle, marginBottom:'1.5rem' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-          <div style={{ fontSize:11, fontWeight:500, color:'#B4B2A9', textTransform:'uppercase', letterSpacing:'.07em' }}>Financeiro</div>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ fontSize:11, color:'#888780' }}>{mesLabel}</span>
-            <input type="month" value={mes} onChange={e => setMes(e.target.value)}
-              style={{ fontSize:11, padding:'3px 7px', border:'0.5px solid #D3D1C7', borderRadius:7, color:'#5F5E5A', background:'rgba(255,255,255,0.8)' }} />
-          </div>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:resumo.temExtrato?'1fr 1fr 1fr 1fr':'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
-          <div style={metricStyle('#EAF3DE')}>
-            <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Entradas</div>
-            <div style={{ fontSize:17, fontWeight:500, color:'#3B6D11' }}>{fmt(resumo.entradas)}</div>
-          </div>
-          <div style={metricStyle('#FEF2F2')}>
-            <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Saídas</div>
-            <div style={{ fontSize:17, fontWeight:500, color:'#A32D2D' }}>{fmt(resumo.saidas)}</div>
-          </div>
-          <div style={metricStyle(resumo.saldo>=0?'#E6F1FB':'#FEF2F2')}>
-            <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Resultado do mês</div>
-            <div style={{ fontSize:17, fontWeight:500, color:resumo.saldo>=0?AG_BLUE:'#A32D2D' }}>{(resumo.saldo<0?'–':'')+fmt(resumo.saldo)}</div>
-          </div>
-          {resumo.temExtrato && (
-            <div style={metricStyle('#F1EFE8')}>
-              <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>Saldo em conta</div>
-              <div style={{ fontSize:17, fontWeight:500, color:resumo.saldoConta>=0?'#2C2C2A':'#A32D2D' }}>{(resumo.saldoConta<0?'–':'')+fmt(resumo.saldoConta)}</div>
-            </div>
-          )}
-        </div>
-        {resumo.entradas > 0 && (
-          <div style={{ marginBottom:12 }}>
-            <div style={{ height:5, background:'#EAF3DE', borderRadius:99, overflow:'hidden' }}>
-              <div style={{ height:'100%', width:Math.min(Math.round(resumo.saidas/resumo.entradas*100),100)+'%', background:resumo.saidas>resumo.entradas?'#D9534F':'#0E7EA8', opacity:0.85, borderRadius:99, transition:'width .4s' }} />
-            </div>
-            <div style={{ fontSize:10, color:'#B4B2A9', marginTop:3 }}>
-              {Math.round(resumo.saidas/resumo.entradas*100)}% das entradas comprometido em saídas
-            </div>
-          </div>
-        )}
-        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+        {/* KPIs */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
           {[
-            { label:'Importar extrato', rota:'/importar' },
-            { label:'Conciliação', rota:'/conciliacao' },
-            { label:'Lançamentos', rota:'/lancamentos' },
-          ].map(a => (
-            <button key={a.rota} onClick={() => navigate(a.rota)} style={{ fontSize:11, padding:'5px 12px', borderRadius:7, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.8)', color:'#5F5E5A', cursor:'pointer' }}>
-              {a.label}
-            </button>
+            { label: `Entradas · ${new Date(mesAtual+'-01').toLocaleDateString('pt-BR',{month:'long'})}`, val: fmt(d?.entradas||0), sub: 'receitas no mês', cor: '#3B6D11', barra: AG_BLUE },
+            { label: `Saídas · ${new Date(mesAtual+'-01').toLocaleDateString('pt-BR',{month:'long'})}`, val: fmt(d?.saidas||0), sub: 'despesas no mês', cor: '#A32D2D', barra: '#A32D2D' },
+            { label: 'Resultado do mês', val: (d?.resultado >= 0 ? '' : '−') + fmt(d?.resultado||0), sub: `${d?.pctComprometido||0}% comprometido`, cor: (d?.resultado||0) >= 0 ? '#3B6D11' : '#A32D2D', barra: (d?.resultado||0) >= 0 ? AG_BLUE : '#A32D2D' },
+            { label: 'Saldo em conta', val: fmt(d?.saldoBancario||0), sub: 'Conta Principal', cor: '#06344F', barra: AG_BLUE },
+          ].map(k => (
+            <div key={k.label} style={{ ...cardStyle, padding: '14px 16px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: k.barra }} />
+              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '.1em', color: '#6C7A86', marginBottom: 8 }}>{k.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: k.cor, letterSpacing: '-.03em' }}>{k.val}</div>
+              <div style={{ fontSize: 11, color: '#687786', marginTop: 5 }}>{k.sub}</div>
+            </div>
           ))}
         </div>
-      </div>
 
+        {/* GRID 2 COLUNAS */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
 
-      {/* Evolução 6 meses */}
-      {evolucao && (evolucao.ent.some(v=>v>0) || evolucao.sai.some(v=>v>0)) && (
-        <div style={{ ...cardStyle, marginBottom:'1.5rem' }}>
-          <div style={{ fontSize:11, fontWeight:500, color:'#B4B2A9', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:12 }}>Evolução — últimos 6 meses</div>
-          <div style={{ height:180 }}>
-            <Line
-              data={{
-                labels: evolucao.labels,
-                datasets: [
-                  { label:'Entradas', data:evolucao.ent, borderColor:'#6BBF2B', backgroundColor:'rgba(107,191,43,0.08)', fill:true, tension:0.35, pointRadius:3, borderWidth:2 },
-                  { label:'Saídas', data:evolucao.sai, borderColor:'#E8212A', backgroundColor:'rgba(232,33,42,0.05)', fill:true, tension:0.35, pointRadius:3, borderWidth:2 },
-                ],
-              }}
-              options={{
-                responsive:true, maintainAspectRatio:false,
-                plugins:{ legend:{ labels:{ boxWidth:10, font:{ size:11, family:'Inter' }, color:'#888780' } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': R$ '+Number(ctx.raw).toLocaleString('pt-BR',{minimumFractionDigits:2}) } } },
-                scales:{
-                  y:{ ticks:{ font:{ size:10, family:'Inter' }, color:'#B4B2A9', callback: v => 'R$ '+(v>=1000?(v/1000).toFixed(0)+'k':v) }, grid:{ color:'#F1EFE8' }, border:{ display:false } },
-                  x:{ ticks:{ font:{ size:10, family:'Inter' }, color:'#B4B2A9' }, grid:{ display:false }, border:{ display:false } },
-                },
-              }}
-            />
+          {/* COLUNA ESQUERDA */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* AÇÕES RÁPIDAS */}
+            <div style={{ ...cardStyle, padding: 18 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 14, display: 'flex', justifyContent: 'space-between' }}>
+                Ações rápidas
+                <span style={{ fontSize: 10, color: '#C8C6BC', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>organizadas por finalidade</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                {[
+                  { grupo: 'Financeiro principal', itens: [
+                    { icon: 'circle-arrow-down', label: 'Despesa', sub: 'saída e anexos', rota: '/lancamentos' },
+                    { icon: 'circle-arrow-up',   label: 'Entrada', sub: 'receitas e doações', rota: '/lancamentos' },
+                    { icon: 'file-upload',        label: 'Importar', sub: 'extrato bancário', rota: '/importar' },
+                    { icon: 'checks',             label: 'Conciliar', sub: 'movimentos', rota: '/conciliacao' },
+                  ]},
+                  { grupo: 'Acompanhamento', itens: [
+                    { icon: 'receipt-2',      label: 'Cobranças', sub: 'confirmar', rota: '/cobrancas', badge: d?.cobPend },
+                    { icon: 'alert-triangle', label: 'Pendências', sub: 'resolver', rota: '/pendencias', badge: d?.pendAbertas },
+                    { icon: 'report-analytics', label: 'Relatórios', sub: 'central', rota: '/relatorios' },
+                    { icon: 'checkup-list',   label: 'Fechamento', sub: 'conselho', rota: '/fechamento' },
+                  ]},
+                  { grupo: 'Institucional', itens: [
+                    { icon: 'users',           label: 'Atendidos', sub: 'cadastro', rota: '/usuarios-atendidos' },
+                    { icon: 'file-certificate', label: 'Prestação', sub: 'contas', rota: '/prestacao-contas' },
+                    { icon: 'world',           label: 'Transparência', sub: 'pública', rota: '/transparencia' },
+                    { icon: 'settings',        label: 'Configurar', sub: 'sistema', rota: '/configuracoes' },
+                  ]},
+                ].map(g => (
+                  <div key={g.grupo}>
+                    <div style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 8, paddingBottom: 5, borderBottom: '0.5px solid #E8E6DE' }}>{g.grupo}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
+                      {g.itens.map(item => (
+                        <button key={item.rota+item.label} onClick={() => navigate(item.rota)} className="acao-rapida"
+                          style={{ background: 'rgba(255,255,255,0.8)', border: '0.5px solid #E8E6DE', borderRadius: 10, padding: '9px 5px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, position: 'relative', transition: 'border-color .12s, background .12s' }}>
+                          <i className={`ti ti-${item.icon}`} style={{ fontSize: 17, color: AG_BLUE }} />
+                          <span style={{ fontSize: 9.5, color: '#2C2C2A', textAlign: 'center', lineHeight: 1.25, fontWeight: 500 }}>{item.label}</span>
+                          <span style={{ fontSize: 8.5, color: '#B4B2A9', textAlign: 'center', lineHeight: 1.2 }}>{item.sub}</span>
+                          {item.badge > 0 && (
+                            <span style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(230,50,20,.14)', color: '#A32D2D', fontSize: 8, fontWeight: 700, borderRadius: 99, minWidth: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* TABELA PRIORIDADES */}
+            <div style={{ ...cardStyle, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px', borderBottom: '0.5px solid #E8E6DE', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#06344F', letterSpacing: '-.02em' }}>Prioridades administrativas</div>
+                  <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>O Admin enxerga tudo que precisa de ação ou revisão.</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['abertas','financeiro','projetos'].map(aba => (
+                    <button key={aba} onClick={() => setAbaTabela(aba)} style={{ border: `0.5px solid ${abaTabela===aba?'#0E7EA8':'#D3D1C7'}`, background: abaTabela===aba?'#0E7EA8':'#F8F7F2', color: abaTabela===aba?'#fff':'#5F5E5A', fontSize: 10.5, fontWeight: 500, padding: '5px 12px', borderRadius: 99, cursor: 'pointer', textTransform: 'capitalize' }}>
+                      {aba.charAt(0).toUpperCase()+aba.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {['Item','Módulo','Tipo','Status','Qtd.'].map((h,i) => (
+                      <th key={h} style={{ background: 'rgba(0,0,0,.018)', color: '#888780', fontSize: 9.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', padding: '8px 16px', textAlign: i===4?'right':'left', borderBottom: '0.5px solid #E8E6DE' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {prioridades.length === 0 ? (
+                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: '#B4B2A9', fontSize: 12 }}>
+                      <i className="ti ti-check" style={{ fontSize: 24, display: 'block', marginBottom: 8 }} />
+                      Nenhuma pendência no momento
+                    </td></tr>
+                  ) : prioridades.map(pr => (
+                    <tr key={pr.item} onClick={() => navigate(pr.rota)} style={{ borderBottom: '0.5px solid rgba(0,0,0,.04)', cursor: 'pointer' }}>
+                      <td style={{ padding: '10px 16px' }}>
+                        <div style={{ fontWeight: 500, fontSize: 12 }}>{pr.item}</div>
+                        <div style={{ fontSize: 10.5, color: '#888780', marginTop: 2 }}>{pr.desc}</div>
+                      </td>
+                      <td style={{ padding: '10px 16px', fontSize: 11, color: '#888780' }}>{pr.modulo}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 11, color: '#888780' }}>{pr.tipo}</td>
+                      <td style={{ padding: '10px 16px' }}>
+                        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 99, fontSize: 10, fontWeight: 600, background: badgeColor[pr.statusColor], color: badgeText[pr.statusColor] }}>{pr.status}</span>
+                      </td>
+                      <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, fontSize: 13, color: badgeText[pr.statusColor] }}>{pr.qtd}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
           </div>
-        </div>
-      )}
 
-      {/* Ações rápidas */}
-      <div style={cardStyle}>
-        <div style={{ fontSize:11, fontWeight:500, color:'#B4B2A9', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:12 }}>Ações rápidas</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(90px,1fr))', gap:8 }}>
-          {[
-            { icon:'ti-circle-arrow-down', label:'Lançar despesa',   rota:'/despesas',          badge: 0 },
-            { icon:'ti-circle-arrow-up',   label:'Lançar entrada',   rota:'/entradas' },
-            { icon:'ti-file-upload',       label:'Importar',         rota:'/importar' },
-            { icon:'ti-checks',            label:'Conciliar',        rota:'/conciliacao' },
-            { icon:'ti-receipt-2',         label:'Cobranças',        rota:'/cobrancas',         badge: cobrancasPendentes },
-            { icon:'ti-report-analytics',  label:'Relatórios',       rota:'/relatorios' },
-            { icon:'ti-users',             label:'Usuários atend.',  rota:'/usuarios-atendidos' },
-            { icon:'ti-checkup-list',      label:'Fechamento',       rota:'/fechamento' },
-            { icon:'ti-world',             label:'Transparência',    rota:'/transparencia' },
-            { icon:'ti-file-certificate',  label:'Prestação',        rota:'/prestacao-contas' },
-          ].map(item => (
-            <button key={item.rota} onClick={() => navigate(item.rota)}
-              className="acao-rapida"
-              style={{ background:'rgba(255,255,255,0.75)', border:'0.5px solid #E8E6DE', borderRadius:12, padding:'12px 6px 10px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:5, position:'relative', boxShadow:'0 1px 6px rgba(0,0,0,0.04)', transition:'transform .12s ease, box-shadow .15s ease, border-color .15s ease' }}>
-              <i className={`ti ${item.icon}`} style={{ fontSize:20, color:AG_BLUE }} aria-hidden="true" />
-              <span style={{ fontSize:10, color:'#5F5E5A', fontWeight:400, lineHeight:1.3, textAlign:'center' }}>{item.label}</span>
-              {item.badge > 0 && (
-                <span style={{ position:'absolute', top:5, right:5, background:AG_RED, color:'#fff', fontSize:9, fontWeight:700, borderRadius:99, minWidth:15, height:15, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px' }}>
-                  {item.badge > 99 ? '99+' : item.badge}
-                </span>
+          {/* COLUNA DIREITA */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            {/* CHECKLIST */}
+            <div style={{ ...cardStyle, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9' }}>Checklist de fechamento</div>
+                <button onClick={() => navigate('/fechamento')} style={{ fontSize: 10, padding: '4px 10px', border: '0.5px solid #D3D1C7', borderRadius: 6, background: 'transparent', color: '#0E7EA8', cursor: 'pointer' }}>Abrir fechamento</button>
+              </div>
+              {[
+                { ok: d?.extratoOk, label: 'Extrato importado', sub: d?.extratoOk ? 'movimentos processados' : 'nenhum extrato no período' },
+                { ok: d?.naoConc === 0, warn: (d?.naoConc||0) > 0, label: 'Conciliação', sub: d?.naoConc > 0 ? `${d.naoConc} pendências para revisar` : 'conciliado' },
+                { ok: d?.docPend === 0, err: (d?.docPend||0) > 0, label: 'Documentos fiscais', sub: d?.docPend > 0 ? `${d.docPend} anexos pendentes` : 'documentos ok' },
+                { ok: d?.mesesSemFechCF === 0, err: (d?.mesesSemFechCF||0) > 0, label: 'Conselho Fiscal', sub: d?.mesesSemFechCF > 0 ? `${d.mesesSemFechCF} meses sem aprovação` : 'em dia' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '8px 0', borderBottom: '0.5px solid #F1EFE8' }}>
+                  <i className={`ti ti-${item.ok ? 'circle-check' : 'alert-circle'}`} style={{ fontSize: 15, flexShrink: 0, marginTop: 1, color: item.ok ? '#3B6D11' : item.err ? '#A32D2D' : '#854F0B' }} />
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: '#2C2C2A' }}>{item.label}</div>
+                    <div style={{ fontSize: 10, color: '#888780', marginTop: 1 }}>{item.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* FINANCEIRO DO MÊS */}
+            <div style={{ ...cardStyle, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9' }}>Financeiro do mês</div>
+                <input type="month" value={mesAtual} onChange={e => setMesAtual(e.target.value)}
+                  style={{ fontSize: 10, padding: '3px 6px', border: '0.5px solid #D3D1C7', borderRadius: 6, background: 'transparent', color: '#5F5E5A' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: '#888780', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.06em' }}>Entradas</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#3B6D11' }}>{fmtK(d?.entradas||0)}</div>
+                </div>
+                <div style={{ background: '#F8F7F2', borderRadius: 10, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: '#888780', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.06em' }}>Saídas</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#A32D2D' }}>{fmtK(d?.saidas||0)}</div>
+                </div>
+              </div>
+              <div style={{ height: 5, background: '#E8E6DE', borderRadius: 99, overflow: 'hidden', marginBottom: 4 }}>
+                <div style={{ height: '100%', background: (d?.pctComprometido||0) > 100 ? '#A32D2D' : '#0E7EA8', borderRadius: 99, width: `${Math.min(d?.pctComprometido||0, 100)}%`, transition: 'width .4s' }} />
+              </div>
+              <div style={{ fontSize: 10, color: '#888780' }}>{d?.pctComprometido||0}% comprometido das entradas</div>
+              {(d?.pctComprometido||0) > 100 && (
+                <div style={{ marginTop: 8, fontSize: 10, color: '#A32D2D', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <i className="ti ti-alert-circle" style={{ fontSize: 12 }} />
+                  Saídas superam as entradas neste mês
+                </div>
               )}
-            </button>
-          ))}
+            </div>
+
+            {/* ACESSO ADMIN */}
+            <div style={{ ...cardStyle, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 10 }}>Acesso Admin</div>
+              {[
+                { icon: 'pencil', label: 'Editar dados', sub: 'lançamentos, projetos e cadastros', rota: '/lancamentos' },
+                { icon: 'settings', label: 'Configurações', sub: 'instituição, usuários e backup', rota: '/configuracoes' },
+                { icon: 'report-analytics', label: 'Relatórios', sub: 'todos os módulos', rota: '/relatorios' },
+              ].map(item => (
+                <div key={item.label} onClick={() => navigate(item.rota)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', borderBottom: '0.5px solid #F1EFE8', cursor: 'pointer' }}>
+                  <i className={`ti ti-${item.icon}`} style={{ fontSize: 14, color: '#0E7EA8', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: '#2C2C2A' }}>{item.label}</div>
+                    <div style={{ fontSize: 10, color: '#888780', marginTop: 1 }}>{item.sub}</div>
+                  </div>
+                  <div style={{ fontSize: 10, color: '#3B6D11', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+                    <i className="ti ti-check" style={{ fontSize: 11 }} /> Total
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
         </div>
-      </div>
 
       </div>
+
+      <style>{`
+        .acao-rapida:hover { border-color: #0E7EA8 !important; background: rgba(14,126,168,0.05) !important; }
+      `}</style>
     </div>
   )
 }
