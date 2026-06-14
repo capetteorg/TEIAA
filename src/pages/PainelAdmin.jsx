@@ -124,19 +124,18 @@ export default function PainelAdmin() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             {[
-              { num: d?.cobPend || 0, label: 'Cobranças pendentes', sub: 'confirmação no extrato', color: 'red', rota: '/cobrancas' },
-              { num: d?.pendAbertas || 0, label: 'Pendências abertas', sub: 'aguardando resolução', color: 'orange', rota: '/pendencias' },
-              { num: d?.mesesSemFechar || 0, label: 'Meses sem fechamento', sub: 'Conselho Fiscal', color: 'blue', rota: '/fechamento' },
+              { num: d?.cobPend || 0, label: 'Cobranças pendentes', sub: 'confirmação no extrato', ntxt: n => `${n} ${n===1?'item':'itens'} aguardando`, bord: 'rgba(163,45,45,0.35)', ncor: 'rgba(163,45,45,0.65)', rota: '/cobrancas' },
+              { num: d?.pendAbertas || 0, label: 'Pendências abertas', sub: 'aguardando resolução', ntxt: n => `${n} ${n===1?'item':'itens'} em aberto`, bord: 'rgba(133,79,11,0.35)', ncor: 'rgba(133,79,11,0.65)', rota: '/pendencias' },
+              { num: d?.mesesSemFechar || 0, label: 'Meses sem fechamento', sub: 'Conselho Fiscal pendente', ntxt: n => `${n} ${n===1?'mês':'meses'} sem aprovação`, bord: 'rgba(14,126,168,0.35)', ncor: 'rgba(14,126,168,0.65)', rota: '/fechamento' },
             ].map(a => (
-              <div key={a.label} onClick={() => navigate(a.rota)} style={{ background: badgeColor[a.color], border: `1px solid ${badgeBorder[a.color]}`, borderRadius: 18, padding: 15, display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', minHeight: 84, cursor: 'pointer' }}>
-                <div>
-                  <span style={{ display: 'block', fontSize: 28, lineHeight: 1, letterSpacing: '-.04em', fontWeight: 800, marginBottom: 3, color: badgeText[a.color] }}>{a.num}</span>
-                  <strong style={{ display: 'block', fontSize: 12, color: '#2D3335' }}>{a.label}</strong>
-                  <span style={{ display: 'block', color: '#6A716D', fontSize: 10.5, marginTop: 2 }}>{a.sub}</span>
+              <div key={a.label} onClick={() => navigate(a.rota)}
+                style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderLeft: `3px solid ${a.bord}`, borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <strong style={{ fontSize: 12, fontWeight: 500, color: '#2C2C2A' }}>{a.label}</strong>
+                  <i className="ti ti-chevron-right" style={{ fontSize: 13, color: '#D3D1C7' }} />
                 </div>
-                <div style={{ width: 26, height: 26, borderRadius: 9, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.6)', color: '#9AA09A', fontSize: 14 }}>
-                  <i className="ti ti-chevron-right" />
-                </div>
+                <div style={{ fontSize: 10.5, color: '#888780' }}>{a.sub}</div>
+                <div style={{ fontSize: 11, fontWeight: 500, color: a.ncor, marginTop: 8 }}>{a.ntxt(a.num)}</div>
               </div>
             ))}
           </div>
