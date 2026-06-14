@@ -204,7 +204,9 @@ export default function Layout() {
       }}>
         {!(colapsado && !isMobile) && (
           <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-            <div style={{ width:32, height:32, borderRadius:9, background:'#0E7EA8', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontWeight:900, fontSize:14, color:'#fff' }}>A</div>
+            <img src="/agendo-logo.png" alt="AGENDO" style={{ height:32, width:'auto', objectFit:'contain', display:'block' }}
+              onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+            <div style={{ display:'none', width:32, height:32, borderRadius:9, background:'#0E7EA8', alignItems:'center', justifyContent:'center', flexShrink:0, fontWeight:900, fontSize:14, color:'#fff' }}>A</div>
             <div>
               <div style={{ fontSize:13, fontWeight:700, color:'#06344F', lineHeight:1.2 }}>AGENDO Integra</div>
               <div style={{ fontSize:9.5, color:'#7A9AAA', marginTop:1 }}>Gestão integrada para OSCs</div>
@@ -212,7 +214,8 @@ export default function Layout() {
           </div>
         )}
         {colapsado && !isMobile && (
-          <div style={{ width:32, height:32, borderRadius:9, background:'#0E7EA8', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:14, color:'#fff' }}>A</div>
+          <img src="/agendo-logo.png" alt="AGENDO" style={{ height:32, width:32, objectFit:'contain', display:'block' }}
+            onError={e => { e.target.style.display='none' }} />
         )}
         {!isMobile && (
           <button onClick={toggleColapsado} title={colapsado ? 'Expandir menu' : 'Recolher menu'}
