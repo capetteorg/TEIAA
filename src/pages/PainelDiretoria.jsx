@@ -136,18 +136,21 @@ export default function PainelDiretoria() {
     }),
   }
 
+  const hora = new Date().getHours()
+  const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
+
   return (
-    <div style={{ padding: '1.25rem 1.5rem', position: 'relative' }}>
-
-      {/* Marca d'água Agendo */}
-      <div style={{ position:'fixed', right:'-6vw', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', zIndex:0, opacity:0.04, filter:'grayscale(100%)' }}>
-        <img src="/agendo-logo.png" alt="" style={{ width:'30vw', maxWidth:360 }} />
+    <div>
+      {/* Topbar */}
+      <div style={{ height:62, background:'rgba(255,255,255,0.78)', borderBottom:'0.5px solid #E0DDD5', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:5 }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:700, color:'#06344F', letterSpacing:'-.03em' }}>{saudacao}, Diretoria!</div>
+          <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
+            {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · acompanhamento financeiro
+          </div>
+        </div>
       </div>
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
-      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '1.25rem' }}>
-        Acompanhamento Financeiro — Diretoria
-      </div>
+      <div style={{ padding:'20px 24px', position:'relative' }}>
 
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 8, marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -158,7 +161,7 @@ export default function PainelDiretoria() {
         </div>
         {ultimoExtrato && ultimoExtrato !== mes && (
           <button onClick={() => setMes(ultimoExtrato)}
-            style={{ fontSize: 11, padding: '5px 10px', borderRadius: 8, border: '0.5px solid #6BBF2B', background: 'transparent', color: '#0E7EA8', cursor: 'pointer', alignSelf: 'flex-end' }}>
+            style={{ fontSize: 11, padding: '5px 10px', borderRadius: 8, border: '0.5px solid #0E7EA8', background: 'transparent', color: '#0E7EA8', cursor: 'pointer', alignSelf: 'flex-end' }}>
             Último extrato ({ultimoExtrato})
           </button>
         )}

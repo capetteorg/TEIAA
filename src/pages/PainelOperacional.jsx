@@ -51,22 +51,18 @@ export default function PainelOperacional() {
   }
 
   return (
-    <div style={{ padding:'1rem', maxWidth:560, margin:'0 auto', position:'relative' }}>
-
-      {/* Marca d'água Agendo */}
-      <div style={{ position:'fixed', right:'-6vw', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', zIndex:0, opacity:0.04, filter:'grayscale(100%)' }}>
-        <img src="/agendo-logo.png" alt="" style={{ width:'30vw', maxWidth:360 }} />
-      </div>
-
-      <div style={{ position:'relative', zIndex:1 }}>
-
-      {/* Saudação */}
-      <div style={{ marginBottom:'1.25rem' }}>
-        <div style={{ fontSize:16, fontWeight:600 }}>{saudacao} <i className="ti ti-hand-stop" style={{fontSize:14}} /></div>
-        <div style={{ fontSize:12, color:'#888780' }}>
-          {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}
+    <div>
+      {/* Topbar */}
+      <div style={{ height:62, background:'rgba(255,255,255,0.78)', borderBottom:'0.5px solid #E0DDD5', padding:'0 24px', display:'flex', alignItems:'center', position:'sticky', top:0, zIndex:5 }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:700, color:'#06344F', letterSpacing:'-.03em' }}>{saudacao}!</div>
+          <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
+            {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · painel operacional
+          </div>
         </div>
       </div>
+      <div style={{ padding:'20px 24px', maxWidth:760, margin:'0 auto' }}>
+      <div style={{ marginBottom:'1.25rem' }} />
 
       {/* Métricas */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:'1.25rem' }}>

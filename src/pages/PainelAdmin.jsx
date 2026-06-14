@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
-import { fetchAll } from '../lib/db'
 
 const AG_BLUE = '#0E7EA8'
 const AG_RED  = '#E63214'
@@ -27,33 +26,37 @@ export default function PainelAdmin() {
   async function carregarDados() {
     const [ano, mes] = mesAtual.split('-')
     const ini = `${ano}-${mes}-01`
-    const fim = `${ano}-${mes}-31`
+    const fimMes = `${ano}-${mes}-31`
 
     const [
       { count: cobPend },
       { count: pendAbertas },
-      fechamentos,
-      movs,
-      dividas,
+      { data: fechamentos },
+      { data: movs },
+      { count: dividasAbertas },
     ] = await Promise.all([
       supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false),
       supabase.from('pendencias').select('id', { count:'exact', head:true }).eq('resolvida', false),
-      supabase.from('fechamentos_mensais').select('competencia, tipo_aprovacao').order('competencia', { ascending:false }).limit(6),
-      fetchAll(q => q.from('movimentacoes').select('valor, data').gte('data', ini).lte('data', fim)),
+      supabase.from('fechamentos_mensais').select('competencia, tipo_aprovacao').order('competencia', { ascending:false }).limit(12),
+      supabase.from('extrato_movs').select('valor').gte('data', ini).lte('data', fimMes),
       supabase.from('dividas').select('id', { count:'exact', head:true }).eq('status', 'aberta'),
     ])
 
-    const entradas = movs.filter(m => Number(m.valor) > 0).reduce((a,m) => a + Number(m.valor), 0)
-    const saidas   = Math.abs(movs.filter(m => Number(m.valor) < 0).reduce((a,m) => a + Number(m.valor), 0))
-    const mesesSemFechar = (fechamentos.data || []).filter(f => !f.tipo_aprovacao).length
+    const entradas = (movs||[]).filter(m => Number(m.valor) > 0).reduce((a,m) => a + Number(m.valor), 0)
+    const saidas   = Math.abs((movs||[]).filter(m => Number(m.valor) < 0).reduce((a,m) => a + Number(m.valor), 0))
+    const mesesSemFechar = (fechamentos||[]).filter(f => !f.tipo_aprovacao).length
+
+    // Saldo bancário — último saldo_final dos extratos
+    const { data: ultimoExtrato } = await supabase.from('extratos')
+      .select('saldo_final').order('competencia', { ascending: false }).limit(1).maybeSingle()
 
     // Checklist de fechamento
-    const { count: extratoCount } = await supabase.from('extratos').select('id', { count:'exact', head:true })
-      .gte('data', ini).lte('data', fim)
-    const { count: naoConc } = await supabase.from('movimentacoes').select('id', { count:'exact', head:true })
-      .eq('conciliado', false).gte('data', ini).lte('data', fim)
-    const { count: docPend } = await supabase.from('documentos_fiscais').select('id', { count:'exact', head:true })
-      .eq('status', 'pendente')
+    const { count: extratoCount } = await supabase.from('extratos')
+      .select('id', { count:'exact', head:true }).gte('competencia', mesAtual).lte('competencia', mesAtual)
+    const { count: naoConc } = await supabase.from('extrato_movs')
+      .select('id', { count:'exact', head:true }).eq('conciliado', false).gte('data', ini).lte('data', fimMes)
+    const { count: docPend } = await supabase.from('documentos_fiscais')
+      .select('id', { count:'exact', head:true }).eq('status', 'pendente')
 
     setDados({
       cobPend: cobPend || 0,
@@ -62,7 +65,8 @@ export default function PainelAdmin() {
       entradas, saidas,
       resultado: entradas - saidas,
       pctComprometido: entradas > 0 ? Math.round(saidas / entradas * 100) : 0,
-      dividasAbertas: dividas.count || 0,
+      saldoBancario: ultimoExtrato?.saldo_final || 0,
+      dividasAbertas: dividasAbertas || 0,
       extratoOk: (extratoCount || 0) > 0,
       naoConc: naoConc || 0,
       docPend: docPend || 0,
