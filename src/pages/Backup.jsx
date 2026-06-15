@@ -123,7 +123,7 @@ export default function Backup() {
       { tabela: 'plano_trabalho', campos: ['id','conta_id','nome','descricao','valor_previsto'] },
     ]
 
-    const dump = { _meta: { sistema: 'AGENDO Integra — CAPETTE', gerado_em: new Date().toISOString(), versao: 1 } }
+    const dump = { _meta: { sistema: 'AGENDO Integra — TEIAA', gerado_em: new Date().toISOString(), versao: 1 } }
 
     for (const mod of modulos) {
       setProgresso(`Exportando ${mod.tabela}...`)
@@ -145,7 +145,7 @@ export default function Backup() {
     const urlJson = URL.createObjectURL(blob)
     const aJson = document.createElement('a')
     aJson.href = urlJson
-    aJson.download = `backup_capette_${new Date().toISOString().slice(0,10)}.json`
+    aJson.download = `backup_teiaa_${new Date().toISOString().slice(0,10)}.json`
     aJson.click()
     URL.revokeObjectURL(urlJson)
 
@@ -160,7 +160,7 @@ export default function Backup() {
           XLSX.utils.book_append_sheet(wb, ws, tabela.slice(0,31))
         }
       }
-      XLSX.writeFile(wb, `capette_dados_${new Date().toISOString().slice(0,10)}.xlsx`)
+      XLSX.writeFile(wb, `teiaa_dados_${new Date().toISOString().slice(0,10)}.xlsx`)
     } catch(e) {
           }
 
@@ -176,7 +176,7 @@ export default function Backup() {
         .order('data')
       if (movsAno?.length) {
         gerarPDFRelatorio(movsAno, iniAno, fimAno, {
-          titulo: `Relatório Financeiro ${anoAtual} — CAPETTE`,
+          titulo: `Relatório Financeiro ${anoAtual} — TEIAA`,
           subtitulo: `Backup gerado em ${new Date().toLocaleDateString('pt-BR')}`,
         })
       }

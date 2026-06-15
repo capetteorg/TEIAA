@@ -200,7 +200,7 @@ export default function MinhaConta() {
             )}
             <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#B4B2A9' }}>
               {dados?.criado_em && (
-                <span><i className="ti ti-calendar" style={{ marginRight: 4 }} />Na CAPETTE desde {fmtData(dados.criado_em)}</span>
+                <span><i className="ti ti-calendar" style={{ marginRight: 4 }} />Na TEIAA desde {fmtData(dados.criado_em)}</span>
               )}
               {dados?.ultimo_acesso && (
                 <span><i className="ti ti-clock" style={{ marginRight: 4 }} />Último acesso {fmtDataHora(dados.ultimo_acesso)}</span>
@@ -220,7 +220,7 @@ export default function MinhaConta() {
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={label}>Bio curta <span style={{ color: '#B4B2A9' }}>(aparece no sistema)</span></label>
               <input value={bio} onChange={e => setBio(e.target.value)}
-                placeholder="Ex: Assistente social há 8 anos na CAPETTE"
+                placeholder="Ex: Ex: Trabalho na TEIAA desde 2024"
                 maxLength={80} style={input} />
               <div style={{ fontSize: 10, color: '#B4B2A9', marginTop: 3, textAlign: 'right' }}>{bio.length}/80</div>
             </div>

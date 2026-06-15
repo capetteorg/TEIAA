@@ -54,7 +54,7 @@ const TIPOS_DECLARACOES = [
 const TEXTOS_DECLARACOES = {
   'Declaração de Capacidade Técnica': (inst, rep) => `DECLARAÇÃO DE CAPACIDADE TÉCNICA
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, para fins de formalização de parceria com a Administração Pública, que possui plena capacidade técnica, operacional e administrativa para executar o objeto descrito no Plano de Trabalho anexo, em conformidade com os requisitos legais estabelecidos na Lei nº 13.019/2014.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, para fins de formalização de parceria com a Administração Pública, que possui plena capacidade técnica, operacional e administrativa para executar o objeto descrito no Plano de Trabalho anexo, em conformidade com os requisitos legais estabelecidos na Lei nº 13.019/2014.
 
 Teresópolis, ${new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'})}
 
@@ -62,11 +62,11 @@ __________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Inexistência de Impedimentos': (inst, rep) => `DECLARAÇÃO DE INEXISTÊNCIA DE IMPEDIMENTOS
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede na ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, neste ato representada por ${rep?.nome || 'seu representante legal'}, portador do CPF nº ${rep?.cpf || ''}, DECLARA, para os devidos fins, que não possui qualquer impedimento legal, judicial ou administrativo que obstrua a celebração de parcerias com o Poder Público, nos termos do art. 33 da Lei nº 13.019, de 31 de julho de 2014.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede na ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, neste ato representada por ${rep?.nome || 'seu representante legal'}, portador do CPF nº ${rep?.cpf || ''}, DECLARA, para os devidos fins, que não possui qualquer impedimento legal, judicial ou administrativo que obstrua a celebração de parcerias com o Poder Público, nos termos do art. 33 da Lei nº 13.019, de 31 de julho de 2014.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -76,11 +76,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Não Distribuição de Resultados': (inst, rep) => `DECLARAÇÃO DE NÃO DISTRIBUIÇÃO DE RESULTADOS
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que não distribui, sob qualquer forma, eventuais resultados operacionais, dividendos, bonificações, participações ou parcela do patrimônio aos seus membros, dirigentes, conselheiros, colaboradores ou a terceiros, conforme preconizado em seu Estatuto Social, e nos termos do art. 2º, inciso I, da Lei nº 13.019, de 31 de julho de 2014.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que não distribui, sob qualquer forma, eventuais resultados operacionais, dividendos, bonificações, participações ou parcela do patrimônio aos seus membros, dirigentes, conselheiros, colaboradores ou a terceiros, conforme preconizado em seu Estatuto Social, e nos termos do art. 2º, inciso I, da Lei nº 13.019, de 31 de julho de 2014.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -90,11 +90,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Finalidade Não Eleitoral': (inst, rep) => `DECLARAÇÃO DE FINALIDADE NÃO ELEITORAL
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que os recursos públicos eventualmente repassados no âmbito da presente parceria não serão utilizados, direta ou indiretamente, para fins eleitorais, em estrita observância ao disposto na legislação eleitoral vigente e demais normas aplicáveis.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que os recursos públicos eventualmente repassados no âmbito da presente parceria não serão utilizados, direta ou indiretamente, para fins eleitorais, em estrita observância ao disposto na legislação eleitoral vigente e demais normas aplicáveis.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -104,11 +104,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Conformidade com a LGPD': (inst, rep) => `DECLARAÇÃO DE CONFORMIDADE COM A LGPD
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que está em conformidade com os princípios, direitos e obrigações previstos na Lei Federal nº 13.709/2018 – Lei Geral de Proteção de Dados Pessoais (LGPD), comprometendo-se com o tratamento ético, responsável e seguro de todos os dados pessoais eventualmente coletados, utilizados ou armazenados durante a execução da presente parceria com a Administração Pública.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que está em conformidade com os princípios, direitos e obrigações previstos na Lei Federal nº 13.709/2018 – Lei Geral de Proteção de Dados Pessoais (LGPD), comprometendo-se com o tratamento ético, responsável e seguro de todos os dados pessoais eventualmente coletados, utilizados ou armazenados durante a execução da presente parceria com a Administração Pública.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -118,11 +118,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Ausência de Conflito de Interesses': (inst, rep) => `DECLARAÇÃO DE AUSÊNCIA DE CONFLITO DE INTERESSES
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que não há qualquer situação de conflito de interesses entre os membros de sua equipe diretiva, técnica ou administrativa e os servidores ou agentes públicos vinculados ao órgão concedente da presente parceria, em conformidade com o disposto na legislação vigente, especialmente a Lei nº 12.813/2013.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que não há qualquer situação de conflito de interesses entre os membros de sua equipe diretiva, técnica ou administrativa e os servidores ou agentes públicos vinculados ao órgão concedente da presente parceria, em conformidade com o disposto na legislação vigente, especialmente a Lei nº 12.813/2013.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -132,11 +132,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Ciência das Obrigações': (inst, rep) => `DECLARAÇÃO DE CIÊNCIA DAS OBRIGAÇÕES
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que está plenamente ciente das obrigações legais, técnicas e administrativas relativas à execução da parceria firmada com a Administração Pública, bem como da necessidade de prestar contas dos recursos recebidos, conforme a legislação vigente, em especial a Lei nº 13.019/2014 e demais normativos aplicáveis.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que está plenamente ciente das obrigações legais, técnicas e administrativas relativas à execução da parceria firmada com a Administração Pública, bem como da necessidade de prestar contas dos recursos recebidos, conforme a legislação vigente, em especial a Lei nº 13.019/2014 e demais normativos aplicáveis.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -146,11 +146,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Estrutura Operacional': (inst, rep) => `DECLARAÇÃO DE ESTRUTURA OPERACIONAL
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que dispõe de estrutura física, técnica, operacional e de pessoal qualificado, adequada e suficiente para a execução do objeto pactuado, conforme os requisitos estabelecidos na legislação vigente, em especial na Lei nº 13.019/2014 e demais normativos aplicáveis.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que dispõe de estrutura física, técnica, operacional e de pessoal qualificado, adequada e suficiente para a execução do objeto pactuado, conforme os requisitos estabelecidos na legislação vigente, em especial na Lei nº 13.019/2014 e demais normativos aplicáveis.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -160,11 +160,11 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'Declaração de Veracidade': (inst, rep) => `DECLARAÇÃO DE VERACIDADE
 
-A ${inst.nome_completo || 'CAPETTE'}, inscrita no CNPJ sob o nº ${inst.cnpj || '29.213.717/0001-01'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que todas as informações e documentos apresentados para fins de celebração da presente parceria são verdadeiros, completos e condizentes com a realidade institucional, responsabilizando-se integralmente por sua autenticidade e exatidão, nos termos da legislação vigente.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nº ${inst.cnpj || '27.837.768/0001-70'}, com sede à ${inst.endereco || 'Rua Juruena, 73, Agriões, Teresópolis – RJ'}, declara, sob as penas da lei, que todas as informações e documentos apresentados para fins de celebração da presente parceria são verdadeiros, completos e condizentes com a realidade institucional, responsabilizando-se integralmente por sua autenticidade e exatidão, nos termos da legislação vigente.
 
 Por ser expressão da verdade, firma a presente para os devidos fins legais.
 
@@ -174,7 +174,7 @@ ______________________________________________________
 ${rep?.nome || 'Representante Legal'}
 ${rep?.cargo || 'Presidente'}
 CPF: ${rep?.cpf || ''}
-${inst.nome_fantasia || inst.nome_completo || 'CAPETTE'}`,
+${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 }
 
 export default function DocumentosFiscais() {
@@ -329,10 +329,10 @@ export default function DocumentosFiscais() {
       const corpo = linhas.slice(1).join('\n')
       return `<div class="decl-pg">
         <div class="logo-row">
-          <div><div class="logo-name">CAPETTE</div><div class="logo-sub">Desde 1974</div></div>
+          <div><div class="logo-name">TEIAA</div><div class="logo-sub">Teresópolis/RJ</div></div>
           <div class="logo-right">
-            <div style="font-size:10px;font-weight:700;color:#20252C">${instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}</div>
-            <div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${instituicao?.cnpj || '29.213.717/0001-01'}</div>
+            <div style="font-size:10px;font-weight:700;color:#20252C">${instituicao?.nome_completo || 'Associação TEIAA'}</div>
+            <div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${instituicao?.cnpj || '27.837.768/0001-70'}</div>
           </div>
         </div>
         <h2>${titulo}</h2>
@@ -345,7 +345,7 @@ export default function DocumentosFiscais() {
         </div>
         <div class="decl-footer">
           <div>AGENDO Integra · Gestão integrada para OSCs<div class="decl-nota">Documento gerado automaticamente — verificar dados antes de assinar</div></div>
-          <div><strong>CAPETTE</strong> · ${new Date().toLocaleDateString('pt-BR')}</div>
+          <div><strong>TEIAA</strong> · ${new Date().toLocaleDateString('pt-BR')}</div>
         </div>
       </div>`
     }).join('')}

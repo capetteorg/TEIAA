@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
 const TIPOS_VINCULO = [
-  'CLT / Funcionário próprio da CAPETTE',
+  'CLT / Funcionário próprio da TEIAA',
   'Servidor público / cedido por órgão público',
   'POT / Programa da Prefeitura',
   'Voluntário',
@@ -19,7 +19,7 @@ const TIPOS_VINCULO = [
 ]
 
 const ORGAOS_ORIGEM = [
-  'CAPETTE',
+  'TEIAA',
   'SME — Secretaria Municipal de Educação',
   'SMASDH — Secretaria Municipal de Assistência Social e Direitos Humanos',
   'CAMP',
@@ -32,7 +32,7 @@ const ORGAOS_ORIGEM = [
 ]
 
 const INSTRUMENTOS_FIXOS = [
-  'Contrato direto com a CAPETTE',
+  'Contrato direto com a TEIAA',
   'Termo de compromisso com a SME',
   'Parceria com a SMASDH',
   'Termo de compromisso com o CAMP',
@@ -63,7 +63,7 @@ const PROJETOS_FIXOS = [
   'Projeto Reparação',
   'Projeto Mãos que Acolhem',
   'Atividades com Famílias e Comunidade',
-  'Administração Geral da CAPETTE',
+  'Administração Geral da TEIAA',
   'Eventos institucionais',
   'Ações comunitárias',
   'Manutenção / Apoio geral',
@@ -98,8 +98,8 @@ const SITUACAO_COR = {
 const FORM_VAZIO = {
   nome:'', cpf:'', data_nascimento:'', funcao:'Assistente Social',
   tem_registro_prof: false, conselho_prof:'CRESS', num_registro:'', uf_registro:'',
-  tipo_vinculo:'CLT / Funcionário próprio da CAPETTE', orgao_origem:'CAPETTE',
-  instrumento_vinc:'Contrato direto com a CAPETTE', parceria_id:'',
+  tipo_vinculo:'CLT / Funcionário próprio da TEIAA', orgao_origem:'TEIAA',
+  instrumento_vinc:'Contrato direto com a TEIAA', parceria_id:'',
   projetos:[], data_entrada:'', data_saida:'', situacao:'ativo',
   carga_horaria:'8h', obs_carga_horaria:'', dias_atuacao:'Segunda a sexta',
   observacoes:'',
@@ -189,7 +189,7 @@ export default function Equipe() {
       funcao:p.funcao, tem_registro_prof:p.tem_registro_prof||false,
       conselho_prof:p.conselho_prof||'CRESS', num_registro:p.num_registro||'',
       uf_registro:p.uf_registro||'', tipo_vinculo:p.tipo_vinculo,
-      orgao_origem:p.orgao_origem||'CAPETTE', instrumento_vinc:p.instrumento_vinc||'',
+      orgao_origem:p.orgao_origem||'TEIAA', instrumento_vinc:p.instrumento_vinc||'',
       parceria_id:p.parceria_id||'', projetos:p.projetos||[],
       data_entrada:p.data_entrada||'', data_saida:p.data_saida||'',
       situacao:p.situacao||'ativo', carga_horaria:p.carga_horaria||'8h',
@@ -378,7 +378,7 @@ export default function Equipe() {
             </div>
             <div style={s.grupo('1fr 1fr')}>
               <div>
-                <label style={s.label}>Função exercida na CAPETTE *</label>
+                <label style={s.label}>Função exercida na TEIAA *</label>
                 <select value={form.funcao} onChange={e=>setForm(f=>({...f,funcao:e.target.value}))} style={s.input} required>
                   {FUNCOES.map(f => <option key={f} value={f}>{f}</option>)}
                 </select>

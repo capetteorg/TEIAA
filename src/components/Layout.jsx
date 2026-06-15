@@ -224,7 +224,7 @@ export default function Layout() {
         )}
       </div>
 
-      {/* Card OSC — logo CAPETTE */}
+      {/* Card OSC — logo TEIAA */}
       {!(colapsado && !isMobile) && (
         <div style={{ margin:'10px 12px', background:'rgba(255,255,255,0.8)', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'10px 12px' }}>
           <div style={{ display:'flex', gap:1.5, alignItems:'center', marginBottom:5 }}>

@@ -273,7 +273,7 @@ export default function Usuarios() {
               </div>
               <div>
                 <label style={s.label}>E-mail</label>
-                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="usuario@capette.org" required style={s.input} />
+                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="seuemail@exemplo.com" required style={s.input} />
               </div>
               <div>
                 <label style={s.label}>Senha inicial</label>

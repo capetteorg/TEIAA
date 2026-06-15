@@ -145,7 +145,7 @@ export default function Sociedade() {
             <div>
               <div style={{ fontSize:13, fontWeight:500, color:'#2C2C2A' }}>Portal de Transparência</div>
               <div style={{ fontSize:11, color:'#888780' }}>
-                {instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'} · CNPJ {instituicao?.cnpj || '29.213.717/0001-01'}
+                {instituicao?.nome_completo || 'Associação TEIAA'} · CNPJ {instituicao?.cnpj || '27.837.768/0001-70'}
               </div>
             </div>
           </div>
@@ -173,10 +173,10 @@ export default function Sociedade() {
                 <div style={{ flex:1, minWidth:200 }}>
                   <div style={{ fontSize:11, color:VERDE, fontWeight:600, marginBottom:6, textTransform:'uppercase', letterSpacing:1 }}>Organização da Sociedade Civil</div>
                   <div style={{ fontSize:20, fontWeight:700, color:'#2C2C2A', marginBottom:8 }}>
-                    {instituicao?.nome_fantasia || 'CAPETTE'}
+                    {instituicao?.nome_fantasia || 'TEIAA'}
                   </div>
                   <div style={{ fontSize:13, color:'#5F5E5A', lineHeight:1.7, marginBottom:12 }}>
-                    {instituicao?.missao || 'A CAPETTE — Casa do Pequeno Trabalhador de Teresópolis atua há mais de 50 anos na promoção e defesa dos direitos de crianças, adolescentes e famílias em situação de vulnerabilidade social no município de Teresópolis, RJ.'}
+                    {instituicao?.missao || 'A TEIAA — Associação de apoio a pessoas com TEA e suas famílias em Teresópolis/RJ.'}
                   </div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                     {[
@@ -268,7 +268,7 @@ export default function Sociedade() {
           <>
             <div style={{ fontSize:15, fontWeight:600, marginBottom:4 }}>Projetos e Serviços</div>
             <div style={{ fontSize:12, color:'#888780', marginBottom:'1.25rem' }}>
-              Projetos, serviços e ações executados pela CAPETTE em prol da comunidade de Teresópolis.
+              Projetos, serviços e ações executados pela TEIAA em prol das pessoas com TEA e suas famílias.
             </div>
 
             {/* Total de usuários */}
@@ -276,7 +276,7 @@ export default function Sociedade() {
               <div style={{ fontSize:40, fontWeight:700, color:VERDE }}>{totalUsuarios}</div>
               <div>
                 <div style={{ fontSize:14, fontWeight:600, color:'#2C2C2A' }}>Usuários ativos atendidos</div>
-                <div style={{ fontSize:12, color:'#5F5E5A' }}>Pessoas beneficiadas diretamente pelos projetos da CAPETTE</div>
+                <div style={{ fontSize:12, color:'#5F5E5A' }}>Pessoas beneficiadas diretamente pelos projetos da TEIAA</div>
               </div>
             </div>
 
@@ -615,8 +615,8 @@ export default function Sociedade() {
             </div>
           </div>
           <div style={{ fontSize:11, color:'#B4B2A9', textAlign:'center' }}>
-            {instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}<br />
-            CNPJ {instituicao?.cnpj || '29.213.717/0001-01'} · Teresópolis — RJ
+            {instituicao?.nome_completo || 'Associação TEIAA'}<br />
+            CNPJ {instituicao?.cnpj || '27.837.768/0001-70'} · Teresópolis — RJ
           </div>
           <div style={{ fontSize:10, color:'#C8C6BC' }}>
             Desenvolvido por Agendo · CNPJ 56.059.476/0001-52

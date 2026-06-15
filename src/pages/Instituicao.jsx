@@ -325,11 +325,11 @@ export default function Instituicao() {
               </div>
               <div>
                 <label style={s.label}>E-mail</label>
-                <input value={formInst.email} onChange={e=>setFormInst(f=>({...f,email:e.target.value}))} placeholder="contato@capette.org" style={s.input} />
+                <input value={formInst.email} onChange={e=>setFormInst(f=>({...f,email:e.target.value}))} placeholder="contato@teiaa.org.br" style={s.input} />
               </div>
               <div>
                 <label style={s.label}>Site</label>
-                <input value={formInst.site} onChange={e=>setFormInst(f=>({...f,site:e.target.value}))} placeholder="www.capette.org.br" style={s.input} />
+                <input value={formInst.site} onChange={e=>setFormInst(f=>({...f,site:e.target.value}))} placeholder="www.associacaoteiaa.org.br" style={s.input} />
               </div>
             </div>
             <div style={{ marginBottom: 10 }}>

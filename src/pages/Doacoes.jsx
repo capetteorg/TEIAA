@@ -17,7 +17,7 @@ const CATEGORIAS = [
 const UNIDADES = ['Unidade', 'Kg', 'Litro', 'Pacote', 'Caixa', 'Cesta', 'Lote', 'Lata', 'Garrafa', 'Fardo', 'Serviço', 'Outro']
 
 const DESTINOS = [
-  'Uso geral da CAPETTE', 'Cozinha / alimentação', 'Primeira Infância',
+  'Uso geral da TEIAA', 'Cozinha / alimentação', 'Primeira Infância',
   'Evento institucional', 'Campanha específica', 'Manutenção / Apoio geral',
   'Projeto específico', 'Outro',
 ]
@@ -32,7 +32,7 @@ const FORM_VAZIO = {
   data_doacao: new Date().toISOString().slice(0,10),
   doador: '', tipo_doador: 'Parceiro institucional', num_nota: '',
   categoria: 'Alimentação', valor_estimado: '', projeto_id: '',
-  campanha_evento: '', destino: 'Uso geral da CAPETTE', observacoes: '',
+  campanha_evento: '', destino: 'Uso geral da TEIAA', observacoes: '',
 }
 
 const ITEM_VAZIO = { item: '', quantidade: '', unidade: 'Unidade', valor_estimado: '', observacao: '' }
@@ -138,7 +138,7 @@ export default function Doacoes() {
       data_doacao: d.data_doacao, doador: d.doador, tipo_doador: d.tipo_doador||'Parceiro institucional',
       num_nota: d.num_nota||'', categoria: d.categoria||'Alimentação',
       valor_estimado: d.valor_estimado||'', projeto_id: d.projeto_id||'',
-      campanha_evento: d.campanha_evento||'', destino: d.destino||'Uso geral da CAPETTE',
+      campanha_evento: d.campanha_evento||'', destino: d.destino||'Uso geral da TEIAA',
       observacoes: d.observacoes||'',
     })
     supabase.from('doacoes_itens').select('*').eq('doacao_id', d.id).order('id').then(({ data }) => {

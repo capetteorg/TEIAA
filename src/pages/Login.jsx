@@ -88,7 +88,7 @@ export default function Login() {
             flexDirection: 'column',
             backdropFilter: 'blur(8px)',
           }}>
-            {/* Logo CAPETTE */}
+            {/* Logo TEIAA */}
             <div style={{ textAlign: 'center', marginBottom: '.85rem' }}>
               <img src="/logo.png" alt="TEIAA"
                 style={{ height: 120, width: 'auto', maxWidth: 280, objectFit: 'contain', display: 'block', margin: '0 auto 14px' }}

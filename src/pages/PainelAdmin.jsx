@@ -229,7 +229,7 @@ export default function PainelAdmin() {
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             Precisa de atenção
-            <span style={{ fontSize: 10, color: '#C8C6BC', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>prioridades do ambiente CAPETTE</span>
+            <span style={{ fontSize: 10, color: '#C8C6BC', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>prioridades do ambiente TEIAA</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             {[

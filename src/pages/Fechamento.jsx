@@ -417,7 +417,7 @@ export default function Fechamento() {
                             <div>
                               <label style={s.label}>Local / Plataforma</label>
                               <input value={formAprov.reuniao_local||''} onChange={e=>setFormAprov(f=>({...f,reuniao_local:e.target.value}))} style={s.input}
-                                placeholder={formAprov.modalidade==='online'?'Ex: Google Meet':'Ex: Sede da CAPETTE'} />
+                                placeholder={formAprov.modalidade==='online'?'Ex: Google Meet':'Ex: Sede da TEIAA'} />
                             </div>
                           </div>
                           <div style={{ marginBottom:10 }}>

@@ -184,7 +184,7 @@ export default function Parcerias() {
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
-<div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Instrumentos jurídicos da CAPETTE</div>
+<div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Instrumentos jurídicos da TEIAA</div>
         </div>
         <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
           style={s.btn(mostrarForm ? '#F1EFE8' : '#0E7EA8', mostrarForm ? '#5F5E5A' : '#fff')}>
