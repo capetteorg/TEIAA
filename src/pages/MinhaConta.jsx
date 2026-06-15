@@ -32,6 +32,7 @@ export default function MinhaConta() {
   const [senhaAtual, setSenhaAtual] = useState('')
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
+  const [fotoPosition, setFotoPosition] = useState('50%')
 
   const inputFotoRef = useRef()
 

@@ -101,12 +101,24 @@ export default function PainelAdmin() {
     <div>
       {/* TOPBAR — alinhada com o topo da sidebar */}
       <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#06344F', letterSpacing: '-.03em', lineHeight: 1 }}>
-            Boa {new Date().getHours() < 12 ? 'manhã' : new Date().getHours() < 18 ? 'tarde' : 'noite'}, {perfil?.nome?.split(' ')[0] || 'Admin'}.
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Avatar */}
+          <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8E6DE', flexShrink: 0 }}>
+            {perfil?.avatar_url ? (
+              <img src={perfil.avatar_url} alt={perfil.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${perfil.foto_position || '50%'}` }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: perfil?.cor_avatar || '#0E7EA8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                {(perfil?.nome || 'A').slice(0,2).toUpperCase()}
+              </div>
+            )}
           </div>
-          <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>
-            {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · painel administrativo
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#06344F', letterSpacing: '-.03em', lineHeight: 1 }}>
+              Boa {new Date().getHours() < 12 ? 'manhã' : new Date().getHours() < 18 ? 'tarde' : 'noite'}, {perfil?.nome?.split(' ')[0] || 'Admin'}.
+            </div>
+            <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>
+              {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · painel administrativo
+            </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
