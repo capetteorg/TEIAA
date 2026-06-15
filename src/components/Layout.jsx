@@ -44,8 +44,15 @@ const TITULOS_PAGINAS = {
 // Páginas que têm topbar própria — não mostrar a do Layout
 const PAGINAS_COM_TOPBAR_PROPRIA = new Set([
   '/painel-admin', '/painel-operacional', '/painel-diretoria',
-  '/conciliacao', '/lancamentos', '/cobrancas', '/pendencias',
-  '/fechamento', '/importar',
+  '/cobrancas', '/pendencias', '/fechamento', '/importar',
+  '/aplicacoes', '/backup', '/categorias', '/classificacoes',
+  '/conciliacao-inteligente', '/configuracoes', '/contas',
+  '/controle-dividas', '/doacoes', '/documentos', '/documentos-fiscais',
+  '/equipe', '/eventos-campanhas', '/historico-fornecedor',
+  '/fornecedores', '/instituicao', '/lancamentos',
+  '/parcerias', '/patrimonio', '/plano-trabalho', '/planos-execucao',
+  '/projetos', '/relatorio-execucao', '/relatorios', '/relatorios-central',
+  '/usuarios', '/usuarios-atendidos',
 ])
 
 const AG_BLUE  = '#0E7EA8'
