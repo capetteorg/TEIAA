@@ -23,6 +23,7 @@ export default function Importar() {
   const [historicoCob, setHistoricoCob] = useState([])
   const [loadingHistorico, setLoadingHistorico] = useState(false)
   const [abaHist, setAbaHist] = useState('extrato')
+  const [novasMovs, setNovasMovs] = useState(null)
   const [cancelando, setCancelando] = useState(null)
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(null)
 
@@ -108,19 +109,85 @@ export default function Importar() {
     const data_inicio = datas[0] || null
     const data_fim = datas[datas.length - 1] || null
 
-    // Verificar duplicata
+    // =============================================
+    // IMPORTAÇÃO INCREMENTAL
+    // Se extrato do mês já existe: adiciona só as movimentações novas
+    // preservando categorizações, fornecedores e conciliações já feitas.
+    // =============================================
     if (data_inicio && data_fim) {
       const { data: existente } = await supabase.from('extratos')
-        .select('id,competencia,arquivo_nome')
+        .select('id, arquivo_nome, total_movs')
         .eq('conta_id', parseInt(contaSel))
         .eq('competencia', competencia)
         .limit(1)
+
       if (existente?.length > 0) {
-        const ok = await confirmar(
-          `Já existe um extrato importado para esta conta no período ${competencia}.\n\nArquivo anterior: ${existente[0].arquivo_nome}\n\nDeseja importar mesmo assim?`,
-          { titulo:'Extrato já importado', confirmarLabel:'Importar mesmo assim' }
+        const extId = existente[0].id
+
+        // Buscar movimentações já importadas
+        const { data: movsExistentes } = await supabase.from('extrato_movs')
+          .select('data, valor, descricao')
+          .eq('extrato_id', extId)
+
+        // Chave: data + valor + primeiros 40 chars da descrição
+        const chaveExistente = new Set(
+          (movsExistentes || []).map(m =>
+            `${m.data}|${Number(m.valor).toFixed(2)}|${(m.descricao||'').slice(0,40)}`
+          )
         )
-        if (!ok) { setSalvando(false); return }
+
+        // Filtrar só as novas
+        const movsNovas = movs.filter(m => {
+          const v = m.tipo === 'entrada' ? m.valorAbs : -m.valorAbs
+          const chave = `${m.dataISO}|${Number(v).toFixed(2)}|${(m.desc||'').slice(0,40)}`
+          return !chaveExistente.has(chave)
+        })
+
+        if (movsNovas.length === 0) {
+          setMsg(`✓ Nenhuma movimentação nova — extrato já está atualizado.`)
+          setSalvando(false)
+          setStep(3)
+          setNovasMovs(0)
+          return
+        }
+
+        // Inserir só as novas (com classificação automática se houver regra)
+        const itensNovos = movsNovas.map(m => {
+          const direcao = m.tipo === 'entrada' ? 'entrada' : 'saida'
+          const regra = mapaRegras[`${m.doc}_${direcao}`]
+          return {
+            extrato_id: extId,
+            data: m.dataISO,
+            descricao: m.desc,
+            doc: m.doc,
+            valor: m.tipo === 'entrada' ? m.valorAbs : -m.valorAbs,
+            saldo: m.saldo ?? null,
+            tipo: m.tipo,
+            classif_auto: regra?.classificacao || m.classif || null,
+            categoria_id: regra?.categoria_id || null,
+            subcategoria_id: regra?.subcategoria_id || null,
+            conciliado: false,
+          }
+        })
+
+        const { error: errNovos } = await supabase.from('extrato_movs').insert(itensNovos)
+        if (errNovos) { setMsg('Erro: ' + errNovos.message); setSalvando(false); return }
+
+        // Atualizar saldo_final e contagem do extrato existente
+        const novoTotal = (movsExistentes?.length || 0) + itensNovos.length
+        const ordenadas = [...movs].sort((a,b) => a.dataISO.localeCompare(b.dataISO))
+        const ultimoSaldo = ordenadas.length ? Number(ordenadas[ordenadas.length-1].saldo||0) : 0
+        await supabase.from('extratos').update({
+          saldo_final: Math.round(ultimoSaldo*100)/100,
+          total_movs: novoTotal,
+          arquivo_nome: extrato.arquivo,
+          importado_em: new Date().toISOString(),
+        }).eq('id', extId)
+
+        setNovasMovs(movsNovas.length)
+        setSalvando(false)
+        setStep(3)
+        return
       }
     }
 
@@ -185,6 +252,7 @@ export default function Importar() {
 
     const { error: err2 } = await supabase.from('extrato_movs').insert(itens)
     if (err2) { setMsg('Erro: ' + err2.message); setSalvando(false); return }
+    setNovasMovs(movs.length)
 
     setSalvando(false)
     setStep(3)
