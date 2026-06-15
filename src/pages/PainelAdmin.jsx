@@ -41,7 +41,7 @@ export default function PainelAdmin() {
     ] = await Promise.all([
       supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false),
       supabase.from('pendencias').select('id', { count:'exact', head:true }).eq('resolvida', false),
-      supabase.from('fechamentos_mensais').select('competencia, tipo_aprovacao').order('competencia', { ascending:false }).limit(12),
+      supabase.from('fechamentos').select('competencia, tipo_aprovacao').order('competencia', { ascending:false }).limit(12),
       supabase.from('extrato_movs').select('valor').gte('data', ini).lte('data', fimMes),
       supabase.from('dividas').select('id', { count:'exact', head:true }).eq('status', 'aberta'),
     ])
@@ -60,7 +60,7 @@ export default function PainelAdmin() {
     const { count: naoConc } = await supabase.from('extrato_movs')
       .select('id', { count:'exact', head:true }).eq('conciliado', false).gte('data', ini).lte('data', fimMes)
     const { count: docPend } = await supabase.from('documentos_fiscais')
-      .select('id', { count:'exact', head:true }).eq('status', 'pendente')
+      .select('id', { count:'exact', head:true })
 
     setDados({
       cobPend: cobPend || 0,

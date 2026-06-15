@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import * as XLSX from 'xlsx'
 import { gerarPDFCobrancas } from '../lib/pdf'
+import { fetchAll } from '../lib/db'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
 
@@ -246,7 +247,6 @@ export default function Cobrancas() {
       <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#06344F' }}>Cobranças / Boletos Vencidos</div>
           {ultimoLote && (
             <div style={{ fontSize: 11, color: '#888780', marginTop: 2 }}>
               Última atualização: {new Date(ultimoLote.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
