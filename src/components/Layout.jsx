@@ -60,6 +60,7 @@ export default function Layout() {
     catch { return new Set(['Institucional','Configura\u00e7\u00f5es']) }
   })
   const [buscaAberta, setBuscaAberta] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(null)
   const [termoBusca, setTermoBusca] = useState('')
   const [badgeCobrancas, setBadgeCobrancas] = useState(0)
   const [badgeDividas, setBadgeDividas] = useState(0)
@@ -88,6 +89,11 @@ export default function Layout() {
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   useEffect(() => {
+    if (perfil?.id) {
+      supabase.from('usuarios').select('avatar_url')
+        .eq('id', perfil.id).single()
+        .then(({ data }) => { if (data?.avatar_url) setAvatarUrl(data.avatar_url) })
+    }
     if (p === 'admin' || p === 'operacional') {
       supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false)
         .then(({ count }) => setBadgeCobrancas(count || 0))
