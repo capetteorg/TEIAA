@@ -42,9 +42,10 @@ export default function Usuarios() {
         .from('usuarios-fotos')
         .getPublicUrl(path)
 
-      // Adicionar cache-bust para forçar reload da imagem
-      const url = urlData.publicUrl + '?t=' + Date.now()
-      await supabase.from('usuarios').update({ avatar_url: url }).eq('id', userId)
+      // Salvar URL limpa no banco (sem timestamp)
+      const url = urlData.publicUrl
+      const { error: updErr } = await supabase.from('usuarios').update({ avatar_url: url }).eq('id', userId)
+      if (updErr) throw updErr
       carregarUsuarios()
     } catch (e) {
       setMsg('Erro ao fazer upload: ' + e.message)
@@ -189,8 +190,10 @@ export default function Usuarios() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '0.5px solid #F1EFE8' }}>
                   <label title="Clique para trocar a foto" style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, cursor: 'pointer', position: 'relative', display: 'block' }}>
                     {u.avatar_url ? (
-                      <img src={u.avatar_url} alt={u.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    ) : (
+                      <img src={u.avatar_url + '?t=' + Date.now()} alt={u.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+                    ) : null}
+                    {(!u.avatar_url) && (
                       <div style={{ width: 34, height: 34, borderRadius: '50%', background: PERFIS[u.perfil]?.bg || '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: PERFIS[u.perfil]?.cor || '#5F5E5A' }}>
                         {uploadingFoto === u.id ? '...' : (u.nome || '?').slice(0,2).toUpperCase()}
                       </div>
