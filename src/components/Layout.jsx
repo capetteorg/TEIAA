@@ -60,7 +60,11 @@ export default function Layout() {
     catch { return new Set(['Institucional','Configurações']) }
   })
   const [buscaAberta, setBuscaAberta] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState(null)
+  const [feedbackAberto, setFeedbackAberto] = useState(false)
+  const [feedbackTipo, setFeedbackTipo] = useState('sugestao')
+  const [feedbackMsg, setFeedbackMsg] = useState('')
+  const [feedbackEnviando, setFeedbackEnviando] = useState(false)
+  const [feedbackOk, setFeedbackOk] = useState('')
   const [termoBusca, setTermoBusca] = useState('')
   const [badgeCobrancas, setBadgeCobrancas] = useState(0)
   const [badgeDividas, setBadgeDividas] = useState(0)
@@ -89,11 +93,6 @@ export default function Layout() {
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   useEffect(() => {
-    if (perfil?.id) {
-      supabase.from('usuarios').select('avatar_url')
-        .eq('id', perfil.id).single()
-        .then(({ data }) => { if (data?.avatar_url) setAvatarUrl(data.avatar_url) })
-    }
     if (p === 'admin' || p === 'operacional') {
       supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false)
         .then(({ count }) => setBadgeCobrancas(count || 0))
@@ -111,6 +110,25 @@ export default function Layout() {
   async function handleLogout() {
     await logout()
     navigate('/login')
+  }
+
+  async function enviarFeedback() {
+    if (!feedbackMsg.trim()) return
+    setFeedbackEnviando(true)
+    const { error } = await supabase.from('mensagens_desenvolvedor').insert({
+      usuario_id: user?.id,
+      usuario_nome: perfil?.nome || 'Desconhecido',
+      tipo: feedbackTipo,
+      mensagem: feedbackMsg.trim(),
+    })
+    if (error) {
+      setFeedbackOk('erro')
+    } else {
+      setFeedbackOk('ok')
+      setFeedbackMsg('')
+      setTimeout(() => { setFeedbackAberto(false); setFeedbackOk('') }, 2000)
+    }
+    setFeedbackEnviando(false)
   }
 
   const fecharMenu = () => isMobile && setMenuAberto(false)
@@ -165,6 +183,7 @@ export default function Layout() {
     { to:'/usuarios', label:'Usuários do sistema', icon:'user-cog', ok:p==='admin' },
     { to:'/backup', label:'Backup', icon:'database-export', ok:p==='admin' },
     { to:'/configuracoes', label:'Zona de perigo', icon:'alert-octagon', ok:p==='admin' },
+    { to:'/mensagens-dev', label:'Mensagens dos usuários', icon:'message-circle', ok:p==='admin' },
   ].filter(i => i.ok)
 
   const resultadosBusca = termoBusca
@@ -298,6 +317,7 @@ export default function Layout() {
         <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/configuracoes"      icon="alert-octagon"     label="Zona de perigo"      visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/mensagens-dev"    icon="message-circle"    label="Mensagens"           visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
       </div>
@@ -306,8 +326,8 @@ export default function Layout() {
       <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1.1rem', borderTop: '0.5px solid #E0DDD5', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
         <div onClick={() => navigate('/minha-conta')} title="Minha conta"
           style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(14,126,168,0.2)', flexShrink: 0, cursor: 'pointer' }}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={perfil?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {perfil?.avatar_url ? (
+            <img src={perfil.avatar_url} alt={perfil?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div style={{ width: 28, height: 28, background: 'rgba(14,126,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: '#0E7EA8' }}>
@@ -413,16 +433,84 @@ export default function Layout() {
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra · CAPETTE · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
           <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-            <a href="mailto:rangelpinheiro@gmail.com?subject=CAPETTE Integra - Feedback" 
-              style={{ fontSize:10, color:'#B4B2A9', textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}
+            <button onClick={() => setFeedbackAberto(true)}
+              style={{ fontSize:10, color:'#B4B2A9', background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:3 }}
               title="Fale com o desenvolvedor">
               <i className="ti ti-message-circle" style={{ fontSize:11 }} /> Fale com o dev
-            </a>
+            </button>
             <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
           </div>
         </div>
 
       </div>
+
+      {/* Modal Fale com o Desenvolvedor */}
+      {feedbackAberto && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={e => { if (e.target === e.currentTarget) setFeedbackAberto(false) }}>
+          <div style={{ background:'#fff', borderRadius:16, padding:28, width:420, maxWidth:'90vw', boxShadow:'0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+              <div>
+                <div style={{ fontSize:16, fontWeight:700, color:'#06344F' }}>Fale com o desenvolvedor</div>
+                <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Sua mensagem vai direto para o Rangel</div>
+              </div>
+              <button onClick={() => setFeedbackAberto(false)}
+                style={{ background:'none', border:'none', fontSize:22, color:'#B4B2A9', cursor:'pointer', lineHeight:1, padding:0 }}>×</button>
+            </div>
+
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:8 }}>Tipo</div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                {[
+                  { val:'sugestao', label:'💡 Sugestão' },
+                  { val:'problema', label:'🐛 Problema' },
+                  { val:'duvida',   label:'❓ Dúvida' },
+                  { val:'elogio',   label:'⭐ Elogio' },
+                ].map(t => (
+                  <button key={t.val} onClick={() => setFeedbackTipo(t.val)}
+                    style={{ fontSize:11, padding:'5px 12px', borderRadius:99, cursor:'pointer',
+                      border:'0.5px solid ' + (feedbackTipo===t.val ? '#0E7EA8' : '#D3D1C7'),
+                      background: feedbackTipo===t.val ? '#0E7EA8' : 'transparent',
+                      color: feedbackTipo===t.val ? '#fff' : '#5F5E5A' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:6 }}>Mensagem</div>
+              <textarea value={feedbackMsg} onChange={e => setFeedbackMsg(e.target.value)}
+                placeholder="Descreva sua sugestão, problema ou dúvida..."
+                rows={4} style={{ width:'100%', boxSizing:'border-box', fontSize:13, padding:'8px 10px', border:'0.5px solid #D3D1C7', borderRadius:8, resize:'vertical', fontFamily:'inherit' }} />
+            </div>
+
+            {feedbackOk === 'ok' && (
+              <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, background:'#EAF3DE', color:'#3B6D11', marginBottom:12 }}>
+                ✓ Mensagem enviada! Obrigado.
+              </div>
+            )}
+            {feedbackOk === 'erro' && (
+              <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, background:'#FEF2F2', color:'#A32D2D', marginBottom:12 }}>
+                Erro ao enviar. Tente novamente.
+              </div>
+            )}
+
+            <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
+              <button onClick={() => setFeedbackAberto(false)}
+                style={{ fontSize:12, padding:'7px 16px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>
+                Cancelar
+              </button>
+              <button onClick={enviarFeedback} disabled={feedbackEnviando || !feedbackMsg.trim()}
+                style={{ fontSize:12, padding:'7px 18px', borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', fontWeight:600,
+                  opacity: (feedbackEnviando || !feedbackMsg.trim()) ? 0.6 : 1 }}>
+                {feedbackEnviando ? 'Enviando...' : 'Enviar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
