@@ -86,12 +86,17 @@ export default function PainelAdmin() {
 
   const d = dados
 
-  const prioridades = d ? [
-    { item:'Cobranças pendentes', desc:'pendentes de confirmação no extrato', modulo:'Cobranças', tipo:'Financeiro', status:'Crítico', statusColor:'red', qtd: d.cobPend, rota:'/cobrancas', show: d.cobPend > 0 },
-    { item:'Pendências abertas', desc:'aguardando resolução dos responsáveis', modulo:'Pendências', tipo:'Gestão', status:'Atenção', statusColor:'orange', qtd: d.pendAbertas, rota:'/pendencias', show: d.pendAbertas > 0 },
-    { item:'Fechamento sem aprovação', desc:'meses aguardando Conselho Fiscal', modulo:'Fechamento', tipo:'Relatórios', status:'Pendente', statusColor:'orange', qtd: d.mesesSemFechar, rota:'/fechamento', show: d.mesesSemFechar > 0 },
-    { item:'Dívidas em aberto', desc:'controle de dívidas e parcelamentos', modulo:'Dívidas', tipo:'Financeiro', status:'Atenção', statusColor:'orange', qtd: d.dividasAbertas, rota:'/controle-dividas', show: d.dividasAbertas > 0 },
+  const todasPrioridades = d ? [
+    { item:'Cobranças pendentes', desc:'pendentes de confirmação no extrato', modulo:'Cobranças', tipo:'Financeiro', status:'Crítico', statusColor:'red', qtd: d.cobPend, rota:'/cobrancas', show: d.cobPend > 0, aba: 'financeiro' },
+    { item:'Pendências abertas', desc:'aguardando resolução dos responsáveis', modulo:'Pendências', tipo:'Gestão', status:'Atenção', statusColor:'orange', qtd: d.pendAbertas, rota:'/pendencias', show: d.pendAbertas > 0, aba: 'abertas' },
+    { item:'Fechamento sem aprovação', desc:'meses aguardando Conselho Fiscal', modulo:'Fechamento', tipo:'Relatórios', status:'Pendente', statusColor:'orange', qtd: d.mesesSemFechar, rota:'/fechamento', show: d.mesesSemFechar > 0, aba: 'abertas' },
+    { item:'Dívidas em aberto', desc:'controle de dívidas e parcelamentos', modulo:'Dívidas', tipo:'Financeiro', status:'Atenção', statusColor:'orange', qtd: d.dividasAbertas, rota:'/controle-dividas', show: d.dividasAbertas > 0, aba: 'financeiro' },
   ].filter(p => p.show) : []
+  const prioridades = todasPrioridades.filter(p =>
+    abaTabela === 'abertas' ? true :
+    abaTabela === 'financeiro' ? p.aba === 'financeiro' :
+    abaTabela === 'projetos' ? p.aba === 'projetos' : true
+  )
 
   const badgeColor = { red:'#FEF2F2', orange:'#FFF6ED', blue:'#EAF4F8', green:'#EAF3DE', gray:'#F1EFE8' }
   const badgeText  = { red:'#A32D2D', orange:'#854F0B', blue:'#0E7EA8', green:'#3B6D11', gray:'#888780' }
