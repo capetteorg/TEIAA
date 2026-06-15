@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
@@ -29,6 +30,7 @@ function badgeStatus(status) {
 
 export default function Fechamento() {
   const { perfil } = useAuth()
+  const navigate = useNavigate()
   const isAdmin = perfil?.perfil === 'admin'
   const [fechamentos, setFechamentos] = useState([])
   const [extratos, setExtratos] = useState([])

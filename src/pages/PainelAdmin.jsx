@@ -122,7 +122,7 @@ export default function PainelAdmin() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => {}} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setBuscaAberta(true)} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <i className="ti ti-search" /> Busca rápida Ctrl+K
           </button>
           <button onClick={() => navigate('/relatorios')} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { parsearExtratoSicredi } from '../lib/db'
 import { supabase } from '../lib/supabase'
@@ -9,6 +10,7 @@ const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8'
 
 export default function Importar() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [contas, setContas] = useState([])
   const [contaSel, setContaSel] = useState('')
   const [competencia, setCompetencia] = useState(new Date().toISOString().slice(0, 7))

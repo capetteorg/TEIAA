@@ -162,8 +162,7 @@ export default function Backup() {
       }
       XLSX.writeFile(wb, `capette_dados_${new Date().toISOString().slice(0,10)}.xlsx`)
     } catch(e) {
-      console.warn('XLSX não gerado:', e)
-    }
+          }
 
     // Gerar PDF do relatório financeiro anual
     setProgresso('Gerando relatório PDF...')
@@ -182,8 +181,7 @@ export default function Backup() {
         })
       }
     } catch (e) {
-      console.warn('PDF não gerado:', e)
-    }
+          }
 
     // Registrar log
     await supabase.from('backup_log').insert({

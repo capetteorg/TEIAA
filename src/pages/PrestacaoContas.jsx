@@ -22,7 +22,6 @@ export default function PrestacaoContas() {
   const [periodo, setPeriodo] = useState('total')
   const [mesInicio, setMesInicio] = useState('')
   const [mesFim, setMesFim] = useState('')
-  const [tipoRelatorio, setTipoRelatorio] = useState('preliminar')
   const [dados, setDados] = useState(null)
   const [loading, setLoading] = useState(false)
   const [pendencias, setPendencias] = useState([])

@@ -196,7 +196,7 @@ export default function ParceriaDetalhe() {
         <div style={s.card}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.85rem' }}>
             <div style={{ fontSize:13, fontWeight:500 }}>Plano de trabalho</div>
-            <button onClick={() => navigate('/plano-trabalho')}
+            <button onClick={() => navigate('/planos-execucao')}
               style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:`0.5px solid ${LARANJA}`, background:'transparent', color:LARANJA, cursor:'pointer' }}>
               Gerenciar plano →
             </button>
@@ -235,7 +235,7 @@ export default function ParceriaDetalhe() {
         <div style={s.card}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.85rem' }}>
             <div style={{ fontSize:13, fontWeight:500 }}>Documentos vinculados</div>
-            <button onClick={() => navigate('/documentos')}
+            <button onClick={() => navigate('/documentos-fiscais')}
               style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:`0.5px solid ${AZUL}`, background:'transparent', color:AZUL, cursor:'pointer' }}>
               Gerenciar documentos →
             </button>
