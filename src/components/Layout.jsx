@@ -56,8 +56,8 @@ export default function Layout() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [colapsado, setColapsado] = useState(() => localStorage.getItem('menuColapsado') === '1')
   const [secFechadas, setSecFechadas] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('secFechadas') || '["Institucional","Configura\u00e7\u00f5es"]')) }
-    catch { return new Set(['Institucional','Configura\u00e7\u00f5es']) }
+    try { return new Set(JSON.parse(localStorage.getItem('secFechadas') || '["Institucional","Configurações"]')) }
+    catch { return new Set(['Institucional','Configurações']) }
   })
   const [buscaAberta, setBuscaAberta] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(null)
@@ -130,39 +130,39 @@ export default function Layout() {
   }
   const secVisivel = nome => colapsado || !secFechadas.has(nome)
 
-  // Itens busc\u00e1veis (espelha o menu, respeitando o perfil)
+  // Itens buscáveis (espelha o menu, respeitando o perfil)
   const itensBusca = [
     { to:'/painel-admin', label:'Painel', icon:'layout-dashboard', ok:p==='admin' },
     { to:'/painel-operacional', label:'Painel', icon:'layout-dashboard', ok:p==='operacional' },
     { to:'/painel-diretoria', label:'Acompanhamento', icon:'layout-dashboard', ok:p==='diretoria' },
     { to:'/importar', label:'Importar extrato', icon:'file-upload', ok:p==='admin' },
-    { to:'/conciliacao', label:'Concilia\u00e7\u00e3o', icon:'checks', ok:p==='admin' },
-    { to:'/lancamentos', label:'Lan\u00e7amentos', icon:'list-details', ok:p==='admin'||p==='operacional' },
-    { to:'/cobrancas', label:'Cobran\u00e7as', icon:'receipt-2', ok:p==='admin'||p==='operacional' },
-    { to:'/pendencias', label:'Pend\u00eancias', icon:'alert-triangle', ok:p==='admin' },
+    { to:'/conciliacao', label:'Conciliação', icon:'checks', ok:p==='admin' },
+    { to:'/lancamentos', label:'Lançamentos', icon:'list-details', ok:p==='admin'||p==='operacional' },
+    { to:'/cobrancas', label:'Cobranças', icon:'receipt-2', ok:p==='admin'||p==='operacional' },
+    { to:'/pendencias', label:'Pendências', icon:'alert-triangle', ok:p==='admin' },
     { to:'/fornecedores', label:'Fornecedores', icon:'building-store', ok:p==='admin' },
-    { to:'/historico-fornecedor', label:'Hist\u00f3rico Fornecedor', icon:'history', ok:p==='admin' },
-    { to:'/controle-dividas', label:'Controle de D\u00edvidas', icon:'credit-card-off', ok:p==='admin'||p==='diretoria' },
-    { to:'/aplicacoes', label:'Aplica\u00e7\u00f5es', icon:'chart-line', ok:p==='admin' },
-    { to:'/planos-execucao', label:'Plano de A\u00e7\u00e3o', icon:'clipboard-check', ok:p==='admin' },
+    { to:'/historico-fornecedor', label:'Histórico Fornecedor', icon:'history', ok:p==='admin' },
+    { to:'/controle-dividas', label:'Controle de Dívidas', icon:'credit-card-off', ok:p==='admin'||p==='diretoria' },
+    { to:'/aplicacoes', label:'Aplicações', icon:'chart-line', ok:p==='admin' },
+    { to:'/planos-execucao', label:'Plano de Ação', icon:'clipboard-check', ok:p==='admin' },
     { to:'/projetos', label:'Projetos', icon:'folder', ok:p==='admin' },
     { to:'/atendimentos', label:'Atendimentos', icon:'clipboard-list', ok:p==='admin'||p==='operacional' },
-    { to:'/usuarios-atendidos', label:'Usu\u00e1rios Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
+    { to:'/usuarios-atendidos', label:'Usuários Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
     { to:'/equipe', label:'Equipe', icon:'users-group', ok:p==='admin'||p==='operacional' },
-    { to:'/doacoes', label:'Doa\u00e7\u00f5es', icon:'gift', ok:p==='admin' },
+    { to:'/doacoes', label:'Doações', icon:'gift', ok:p==='admin' },
     { to:'/eventos-campanhas', label:'Eventos e Campanhas', icon:'calendar-event', ok:p==='admin' },
-    { to:'/relatorios', label:'Central de Relat\u00f3rios', icon:'report-analytics', ok:p==='admin'||p==='diretoria' },
+    { to:'/relatorios', label:'Central de Relatórios', icon:'report-analytics', ok:p==='admin'||p==='diretoria' },
     { to:'/fechamento', label:'Fechamento / Conselho Fiscal', icon:'checkup-list', ok:p==='admin' },
-    { to:'/prestacao-contas', label:'Presta\u00e7\u00e3o de Contas', icon:'file-certificate', ok:p==='admin' },
-    { to:'/transparencia', label:'Transpar\u00eancia P\u00fablica', icon:'world', ok:p==='admin' },
-    { to:'/instituicao', label:'Institui\u00e7\u00e3o', icon:'building', ok:p==='admin' },
+    { to:'/prestacao-contas', label:'Prestação de Contas', icon:'file-certificate', ok:p==='admin' },
+    { to:'/transparencia', label:'Transparência Pública', icon:'world', ok:p==='admin' },
+    { to:'/instituicao', label:'Instituição', icon:'building', ok:p==='admin' },
     { to:'/parcerias', label:'Instrumentos', icon:'file-invoice', ok:p==='admin' },
     { to:'/documentos-fiscais', label:'Documentos', icon:'files', ok:p==='admin' },
-    { to:'/patrimonio', label:'Patrim\u00f4nio', icon:'building-warehouse', ok:p==='admin' },
-    { to:'/contas', label:'Contas banc\u00e1rias', icon:'building-bank', ok:p==='admin' },
+    { to:'/patrimonio', label:'Patrimônio', icon:'building-warehouse', ok:p==='admin' },
+    { to:'/contas', label:'Contas bancárias', icon:'building-bank', ok:p==='admin' },
     { to:'/categorias', label:'Categorias', icon:'tag', ok:p==='admin' },
-    { to:'/classificacoes', label:'Classifica\u00e7\u00f5es', icon:'list-tree', ok:p==='admin' },
-    { to:'/usuarios', label:'Usu\u00e1rios do sistema', icon:'user-cog', ok:p==='admin' },
+    { to:'/classificacoes', label:'Classificações', icon:'list-tree', ok:p==='admin' },
+    { to:'/usuarios', label:'Usuários do sistema', icon:'user-cog', ok:p==='admin' },
     { to:'/backup', label:'Backup', icon:'database-export', ok:p==='admin' },
     { to:'/configuracoes', label:'Zona de perigo', icon:'alert-octagon', ok:p==='admin' },
   ].filter(i => i.ok)
@@ -186,14 +186,14 @@ export default function Layout() {
       display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%',
     }}>
 
-      {/* AGENDO Integra \u2014 topo */}
+      {/* AGENDO Integra — topo */}
       <div style={{ padding: colapsado && !isMobile ? '14px 0' : '13px 14px', borderBottom: '0.5px solid #E0DDD5', display: 'flex', alignItems: 'center', justifyContent: colapsado && !isMobile ? 'center' : 'space-between', minHeight: 60 }}>
         {!(colapsado && !isMobile) && (
           <div style={{ display:'flex', alignItems:'center', gap:9 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:'#0E7EA8', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontWeight:900, fontSize:13, color:'#fff' }}>A</div>
             <div>
               <div style={{ fontSize:12.5, fontWeight:700, color:'#06344F', lineHeight:1.2 }}>AGENDO Integra</div>
-              <div style={{ fontSize:9.5, color:'#9BBFCE', marginTop:1 }}>Gest\u00e3o integrada para OSCs</div>
+              <div style={{ fontSize:9.5, color:'#9BBFCE', marginTop:1 }}>Gestão integrada para OSCs</div>
             </div>
           </div>
         )}
@@ -211,7 +211,7 @@ export default function Layout() {
         )}
       </div>
 
-      {/* Card OSC \u2014 logo CAPETTE */}
+      {/* Card OSC — logo CAPETTE */}
       {!(colapsado && !isMobile) && (
         <div style={{ margin:'10px 12px', background:'rgba(255,255,255,0.8)', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'10px 12px' }}>
           <div style={{ display:'flex', gap:1.5, alignItems:'center', marginBottom:5 }}>
@@ -227,7 +227,7 @@ export default function Layout() {
               ))}
             </div>
           </div>
-          <div style={{ fontSize:10.5, fontWeight:600, color:'#1A1F1C', lineHeight:1.35 }}>Casa do Pequeno Trabalhador de Teres\u00f3polis</div>
+          <div style={{ fontSize:10.5, fontWeight:600, color:'#1A1F1C', lineHeight:1.35 }}>Casa do Pequeno Trabalhador de Teresópolis</div>
           <div style={{ fontSize:9, color:'#888780', marginTop:3 }}>CNPJ 29.213.717/0001-01</div>
           <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:7, border:'0.5px solid rgba(14,126,168,.25)', background:'rgba(14,126,168,.07)', color:'#0E7EA8', padding:'3px 9px', borderRadius:99, fontSize:9.5, fontWeight:600 }}>
             <i className="ti ti-shield-check" style={{ fontSize:10 }} />
@@ -244,63 +244,63 @@ export default function Layout() {
         <NavItem colapsado={colapsado} to="/painel-operacional" icon="layout-dashboard"  label="Painel"              visivel={p==='operacional'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
 
-        <NavSecao colapsado={colapsado} label="Opera\u00e7\u00e3o di\u00e1ria" aberta={secVisivel("Opera\u00e7\u00e3o di\u00e1ria")} onToggle={() => toggleSec("Opera\u00e7\u00e3o di\u00e1ria")} />
-        {secVisivel("Opera\u00e7\u00e3o di\u00e1ria") && (<>
+        <NavSecao colapsado={colapsado} label="Operação diária" aberta={secVisivel("Operação diária")} onToggle={() => toggleSec("Operação diária")} />
+        {secVisivel("Operação diária") && (<>
         <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Concilia\u00e7\u00e3o"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lan\u00e7amentos"         visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/cobrancas"          icon="receipt-2"         label="Cobran\u00e7as"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
-        <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pend\u00eancias"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
+        <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/cobrancas"          icon="receipt-2"         label="Cobranças"           visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} badge={badgeCobrancas} />
+        <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
 
         </>)}
-        <NavSecao colapsado={colapsado} label="Gest\u00e3o financeira" aberta={secVisivel("Gest\u00e3o financeira")} onToggle={() => toggleSec("Gest\u00e3o financeira")} />
-        {secVisivel("Gest\u00e3o financeira") && (<>
+        <NavSecao colapsado={colapsado} label="Gestão financeira" aberta={secVisivel("Gestão financeira")} onToggle={() => toggleSec("Gestão financeira")} />
+        {secVisivel("Gestão financeira") && (<>
         <NavItem colapsado={colapsado} to="/fornecedores"       icon="building-store"    label="Fornecedores"        visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/historico-fornecedor" icon="history"         label="Hist\u00f3rico Fornecedor" visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/controle-dividas"   icon="credit-card-off"   label="Controle de D\u00edvidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
-        <NavItem colapsado={colapsado} to="/aplicacoes"         icon="chart-line"        label="Aplica\u00e7\u00f5es"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/historico-fornecedor" icon="history"         label="Histórico Fornecedor" visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/controle-dividas"   icon="credit-card-off"   label="Controle de Dívidas" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} badge={badgeDividas} />
+        <NavItem colapsado={colapsado} to="/aplicacoes"         icon="chart-line"        label="Aplicações"          visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
         <NavSecao colapsado={colapsado} label="Programas e projetos" aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")} />
         {secVisivel("Programas e projetos") && (<>
-        <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de A\u00e7\u00e3o"       visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usu\u00e1rios Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doa\u00e7\u00f5es"             visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
-        <NavSecao colapsado={colapsado} label="Relat\u00f3rios" aberta={secVisivel("Relat\u00f3rios")} onToggle={() => toggleSec("Relat\u00f3rios")} />
-        {secVisivel("Relat\u00f3rios") && (<>
-        <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relat\u00f3rios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+        <NavSecao colapsado={colapsado} label="Relatórios" aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")} />
+        {secVisivel("Relatórios") && (<>
+        <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho"  visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/prestacao-contas"   icon="file-certificate"  label="Presta\u00e7\u00e3o de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/transparencia"      icon="world"             label="Transpar\u00eancia P\u00fablica"  visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/transparencia"      icon="world"             label="Transparência Pública"  visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
         <NavSecao colapsado={colapsado} label="Institucional" aberta={secVisivel("Institucional")} onToggle={() => toggleSec("Institucional")} />
         {secVisivel("Institucional") && (<>
-        <NavItem colapsado={colapsado} to="/instituicao"        icon="building"           label="Institui\u00e7\u00e3o"         visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/instituicao"        icon="building"           label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/parcerias"          icon="file-invoice"       label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/documentos-fiscais" icon="files"              label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/patrimonio"         icon="building-warehouse" label="Patrim\u00f4nio"          visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
-        <NavSecao colapsado={colapsado} label="Configura\u00e7\u00f5es" aberta={secVisivel("Configura\u00e7\u00f5es")} onToggle={() => toggleSec("Configura\u00e7\u00f5es")} />
-        {secVisivel("Configura\u00e7\u00f5es") && (<>
-        <NavItem colapsado={colapsado} to="/contas"             icon="building-bank"     label="Contas banc\u00e1rias"    visivel={p==='admin'} onClick={fecharMenu} />
+        <NavSecao colapsado={colapsado} label="Configurações" aberta={secVisivel("Configurações")} onToggle={() => toggleSec("Configurações")} />
+        {secVisivel("Configurações") && (<>
+        <NavItem colapsado={colapsado} to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/classificacoes"     icon="list-tree"         label="Classifica\u00e7\u00f5es"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usu\u00e1rios"            visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/configuracoes"      icon="alert-octagon"     label="Zona de perigo"      visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
       </div>
 
-      {/* Rodap\u00e9 usu\u00e1rio */}
+      {/* Rodapé usuário */}
       <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1.1rem', borderTop: '0.5px solid #E0DDD5', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
         <div onClick={() => navigate('/minha-conta')} title="Minha conta"
           style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(14,126,168,0.2)', flexShrink: 0, cursor: 'pointer' }}>
@@ -316,7 +316,7 @@ export default function Layout() {
         </div>
         {!(colapsado && !isMobile) && <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 11, color: '#1A1F1C', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {perfil?.nome || 'Usu\u00e1rio'}
+            {perfil?.nome || 'Usuário'}
           </div>
           <div style={{ fontSize: 10, color: '#888780' }}>{perfil?.bio || perfilLabel}</div>
         </div>}
@@ -348,7 +348,7 @@ export default function Layout() {
       {/* Marca d'água AGENDO */}
       <img src="/agendo-logo.png" alt="" aria-hidden="true" style={{ position: 'fixed', bottom: 0, left: 0, width: '32vw', maxWidth: 420, opacity: 0.045, pointerEvents: 'none', zIndex: 0, userSelect: 'none' }} />
 
-      {/* Busca global \u2014 Ctrl+K */}
+      {/* Busca global — Ctrl+K */}
       {buscaAberta && (
         <div onClick={e => { if (e.target === e.currentTarget) setBuscaAberta(false) }}
           style={{ position:'fixed', inset:0, background:'rgba(26,31,28,0.4)', zIndex:9999, display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'12vh', backdropFilter:'blur(2px)' }}>
@@ -409,8 +409,8 @@ export default function Layout() {
         </div>
 
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra \u00b7 CAPETTE \u00b7 <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca r\u00e1pida Ctrl+K</span></span>
-          <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo \u00b7 CNPJ 56.059.476/0001-52</span>
+          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra · CAPETTE · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
+          <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
         </div>
 
       </div>
