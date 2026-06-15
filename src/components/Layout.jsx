@@ -43,16 +43,9 @@ const TITULOS_PAGINAS = {
 
 // Páginas que têm topbar própria — não mostrar a do Layout
 const PAGINAS_COM_TOPBAR_PROPRIA = new Set([
-  '/painel-admin', '/painel-operacional', '/painel-diretoria',
-  '/cobrancas', '/pendencias', '/fechamento', '/importar',
-  '/aplicacoes', '/backup', '/categorias', '/classificacoes',
-  '/conciliacao-inteligente', '/configuracoes', '/contas',
-  '/controle-dividas', '/doacoes', '/documentos', '/documentos-fiscais',
-  '/equipe', '/eventos-campanhas', '/historico-fornecedor',
-  '/fornecedores', '/instituicao', '/lancamentos',
-  '/parcerias', '/patrimonio', '/plano-trabalho', '/planos-execucao',
-  '/projetos', '/relatorio-execucao', '/relatorios', '/relatorios-central',
-  '/usuarios', '/usuarios-atendidos',
+  // Todas as páginas — o Layout não adiciona topbar automática
+  // Cada página controla seu próprio cabeçalho
+  'DISABLED'
 ])
 
 const AG_BLUE  = '#0E7EA8'
@@ -491,12 +484,6 @@ export default function Layout() {
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <div key={location.pathname} className="page-anim" style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
-            {/* Topbar automática para páginas sem topbar própria */}
-            {!PAGINAS_COM_TOPBAR_PROPRIA.has(location.pathname) && TITULOS_PAGINAS[location.pathname] && (
-              <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 5 }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>{TITULOS_PAGINAS[location.pathname]}</div>
-              </div>
-            )}
             <Outlet />
           </div>
         </div>
