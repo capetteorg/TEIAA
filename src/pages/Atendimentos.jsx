@@ -96,13 +96,14 @@ export default function Atendimentos() {
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : null,
       equipe_ids: form.equipe_ids.map(id => parseInt(id)),
     }
-    let error
+    let error, data
     if (editando) {
-      ;({ error } = await supabase.from('atendimentos').update(dados).eq('id', editando))
+      ;({ error, data } = await supabase.from('atendimentos').update(dados).eq('id', editando).select())
     } else {
-      ;({ error } = await supabase.from('atendimentos').insert(dados))
+      ;({ error, data } = await supabase.from('atendimentos').insert(dados).select())
     }
-    if (error) setMsg('Erro: ' + error.message)
+    if (error) setMsg('Erro ao salvar: ' + error.message + ' | Código: ' + error.code)
+    else if (!data || data.length === 0) setMsg('Erro: registro não foi salvo. Verifique permissões.')
     else { setMsg('Registro salvo!'); setForm(FORM_VAZIO); setEditando(null); setMostrarForm(false); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
