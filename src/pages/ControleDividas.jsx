@@ -291,10 +291,11 @@ export default function ControleDividas() {
   }
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ }}>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Controle de Dívidas</div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
@@ -631,5 +632,6 @@ export default function ControleDividas() {
         </div>
       )}
     </div>
+      </div>
   )
 }

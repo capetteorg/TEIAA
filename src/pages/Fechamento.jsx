@@ -204,10 +204,11 @@ export default function Fechamento() {
   const abertos = fechamentos.filter(f => !f.fechamento || f.fechamento.status === 'aberto').length
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ }}>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Fechamento e Aprovação do Conselho Fiscal</div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:'1.25rem' }}>
         <div>
@@ -430,5 +431,6 @@ export default function Fechamento() {
         </table>
       </div>
     </div>
+      </div>
   )
 }

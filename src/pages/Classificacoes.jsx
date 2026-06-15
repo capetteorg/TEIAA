@@ -50,10 +50,11 @@ export default function Classificacoes() {
   }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div style={{ }}>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Classificações automáticas</div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
 <div style={{ background: '#FAFAF8', borderLeft:'3px solid #0E7EA8', borderRadius:'0 8px 8px 0', padding:'.55rem .9rem', fontSize:12, color:'#5F5E5A', marginBottom:'1.25rem' }}>
         Regras aplicadas automaticamente ao importar o extrato. Quando o tipo do documento bater com uma regra, o lançamento é classificado automaticamente.
@@ -130,5 +131,6 @@ export default function Classificacoes() {
         </form>
       </div>
     </div>
+      </div>
   )
 }

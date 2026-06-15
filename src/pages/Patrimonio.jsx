@@ -122,7 +122,12 @@ export default function Patrimonio() {
   const corEstado = { 'Ótimo':VERDE, 'Bom':'#6BBF2B', 'Regular':LARANJA, 'Ruim':VERMELHO, 'Inativo':'#888780' }
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem', maxWidth:1020, margin:'0 auto' }}>
+    <div style={{ maxWidth:1020, margin:'0 auto' }}>
+      {/* Topbar */}
+      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Controle de Patrimônio</div>
+      </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Controle de Patrimônio</div>
@@ -276,5 +281,6 @@ export default function Patrimonio() {
         )}
       </div>
     </div>
+      </div>
   )
 }

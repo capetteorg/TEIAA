@@ -199,10 +199,11 @@ export default function Instituicao() {
   }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div style={{ }}>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Cadastro da Instituição</div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
 {presidenteAtual && (
         <div style={{ background: '#F0F6FA', border: '0.5px solid #C5DCEA', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -549,5 +550,6 @@ export default function Instituicao() {
         </div>
       )}
     </div>
+      </div>
   )
 }

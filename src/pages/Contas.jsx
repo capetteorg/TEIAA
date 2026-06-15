@@ -106,10 +106,11 @@ export default function Contas() {
   const tipoCor = { principal: ['#EAF3DE','#3B6D11'], emenda: ['#E6F1FB','#185FA5'], edital: ['#E6F1FB','#185FA5'], fomento: ['#F1EFE8','#5F5E5A'], colaboracao: ['#FAEEDA','#854F0B'], convenio: ['#FCEBEB','#A32D2D'], projeto: ['#F8F7F2','#5F5E5A'] }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div style={{ }}>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Contas bancárias</div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
 {/* Lista de contas */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -287,5 +288,6 @@ export default function Contas() {
         </form>
       </div>
     </div>
+      </div>
   )
 }
