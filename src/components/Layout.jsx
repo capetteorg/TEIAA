@@ -15,9 +15,9 @@ function NavItem({ to, icon, label, visivel = true, onClick, badge, colapsado = 
       padding: colapsado ? '10px 0' : '9px 1.1rem',
       justifyContent: colapsado ? 'center' : 'flex-start',
       fontSize: 12.5,
-      color: isActive ? '#fff' : 'rgba(255,255,255,0.62)',
-      background: isActive ? 'rgba(14,126,168,0.32)' : 'transparent',
-      borderRight: isActive ? `2px solid ${AG_BLUE}` : '2px solid transparent',
+      color: isActive ? '#0E7EA8' : '#5F5E5A',
+      background: isActive ? 'rgba(14,126,168,0.08)' : 'transparent',
+      borderLeft: isActive ? `2px solid ${AG_BLUE}` : '2px solid transparent',
       textDecoration: 'none',
       transition: 'background .15s ease, color .15s ease',
       fontWeight: isActive ? 500 : 400,
@@ -40,7 +40,7 @@ function NavItem({ to, icon, label, visivel = true, onClick, badge, colapsado = 
 function NavSecao({ label, colapsado = false, aberta = true, onToggle }) {
   if (colapsado) return <div style={{ height: 10, borderBottom: '0.5px solid #F1EFE8', marginBottom: 4 }} />
   return (
-    <div onClick={onToggle} style={{ fontSize: 9.5, color: 'rgba(155,191,206,0.55)', padding: '10px 1.1rem 2px', textTransform: 'uppercase', letterSpacing: '.09em', fontWeight: 500, cursor: onToggle ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+    <div onClick={onToggle} style={{ fontSize: 9.5, color: '#B4B2A9', padding: '10px 1.1rem 2px', textTransform: 'uppercase', letterSpacing: '.09em', fontWeight: 500, cursor: onToggle ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
       {label}
       {onToggle && <i className={`ti ti-chevron-${aberta ? 'down' : 'right'}`} style={{ fontSize: 11 }} />}
     </div>
@@ -175,18 +175,18 @@ export default function Layout() {
     <div style={{
       width: colapsado && !isMobile ? 64 : 228,
       transition: 'width .2s cubic-bezier(.2,.8,.3,1)',
-      background: 'rgba(7,54,83,0.88)',
-      borderRight: '1px solid rgba(14,126,168,0.2)',
+      background: 'rgba(255,255,255,0.52)',
+      borderRight: '0.5px solid #E0DDD5',
       display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%',
     }}>
 
       {/* AGENDO Integra \u2014 topo */}
-      <div style={{ padding: colapsado && !isMobile ? '14px 0' : '13px 14px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: colapsado && !isMobile ? 'center' : 'space-between', minHeight: 60 }}>
+      <div style={{ padding: colapsado && !isMobile ? '14px 0' : '13px 14px', borderBottom: '0.5px solid #E0DDD5', display: 'flex', alignItems: 'center', justifyContent: colapsado && !isMobile ? 'center' : 'space-between', minHeight: 60 }}>
         {!(colapsado && !isMobile) && (
           <div style={{ display:'flex', alignItems:'center', gap:9 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:'#0E7EA8', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontWeight:900, fontSize:13, color:'#fff' }}>A</div>
             <div>
-              <div style={{ fontSize:12.5, fontWeight:700, color:'#fff', lineHeight:1.2 }}>AGENDO Integra</div>
+              <div style={{ fontSize:12.5, fontWeight:700, color:'#06344F', lineHeight:1.2 }}>AGENDO Integra</div>
               <div style={{ fontSize:9.5, color:'#9BBFCE', marginTop:1 }}>Gest\u00e3o integrada para OSCs</div>
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function Layout() {
 
       {/* Card OSC \u2014 logo CAPETTE */}
       {!(colapsado && !isMobile) && (
-        <div style={{ margin:'10px 12px', background:'rgba(255,255,255,0.09)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:12, padding:'10px 12px' }}>
+        <div style={{ margin:'10px 12px', background:'rgba(255,255,255,0.8)', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'10px 12px' }}>
           <div style={{ display:'flex', gap:1.5, alignItems:'center', marginBottom:5 }}>
             <img src="/logo.png" alt="CAPETTE" style={{ height:28, width:'auto', objectFit:'contain', maxWidth:120, display:'block' }}
               onError={e => {
@@ -221,9 +221,9 @@ export default function Layout() {
               ))}
             </div>
           </div>
-          <div style={{ fontSize:10.5, fontWeight:600, color:'#fff', lineHeight:1.35 }}>Casa do Pequeno Trabalhador de Teres\u00f3polis</div>
-          <div style={{ fontSize:9, color:'#9BBFCE', marginTop:3 }}>CNPJ 29.213.717/0001-01</div>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:7, border:'1px solid rgba(14,126,168,0.4)', background:'rgba(14,126,168,0.2)', color:'#7DD4F0', padding:'3px 9px', borderRadius:99, fontSize:9.5, fontWeight:600 }}>
+          <div style={{ fontSize:10.5, fontWeight:600, color:'#1A1F1C', lineHeight:1.35 }}>Casa do Pequeno Trabalhador de Teres\u00f3polis</div>
+          <div style={{ fontSize:9, color:'#888780', marginTop:3 }}>CNPJ 29.213.717/0001-01</div>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:7, border:'0.5px solid rgba(14,126,168,.25)', background:'rgba(14,126,168,.07)', color:'#0E7EA8', padding:'3px 9px', borderRadius:99, fontSize:9.5, fontWeight:600 }}>
             <i className="ti ti-shield-check" style={{ fontSize:10 }} />
             {perfilLabel}
           </div>
@@ -295,20 +295,27 @@ export default function Layout() {
       </div>
 
       {/* Rodap\u00e9 usu\u00e1rio */}
-      <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1.1rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(14,126,168,0.4)', border: '1px solid rgba(14,126,168,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>
-            {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
-          </span>
+      <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1.1rem', borderTop: '0.5px solid #E0DDD5', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
+        <div onClick={() => navigate('/minha-conta')} title="Minha conta"
+          style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(14,126,168,0.2)', flexShrink: 0, cursor: 'pointer' }}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={perfil?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: 28, height: 28, background: 'rgba(14,126,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#0E7EA8' }}>
+                {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
+              </span>
+            </div>
+          )}
         </div>
         {!(colapsado && !isMobile) && <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 11, color: '#1A1F1C', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {perfil?.nome || 'Usu\u00e1rio'}
           </div>
-          <div style={{ fontSize: 10, color: '#9BBFCE' }}>{perfilLabel}</div>
+          <div style={{ fontSize: 10, color: '#888780' }}>{perfil?.bio || perfilLabel}</div>
         </div>}
         <button onClick={handleLogout} title="Sair"
-          style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(155,191,206,0.5)', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#C8C6BC', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
           <i className="ti ti-logout" style={{ fontSize: 15 }} />
         </button>
       </div>
@@ -319,12 +326,12 @@ export default function Layout() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'linear-gradient(135deg, #F8F7F2 0%, #EEF4E8 100%)', overflow: 'hidden' }}>
       <style>{`
-        .nav-item:hover { background: rgba(255,255,255,0.07) !important; color: #fff !important; }
+        .nav-item:hover { background: rgba(14,126,168,0.06) !important; color: #0E7EA8 !important; }
         .sidebar-scroll::-webkit-scrollbar { width: 5px; }
         .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
-        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-        .sidebar-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #D3D1C7; border-radius: 99px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: #B4B2A9; }
+        .sidebar-scroll { scrollbar-width: thin; scrollbar-color: #D3D1C7 transparent; }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .drawer-mobile { animation: drawerIn .22s cubic-bezier(.2,.8,.3,1); }
@@ -393,7 +400,7 @@ export default function Layout() {
         </div>
 
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: 'rgba(155,191,206,0.55)' }}>AGENDO Integra \u00b7 CAPETTE \u00b7 <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca r\u00e1pida Ctrl+K</span></span>
+          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra \u00b7 CAPETTE \u00b7 <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca r\u00e1pida Ctrl+K</span></span>
           <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo \u00b7 CNPJ 56.059.476/0001-52</span>
         </div>
 
