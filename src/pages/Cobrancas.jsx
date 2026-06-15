@@ -240,9 +240,12 @@ export default function Cobrancas() {
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Cobranças / Boletos Vencidos</div>
-        <button onClick={() => setTab('importar')} style={{ padding:'7px 14px', fontSize:12, fontWeight:600, borderRadius:9, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-          <i className="ti ti-upload" /> Importar XLS Sicredi
-        </button>
+        {isAdmin && (
+          <label style={{ padding:'7px 14px', fontSize:12, fontWeight:600, borderRadius:9, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+            <i className="ti ti-upload" /> Importar XLS Sicredi
+            <input type="file" accept=".xls,.xlsx" onChange={importarXLS} style={{ display: 'none' }} />
+          </label>
+        )}
       </div>
       <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
@@ -255,12 +258,7 @@ export default function Cobrancas() {
             </div>
           )}
         </div>
-        {isAdmin && (
-          <label style={{ padding: '6px 14px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
-            Importar XLS Sicredi
-            <input type="file" accept=".xls,.xlsx" onChange={importarXLS} style={{ display: 'none' }} />
-          </label>
-        )}
+
       </div>
 
       {msg && (

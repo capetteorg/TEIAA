@@ -288,10 +288,6 @@ export default function Projetos() {
     const [bg,cor] = SITUACAO_COR[p.situacao] || ['#F1EFE8','#888780']
     return (
       <div style={{ padding:'1.25rem 1.5rem' }}>
-      {/* Topbar */}
-      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Projetos / Serviços / Ações</div>
-      </div>
         <div style={{ display:'flex', gap:8, marginBottom:'1rem', flexWrap:'wrap' }}>
           <button onClick={() => setProjetoDetalhe(null)} style={s.btn('#F1EFE8','#5F5E5A')}>← Voltar</button>
           <button onClick={() => editar(p)} style={s.btn(AZUL)}><i className="ti ti-pencil" style={{fontSize:14}} /> Editar projeto</button>
