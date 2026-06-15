@@ -160,7 +160,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
         setMsgIA('')
       } catch(err) {
         setMsgIA('Erro ao converter PDF. Tente uma imagem ou texto.')
-        console.error(err)
       }
     }
     reader.readAsArrayBuffer(file)
@@ -238,7 +237,6 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
       setModoIA(false)
     } catch(e) {
       setMsgIA('Não foi possível extrair os dados. Preencha manualmente.')
-      console.error(e)
     }
     setAnalisando(false)
   }

@@ -72,7 +72,8 @@ export default function RelatoriosCentral() {
       else if (aba === 'usuarios') await gerarUsuarios(pId)
       else if (aba === 'atendimentos') await gerarAtendimentos(pId)
       else if (aba === 'doacoes') await gerarDoacoes(pId)
-    } catch(e) { console.error(e) }
+    } catch(e) {
+ }
     setLoading(false)
   }
 
