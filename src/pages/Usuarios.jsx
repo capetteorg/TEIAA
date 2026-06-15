@@ -19,12 +19,38 @@ export default function Usuarios() {
   const [salvando, setSalvando] = useState(false)
   const [resetando, setResetando] = useState(null)
   const [logs, setLogs] = useState([])
+  const [uploadingFoto, setUploadingFoto] = useState(null) // id do usuário fazendo upload
 
   useEffect(() => {
     carregarUsuarios()
     supabase.from('auditoria').select('*').order('criado_em', { ascending:false }).limit(50)
       .then(({ data }) => setLogs(data || []))
   }, [])
+
+  async function uploadFoto(userId, file) {
+    if (!file) return
+    setUploadingFoto(userId)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `avatars/${userId}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('usuarios-fotos')
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (upErr) throw upErr
+
+      const { data: urlData } = supabase.storage
+        .from('usuarios-fotos')
+        .getPublicUrl(path)
+
+      // Adicionar cache-bust para forçar reload da imagem
+      const url = urlData.publicUrl + '?t=' + Date.now()
+      await supabase.from('usuarios').update({ avatar_url: url }).eq('id', userId)
+      carregarUsuarios()
+    } catch (e) {
+      setMsg('Erro ao fazer upload: ' + e.message)
+    }
+    setUploadingFoto(null)
+  }
 
   async function carregarUsuarios() {
     const { data } = await supabase.from('usuarios').select('*').order('nome')
@@ -161,9 +187,17 @@ export default function Usuarios() {
               {/* Linha do usuário */}
               {editando !== u.id ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '0.5px solid #F1EFE8' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: PERFIS[u.perfil]?.bg || '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: PERFIS[u.perfil]?.cor || '#5F5E5A', flexShrink: 0 }}>
-                    {(u.nome || '?').slice(0,2).toUpperCase()}
-                  </div>
+                  <label title="Clique para trocar a foto" style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, cursor: 'pointer', position: 'relative', display: 'block' }}>
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt={u.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    ) : (
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: PERFIS[u.perfil]?.bg || '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: PERFIS[u.perfil]?.cor || '#5F5E5A' }}>
+                        {uploadingFoto === u.id ? '...' : (u.nome || '?').slice(0,2).toUpperCase()}
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" style={{ display: 'none' }}
+                      onChange={e => uploadFoto(u.id, e.target.files[0])} />
+                  </label>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 500, fontSize: 13 }}>{u.nome}</div>
                     <div style={{ fontSize: 11, color: '#888780' }}>{u.email}</div>
