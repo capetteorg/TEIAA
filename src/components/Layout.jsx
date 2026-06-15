@@ -228,7 +228,7 @@ export default function Layout() {
       {!(colapsado && !isMobile) && (
         <div style={{ margin:'10px 12px', background:'rgba(255,255,255,0.8)', border:'0.5px solid #E0DDD5', borderRadius:12, padding:'10px 12px' }}>
           <div style={{ display:'flex', gap:1.5, alignItems:'center', marginBottom:5 }}>
-            <img src="/logo.png" alt="CAPETTE" style={{ height:28, width:'auto', objectFit:'contain', maxWidth:120, display:'block' }}
+            <img src="/logo.png" alt="TEIAA" style={{ height:52, width:'auto', objectFit:'contain', maxWidth:160, display:'block' }}
               onError={e => {
                 e.target.style.display='none'
                 e.target.nextSibling.style.display='flex'
@@ -240,8 +240,8 @@ export default function Layout() {
               ))}
             </div>
           </div>
-          <div style={{ fontSize:10.5, fontWeight:600, color:'#1A1F1C', lineHeight:1.35 }}>Casa do Pequeno Trabalhador de Teresópolis</div>
-          <div style={{ fontSize:9, color:'#888780', marginTop:3 }}>CNPJ 29.213.717/0001-01</div>
+          <div style={{ fontSize:10.5, fontWeight:600, color:'#1A1F1C', lineHeight:1.35 }}>Associação TEIAA</div>
+          <div style={{ fontSize:9, color:'#888780', marginTop:3 }}>CNPJ 27.837.768/0001-70</div>
           <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:7, border:'0.5px solid rgba(14,126,168,.25)', background:'rgba(14,126,168,.07)', color:'#0E7EA8', padding:'3px 9px', borderRadius:99, fontSize:9.5, fontWeight:600 }}>
             <i className="ti ti-shield-check" style={{ fontSize:10 }} />
             {perfilLabel}
@@ -407,7 +407,7 @@ export default function Layout() {
             <button onClick={() => setMenuAberto(true)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', color: '#888780', padding: '2px 4px', lineHeight: 1 }}>
               <i className="ti ti-menu-2" style={{ fontSize: 20 }} />
             </button>
-            <img src="/logo.png" alt="Logo" style={{ height: 28, width: 'auto', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none' }} />
+            <img src="/logo.png" alt="TEIAA" style={{ height: 52, width: 'auto', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none' }} />
             <div style={{ flex: 1 }} />
             <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, fontWeight: 500, color: '#fff', background: perfilCor }}>
               {perfilLabel}
@@ -422,7 +422,7 @@ export default function Layout() {
         </div>
 
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra · CAPETTE · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
+          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra · TEIAA · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
           <div style={{ display:'flex', gap:12, alignItems:'center' }}>
             <button onClick={() => setFeedbackAberto(true)}
               style={{ fontSize:10, color:'#B4B2A9', background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:3 }}
