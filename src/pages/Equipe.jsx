@@ -150,7 +150,7 @@ export default function Equipe() {
     }
     let error, data
     if (editando) {
-      ;({ error } = await supabase.from('equipe').update(dados).eq('id', editando))
+      ;({ error, data } = await supabase.from('equipe').update(dados).eq('id', editando).select())
     } else {
       ;({ data, error } = await supabase.from('equipe').insert(dados).select().single())
       // Registra entrada no histórico
@@ -161,7 +161,8 @@ export default function Equipe() {
         })
       }
     }
-    if (error) setMsg('Erro: ' + error.message)
+    if (error) setMsg('Erro ao salvar: ' + error.message + (error.code ? ' [' + error.code + ']' : ''))
+    else if (editando && (!data || data.length === 0)) setMsg('Erro: registro não foi atualizado. Verifique permissões no banco.')
     else { setMsg('Pessoa salva com sucesso!'); setForm(FORM_VAZIO); setEditando(null); setAba('lista'); carregar() }
     setSalvando(false)
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
