@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { fetchAll } from '../lib/db'
 import { auditar } from '../lib/auditoria'
 import { useNavigate } from 'react-router-dom'
@@ -22,6 +23,7 @@ function similaridade(s1, s2) {
 
 export default function Conciliacao() {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [extratos, setExtratos] = useState([])
   const [extratoSel, setExtratoSel] = useState(null)
   const [movs, setMovs] = useState([])

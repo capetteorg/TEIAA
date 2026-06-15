@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { useNavigate } from 'react-router-dom'
 
 const VERDE = '#0E7EA8', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
@@ -19,6 +20,7 @@ const TIPO = {
 
 export default function Pendencias() {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [pendencias, setPendencias] = useState([])
   const [loading, setLoading] = useState(false)
   const [atualizando, setAtualizando] = useState(false)
@@ -154,7 +156,8 @@ export default function Pendencias() {
             )}
           </div>
         ) : (
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
             <thead>
               <tr>{['Gravidade','Tipo','Pendência','Descrição','Criado em',''].map(h=>(
                 <th key={h} style={s.th}>{h}</th>
@@ -199,6 +202,7 @@ export default function Pendencias() {
               })}
             </tbody>
           </table>
+                </div>
         )}
       </div>
     </div>

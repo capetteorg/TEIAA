@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const AG_BLUE = '#0E7EA8'
 const TOPBAR_H = 62
@@ -9,6 +10,7 @@ const TOPBAR_H = 62
 export default function PainelOperacional() {
   const navigate = useNavigate()
   const { perfil } = useAuth()
+  const isMobile = useIsMobile()
   const [dados, setDados] = useState(null)
   const [atendimentosRecentes, setAtendimentosRecentes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +101,7 @@ export default function PainelOperacional() {
   return (
     <div>
       {/* Topbar */}
-      <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+      <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: isMobile ? '0 12px' : '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8E6DE', flexShrink: 0 }}>
             {perfil?.avatar_url ? (
@@ -120,12 +122,12 @@ export default function PainelOperacional() {
           </div>
         </div>
         <button onClick={() => navigate('/atendimentos')}
-          style={{ padding: '7px 16px', fontSize: 12, fontWeight: 600, borderRadius: 9, border: 'none', background: AG_BLUE, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 600, borderRadius: 9, border: 'none', background: AG_BLUE, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
           <i className="ti ti-plus" /> Registrar atendimento
         </button>
       </div>
 
-      <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ padding: isMobile ? '12px' : '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* ALERTA cobranças */}
         {!loading && dados?.cobrancas > 0 && (
@@ -158,14 +160,14 @@ export default function PainelOperacional() {
         </div>
 
         {/* GRID 2 COLUNAS */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 14, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 280px', gap: 14, alignItems: 'start' }}>
 
           {/* AÇÕES RÁPIDAS */}
           <div style={{ ...card }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 14 }}>
               Ações rápidas
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 8 }}>
               {ACOES.map(a => (
                 <button key={a.rota+a.label} onClick={() => navigate(a.rota)}
                   style={{

@@ -149,7 +149,7 @@ export default function UsuariosAtendidos() {
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Usuários / Público Atendido</div>
       </div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
+      <div style={{ padding: isMobile ? '.75rem' : '1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
 <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {usuarios.length} total</div>
