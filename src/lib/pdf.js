@@ -521,8 +521,11 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 
   const conciliadas = lista.filter(m => m.conciliado).length
   const pendentes   = lista.filter(m => !m.conciliado).length
+  const statusCor   = pendentes > 0 ? '#854F0B' : '#2E6F3E'
+  const statusTxt   = pendentes > 0 ? `${pendentes} pendente(s)` : 'Totalmente conciliado'
+  const statusBg    = pendentes > 0 ? '#FFF6ED' : '#EEF8F1'
 
-  // Demonstrativo mensal
+  // ── Demonstrativo mensal ──
   const mesesMap = {}
   lista.forEach(m => {
     const mes = m.data?.slice(0,7)
@@ -533,149 +536,171 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
     else mesesMap[mes].sai += Math.abs(v)
     mesesMap[mes].qtd++
   })
-  const linhasMensais = Object.entries(mesesMap).sort().map(([mes, d]) => {
+  const linhasMensais = Object.entries(mesesMap).sort().map(([mes, d], i) => {
     const [ano, mo] = mes.split('-')
-    const nomeMes = new Date(+ano, +mo-1, 1).toLocaleDateString('pt-BR', {month:'long', year:'numeric'}).replace(/^(\w)/, ch => ch.toLowerCase())
+    const nomeMes = new Date(+ano, +mo-1, 1).toLocaleDateString('pt-BR', {month:'long', year:'numeric'})
     const res = d.ent - d.sai
-    return `<tr>
-      <td>${nomeMes}</td>
-      <td class="num" style="color:#2E6F3E">${fmt(d.ent)}</td>
-      <td class="num" style="color:#A7352C">${fmt(d.sai)}</td>
-      <td class="num" style="color:${res>=0?'#2E6F3E':'#A7352C'}">${res>=0?'+':'-'} ${fmt(res)}</td>
-      <td class="num">${d.qtd}</td>
+    const resCor = res >= 0 ? '#2E6F3E' : '#A7352C'
+    const bg = i % 2 === 0 ? '#fff' : '#F8F7F2'
+    return `<tr style="background:${bg}">
+      <td style="padding:7px 10px;border-bottom:1px solid #ECE6DA;font-size:10px">${nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1)}</td>
+      <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #ECE6DA;color:#2E6F3E;font-weight:600;font-size:10px">${fmt(d.ent)}</td>
+      <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #ECE6DA;color:#A7352C;font-weight:600;font-size:10px">${fmt(d.sai)}</td>
+      <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #ECE6DA;color:${resCor};font-weight:700;font-size:10px">${res>=0?'+ ':'\u2212 '}${fmt(Math.abs(res))}</td>
+      <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #ECE6DA;color:#626B76;font-size:10px">${d.qtd}</td>
     </tr>`
   }).join('')
 
-  // Linhas de detalhamento
-  const linhas = lista.map(m => {
+  // ── Linhas de detalhamento ──
+  const linhas = lista.map((m, i) => {
     const isEnt  = Number(m.valor) > 0
     const partes = m._partes || []
     const fornecedor = m.fornecedor || m.lancamento?.fornecedor || '—'
     const numNota    = m.num_nota  || m.lancamento?.num_nota   || '—'
-    const subLinhas  = partes.map(p => `
-      <tr style="background:#F8F7F2">
-        <td></td>
-        <td style="padding-left:14px;font-size:8.5px;color:#888;font-style:italic">└ ${p.descricao||'—'}</td>
-        <td style="font-size:8.5px;color:#5F5E5A">${p.categoria?.nome||'—'}</td>
-        <td style="font-size:8.5px;color:#888">${p.subcategoria?.nome||'—'}</td>
-        <td></td><td></td><td></td><td></td>
+    const catTxt     = partes.length > 0 ? '' : (m.categoria?.nome || '—')
+    const subCatTxt  = partes.length > 0 ? '' : (m.subcategoria?.nome || '')
+    const bg = isEnt ? '#F5FBF0' : (i % 2 === 0 ? '#fff' : '#FEFEFE')
+    const valCor = isEnt ? '#2E6F3E' : '#A7352C'
+    const sinal  = isEnt ? '+' : '\u2212'
+
+    const subLinhas = partes.map(p => `
+      <tr style="background:#F8F7F4">
+        <td style="padding:3px 8px;border-bottom:1px solid #ECE6DA"></td>
+        <td colspan="2" style="padding:3px 8px 3px 20px;border-bottom:1px solid #ECE6DA;font-size:8px;color:#888;font-style:italic">
+          └ ${p.descricao||'—'}
+        </td>
+        <td style="padding:3px 8px;border-bottom:1px solid #ECE6DA;font-size:8px;color:#626B76">${p.categoria?.nome||'—'}</td>
+        <td style="padding:3px 8px;border-bottom:1px solid #ECE6DA;font-size:8px;color:#888">${p.subcategoria?.nome||'—'}</td>
+        <td colspan="3" style="border-bottom:1px solid #ECE6DA"></td>
       </tr>`).join('')
-    return `<tr>
-      <td style="white-space:nowrap;color:#626B76">${fmtData(m.data)}</td>
-      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.descricao||'—'}${partes.length>0?` <span style="font-size:8.5px;color:#185FA5">(${partes.length})</span>`:''}</td>
-      <td style="font-size:8.5px">${partes.length>0?'<em style="color:#aaa">ver abaixo</em>':(m.categoria?.nome||'—')}</td>
-      <td style="font-size:8.5px;color:#888">${partes.length>0?'':m.subcategoria?.nome||'—'}</td>
-      <td style="font-size:8.5px;color:#888">${fornecedor==='—'?'—':fornecedor.split(' ').slice(0,2).join(' ')}</td>
-      <td style="font-family:monospace;font-size:8px;color:#888">${numNota}</td>
-      <td class="num" style="font-weight:600;white-space:nowrap;color:${isEnt?'#2E6F3E':'#A7352C'}">${isEnt?'+':'-'} ${fmt(Math.abs(Number(m.valor)))}</td>
-      <td class="center" style="color:${m.conciliado?'#2E6F3E':'#854F0B'};font-weight:700">${m.conciliado?'✓':'⏳'}</td>
+
+    return `<tr style="background:${bg}">
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;white-space:nowrap;color:#626B76;font-size:9px">${fmtData(m.data)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;font-size:9px;max-width:180px">
+        ${m.descricao||'—'}${partes.length>0?` <span style="font-size:8px;color:#0E7EA8;font-weight:600">(${partes.length})</span>`:''}
+      </td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;font-size:8.5px;color:#444">${catTxt}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;font-size:8px;color:#888">${subCatTxt}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;font-size:8px;color:#888;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fornecedor==='—'?'—':fornecedor.split(' ').slice(0,2).join(' ')}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;font-family:monospace;font-size:8px;color:#aaa">${numNota}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;text-align:right;font-weight:700;white-space:nowrap;font-size:9.5px;color:${valCor}">${sinal} ${fmt(Math.abs(Number(m.valor)))}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #ECE6DA;text-align:center;font-weight:700;font-size:10px;color:${m.conciliado?'#2E6F3E':'#854F0B'}">${m.conciliado?'✓':'⏳'}</td>
     </tr>${subLinhas}`
   }).join('')
 
   const logoFallback = `<div style="display:flex;gap:1px"><span style="font-size:16px;font-weight:900;color:#F5C800">C</span><span style="font-size:16px;font-weight:900;color:#F4821F">A</span><span style="font-size:16px;font-weight:900;color:#8B2FC9">P</span><span style="font-size:16px;font-weight:900;color:#E8212A">E</span><span style="font-size:16px;font-weight:900;color:#6BBF2B">T</span><span style="font-size:16px;font-weight:900;color:#0E7EA8">T</span><span style="font-size:16px;font-weight:900;color:#E8207A">E</span></div><div style="font-size:8px;color:#888">Desde 1974</div>`
 
+  // ── Cabeçalho compacto para páginas internas ──
   const cabecalhoPagina = `
-  <div style="display:grid;grid-template-columns:1fr auto;gap:20px;border-bottom:1px solid #D7D0C2;padding-bottom:12px;margin-bottom:20px">
+  <div style="display:grid;grid-template-columns:1fr auto;gap:20px;border-bottom:1.5px solid #0E7EA8;padding-bottom:10px;margin-bottom:16px;align-items:end">
     <div>
-      <div style="font-size:15px;font-weight:700;color:#06344F;letter-spacing:-.01em">Conciliação Bancária — ${new Date().getFullYear()}</div>
-      <div style="margin-top:4px;color:#66717E;font-size:9.5px">${contaNome} · ${bancNome} · ${periodoLabel}</div>
+      <div style="font-size:7.5px;font-weight:700;color:#0E7EA8;letter-spacing:.15em;text-transform:uppercase;margin-bottom:3px">Conciliação Bancária · ${new Date().getFullYear()}</div>
+      <div style="font-size:12px;font-weight:700;color:#06344F">${contaNome} · ${bancNome}</div>
+      <div style="font-size:9px;color:#66717E;margin-top:2px">${periodoLabel}</div>
     </div>
-    <div style="text-align:right;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#06344F">
-      AGENDO Integra<span style="display:block;margin-top:4px;color:#0E7EA8;font-weight:400;text-transform:none;letter-spacing:0">${protocolo}</span>
+    <div style="text-align:right">
+      <div style="font-size:7.5px;font-weight:700;color:#06344F;letter-spacing:.1em;text-transform:uppercase">AGENDO Integra</div>
+      <div style="font-size:9px;color:#0E7EA8;margin-top:2px">${protocolo}</div>
     </div>
   </div>`
 
   const rodapeHtml = `
-  <div style="border-top:1px solid #D7D0C2;padding-top:10px;display:flex;justify-content:space-between;color:#66717E;font-size:9px;margin-top:20px">
+  <div style="border-top:1px solid #D7D0C2;padding-top:8px;display:flex;justify-content:space-between;color:#9199A2;font-size:8px;margin-top:20px">
     <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
-    <div><strong style="color:#06344F">AGENDO Integra</strong> · ${protocolo}</div>
+    <div>AGENDO Integra · ${protocolo}</div>
   </div>`
+
+  // ── TH helper ──
+  const th = (txt, align='left') =>
+    `<th style="background:#1A2535;color:#C8D0DA;font-size:7px;text-transform:uppercase;letter-spacing:.12em;padding:8px 8px;text-align:${align};font-weight:700;border:none">${txt}</th>`
 
   const html = `
   <div class="pg">
-    <!-- CABEÇALHO COMPLETO COM LOGO -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0E7EA8;padding-bottom:12px;margin-bottom:24px">
+
+    <!-- ── CABEÇALHO COM LOGO ── -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #0E7EA8;padding-bottom:14px;margin-bottom:20px">
       <div>
-        <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:48px;width:auto;object-fit:contain;display:block"
+        <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE"
+          style="height:50px;width:auto;object-fit:contain;display:block"
           onerror="this.outerHTML='${logoFallback}'" />
       </div>
-      <div style="text-align:right;font-size:9px;color:#5F6874;max-width:280px;line-height:1.5">
-        <div style="font-size:11px;font-weight:700;color:#20252C">${CAPETTE_INFO.nome}</div>
-        <div style="font-size:10px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${CAPETTE_INFO.cnpj}</div>
-        <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
+      <div style="text-align:right;font-size:9px;color:#5F6874;max-width:290px;line-height:1.6">
+        <div style="font-size:12px;font-weight:700;color:#20252C;margin-bottom:2px">${CAPETTE_INFO.nome}</div>
+        <div style="font-size:9.5px;font-weight:700;color:#444;margin-bottom:3px">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+        <div style="font-size:7.5px;color:#9199A2;line-height:1.6">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
       </div>
     </div>
 
-    <!-- TÍTULO EDITORIAL -->
-    <div style="font-size:10px;font-weight:700;color:#0E7EA8;letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px">Documento operacional</div>
-    <div style="font-family:Georgia,serif;font-size:46px;line-height:.95;font-weight:400;letter-spacing:-.04em;color:#06344F;margin-bottom:12px">Conciliação<br>Bancária</div>
-    <div style="width:80px;height:2px;background:#A98E54;margin-bottom:14px"></div>
-    <div style="font-size:13px;color:#303944;margin-bottom:22px">Período: ${periodoLabel}</div>
+    <!-- ── KICKER + TÍTULO ── -->
+    <div style="font-size:9px;font-weight:700;color:#0E7EA8;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">Documento Operacional</div>
+    <div style="font-family:Georgia,serif;font-size:44px;line-height:.92;font-weight:400;letter-spacing:-.04em;color:#06344F;margin-bottom:10px">Conciliação<br>Bancária</div>
+    <div style="width:60px;height:2.5px;background:#A98E54;margin-bottom:12px"></div>
+    <div style="font-size:12px;color:#444;margin-bottom:20px">Período: <strong>${periodoLabel}</strong></div>
 
-    <!-- GRID DE IDENTIFICAÇÃO -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin-bottom:20px">
-      <div style="padding:12px 20px 12px 0;border-right:1px solid #ECE6DA;border-bottom:1px solid #ECE6DA">
-        <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:5px">Instituição</div>
-        <div style="font-size:12px;color:#20252C;font-weight:600">${CAPETTE_INFO.nome}</div>
-        <div style="font-size:9.5px;color:#626B76;margin-top:2px">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+    <!-- ── 4 KPIs ── -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+      <div style="border-top:3px solid #2E6F3E;background:#F5FBF0;border-radius:4px;padding:10px 12px">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#5A8060;margin-bottom:5px">Total Entradas</div>
+        <div style="font-size:15px;font-weight:700;color:#2E6F3E">${fmt(totalEnt)}</div>
       </div>
-      <div style="padding:12px 0 12px 20px;border-bottom:1px solid #ECE6DA">
-        <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:5px">Conta analisada</div>
-        <div style="font-size:12px;color:#20252C;font-weight:600">${contaNome}</div>
-        <div style="font-size:9.5px;color:#626B76;margin-top:2px">${bancNome} · Ag. ${agNome} · Cc. ${ctNum}</div>
+      <div style="border-top:3px solid #A7352C;background:#FFF5F5;border-radius:4px;padding:10px 12px">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#8A4040;margin-bottom:5px">Total Saídas</div>
+        <div style="font-size:15px;font-weight:700;color:#A7352C">${fmt(totalSai)}</div>
       </div>
-      <div style="padding:12px 20px 12px 0;border-right:1px solid #ECE6DA">
-        <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:5px">Protocolo</div>
-        <div style="font-size:12px;color:#20252C;font-weight:600">${protocolo}</div>
-        <div style="font-size:9.5px;color:#626B76;margin-top:2px">Emitido em ${dataEmissao}</div>
+      <div style="border-top:3px solid #0E7EA8;background:#EAF5F8;border-radius:4px;padding:10px 12px">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#1A6080;margin-bottom:5px">Saldo do Período</div>
+        <div style="font-size:15px;font-weight:700;color:${saldo>=0?'#2E6F3E':'#A7352C'}">${saldo>=0?'+ ':'\u2212 '}${fmt(Math.abs(saldo))}</div>
       </div>
-      <div style="padding:12px 0 12px 20px">
-        <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:5px">Status</div>
-        <div style="font-size:12px;font-weight:600;color:${pendentes>0?'#854F0B':'#2E6F3E'}">${pendentes>0?pendentes+' pendente(s)':'Totalmente conciliado'}</div>
-        <div style="font-size:9.5px;color:#626B76;margin-top:2px">${conciliadas} conciliadas · ${pendentes} pendentes</div>
+      <div style="border-top:3px solid #6B7280;background:#F8F7F2;border-radius:4px;padding:10px 12px">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#5F6874;margin-bottom:5px">Movimentações</div>
+        <div style="font-size:15px;font-weight:700;color:#1A1F1C">${lista.length.toLocaleString('pt-BR')}</div>
       </div>
     </div>
 
-    <!-- INDICADORES -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;margin-bottom:22px">
-      <div style="padding:13px 10px;border-right:1px solid #ECE6DA">
-        <div style="font-size:8px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:7px">Total entradas</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:#2E6F3E">${fmt(totalEnt)}</div>
+    <!-- ── METADADOS ── -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #E0DDD5;border-radius:4px;margin-bottom:20px;overflow:hidden">
+      <div style="padding:10px 12px;border-right:1px solid #E0DDD5;background:#FAFAF8">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#888780;margin-bottom:4px">Instituição</div>
+        <div style="font-size:9.5px;font-weight:600;color:#1A1F1C;line-height:1.3">${CAPETTE_INFO.nome}</div>
+        <div style="font-size:8px;color:#888780;margin-top:2px">${CAPETTE_INFO.cnpj}</div>
       </div>
-      <div style="padding:13px 10px;border-right:1px solid #ECE6DA">
-        <div style="font-size:8px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:7px">Total saídas</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:#A7352C">${fmt(totalSai)}</div>
+      <div style="padding:10px 12px;border-right:1px solid #E0DDD5;background:#FAFAF8">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#888780;margin-bottom:4px">Conta analisada</div>
+        <div style="font-size:9.5px;font-weight:600;color:#1A1F1C">${contaNome}</div>
+        <div style="font-size:8px;color:#888780;margin-top:2px">${bancNome} · Ag. ${agNome} · Cc. ${ctNum}</div>
       </div>
-      <div style="padding:13px 10px;border-right:1px solid #ECE6DA">
-        <div style="font-size:8px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:7px">Saldo do período</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:${saldo>=0?'#2E6F3E':'#A7352C'}">${saldo>=0?'+':'-'} ${fmt(saldo)}</div>
+      <div style="padding:10px 12px;border-right:1px solid #E0DDD5;background:#FAFAF8">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#888780;margin-bottom:4px">Protocolo</div>
+        <div style="font-size:9.5px;font-weight:600;color:#1A1F1C">${protocolo}</div>
+        <div style="font-size:8px;color:#888780;margin-top:2px">Emitido em ${dataEmissao}</div>
       </div>
-      <div style="padding:13px 10px">
-        <div style="font-size:8px;text-transform:uppercase;color:#6B7280;letter-spacing:.12em;margin-bottom:7px">Movimentações</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:#0E7EA8">${lista.length}</div>
+      <div style="padding:10px 12px;background:${statusBg}">
+        <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#888780;margin-bottom:4px">Status</div>
+        <div style="font-size:9.5px;font-weight:700;color:${statusCor}">${statusTxt}</div>
+        <div style="font-size:8px;color:#888780;margin-top:2px">${conciliadas} conciliadas · ${pendentes} pendentes</div>
       </div>
     </div>
 
-    <!-- DEMONSTRATIVO MENSAL -->
-    <div style="font-family:Georgia,serif;font-size:22px;color:#06344F;margin-bottom:13px;letter-spacing:-.02em">Demonstrativo mensal</div>
-    <table style="font-size:10.5px;border-collapse:collapse;width:100%">
+    <!-- ── DEMONSTRATIVO MENSAL ── -->
+    <div style="font-family:Georgia,serif;font-size:19px;color:#06344F;margin-bottom:10px;letter-spacing:-.02em">Demonstrativo mensal</div>
+    <table style="border-collapse:collapse;width:100%;border-radius:4px;overflow:hidden">
       <thead>
         <tr>
-          <th style="background:#06344F;color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:.1em;padding:8px 7px;text-align:left">Mês</th>
-          <th style="background:#06344F;color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:.1em;padding:8px 7px;text-align:right">Entradas</th>
-          <th style="background:#06344F;color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:.1em;padding:8px 7px;text-align:right">Saídas</th>
-          <th style="background:#06344F;color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:.1em;padding:8px 7px;text-align:right">Resultado</th>
-          <th style="background:#06344F;color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:.1em;padding:8px 7px;text-align:right">Movs.</th>
+          ${th('Mês')}
+          ${th('Entradas','right')}
+          ${th('Saídas','right')}
+          ${th('Resultado','right')}
+          ${th('Movs.','right')}
         </tr>
       </thead>
       <tbody>
         ${linhasMensais}
-        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2">
-          <td style="padding:8px 7px;border-bottom:none">Total do período</td>
-          <td style="padding:8px 7px;text-align:right;color:#2E6F3E;border-bottom:none">${fmt(totalEnt)}</td>
-          <td style="padding:8px 7px;text-align:right;color:#A7352C;border-bottom:none">${fmt(totalSai)}</td>
-          <td style="padding:8px 7px;text-align:right;color:${saldo>=0?'#2E6F3E':'#A7352C'};border-bottom:none">${saldo>=0?'+':'-'} ${fmt(saldo)}</td>
-          <td style="padding:8px 7px;text-align:right;border-bottom:none">${lista.length}</td>
+        <tr style="background:#F0EDE4;font-weight:700;border-top:2px solid #1A2535">
+          <td style="padding:9px 10px;font-size:10.5px;color:#1A1F1C">Total do período</td>
+          <td style="padding:9px 10px;text-align:right;font-size:10.5px;color:#2E6F3E">${fmt(totalEnt)}</td>
+          <td style="padding:9px 10px;text-align:right;font-size:10.5px;color:#A7352C">${fmt(totalSai)}</td>
+          <td style="padding:9px 10px;text-align:right;font-size:10.5px;color:${saldo>=0?'#2E6F3E':'#A7352C'}">${saldo>=0?'+ ':'\u2212 '}${fmt(Math.abs(saldo))}</td>
+          <td style="padding:9px 10px;text-align:right;font-size:10.5px;color:#626B76">${lista.length}</td>
         </tr>
       </tbody>
     </table>
@@ -683,32 +708,37 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
     ${rodapeHtml}
   </div>
 
-  <!-- PÁGINAS DE DETALHAMENTO -->
+  <!-- ── PÁGINAS DE DETALHAMENTO ── -->
   <div class="pg page-break">
     ${cabecalhoPagina}
 
-    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px 6px 13px;border-left:3px solid #0E7EA8;background:#EAF5F8;color:#06344F;margin-bottom:12px">
-      ⇅ Detalhamento das movimentações (${lista.length})
+    <div style="font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:7px 12px 7px 14px;border-left:3px solid #0E7EA8;background:#EAF5F8;color:#06344F;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <span>⇅ Detalhamento das movimentações (${lista.length})</span>
+      <span style="font-size:8px;font-weight:400;color:#0E7EA8">
+        <span style="display:inline-block;width:10px;height:10px;background:#F5FBF0;border:1px solid #2E6F3E;border-radius:2px;vertical-align:middle;margin-right:3px"></span>Entrada &nbsp;
+        <span style="display:inline-block;width:10px;height:10px;background:#FFF5F5;border:1px solid #A7352C;border-radius:2px;vertical-align:middle;margin-right:3px"></span>Saída
+      </span>
     </div>
+
     <table style="font-size:9px;border-collapse:collapse;width:100%">
       <thead>
         <tr>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:left">Data</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:left">Descrição</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:left">Categoria</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:left">Subcategoria</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:left">Fornecedor</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:left">Nº Nota</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:right">Valor</th>
-          <th style="background:#F2F6F7;color:#525B66;border-top:1px solid #D7D0C2;border-bottom:1px solid #D7D0C2;font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;padding:7px 6px;text-align:center">OK</th>
+          ${th('Data')}
+          ${th('Descrição / Fornecedor')}
+          ${th('Categoria')}
+          ${th('Subcategoria')}
+          ${th('Fornecedor')}
+          ${th('Nº Nota')}
+          ${th('Valor','right')}
+          ${th('✓','center')}
         </tr>
       </thead>
       <tbody>
         ${linhas}
-        <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid #D7D0C2">
-          <td colspan="6" style="padding:7px 6px;border-bottom:none">Saldo do período</td>
-          <td style="padding:7px 6px;text-align:right;color:${saldo>=0?'#2E6F3E':'#A7352C'};border-bottom:none">${saldo>=0?'+':'-'} ${fmt(saldo)}</td>
-          <td style="border-bottom:none"></td>
+        <tr style="background:#F0EDE4;font-weight:700;border-top:2px solid #1A2535">
+          <td colspan="6" style="padding:8px 8px;font-size:10px;color:#1A1F1C">Saldo do período</td>
+          <td style="padding:8px 8px;text-align:right;font-size:10.5px;color:${saldo>=0?'#2E6F3E':'#A7352C'}">${saldo>=0?'+ ':'\u2212 '}${fmt(Math.abs(saldo))}</td>
+          <td></td>
         </tr>
       </tbody>
     </table>
