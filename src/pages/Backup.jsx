@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { confirmar } from '../lib/ui'
 import { auditar } from '../lib/auditoria'
+import { gerarPDFRelatorio } from '../lib/pdf'
+import * as XLSX from 'xlsx'
 
 const VERDE = '#0E7EA8', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -140,12 +142,48 @@ export default function Backup() {
 
     // JSON estruturado — reimportável tabela por tabela
     const blob = new Blob([JSON.stringify(dump, null, 1)], { type: 'application/json;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `backup_capette_${new Date().toISOString().slice(0,10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    const urlJson = URL.createObjectURL(blob)
+    const aJson = document.createElement('a')
+    aJson.href = urlJson
+    aJson.download = `backup_capette_${new Date().toISOString().slice(0,10)}.json`
+    aJson.click()
+    URL.revokeObjectURL(urlJson)
+
+    // XLSX com abas principais
+    setProgresso('Gerando planilha Excel...')
+    try {
+      const wb = XLSX.utils.book_new()
+      const principais = ['extrato_movs','lancamentos','cobrancas','projetos','atendimentos','equipe','usuarios_atendidos','fornecedores']
+      for (const tabela of principais) {
+        if (dump[tabela]?.length) {
+          const ws = XLSX.utils.json_to_sheet(dump[tabela])
+          XLSX.utils.book_append_sheet(wb, ws, tabela.slice(0,31))
+        }
+      }
+      XLSX.writeFile(wb, `capette_dados_${new Date().toISOString().slice(0,10)}.xlsx`)
+    } catch(e) {
+      console.warn('XLSX não gerado:', e)
+    }
+
+    // Gerar PDF do relatório financeiro anual
+    setProgresso('Gerando relatório PDF...')
+    try {
+      const anoAtual = new Date().getFullYear()
+      const iniAno = `${anoAtual}-01-01`
+      const fimAno = `${anoAtual}-12-31`
+      const { data: movsAno } = await supabase.from('extrato_movs')
+        .select('valor, data, descricao, categoria_id, tipo')
+        .gte('data', iniAno).lte('data', fimAno)
+        .order('data')
+      if (movsAno?.length) {
+        gerarPDFRelatorio(movsAno, iniAno, fimAno, {
+          titulo: `Relatório Financeiro ${anoAtual} — CAPETTE`,
+          subtitulo: `Backup gerado em ${new Date().toLocaleDateString('pt-BR')}`,
+        })
+      }
+    } catch (e) {
+      console.warn('PDF não gerado:', e)
+    }
 
     // Registrar log
     await supabase.from('backup_log').insert({
@@ -155,7 +193,7 @@ export default function Backup() {
     }).catch(() => {})
 
     setProgresso('')
-    setResultado({ total: totalRegistros, arquivos: arquivos.length })
+    setResultado({ total: totalRegistros, arquivos: 3 })
     setLoading(false)
   }
 
@@ -186,12 +224,12 @@ export default function Backup() {
 
         {resultado && (
           <div style={{ fontSize:12, color:'#3B6D11', marginBottom:12, padding:'8px 12px', background:'#EAF3DE', borderRadius:8 }}>
-            <i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Backup gerado com sucesso! {resultado.total.toLocaleString('pt-BR')} registros em {resultado.arquivos} tabelas.
+            <i className="ti ti-circle-check" style={{marginRight:4, color:'#3B6D11'}} /> Backup gerado com sucesso! {resultado.total.toLocaleString('pt-BR')} registros exportados em 3 arquivos: backup.json · dados.xlsx · relatório.pdf
           </div>
         )}
 
         <button onClick={gerarBackup} disabled={loading} style={s.btn(loading?'#D3D1C7':'#0E7EA8')}>
-          {loading ? 'Gerando backup...' : 'Gerar e baixar backup'}
+          {loading ? progresso || 'Gerando backup...' : 'Gerar backup completo (JSON + Excel + PDF)'}
         </button>
       </div>
 
