@@ -456,9 +456,11 @@ export default function RelatoriosCentral() {
 
   return (
     <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em', marginBottom:'1.25rem' }}>Relatórios</div>
-
-      {/* Abas */}
+      {/* Topbar */}
+      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Central de Relatórios</div>
+      </div>
+{/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         {ABAS.filter(a => isDiretoria ? ['financeiro','execucao','equipe','usuarios','atendimentos'].includes(a.id) : true).map(a => (
           <button key={a.id} onClick={() => { setAba(a.id); setDados(null) }} style={s.tab(aba===a.id)}>
