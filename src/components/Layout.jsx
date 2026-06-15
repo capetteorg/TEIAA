@@ -345,6 +345,9 @@ export default function Layout() {
         .busca-item:hover { background: rgba(14,126,168,0.08) !important; }
       `}</style>
 
+      {/* Marca d'água AGENDO */}
+      <img src="/agendo-logo.png" alt="" aria-hidden="true" style={{ position: 'fixed', bottom: 0, left: 0, width: '32vw', maxWidth: 420, opacity: 0.045, pointerEvents: 'none', zIndex: 0, userSelect: 'none' }} />
+
       {/* Busca global \u2014 Ctrl+K */}
       {buscaAberta && (
         <div onClick={e => { if (e.target === e.currentTarget) setBuscaAberta(false) }}
