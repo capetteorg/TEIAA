@@ -78,16 +78,29 @@ export default function Pendencias() {
   }
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
-        <div>
-          <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Pendências</div>
-          <div style={{ fontSize:12, color:'#888780' }}>Itens que precisam de atenção</div>
-        </div>
-        <button onClick={atualizar} disabled={atualizando} style={s.btn(AZUL)}>
-          {atualizando ? 'Atualizando...' : '↻ Atualizar pendências'}
+    <div>
+      <div style={{ padding:'0 1.5rem 1.5rem' }}>
+      {/* Topbar */}
+      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Pendências</div>
+        <button onClick={atualizar} disabled={atualizando} style={{ padding:'7px 14px', fontSize:12, fontWeight:600, borderRadius:9, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+          <i className="ti ti-refresh" /> {atualizando ? 'Atualizando...' : 'Atualizar pendências'}
         </button>
       </div>
+
+      {/* Banner explicativo */}
+      {pendencias.filter(p => !p.resolvida).length > 0 && (
+        <div style={{ background: 'rgba(14,126,168,0.05)', border: '0.5px solid rgba(14,126,168,0.15)', borderRadius: 12, padding: '12px 16px', margin: '16px 0 0', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <i className="ti ti-info-circle" style={{ fontSize: 18, color: '#0E7EA8', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#06344F', marginBottom: 3 }}>O que são pendências?</div>
+            <div style={{ fontSize: 11.5, color: '#5F5E5A', lineHeight: 1.55 }}>
+              Pendências são geradas automaticamente durante a conciliação — despesas sem nota fiscal, movimentações sem categoria ou situações que precisam de revisão.
+              Resolva as <strong>críticas</strong> antes de fechar o mês. As <strong>informativas</strong> podem ser resolvidas depois.
+            </div>
+          </div>
+        </div>
+      )}
 
       {msg && <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:10, background:'#F2FAE8', color:'#3B6D11' }}>{msg}</div>}
 
@@ -189,5 +202,6 @@ export default function Pendencias() {
         )}
       </div>
     </div>
+      </div>
   )
 }

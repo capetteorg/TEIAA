@@ -382,8 +382,12 @@ export default function Importar() {
 
           {step === 3 && (
             <div style={{ ...s.card, textAlign: 'center', padding: '3rem' }}>
-              <div style={{ marginBottom: '1rem' }}><i className="ti ti-circle-check" style={{fontSize:48, color:'#3B6D11'}} /></div>
-              <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '.5rem' }}>Extrato importado com sucesso!</div>
+              <div style={{ marginBottom: '1rem' }}>
+                <i className="ti ti-circle-check" style={{fontSize:48, color:'#3B6D11'}} />
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em', marginBottom: '.5rem' }}>
+                {novasMovs === 0 ? 'Extrato já atualizado!' : novasMovs !== null && novasMovs < 9999 ? `${novasMovs} movimentações adicionadas!` : 'Extrato importado com sucesso!'}
+              </div>
               {avisoSaldo && (
                 <div style={{ fontSize:12, color:'#854F0B', background:'#FAEEDA', border:'0.5px solid #EDD9A3', borderRadius:10, padding:'10px 14px', margin:'0 auto 1rem', maxWidth:520, textAlign:'left', display:'flex', gap:8, alignItems:'flex-start' }}>
                   <i className="ti ti-alert-triangle" style={{fontSize:15, flexShrink:0, marginTop:1}} />
@@ -394,8 +398,12 @@ export default function Importar() {
                 Agora vá em <strong>Conciliação</strong> para categorizar e validar as movimentações.
               </div>
               <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+                <button onClick={() => navigate('/conciliacao')}
+                  style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                  <i className="ti ti-checks" /> Ir para Conciliação →
+                </button>
                 <button onClick={() => setStep(1)}
-                  style={{ padding: '7px 16px', fontSize: 12, borderRadius: 8, border: 'none', background: '#0E7EA8', color: '#fff', cursor: 'pointer' }}>
+                  style={{ padding: '9px 16px', fontSize: 12, borderRadius: 10, border: '0.5px solid #D3D1C7', background: 'transparent', color: '#5F5E5A', cursor: 'pointer' }}>
                   + Importar outro extrato
                 </button>
                 <button onClick={() => { setAba('historico'); setStep(1) }}

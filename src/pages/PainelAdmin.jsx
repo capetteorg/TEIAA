@@ -120,6 +120,84 @@ export default function PainelAdmin() {
 
       <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+        {/* STEPPER DO MÊS */}
+        {d && (() => {
+          const mesLabel = new Date(mesAtual+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})
+          const etapas = [
+            {
+              num: 1, label: 'Importar extrato', icon: 'ti-file-upload',
+              ok: d.extratoOk,
+              pendente: !d.extratoOk,
+              desc: d.extratoOk ? 'Extrato importado' : 'Nenhum extrato importado ainda',
+              rota: '/importar',
+            },
+            {
+              num: 2, label: 'Conciliar', icon: 'ti-checks',
+              ok: d.extratoOk && d.naoConc === 0,
+              pendente: d.extratoOk && d.naoConc > 0,
+              desc: !d.extratoOk ? 'Aguardando extrato' : d.naoConc === 0 ? 'Tudo conciliado' : `${d.naoConc} movimentação(ões) pendente(s)`,
+              rota: '/conciliacao',
+            },
+            {
+              num: 3, label: 'Resolver pendências', icon: 'ti-alert-triangle',
+              ok: d.extratoOk && d.naoConc === 0 && d.pendAbertas === 0,
+              pendente: d.pendAbertas > 0,
+              desc: d.pendAbertas === 0 ? 'Sem pendências abertas' : `${d.pendAbertas} pendência(s) para resolver`,
+              rota: '/pendencias',
+            },
+            {
+              num: 4, label: 'Fechar mês', icon: 'ti-lock',
+              ok: d.mesesSemFechCF === 0,
+              pendente: d.extratoOk && d.naoConc === 0 && d.pendAbertas === 0 && d.mesesSemFechCF > 0,
+              desc: d.mesesSemFechCF === 0 ? 'Mês aprovado pelo CF' : 'Aguardando aprovação do Conselho Fiscal',
+              rota: '/fechamento',
+            },
+          ]
+          // Etapa atual = primeira não concluída
+          const etapaAtual = etapas.findIndex(e => !e.ok)
+
+          return (
+            <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, padding: '14px 18px', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 12, display: 'flex', justifyContent: 'space-between' }}>
+                Fluxo do mês — {mesLabel}
+                {etapaAtual === -1 && <span style={{ color: '#3B6D11', fontWeight: 600 }}>✓ Mês completo</span>}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, position: 'relative' }}>
+                {/* Linha conectora */}
+                <div style={{ position: 'absolute', top: 16, left: '12.5%', right: '12.5%', height: 2, background: '#E8E6DE', zIndex: 0 }} />
+                {etapas.map((et, i) => {
+                  const isOk = et.ok
+                  const isCurrent = i === etapaAtual
+                  const isLocked = !isOk && !isCurrent && !et.pendente
+                  return (
+                    <div key={et.num} onClick={() => navigate(et.rota)}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', position: 'relative', zIndex: 1, padding: '0 8px' }}>
+                      {/* Círculo */}
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: isOk ? '#3B6D11' : isCurrent ? '#0E7EA8' : et.pendente ? '#854F0B' : '#E8E6DE',
+                        border: `2px solid ${isOk ? '#3B6D11' : isCurrent ? '#0E7EA8' : et.pendente ? '#854F0B' : '#D3D1C7'}`,
+                        transition: 'all .2s',
+                      }}>
+                        <i className={`ti ${isOk ? 'ti-check' : et.icon}`} style={{ fontSize: 13, color: isOk || isCurrent || et.pendente ? '#fff' : '#B4B2A9' }} />
+                      </div>
+                      {/* Label */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 11, fontWeight: isCurrent ? 600 : 500, color: isOk ? '#3B6D11' : isCurrent ? '#0E7EA8' : et.pendente ? '#854F0B' : '#B4B2A9' }}>
+                          {et.label}
+                        </div>
+                        <div style={{ fontSize: 10, color: isOk ? '#3B6D11' : isCurrent ? '#0E7EA8' : et.pendente ? '#854F0B' : '#C8C6BC', marginTop: 2, lineHeight: 1.3 }}>
+                          {et.desc}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* ALERTAS */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

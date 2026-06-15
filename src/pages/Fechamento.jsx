@@ -204,12 +204,66 @@ export default function Fechamento() {
   const abertos = fechamentos.filter(f => !f.fechamento || f.fechamento.status === 'aberto').length
 
   return (
-    <div style={{ }}>
+    <div>
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Fechamento e Aprovação do Conselho Fiscal</div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Fechamento / Conselho Fiscal</div>
       </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
+      {/* Checklist pré-fechamento */}
+      {(() => {
+        const mesAtualComp = new Date().toISOString().slice(0,7)
+        const extratoMes = extratos.find(e => e.competencia === mesAtualComp)
+        return (
+          <div style={{ background: 'rgba(255,255,255,0.92)', border: '0.5px solid #E8E6DE', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 12 }}>
+              Checklist para fechar {new Date(mesAtualComp+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
+              {[
+                {
+                  ok: !!extratoMes,
+                  label: 'Extrato importado',
+                  desc: extratoMes ? `${extratoMes.total_movs} movimentações · ${extratoMes.arquivo_nome}` : 'Nenhum extrato importado para este mês',
+                  rota: '/importar',
+                  icon: 'ti-file-upload',
+                },
+                {
+                  ok: !!extratoMes && (extratoMes.total_movs || 0) === extratos.filter(e=>e.competencia===mesAtualComp).reduce((a,e)=>a+(e.total_conciliados||0),0),
+                  label: 'Conciliação completa',
+                  desc: !extratoMes ? 'Aguardando extrato' : 'Verifique se todas as movimentações foram categorizadas',
+                  rota: '/conciliacao',
+                  icon: 'ti-checks',
+                },
+                {
+                  ok: mesesPendentes === 0,
+                  label: 'Sem meses anteriores pendentes',
+                  desc: mesesPendentes > 0 ? `${mesesPendentes} mês(es) anterior(es) sem aprovação` : 'Todos os meses anteriores aprovados',
+                  rota: '/fechamento',
+                  icon: 'ti-history',
+                },
+                {
+                  ok: true, // sempre pode tentar fechar
+                  label: 'Reunião do Conselho Fiscal',
+                  desc: 'Registre a data, modalidade e membros presentes',
+                  rota: null,
+                  icon: 'ti-users-group',
+                },
+              ].map(item => (
+                <div key={item.label} onClick={() => item.rota && navigate(item.rota)}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: item.ok ? 'rgba(59,109,17,0.05)' : 'rgba(0,0,0,0.02)', border: `0.5px solid ${item.ok ? 'rgba(59,109,17,0.2)' : '#E8E6DE'}`, cursor: item.rota ? 'pointer' : 'default' }}>
+                  <i className={`ti ${item.ok ? 'ti-circle-check' : 'ti-circle-dashed'}`} style={{ fontSize: 16, color: item.ok ? '#3B6D11' : '#B4B2A9', flexShrink: 0, marginTop: 1 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: item.ok ? '#3B6D11' : '#2C2C2A', marginBottom: 2 }}>{item.label}</div>
+                    <div style={{ fontSize: 11, color: '#888780', lineHeight: 1.4 }}>{item.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:'1.25rem' }}>
         <div>
 <div style={{ fontSize:12, color:'#888780', marginTop:2 }}>Fluxo: o financeiro <strong>fecha</strong> o mês após a conciliação → o Conselho Fiscal <strong>aprova</strong> (ou reprova) → meses aprovados aparecem na Transparência Pública.</div>
