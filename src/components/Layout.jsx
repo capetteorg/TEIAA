@@ -120,6 +120,10 @@ export default function Layout() {
     catch { return new Set(['Institucional','Configurações']) }
   })
   const [buscaAberta, setBuscaAberta] = useState(false)
+  const [feedbackAberto, setFeedbackAberto] = useState(false)
+  const [feedbackForm, setFeedbackForm] = useState({ tipo: 'sugestao', mensagem: '' })
+  const [feedbackEnviando, setFeedbackEnviando] = useState(false)
+  const [feedbackMsg, setFeedbackMsg] = useState('')
   const [termoBusca, setTermoBusca] = useState('')
   const [badgeCobrancas, setBadgeCobrancas] = useState(0)
   const [avatarUrl, setAvatarUrl] = useState(null)
