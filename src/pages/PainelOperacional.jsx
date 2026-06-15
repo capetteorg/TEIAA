@@ -92,6 +92,7 @@ export default function PainelOperacional() {
     { icon: 'ti-calendar-event', label: 'Eventos e Campanhas',   sub: 'atividades externas', rota: '/eventos-campanhas' },
     { icon: 'ti-users-group',    label: 'Equipe',                sub: 'ver colegas',     rota: '/equipe' },
     { icon: 'ti-circle-arrow-down', label: 'Lançar despesa',     sub: 'saída do dia',    rota: '/despesas' },
+    { icon: 'ti-circle-arrow-up',   label: 'Lançar entrada',      sub: 'dinheiro recebido', rota: '/entradas' },
     { icon: 'ti-users',          label: 'Usuários atendidos',    sub: 'cadastro geral',  rota: '/usuarios-atendidos' },
   ]
 
@@ -130,7 +131,7 @@ export default function PainelOperacional() {
         )}
 
         {/* KPIs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
           {[
             { label: 'Atendimentos hoje',      val: loading ? '...' : dados?.atendimentosHoje,  cor: AG_BLUE,    barra: AG_BLUE },
             { label: `Atendimentos em ${mesAtual}`, val: loading ? '...' : dados?.atendimentosMes, cor: '#06344F', barra: AG_BLUE },
@@ -153,7 +154,7 @@ export default function PainelOperacional() {
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 14 }}>
               Ações rápidas
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
               {ACOES.map(a => (
                 <button key={a.rota+a.label} onClick={() => navigate(a.rota)}
                   style={{
