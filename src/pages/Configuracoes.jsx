@@ -96,8 +96,8 @@ export default function Configuracoes() {
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Configurações avançadas</div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
 <div style={{ background: '#FEF2F2', border: '0.5px solid #F7C1C1', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: '#A32D2D', marginBottom: 4 }}><i className="ti ti-alert-triangle" style={{marginRight:4, color:'#E67814'}} /> Zona de perigo</div>
         <div style={{ fontSize: 12, color: '#5F5E5A' }}>As ações abaixo são irreversíveis. Use apenas para limpar dados de teste antes de começar o uso real.</div>

@@ -459,8 +459,8 @@ export default function RelatoriosCentral() {
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Central de Relatórios</div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
 {/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         {ABAS.filter(a => isDiretoria ? ['financeiro','execucao','equipe','usuarios','atendimentos'].includes(a.id) : true).map(a => (

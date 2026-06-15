@@ -110,8 +110,8 @@ export default function Contas() {
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Contas bancárias</div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
 {/* Lista de contas */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
         {lista.map(c => {

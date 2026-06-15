@@ -316,8 +316,8 @@ ${incluirAss ? `<div class="assinaturas">
       {/* Topbar */}
       <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Relatório de Execução do Objeto</div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
       </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
 {/* Configuração */}
       <div style={s.card}>
         <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>Selecione o plano ou projeto e o período</div>
