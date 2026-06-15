@@ -29,6 +29,7 @@ import EventosCampanhas from './pages/EventosCampanhas'
 import Cobrancas from './pages/Cobrancas'
 import PrestacaoContas from './pages/PrestacaoContas'
 import Backup from './pages/Backup'
+import MinhaConta from './pages/MinhaConta'
 import PainelDiretoria from './pages/PainelDiretoria'
 import PainelAdmin from './pages/PainelAdmin'
 import Parcerias from './pages/Parcerias'
@@ -106,6 +107,7 @@ export default function App() {
         <Route path="configuracoes" element={<RotaProtegida perfisPermitidos={['admin']}><Configuracoes /></RotaProtegida>} />
         <Route path="fechamento" element={<RotaProtegida perfisPermitidos={['admin']}><Fechamento /></RotaProtegida>} />
         <Route path="backup" element={<RotaProtegida perfisPermitidos={['admin']}><Backup /></RotaProtegida>} />
+        <Route path="minha-conta" element={<RotaProtegida><MinhaConta /></RotaProtegida>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/painel" replace />} />

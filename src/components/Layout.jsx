@@ -366,13 +366,15 @@ export default function Layout() {
       </div>
 
       {/* Rodapé usuário */}
-      <div style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1rem', borderTop: '0.5px solid #E0DDD5', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 8, justifyContent: colapsado && !isMobile ? 'center' : 'flex-start', flexShrink: 0 }}>
+      <div onClick={() => navigate('/minha-conta')} title="Minha conta" style={{ padding: colapsado && !isMobile ? '.7rem 0' : '.7rem 1rem', borderTop: '0.5px solid #E0DDD5', display: 'flex', flexDirection: colapsado && !isMobile ? 'column' : 'row', alignItems: 'center', gap: 8, justifyContent: colapsado && !isMobile ? 'center' : 'flex-start', flexShrink: 0, cursor: 'pointer' }}
+        onMouseEnter={e => e.currentTarget.style.background='rgba(14,126,168,0.04)'}
+        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(14,126,168,0.2)' }}>
           {avatarUrl ? (
             <img src={avatarUrl} alt={perfil?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           ) : (
-            <div style={{ width: 28, height: 28, background: 'rgba(14,126,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#0E7EA8' }}>
+            <div style={{ width: 28, height: 28, background: perfil?.cor_avatar || 'rgba(14,126,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: perfil?.cor_avatar ? '#fff' : '#0E7EA8' }}>
                 {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
               </span>
             </div>
@@ -382,7 +384,9 @@ export default function Layout() {
           <div style={{ fontSize: 11, color: '#1A1F1C', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {perfil?.nome || 'Usuário'}
           </div>
-          <div style={{ fontSize: 9.5, color: '#888780' }}>{perfilLabel} · última atualização: {new Date().toLocaleDateString('pt-BR')}</div>
+          <div style={{ fontSize: 9.5, color: '#888780', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {perfil?.bio || `${perfilLabel} · clique para editar perfil`}
+          </div>
         </div>}
         <button onClick={handleLogout} title="Sair"
           style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#C8C6BC', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
