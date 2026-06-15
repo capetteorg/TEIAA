@@ -62,7 +62,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/painel" replace />} />
-      <Route path="/transparencia" element={<Sociedade />} />
+      <Route path="transparencia" element={<Sociedade />} />
       <Route path="/nova-senha" element={<NovaSenha />} />
 
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
