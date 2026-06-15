@@ -3,6 +3,51 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
+
+// Mapa de rotas para títulos — usado pela topbar automática do Layout
+const TITULOS_PAGINAS = {
+  '/importar': 'Importar extrato',
+  '/conciliacao': 'Conciliação bancária',
+  '/lancamentos': 'Lançamentos',
+  '/cobrancas': 'Cobranças / Boletos Vencidos',
+  '/pendencias': 'Pendências',
+  '/fornecedores': 'Fornecedores',
+  '/historico-fornecedor': 'Histórico por fornecedor',
+  '/controle-dividas': 'Controle de Dívidas',
+  '/aplicacoes': 'Aplicações financeiras',
+  '/planos-execucao': 'Plano de Ação Institucional',
+  '/projetos': 'Projetos / Serviços / Ações',
+  '/atendimentos': 'Atendimentos',
+  '/usuarios-atendidos': 'Usuários / Público Atendido',
+  '/equipe': 'Equipe',
+  '/doacoes': 'Doações recebidas',
+  '/eventos-campanhas': 'Eventos e Campanhas',
+  '/relatorios': 'Relatórios',
+  '/fechamento': 'Fechamento / Conselho Fiscal',
+  '/prestacao-contas': 'Prestação de Contas',
+  '/transparencia': 'Transparência Pública',
+  '/instituicao': 'Cadastro da Instituição',
+  '/parcerias': 'Parcerias, Emendas e Editais',
+  '/documentos-fiscais': 'Documentos Fiscais',
+  '/patrimonio': 'Controle de Patrimônio',
+  '/contas': 'Contas bancárias',
+  '/categorias': 'Categorias',
+  '/classificacoes': 'Classificações',
+  '/usuarios': 'Usuários do sistema',
+  '/backup': 'Backup do sistema',
+  '/configuracoes': 'Configurações avançadas',
+  '/relatorio-execucao': 'Relatório de Execução',
+  '/relatorios-central': 'Central de Relatórios',
+  '/documentos': 'Documentos institucionais',
+}
+
+// Páginas que têm topbar própria — não mostrar a do Layout
+const PAGINAS_COM_TOPBAR_PROPRIA = new Set([
+  '/painel-admin', '/painel-operacional', '/painel-diretoria',
+  '/conciliacao', '/lancamentos', '/cobrancas', '/pendencias',
+  '/fechamento', '/importar',
+])
+
 const AG_BLUE  = '#0E7EA8'
 const AG_GREEN = '#96C11F'
 const AG_RED   = '#E63214'
@@ -439,6 +484,12 @@ export default function Layout() {
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <div key={location.pathname} className="page-anim" style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
+            {/* Topbar automática para páginas sem topbar própria */}
+            {!PAGINAS_COM_TOPBAR_PROPRIA.has(location.pathname) && TITULOS_PAGINAS[location.pathname] && (
+              <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 5 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>{TITULOS_PAGINAS[location.pathname]}</div>
+              </div>
+            )}
             <Outlet />
           </div>
         </div>
