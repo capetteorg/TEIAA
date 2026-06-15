@@ -506,8 +506,61 @@ export default function Layout() {
 
         <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 10, color: '#C8C6BC' }}>AGENDO Integra · CAPETTE · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
-          <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <button onClick={() => setFeedbackAberto(true)} title="Fale com o desenvolvedor"
+              style={{ background:'none', border:'none', color:'#C8C6BC', fontSize:10, cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:4 }}
+              onMouseEnter={e => e.currentTarget.style.color='#0E7EA8'}
+              onMouseLeave={e => e.currentTarget.style.color='#C8C6BC'}>
+              <i className="ti ti-message-circle" style={{ fontSize:12 }} /> Fale com o dev
+            </button>
+            <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
+          </div>
         </div>
+
+      {/* Modal Fale com o Desenvolvedor */}
+      {feedbackAberto && (
+        <div onClick={e => { if (e.target === e.currentTarget) setFeedbackAberto(false) }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.35)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ background:'#fff', borderRadius:16, padding:28, width:420, maxWidth:'90vw', boxShadow:'0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <div>
+                <div style={{ fontSize:16, fontWeight:700, color:'#06344F' }}>Fale com o desenvolvedor</div>
+                <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Sua mensagem vai direto para o Rangel</div>
+              </div>
+              <button onClick={() => setFeedbackAberto(false)} style={{ background:'none', border:'none', fontSize:20, color:'#B4B2A9', cursor:'pointer' }}>×</button>
+            </div>
+            <div style={{ marginBottom:12 }}>
+              <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:6 }}>Tipo</div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                {[{val:'sugestao',label:'💡 Sugestão'},{val:'problema',label:'🐛 Problema'},{val:'duvida',label:'❓ Dúvida'},{val:'elogio',label:'⭐ Elogio'}].map(t => (
+                  <button key={t.val} onClick={() => setFeedbackForm(f => ({ ...f, tipo: t.val }))}
+                    style={{ fontSize:11, padding:'5px 10px', borderRadius:99, border:`0.5px solid ${feedbackForm.tipo===t.val?'#0E7EA8':'#D3D1C7'}`, background:feedbackForm.tipo===t.val?'#0E7EA8':'transparent', color:feedbackForm.tipo===t.val?'#fff':'#5F5E5A', cursor:'pointer' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:6 }}>Mensagem</div>
+              <textarea value={feedbackForm.mensagem} onChange={e => setFeedbackForm(f => ({ ...f, mensagem: e.target.value }))}
+                placeholder="Descreva sua sugestão, problema ou dúvida..."
+                rows={4} style={{ width:'100%', fontSize:13, padding:'8px 10px', border:'0.5px solid #D3D1C7', borderRadius:8, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+            </div>
+            {feedbackMsg && (
+              <div style={{ fontSize:12, padding:'7px 12px', borderRadius:8, marginBottom:12, background:feedbackMsg.includes('Erro')?'#FEF2F2':'#EAF3DE', color:feedbackMsg.includes('Erro')?'#A32D2D':'#3B6D11' }}>
+                {feedbackMsg}
+              </div>
+            )}
+            <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
+              <button onClick={() => setFeedbackAberto(false)} style={{ fontSize:12, padding:'7px 14px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>Cancelar</button>
+              <button onClick={enviarFeedback} disabled={feedbackEnviando || !feedbackForm.mensagem.trim()}
+                style={{ fontSize:12, padding:'7px 16px', borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', fontWeight:600, opacity:(feedbackEnviando||!feedbackForm.mensagem.trim())?0.6:1 }}>
+                {feedbackEnviando ? 'Enviando...' : 'Enviar mensagem'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>

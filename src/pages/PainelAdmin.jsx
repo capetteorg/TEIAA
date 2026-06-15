@@ -24,6 +24,7 @@ export default function PainelAdmin() {
     return d.toISOString().slice(0,7)
   })
   const [abaTabela, setAbaTabela] = useState('abertas')
+  const [mensagensDev, setMensagensDev] = useState([])
 
   useEffect(() => { carregarDados() }, [mesAtual])
 
@@ -61,6 +62,11 @@ export default function PainelAdmin() {
       .select('id', { count:'exact', head:true }).eq('conciliado', false).gte('data', ini).lte('data', fimMes)
     const { count: docPend } = await supabase.from('documentos_fiscais')
       .select('id', { count:'exact', head:true })
+
+    // Buscar mensagens do desenvolvedor
+    const { data: msgs } = await supabase.from('mensagens_desenvolvedor')
+      .select('*').order('criado_em', { ascending: false }).limit(20)
+    setMensagensDev(msgs || [])
 
     setDados({
       cobPend: cobPend || 0,
@@ -439,6 +445,33 @@ export default function PainelAdmin() {
                 </div>
               ))}
             </div>
+
+            {/* MENSAGENS DO DESENVOLVEDOR */}
+            {mensagensDev.length > 0 && (
+              <div style={{ ...cardStyle, padding: '14px 16px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  Mensagens dos usuários
+                  <span style={{ background:'#0E7EA8', color:'#fff', fontSize:9, fontWeight:700, borderRadius:99, padding:'1px 6px' }}>{mensagensDev.filter(m=>!m.lida).length} novas</span>
+                </div>
+                {mensagensDev.slice(0,5).map(m => (
+                  <div key={m.id} onClick={async () => {
+                    await supabase.from('mensagens_desenvolvedor').update({ lida: true }).eq('id', m.id)
+                    setMensagensDiv(prev => prev.map(x => x.id===m.id ? {...x, lida:true} : x))
+                  }} style={{ padding:'8px 0', borderBottom:'0.5px solid #F1EFE8', cursor:'pointer', opacity: m.lida ? 0.6 : 1 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:3 }}>
+                      <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                        <span style={{ fontSize:9, padding:'1px 6px', borderRadius:99, background: m.tipo==='problema'?'#FEF2F2':m.tipo==='elogio'?'#EAF3DE':m.tipo==='duvida'?'#FFF6ED':'#E6F1FB', color: m.tipo==='problema'?'#A32D2D':m.tipo==='elogio'?'#3B6D11':m.tipo==='duvida'?'#854F0B':'#0E7EA8' }}>
+                          {m.tipo==='sugestao'?'💡':m.tipo==='problema'?'🐛':m.tipo==='duvida'?'❓':'⭐'} {m.tipo}
+                        </span>
+                        <span style={{ fontSize:10, fontWeight:500, color:'#2C2C2A' }}>{m.usuario_nome}</span>
+                      </div>
+                      <span style={{ fontSize:9, color:'#B4B2A9', whiteSpace:'nowrap' }}>{new Date(m.criado_em).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div style={{ fontSize:11, color:'#5F5E5A', lineHeight:1.4 }}>{m.mensagem}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
           </div>
         </div>
