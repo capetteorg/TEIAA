@@ -91,7 +91,7 @@ export default function Login() {
             {/* Logo CAPETTE */}
             <div style={{ textAlign: 'center', marginBottom: '.85rem' }}>
               <img src="/logo.png" alt="TEIAA"
-                style={{ height: 44, width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 6px' }}
+                style={{ height: 80, width: 'auto', maxWidth: 220, objectFit: 'contain', display: 'block', margin: '0 auto 10px' }}
                 onError={e => { e.target.style.display='none'; document.getElementById('login-logo-letras').style.display='flex' }} />
               <div id="login-logo-letras" style={{ display: 'none', gap: 2, justifyContent: 'center', marginBottom: 8 }}>
                 {LOGO_LETRAS.map(([l,c]) => (
