@@ -18,7 +18,11 @@ export default function PainelAdmin() {
   const navigate = useNavigate()
   const { perfil } = useAuth()
   const [dados, setDados] = useState(null)
-  const [mesAtual, setMesAtual] = useState(new Date().toISOString().slice(0,7))
+  const [mesAtual, setMesAtual] = useState(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 1)
+    return d.toISOString().slice(0,7)
+  })
   const [abaTabela, setAbaTabela] = useState('abertas')
 
   useEffect(() => { carregarDados() }, [mesAtual])

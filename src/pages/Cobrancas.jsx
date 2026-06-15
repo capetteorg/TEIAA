@@ -235,10 +235,18 @@ export default function Cobrancas() {
   }
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem' }}>
+    <div>
+      {/* Topbar */}
+      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Cobranças / Boletos Vencidos</div>
+        <button onClick={() => setAba('importar')} style={{ padding:'7px 14px', fontSize:12, fontWeight:600, borderRadius:9, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+          <i className="ti ti-upload" /> Importar XLS Sicredi
+        </button>
+      </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.022em' }}>Cobranças / Boletos Vencidos</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#06344F' }}>Cobranças / Boletos Vencidos</div>
           {ultimoLote && (
             <div style={{ fontSize: 11, color: '#888780', marginTop: 2 }}>
               Última atualização: {new Date(ultimoLote.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
@@ -485,6 +493,7 @@ export default function Cobrancas() {
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
