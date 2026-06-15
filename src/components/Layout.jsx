@@ -66,9 +66,7 @@ export default function Layout() {
   const [feedbackEnviando, setFeedbackEnviando] = useState(false)
   const [feedbackOk, setFeedbackOk] = useState('')
   const [termoBusca, setTermoBusca] = useState('')
-  const [badgeCobrancas, setBadgeCobrancas] = useState(0)
   const [badgeDividas, setBadgeDividas] = useState(0)
-  const [badgePendencias, setBadgePendencias] = useState(0)
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768)
@@ -93,10 +91,7 @@ export default function Layout() {
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   useEffect(() => {
-    if (p === 'admin' || p === 'operacional') {
-      supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false)
-        .then(({ count }) => setBadgeCobrancas(count || 0))
-    }
+
     if (p === 'admin' || p === 'diretoria') {
       supabase.from('dividas').select('id', { count:'exact', head:true }).eq('status', 'aberta')
         .then(({ count }) => setBadgeDividas(count || 0))
@@ -156,11 +151,8 @@ export default function Layout() {
     { to:'/importar', label:'Importar extrato', icon:'file-upload', ok:p==='admin' },
     { to:'/conciliacao', label:'Conciliação', icon:'checks', ok:p==='admin' },
     { to:'/lancamentos', label:'Lançamentos', icon:'list-details', ok:p==='admin'||p==='operacional' },
-    { to:'/cobrancas', label:'Cobranças', icon:'receipt-2', ok:p==='admin'||p==='operacional' },
     { to:'/pendencias', label:'Pendências', icon:'alert-triangle', ok:p==='admin' },
     { to:'/fornecedores', label:'Fornecedores', icon:'building-store', ok:p==='admin' },
-    { to:'/historico-fornecedor', label:'Histórico Fornecedor', icon:'history', ok:p==='admin' },
-    { to:'/controle-dividas', label:'Controle de Dívidas', icon:'credit-card-off', ok:p==='admin'||p==='diretoria' },
     { to:'/aplicacoes', label:'Aplicações', icon:'chart-line', ok:p==='admin' },
     { to:'/planos-execucao', label:'Plano de Ação', icon:'clipboard-check', ok:p==='admin' },
     { to:'/projetos', label:'Projetos', icon:'folder', ok:p==='admin' },
