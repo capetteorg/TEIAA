@@ -54,7 +54,7 @@ export function useAuth() {
     if (perfilCarregado.current === userId) return // já carregado
     const { data } = await supabase
       .from('usuarios')
-      .select('perfil, nome, bio, cor_avatar, avatar_url')
+      .select('perfil, nome, bio, cor_avatar, avatar_url, foto_position')
       .eq('id', userId)
       .single()
     if (!mounted) return

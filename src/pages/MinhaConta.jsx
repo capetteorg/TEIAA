@@ -51,6 +51,7 @@ export default function MinhaConta() {
       setNome(data.nome || '')
       setBio(data.bio || '')
       setCorAvatar(data.cor_avatar || '#0E7EA8')
+      setFotoPosition(data.foto_position || '50%')
     }
     setLoading(false)
   }
@@ -63,7 +64,7 @@ export default function MinhaConta() {
   async function salvarPerfil() {
     setSalvando(true)
     const { error } = await supabase.from('usuarios').update({
-      nome, bio, cor_avatar: corAvatar,
+      nome, bio, cor_avatar: corAvatar, foto_position: fotoPosition,
     }).eq('id', dados.id)
 
     if (error) showMsg('erro', 'Erro ao salvar: ' + error.message)
@@ -149,7 +150,7 @@ export default function MinhaConta() {
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 88, height: 88, borderRadius: '50%', overflow: 'hidden', border: '3px solid #E8E6DE', position: 'relative' }}>
               {dados?.avatar_url ? (
-                <img src={dados.avatar_url} alt={nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={dados.avatar_url} alt={nome} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${fotoPosition}` }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', background: corAvatar, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 700, color: '#fff' }}>
                   {iniciais}
@@ -175,6 +176,14 @@ export default function MinhaConta() {
             </div>
             <input ref={inputFotoRef} type="file" accept="image/*" style={{ display: 'none' }}
               onChange={e => uploadFoto(e.target.files[0])} />
+            {dados?.avatar_url && (
+              <div style={{ marginTop: 4, textAlign: 'center' }}>
+                <div style={{ fontSize: 9, color: '#B4B2A9', marginBottom: 3 }}>Ajustar posição</div>
+                <input type="range" min="0" max="100" value={parseInt(fotoPosition)||50}
+                  onChange={e => setFotoPosition(e.target.value + '%')}
+                  style={{ width: 88, accentColor: '#0E7EA8' }} />
+              </div>
+            )}
           </div>
 
           {/* Info */}

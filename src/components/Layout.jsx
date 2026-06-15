@@ -371,7 +371,7 @@ export default function Layout() {
         onMouseLeave={e => e.currentTarget.style.background='transparent'}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(14,126,168,0.2)' }}>
           {avatarUrl ? (
-            <img src={avatarUrl} alt={perfil?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={avatarUrl} alt={perfil?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${perfil?.foto_position || '50%'}`, display: 'block' }} />
           ) : (
             <div style={{ width: 28, height: 28, background: perfil?.cor_avatar || 'rgba(14,126,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: perfil?.cor_avatar ? '#fff' : '#0E7EA8' }}>
