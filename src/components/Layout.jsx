@@ -48,7 +48,7 @@ function NavSecao({ label, colapsado = false, aberta = true, onToggle }) {
 }
 
 export default function Layout() {
-  const { perfil, logout } = useAuth()
+  const { perfil, user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const p = perfil?.perfil
