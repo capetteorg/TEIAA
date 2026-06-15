@@ -63,10 +63,10 @@ export default function Login() {
         {/* Cabeçalho institucional */}
         <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
           <div style={{ fontSize: 12, color: '#888780', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-            Casa do Pequeno Trabalhador de Teresópolis
+            Associação TEIAA
           </div>
           <div style={{ fontSize: 11, color: '#B4B2A9', marginTop: 2 }}>
-            CNPJ 29.213.717/0001-01 · Desde 1974
+            CNPJ 27.837.768/0001-70
           </div>
         </div>
 
@@ -90,7 +90,7 @@ export default function Login() {
           }}>
             {/* Logo CAPETTE */}
             <div style={{ textAlign: 'center', marginBottom: '.85rem' }}>
-              <img src="/logo.png" alt="CAPETTE"
+              <img src="/logo.png" alt="TEIAA"
                 style={{ height: 44, width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 6px' }}
                 onError={e => { e.target.style.display='none'; document.getElementById('login-logo-letras').style.display='flex' }} />
               <div id="login-logo-letras" style={{ display: 'none', gap: 2, justifyContent: 'center', marginBottom: 8 }}>
@@ -169,7 +169,7 @@ export default function Login() {
               </div>
               <div style={{ height: '0.5px', background: 'rgba(0,0,0,0.08)', marginBottom: '1rem' }} />
               <div style={{ fontSize: 12, color: '#5F5E5A', lineHeight: 1.7, marginBottom: '1rem' }}>
-                Consulte receitas, despesas, relatórios e prestações de contas da CAPETTE, em conformidade com a legislação aplicável às Organizações da Sociedade Civil e entidades beneficentes.
+                Consulte receitas, despesas, relatórios e prestações de contas da TEIAA, em conformidade com a legislação aplicável às Organizações da Sociedade Civil e entidades beneficentes.
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
                 {[
