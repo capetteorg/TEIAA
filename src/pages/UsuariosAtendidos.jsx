@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useAuth } from '../hooks/useAuth'
 import { gerarPDFAnexoTeacolher } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
@@ -63,6 +64,11 @@ const FORM_VAZIO = {
 
 export default function UsuariosAtendidos() {
   const isMobile = useIsMobile()
+  const { perfil } = useAuth()
+  const perfilAtual = perfil?.perfil
+  const podeGerenciarUsuarios = perfilAtual === 'admin'
+  const podeExcluirUsuario = perfilAtual === 'admin'
+  const podeImprimirAnexo = perfilAtual === 'admin' || perfilAtual === 'operacional'
   const [usuarios, setUsuarios] = useState([])
   const [limite, setLimite] = useState(300)
   const [temMais, setTemMais] = useState(false)
@@ -129,6 +135,10 @@ export default function UsuariosAtendidos() {
 
   async function salvar(e) {
     e.preventDefault()
+    if (!podeGerenciarUsuarios) {
+      setMsg('Seu perfil tem acesso somente para visualização.')
+      return
+    }
     setSalvando(true)
     const dados = {
       ...form,
@@ -222,6 +232,11 @@ export default function UsuariosAtendidos() {
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
 
   async function excluir(id) {
+    if (!podeExcluirUsuario) {
+      setMsg('Seu perfil não tem permissão para excluir usuários atendidos.')
+      setConfirmandoExcluir(null)
+      return
+    }
     const { error } = await supabase.from('usuarios_atendidos').delete().eq('id', id)
     setConfirmandoExcluir(null)
     if (error) {
@@ -245,10 +260,12 @@ export default function UsuariosAtendidos() {
         <div>
 <div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {usuarios.length} total</div>
         </div>
-        <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-          style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
-          {mostrarForm ? 'Cancelar' : '+ Cadastrar usuário'}
-        </button>
+        {podeGerenciarUsuarios && (
+          <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
+            style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
+            {mostrarForm ? 'Cancelar' : '+ Cadastrar usuário'}
+          </button>
+        )}
       </div>
 
       {msg && (
@@ -258,7 +275,7 @@ export default function UsuariosAtendidos() {
       )}
 
       {/* Formulário */}
-      {mostrarForm && (
+      {mostrarForm && podeGerenciarUsuarios && (
         <div style={{ ...s.card, borderColor:'#C0DD97' }}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
             {editando ? 'Editar usuário' : 'Cadastrar usuário / público atendido'}
@@ -496,7 +513,9 @@ export default function UsuariosAtendidos() {
               <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
                 <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Nenhum usuário cadastrado</div>
                 <div style={{ fontSize:12, color:'#888780', maxWidth:380, margin:'0 auto' }}>Cadastre as pessoas atendidas pela instituição para acompanhar atendimentos, projetos e relatórios.</div>
-                <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Cadastrar usuário</button>
+                {podeGerenciarUsuarios && (
+                  <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Cadastrar usuário</button>
+                )}
               </div>
             ) : (
               <div style={{ maxHeight:520, overflowY:'auto',overflowX:'auto' }}>
@@ -518,11 +537,15 @@ export default function UsuariosAtendidos() {
                           <td style={s.td}><span style={s.badge(bg,cor)}>{u.situacao}</span></td>
                           <td style={s.td}>
                             <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                              <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                              {usuarioEhTeacolher(u) && (
+                              {podeGerenciarUsuarios && (
+                                <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                              )}
+                              {podeImprimirAnexo && usuarioEhTeacolher(u) && (
                                 <button onClick={() => gerarPDFAnexoTeacolher(u, { projetoNome: nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || 'Projeto TEAcolher' })} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
                               )}
-                              <button type="button" onClick={() => setConfirmandoExcluir(u.id)} style={s.btn('#FEF2F2','#A32D2D')}>Excluir</button>
+                              {podeExcluirUsuario && (
+                                <button type="button" onClick={() => setConfirmandoExcluir(u.id)} style={s.btn('#FEF2F2','#A32D2D')}>Excluir</button>
+                              )}
                             </div>
                           </td>
                         </tr>
