@@ -34,17 +34,13 @@ export default function PainelAdmin() {
     const fimMes = `${ano}-${mes}-31`
 
     const [
-      { count: cobPend },
       { count: pendAbertas },
       { data: fechamentos },
       { data: movs },
-      { count: dividasAbertas },
     ] = await Promise.all([
-      supabase.from('cobrancas').select('id', { count:'exact', head:true }).eq('pago_confirmado', false),
       supabase.from('pendencias').select('id', { count:'exact', head:true }).eq('resolvida', false),
       supabase.from('fechamentos').select('competencia, tipo_aprovacao').order('competencia', { ascending:false }).limit(12),
       supabase.from('extrato_movs').select('valor').gte('data', ini).lte('data', fimMes),
-      supabase.from('dividas').select('id', { count:'exact', head:true }).eq('status', 'aberta'),
     ])
 
     const entradas = (movs||[]).filter(m => Number(m.valor) > 0).reduce((a,m) => a + Number(m.valor), 0)
@@ -69,14 +65,12 @@ export default function PainelAdmin() {
     setMensagensDev(msgs || [])
 
     setDados({
-      cobPend: cobPend || 0,
       pendAbertas: pendAbertas || 0,
       mesesSemFechar: mesesSemFechar || 0,
       entradas, saidas,
       resultado: entradas - saidas,
       pctComprometido: entradas > 0 ? Math.round(saidas / entradas * 100) : 0,
       saldoBancario: ultimoExtrato?.saldo_final || 0,
-      dividasAbertas: dividasAbertas || 0,
       extratoOk: (extratoCount || 0) > 0,
       naoConc: naoConc || 0,
       docPend: docPend || 0,
@@ -93,10 +87,8 @@ export default function PainelAdmin() {
   const d = dados
 
   const todasPrioridades = d ? [
-    { item:'Cobranças pendentes', desc:'pendentes de confirmação no extrato', modulo:'Cobranças', tipo:'Financeiro', status:'Crítico', statusColor:'red', qtd: d.cobPend, rota:'/cobrancas', show: d.cobPend > 0, aba: 'financeiro' },
     { item:'Pendências abertas', desc:'aguardando resolução dos responsáveis', modulo:'Pendências', tipo:'Gestão', status:'Atenção', statusColor:'orange', qtd: d.pendAbertas, rota:'/pendencias', show: d.pendAbertas > 0, aba: 'abertas' },
     { item:'Fechamento sem aprovação', desc:'meses aguardando Conselho Fiscal', modulo:'Fechamento', tipo:'Relatórios', status:'Pendente', statusColor:'orange', qtd: d.mesesSemFechar, rota:'/fechamento', show: d.mesesSemFechar > 0, aba: 'abertas' },
-    { item:'Dívidas em aberto', desc:'controle de dívidas e parcelamentos', modulo:'Dívidas', tipo:'Financeiro', status:'Atenção', statusColor:'orange', qtd: d.dividasAbertas, rota:'/controle-dividas', show: d.dividasAbertas > 0, aba: 'financeiro' },
   ].filter(p => p.show) : []
   const prioridades = todasPrioridades.filter(p =>
     abaTabela === 'abertas' ? true :
@@ -233,7 +225,6 @@ export default function PainelAdmin() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             {[
-              { num: d?.cobPend || 0, label: 'Cobranças pendentes', sub: 'confirmação no extrato', ntxt: n => `${n} ${n===1?'item':'itens'} aguardando`, bord: 'rgba(163,45,45,0.35)', ncor: 'rgba(163,45,45,0.65)', rota: '/cobrancas' },
               { num: d?.pendAbertas || 0, label: 'Pendências abertas', sub: 'aguardando resolução', ntxt: n => `${n} ${n===1?'item':'itens'} em aberto`, bord: 'rgba(133,79,11,0.35)', ncor: 'rgba(133,79,11,0.65)', rota: '/pendencias' },
               { num: d?.mesesSemFechar || 0, label: 'Meses sem fechamento', sub: 'Conselho Fiscal pendente', ntxt: n => `${n} ${n===1?'mês':'meses'} sem aprovação`, bord: 'rgba(14,126,168,0.35)', ncor: 'rgba(14,126,168,0.65)', rota: '/fechamento' },
             ].map(a => (
@@ -288,7 +279,6 @@ export default function PainelAdmin() {
                     { icon: 'checks',             label: 'Conciliar', sub: 'movimentos', rota: '/conciliacao' },
                   ]},
                   { grupo: 'Acompanhamento', itens: [
-                    { icon: 'receipt-2',      label: 'Cobranças', sub: 'confirmar', rota: '/cobrancas', badge: d?.cobPend },
                     { icon: 'alert-triangle', label: 'Pendências', sub: 'resolver', rota: '/pendencias', badge: d?.pendAbertas },
                     { icon: 'report-analytics', label: 'Relatórios', sub: 'central', rota: '/relatorios' },
                     { icon: 'checkup-list',   label: 'Fechamento', sub: 'conselho', rota: '/fechamento' },
@@ -456,7 +446,7 @@ export default function PainelAdmin() {
                 {mensagensDev.slice(0,5).map(m => (
                   <div key={m.id} onClick={async () => {
                     await supabase.from('mensagens_desenvolvedor').update({ lida: true }).eq('id', m.id)
-                    setMensagensDiv(prev => prev.map(x => x.id===m.id ? {...x, lida:true} : x))
+                    setMensagensDev(prev => prev.map(x => x.id===m.id ? {...x, lida:true} : x))
                   }} style={{ padding:'8px 0', borderBottom:'0.5px solid #F1EFE8', cursor:'pointer', opacity: m.lida ? 0.6 : 1 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:3 }}>
                       <div style={{ display:'flex', gap:6, alignItems:'center' }}>
