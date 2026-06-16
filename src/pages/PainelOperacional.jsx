@@ -95,17 +95,25 @@ export default function PainelOperacional() {
             </div>
           </div>
         </div>
-        <button onClick={() => navigate('/usuarios-atendidos')}
-          style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 600, borderRadius: 9, border: 'none', background: AG_BLUE, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <i className="ti ti-users" /> Ver usuários
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+          <button onClick={() => navigate('/usuarios-atendidos')}
+            style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 700, borderRadius: 9, border: 'none', background: AG_BLUE, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <i className="ti ti-user-plus" /> Cadastrar usuário
+          </button>
+          {!isMobile && (
+            <button onClick={() => navigate('/usuarios-atendidos')}
+              style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 9, border: '0.5px solid #D3D1C7', background: 'rgba(255,255,255,0.8)', color: '#5F5E5A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <i className="ti ti-users" /> Ver usuários
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{ padding: isMobile ? '12px' : '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ ...card, borderLeft: '3px solid rgba(14,126,168,.45)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#06344F', marginBottom: 4 }}>Painel operacional da TEIAA</div>
           <div style={{ fontSize: 12, color: '#5F5E5A', lineHeight: 1.45 }}>
-            Este perfil está liberado somente para consultar usuários atendidos e imprimir o Anexo I do Projeto TEAcolher, quando disponível.
+            Este perfil está liberado para cadastrar, editar e consultar usuários atendidos, além de imprimir o Anexo I do Projeto TEAcolher quando disponível.
           </div>
         </div>
 
@@ -135,8 +143,12 @@ export default function PainelOperacional() {
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#06344F' }}>Usuários atendidos</div>
-                <div style={{ fontSize: 12, color: '#5F5E5A', marginTop: 2 }}>Consultar cadastro geral e imprimir Anexo I do TEAcolher.</div>
+                <div style={{ fontSize: 12, color: '#5F5E5A', marginTop: 2 }}>Cadastrar, editar, consultar cadastro geral e imprimir Anexo I do TEAcolher.</div>
               </div>
+            </button>
+            <button onClick={() => navigate('/usuarios-atendidos')}
+              style={{ marginTop: 10, width: '100%', background: AG_BLUE, border: 'none', borderRadius: 10, padding: '11px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <i className="ti ti-user-plus" /> + Cadastrar usuário atendido
             </button>
           </div>
 
