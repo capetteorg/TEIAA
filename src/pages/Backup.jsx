@@ -108,17 +108,12 @@ export default function Backup() {
       { tabela: 'equipe', campos: ['id','nome','cpf','data_nascimento','funcao','tipo_vinculo','orgao_origem','instrumento_vinculacao','data_entrada','data_saida','situacao','carga_horaria','projetos','observacoes'] },
       { tabela: 'equipe_historico', campos: ['id','equipe_id','data','tipo','descricao'] },
       { tabela: 'funcionarios', campos: ['id','nome','cpf','cargo','tipo_vinculo','salario','data_admissao','data_demissao','status','observacoes'] },
-      { tabela: 'dividas', campos: ['id','funcionario_id','descricao','valor_total','data_inicio','status'] },
-      { tabela: 'pagamentos_divida', campos: ['id','divida_id','data_pagamento','valor','observacoes'] },
       // Doações
       { tabela: 'doacoes', campos: ['id','data_doacao','doador','tipo_doador','num_nota','categoria','valor_estimado','projeto_id','campanha_evento','destino','observacoes'] },
       { tabela: 'doacoes_itens', campos: ['id','doacao_id','item','quantidade','unidade','valor_estimado','observacao'] },
       // Eventos e campanhas
       { tabela: 'eventos', campos: ['id','nome','descricao','data_inicio','data_fim','meta_financeira','status','observacoes'] },
       { tabela: 'campanhas', campos: ['id','nome','descricao','objetivo','data_inicio','data_fim','meta_financeira','status','observacoes'] },
-      // Cobranças
-      { tabela: 'cobrancas', campos: ['id','descricao','valor','data_vencimento','situacao','observacoes'] },
-      { tabela: 'historico_cobrancas', campos: ['id','cobranca_id','data','descricao'] },
       // Plano de trabalho antigo (conciliação)
       { tabela: 'plano_trabalho', campos: ['id','conta_id','nome','descricao','valor_previsto'] },
     ]
@@ -153,7 +148,7 @@ export default function Backup() {
     setProgresso('Gerando planilha Excel...')
     try {
       const wb = XLSX.utils.book_new()
-      const principais = ['extrato_movs','lancamentos','cobrancas','projetos','atendimentos','equipe','usuarios_atendidos','fornecedores']
+      const principais = ['extrato_movs','lancamentos','projetos','atendimentos','equipe','usuarios_atendidos','fornecedores']
       for (const tabela of principais) {
         if (dump[tabela]?.length) {
           const ws = XLSX.utils.json_to_sheet(dump[tabela])

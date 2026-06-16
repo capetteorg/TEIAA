@@ -240,10 +240,10 @@ export default function RelatorioExecucao() {
 <div class="pg">
 
 <div class="logo-row">
-  <div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:44px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='<div style=\'display:flex;gap:1px\'><span style=\'font-size:14px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:14px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:14px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:14px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:14px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:14px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:14px;font-weight:900;color:#E8207A\'>E</span></div>'" /></div>
+  <div><img src="/logo.png" alt="TEIAA" style="height:44px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='<div style=\'font-size:18px;font-weight:900;color:#0E7EA8\'>TEIAA</div>'" /></div>
   <div style="text-align:right;font-size:9px;color:#5F6874;max-width:240px;line-height:1.5">
-    <div style="font-size:11px;font-weight:700;color:#20252C">${instituicao?.nome_completo || 'Casa do Pequeno Trabalhador de Teresópolis'}</div>
-    <div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${instituicao?.cnpj || '29.213.717/0001-01'}</div>
+    <div style="font-size:11px;font-weight:700;color:#20252C">${instituicao?.nome_completo || 'Associação TEIAA - Troca de Experiências e Integração entre Amigos de Autistas'}</div>
+    <div style="font-size:9px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${instituicao?.cnpj || '27.837.768/0001-70'}</div>
   </div>
 </div>
 
@@ -282,7 +282,7 @@ ${incluirAss ? `<div class="assinaturas">
 </div>` : ''}
 
 <div class="footer">
-  <div>Rua Juruena, 73 · Teresópolis — RJ · capette@capette.org</div>
+  <div>Rua Prefeito Sebastião Teixeira, 58 · Teresópolis — RJ · associacaoteiaa@gmail.com</div>
   <div><strong>AGENDO Integra</strong> · Relatório de Execução</div>
 </div>
 

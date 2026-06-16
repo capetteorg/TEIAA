@@ -22,7 +22,6 @@ export default function Importar() {
   const [step, setStep] = useState(1)
   const [aba, setAba] = useState('importar')
   const [historico, setHistorico] = useState([])
-  const [historicoCob, setHistoricoCob] = useState([])
   const [loadingHistorico, setLoadingHistorico] = useState(false)
   const [abaHist, setAbaHist] = useState('extrato')
   const [novasMovs, setNovasMovs] = useState(null)
@@ -42,24 +41,17 @@ export default function Importar() {
 
   async function carregarHistorico() {
     setLoadingHistorico(true)
-    const [extRes, cobRes] = await Promise.all([
-      supabase.from('extratos').select('*, conta:contas(nome,banco)').order('criado_em', { ascending: false }),
-      supabase.from('lotes_cobranca').select('*').order('criado_em', { ascending: false }),
-    ])
+    const extRes = await supabase.from('extratos')
+      .select('*, conta:contas(nome,banco)')
+      .order('criado_em', { ascending: false })
     setHistorico(extRes.data || [])
-    setHistoricoCob(cobRes.data || [])
     setLoadingHistorico(false)
   }
 
   async function cancelarImportacao(item) {
     setCancelando(item.id)
-    if (item._tipo === 'cobranca') {
-      await supabase.from('cobrancas').delete().eq('lote_id', item.id)
-      await supabase.from('lotes_cobranca').delete().eq('id', item.id)
-    } else {
-      await supabase.from('extrato_movs').delete().eq('extrato_id', item.id)
-      await supabase.from('extratos').delete().eq('id', item.id)
-    }
+    await supabase.from('extrato_movs').delete().eq('extrato_id', item.id)
+    await supabase.from('extratos').delete().eq('id', item.id)
     setConfirmandoCancelar(null)
     setCancelando(null)
     carregarHistorico()
@@ -422,9 +414,6 @@ export default function Importar() {
             <button onClick={() => setAbaHist('extrato')} style={{ ...s.tab(abaHist==='extrato'), fontSize:11 }}>
               <i className="ti ti-building-bank" style={{marginRight:4}} /> Extratos bancários ({historico.length})
             </button>
-            <button onClick={() => setAbaHist('cobrancas')} style={{ ...s.tab(abaHist==='cobrancas'), fontSize:11 }}>
-              <i className="ti ti-receipt-2" style={{marginRight:4}} /> Cobranças / Boletos ({historicoCob.length})
-            </button>
           </div>
 
           {loadingHistorico ? (
@@ -465,38 +454,6 @@ export default function Importar() {
                 </div>
               )}
 
-              {/* Lotes de cobranças */}
-              {abaHist === 'cobrancas' && (
-                <div style={s.card}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.85rem' }}>
-                    <div style={{ fontSize:13, fontWeight:500 }}>Importações de cobranças ({historicoCob.length})</div>
-                    <button onClick={carregarHistorico} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:`0.5px solid #D3D1C7`, background:'transparent', color:'#5F5E5A', cursor:'pointer' }}>↻ Atualizar</button>
-                  </div>
-                  {historicoCob.length === 0 ? (
-                    <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>Nenhuma importação de cobranças ainda.</div>
-                  ) : (
-                    <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                      <thead><tr>{['Nome do lote','Arquivo','Boletos','Importado em',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {historicoCob.map((lote, i) => (
-                          <tr key={lote.id} style={{ background: i%2===0?'#fff':'#FAFAF8' }}>
-                            <td style={{ ...s.td, fontWeight:500 }}>{lote.nome}</td>
-                            <td style={{ ...s.td, fontSize:11, color:'#888780', fontFamily:'monospace' }}>{lote.arquivo_nome || '—'}</td>
-                            <td style={{ ...s.td, textAlign:'center' }}><span style={s.badge('#FAEEDA','#854F0B')}>{lote.total_boletos} boletos</span></td>
-                            <td style={{ ...s.td, fontSize:11, color:'#888780' }}>{fmtData(lote.criado_em)}</td>
-                            <td style={s.td}>
-                              <button onClick={() => setConfirmandoCancelar({ ...lote, _tipo: 'cobranca' })}
-                                style={{ fontSize:11, padding:'3px 10px', borderRadius:6, border:`0.5px solid ${VERMELHO}`, background:'transparent', color:VERMELHO, cursor:'pointer' }}>
-                                Cancelar
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
@@ -509,13 +466,10 @@ export default function Importar() {
             <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Cancelar importação?</div>
             <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:4 }}>
-              {confirmandoCancelar._tipo === 'cobranca'
-                ? <><strong>{confirmandoCancelar.nome}</strong> — {confirmandoCancelar.arquivo_nome}</>
-                : <><strong>{fmtMes(confirmandoCancelar.competencia)}</strong> — {confirmandoCancelar.conta?.nome}</>
-              }
+              <><strong>{fmtMes(confirmandoCancelar.competencia)}</strong> — {confirmandoCancelar.conta?.nome}</>
             </div>
             <div style={{ fontSize:12, color:'#A32D2D', marginBottom:'1.5rem' }}>
-              Isso vai apagar <strong>{confirmandoCancelar._tipo === 'cobranca' ? `${confirmandoCancelar.total_boletos} boletos` : `${confirmandoCancelar.total_movs} movimentações`}</strong> permanentemente. Esta ação não pode ser desfeita.
+              Isso vai apagar <strong>{confirmandoCancelar.total_movs} movimentações</strong> permanentemente. Esta ação não pode ser desfeita.
             </div>
             <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
               <button onClick={() => cancelarImportacao(confirmandoCancelar)} disabled={cancelando === confirmandoCancelar.id}

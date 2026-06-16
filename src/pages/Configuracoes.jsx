@@ -36,21 +36,14 @@ export default function Configuracoes() {
         await del('lancamentos')
         setMsg('Lançamentos excluídos.')
 
-      } else if (tipo === 'cobrancas') {
-        await del('historico_cobrancas')
-        await del('cobrancas')
-        setMsg('Cobranças excluídas.')
-
       } else if (tipo === 'eventos_campanhas') {
         await del('eventos')
         await del('campanhas')
         setMsg('Eventos e campanhas excluídos.')
 
       } else if (tipo === 'funcionarios') {
-        await del('pagamentos_divida')
-        await del('dividas')
         await del('funcionarios')
-        setMsg('Funcionários e dívidas excluídos.')
+        setMsg('Funcionários excluídos.')
 
       } else if (tipo === 'fechamentos') {
         await del('fechamentos')
@@ -58,11 +51,7 @@ export default function Configuracoes() {
 
       } else if (tipo === 'tudo') {
         // Ordem correta respeitando FKs
-        await del('historico_cobrancas')
-        await del('cobrancas')
         await del('historico_movs')
-        await del('pagamentos_divida')
-        await del('dividas')
         await del('funcionarios')
         await del('fechamentos')
         await del('extrato_movs')
@@ -84,9 +73,8 @@ export default function Configuracoes() {
   const acoes = [
     { id: 'extratos',         titulo: 'Excluir extratos importados',    desc: 'Remove todos os extratos bancários e movimentações. Não afeta lançamentos manuais.', cor: '#F4821F' },
     { id: 'lancamentos',      titulo: 'Excluir lançamentos manuais',    desc: 'Remove despesas e entradas lançadas manualmente. Não afeta extratos.', cor: '#F4821F' },
-    { id: 'cobrancas',        titulo: 'Excluir cobranças',              desc: 'Remove todos os boletos e histórico de cobranças.', cor: '#F4821F' },
     { id: 'eventos_campanhas',titulo: 'Excluir eventos e campanhas',    desc: 'Remove todos os eventos e campanhas cadastrados.', cor: '#F4821F' },
-    { id: 'funcionarios',     titulo: 'Excluir funcionários e dívidas', desc: 'Remove funcionários, dívidas e pagamentos cadastrados.', cor: '#F4821F' },
+    { id: 'funcionarios',     titulo: 'Excluir funcionários',          desc: 'Remove funcionários cadastrados.', cor: '#F4821F' },
     { id: 'fechamentos',      titulo: 'Excluir fechamentos',            desc: 'Remove todos os registros de fechamento de período.', cor: '#F4821F' },
     { id: 'tudo',             titulo: 'Limpar TUDO — dados de teste',   desc: 'Remove TODOS os dados operacionais. Use antes de começar o uso real.', cor: '#E8212A', destaque: true },
   ]

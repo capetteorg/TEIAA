@@ -297,7 +297,7 @@ export default function Instituicao() {
             <div style={{ ...s.grupo, gridTemplateColumns: '3fr 1fr' }}>
               <div>
                 <label style={s.label}>Endereço (rua e número)</label>
-                <input value={formInst.endereco} onChange={e=>setFormInst(f=>({...f,endereco:e.target.value}))} placeholder="Rua Juruena, 73" style={s.input} />
+                <input value={formInst.endereco} onChange={e=>setFormInst(f=>({...f,endereco:e.target.value}))} placeholder="Rua Prefeito Sebastião Teixeira, 58" style={s.input} />
               </div>
               <div>
                 <label style={s.label}>CEP</label>
@@ -334,7 +334,7 @@ export default function Instituicao() {
             </div>
             <div style={{ marginBottom: 10 }}>
               <label style={s.label}>Instagram / Redes sociais</label>
-              <input value={formInst.instagram} onChange={e=>setFormInst(f=>({...f,instagram:e.target.value}))} placeholder="@capette · facebook.com/capette · etc." style={s.input} />
+              <input value={formInst.instagram} onChange={e=>setFormInst(f=>({...f,instagram:e.target.value}))} placeholder="@associacaoteiaa · facebook.com/associacaoteiaa · etc." style={s.input} />
             </div>
           </div>
 
