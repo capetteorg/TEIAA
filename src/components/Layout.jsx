@@ -66,7 +66,7 @@ export default function Layout() {
   const [feedbackEnviando, setFeedbackEnviando] = useState(false)
   const [feedbackOk, setFeedbackOk] = useState('')
   const [termoBusca, setTermoBusca] = useState('')
-  const [badgeDividas, setBadgeDividas] = useState(0)
+  const [badgePendencias, setBadgePendencias] = useState(0)
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768)
@@ -91,14 +91,13 @@ export default function Layout() {
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   useEffect(() => {
-
-    if (p === 'admin' || p === 'diretoria') {
-      supabase.from('dividas').select('id', { count:'exact', head:true }).eq('status', 'aberta')
-        .then(({ count }) => setBadgeDividas(count || 0))
-    }
     if (p === 'admin') {
       supabase.from('pendencias').select('id', { count:'exact', head:true }).eq('resolvida', false)
-        .then(({ count }) => setBadgePendencias(count || 0))
+        .then(({ count, error }) => {
+          if (!error) setBadgePendencias(count || 0)
+        })
+    } else {
+      setBadgePendencias(0)
     }
   }, [p])
 
@@ -235,7 +234,7 @@ export default function Layout() {
               }}
             />
             <div style={{ display:'none', gap:1, alignItems:'center' }}>
-              {[['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#0E7EA8'],['E','#E8207A']].map(([l,cor])=>(
+              {[['T','#0E7EA8'],['E','#96C11F'],['I','#06344F'],['A','#0E7EA8'],['A','#96C11F']].map(([l,cor])=>(
                 <span key={l+cor} style={{ fontSize:14, fontWeight:900, color:cor }}>{l}</span>
               ))}
             </div>
@@ -262,7 +261,7 @@ export default function Layout() {
         <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={0} />
+        <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
 
         </>)}
         <NavSecao colapsado={colapsado} label="Gestão financeira" aberta={secVisivel("Gestão financeira")} onToggle={() => toggleSec("Gestão financeira")} />
