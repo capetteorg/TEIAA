@@ -32,6 +32,18 @@ const TIPOS_DEFICIENCIA = [
   'Deficiência Mental/Psicossocial',
   'Deficiência Múltipla',
 ]
+
+const TIPOS_SANGUINEOS = [
+  'A+',
+  'A-',
+  'B+',
+  'B-',
+  'AB+',
+  'AB-',
+  'O+',
+  'O-',
+  'Não informado',
+]
 const SITUACAO_COR = {
   'ativo': ['#EAF3DE','#3B6D11'],
   'desligado': ['#FCEBEB','#A32D2D'],
@@ -306,7 +318,10 @@ export default function UsuariosAtendidos() {
                 <div style={s.grupo('1fr 1fr 1fr')}>
                   <div>
                     <label style={s.label}>Tipo sanguíneo</label>
-                    <input value={form.tipo_sanguineo} onChange={e=>setForm(f=>({...f,tipo_sanguineo:e.target.value}))} placeholder="Ex.: O+, A-, B+" style={s.input} />
+                    <select value={form.tipo_sanguineo} onChange={e=>setForm(f=>({...f,tipo_sanguineo:e.target.value}))} style={s.input}>
+                      <option value="">Selecione...</option>
+                      {TIPOS_SANGUINEOS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
                   </div>
                   <div>
                     <label style={s.label}>Gênero</label>
