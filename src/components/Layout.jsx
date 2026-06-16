@@ -91,14 +91,9 @@ export default function Layout() {
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   useEffect(() => {
-    if (p === 'admin') {
-      supabase.from('pendencias').select('id', { count:'exact', head:true }).eq('resolvida', false)
-        .then(({ count, error }) => {
-          if (!error) setBadgePendencias(count || 0)
-        })
-    } else {
-      setBadgePendencias(0)
-    }
+    // Na TEIAA, deixamos o badge de pendências desativado para evitar erro 400
+    // quando a estrutura da tabela pendencias não tiver a coluna resolvida.
+    setBadgePendencias(0)
   }, [p])
 
   async function handleLogout() {

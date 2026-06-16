@@ -72,8 +72,14 @@ export default function UsuariosAtendidos() {
   const projetoSelecionado = projetos.find(p => String(p.id) === String(form.projeto_id))
   const formEhTeacolher = projetoSelecionado?.nome?.toLowerCase().includes('teacolher')
 
+  function nomeProjetoPorId(id) {
+    if (!id) return ''
+    return projetos.find(p => String(p.id) === String(id))?.nome || ''
+  }
+
   function usuarioEhTeacolher(usuario) {
-    return usuario?.projeto?.nome?.toLowerCase().includes('teacolher')
+    const nomeProjeto = usuario?.projeto?.nome || nomeProjetoPorId(usuario?.projeto_id)
+    return nomeProjeto?.toLowerCase().includes('teacolher')
   }
 
   function parseMoedaBR(valor) {
@@ -87,7 +93,7 @@ export default function UsuariosAtendidos() {
     setLoading(true)
     const montar = () => {
       let q = supabase.from('usuarios_atendidos')
-        .select('*, projeto:projetos(nome,tipo)')
+        .select('*')
         .order('nome')
       if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
       if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
@@ -95,7 +101,14 @@ export default function UsuariosAtendidos() {
       if (filtros.dataFim) q = q.lte('data_ingresso', filtros.dataFim)
       return q
     }
-    const { data } = await fetchAll(montar, 1000, limite + 1)
+    const { data, error } = await fetchAll(montar, 1000, limite + 1)
+    if (error) {
+      setMsg('Erro ao carregar usuários: ' + error.message)
+      setUsuarios([])
+      setTemMais(false)
+      setLoading(false)
+      return
+    }
     const recebidos = data || []
     setTemMais(recebidos.length > limite)
     setUsuarios(recebidos.slice(0, limite))
@@ -176,7 +189,7 @@ export default function UsuariosAtendidos() {
   const ativos = usuarios.filter(u => u.situacao === 'ativo').length
   const porProjeto = {}
   usuarios.forEach(u => {
-    const nome = u.projeto?.nome || 'Sem projeto'
+    const nome = nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || 'Sem projeto'
     if (!porProjeto[nome]) porProjeto[nome] = { ativo:0, total:0 }
     porProjeto[nome].total++
     if (u.situacao === 'ativo') porProjeto[nome].ativo++
@@ -477,7 +490,7 @@ export default function UsuariosAtendidos() {
                       return (
                         <tr key={u.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                           <td style={{ ...s.td, fontWeight:500 }}>{u.nome}</td>
-                          <td style={{ ...s.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{u.projeto?.nome||'—'}</td>
+                          <td style={{ ...s.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || '—'}</td>
                           <td style={s.td}>{idade !== null ? `${idade} anos` : '—'}</td>
                           <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(u.data_ingresso)}</td>
                           <td style={{ ...s.td, whiteSpace:'nowrap', color:u.data_saida?VERMELHO:'#888780' }}>{fmtData(u.data_saida)}</td>
@@ -486,7 +499,7 @@ export default function UsuariosAtendidos() {
                             <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                               <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                               {usuarioEhTeacolher(u) && (
-                                <button onClick={() => gerarPDFAnexoTeacolher(u, { projetoNome: u.projeto?.nome || 'Projeto TEAcolher' })} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
+                                <button onClick={() => gerarPDFAnexoTeacolher(u, { projetoNome: nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || 'Projeto TEAcolher' })} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
                               )}
                             </div>
                           </td>
