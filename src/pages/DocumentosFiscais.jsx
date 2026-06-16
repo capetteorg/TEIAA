@@ -54,7 +54,7 @@ const TIPOS_DECLARACOES = [
 const TEXTOS_DECLARACOES = {
   'DeclaraÃ§Ã£o de Capacidade TÃ©cnica': (inst, rep) => `DECLARAÃ‡ÃƒO DE CAPACIDADE TÃ‰CNICA
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, para fins de formalizaÃ§Ã£o de parceria com a AdministraÃ§Ã£o PÃºblica, que possui plena capacidade tÃ©cnica, operacional e administrativa para executar o objeto descrito no Plano de Trabalho anexo, em conformidade com os requisitos legais estabelecidos na Lei nÂº 13.019/2014.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, para fins de formalizaÃ§Ã£o de parceria com a AdministraÃ§Ã£o PÃºblica, que possui plena capacidade tÃ©cnica, operacional e administrativa para executar o objeto descrito no Plano de Trabalho anexo, em conformidade com os requisitos legais estabelecidos na Lei nÂº 13.019/2014.
 
 TeresÃ³polis, ${new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'})}
 
@@ -66,7 +66,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de InexistÃªncia de Impedimentos': (inst, rep) => `DECLARAÃ‡ÃƒO DE INEXISTÃŠNCIA DE IMPEDIMENTOS
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede na ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, neste ato representada por ${rep?.nome || 'seu representante legal'}, portador do CPF nÂº ${rep?.cpf || ''}, DECLARA, para os devidos fins, que nÃ£o possui qualquer impedimento legal, judicial ou administrativo que obstrua a celebraÃ§Ã£o de parcerias com o Poder PÃºblico, nos termos do art. 33 da Lei nÂº 13.019, de 31 de julho de 2014.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede na ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, neste ato representada por ${rep?.nome || 'seu representante legal'}, portador do CPF nÂº ${rep?.cpf || ''}, DECLARA, para os devidos fins, que nÃ£o possui qualquer impedimento legal, judicial ou administrativo que obstrua a celebraÃ§Ã£o de parcerias com o Poder PÃºblico, nos termos do art. 33 da Lei nÂº 13.019, de 31 de julho de 2014.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -80,7 +80,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de NÃ£o DistribuiÃ§Ã£o de Resultados': (inst, rep) => `DECLARAÃ‡ÃƒO DE NÃƒO DISTRIBUIÃ‡ÃƒO DE RESULTADOS
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que nÃ£o distribui, sob qualquer forma, eventuais resultados operacionais, dividendos, bonificaÃ§Ãµes, participaÃ§Ãµes ou parcela do patrimÃ´nio aos seus membros, dirigentes, conselheiros, colaboradores ou a terceiros, conforme preconizado em seu Estatuto Social, e nos termos do art. 2Âº, inciso I, da Lei nÂº 13.019, de 31 de julho de 2014.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que nÃ£o distribui, sob qualquer forma, eventuais resultados operacionais, dividendos, bonificaÃ§Ãµes, participaÃ§Ãµes ou parcela do patrimÃ´nio aos seus membros, dirigentes, conselheiros, colaboradores ou a terceiros, conforme preconizado em seu Estatuto Social, e nos termos do art. 2Âº, inciso I, da Lei nÂº 13.019, de 31 de julho de 2014.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -94,7 +94,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de Finalidade NÃ£o Eleitoral': (inst, rep) => `DECLARAÃ‡ÃƒO DE FINALIDADE NÃƒO ELEITORAL
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que os recursos pÃºblicos eventualmente repassados no Ã¢mbito da presente parceria nÃ£o serÃ£o utilizados, direta ou indiretamente, para fins eleitorais, em estrita observÃ¢ncia ao disposto na legislaÃ§Ã£o eleitoral vigente e demais normas aplicÃ¡veis.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que os recursos pÃºblicos eventualmente repassados no Ã¢mbito da presente parceria nÃ£o serÃ£o utilizados, direta ou indiretamente, para fins eleitorais, em estrita observÃ¢ncia ao disposto na legislaÃ§Ã£o eleitoral vigente e demais normas aplicÃ¡veis.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -108,7 +108,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de Conformidade com a LGPD': (inst, rep) => `DECLARAÃ‡ÃƒO DE CONFORMIDADE COM A LGPD
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que estÃ¡ em conformidade com os princÃ­pios, direitos e obrigaÃ§Ãµes previstos na Lei Federal nÂº 13.709/2018 â€“ Lei Geral de ProteÃ§Ã£o de Dados Pessoais (LGPD), comprometendo-se com o tratamento Ã©tico, responsÃ¡vel e seguro de todos os dados pessoais eventualmente coletados, utilizados ou armazenados durante a execuÃ§Ã£o da presente parceria com a AdministraÃ§Ã£o PÃºblica.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que estÃ¡ em conformidade com os princÃ­pios, direitos e obrigaÃ§Ãµes previstos na Lei Federal nÂº 13.709/2018 â€“ Lei Geral de ProteÃ§Ã£o de Dados Pessoais (LGPD), comprometendo-se com o tratamento Ã©tico, responsÃ¡vel e seguro de todos os dados pessoais eventualmente coletados, utilizados ou armazenados durante a execuÃ§Ã£o da presente parceria com a AdministraÃ§Ã£o PÃºblica.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -122,7 +122,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de AusÃªncia de Conflito de Interesses': (inst, rep) => `DECLARAÃ‡ÃƒO DE AUSÃŠNCIA DE CONFLITO DE INTERESSES
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que nÃ£o hÃ¡ qualquer situaÃ§Ã£o de conflito de interesses entre os membros de sua equipe diretiva, tÃ©cnica ou administrativa e os servidores ou agentes pÃºblicos vinculados ao Ã³rgÃ£o concedente da presente parceria, em conformidade com o disposto na legislaÃ§Ã£o vigente, especialmente a Lei nÂº 12.813/2013.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que nÃ£o hÃ¡ qualquer situaÃ§Ã£o de conflito de interesses entre os membros de sua equipe diretiva, tÃ©cnica ou administrativa e os servidores ou agentes pÃºblicos vinculados ao Ã³rgÃ£o concedente da presente parceria, em conformidade com o disposto na legislaÃ§Ã£o vigente, especialmente a Lei nÂº 12.813/2013.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -136,7 +136,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de CiÃªncia das ObrigaÃ§Ãµes': (inst, rep) => `DECLARAÃ‡ÃƒO DE CIÃŠNCIA DAS OBRIGAÃ‡Ã•ES
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que estÃ¡ plenamente ciente das obrigaÃ§Ãµes legais, tÃ©cnicas e administrativas relativas Ã  execuÃ§Ã£o da parceria firmada com a AdministraÃ§Ã£o PÃºblica, bem como da necessidade de prestar contas dos recursos recebidos, conforme a legislaÃ§Ã£o vigente, em especial a Lei nÂº 13.019/2014 e demais normativos aplicÃ¡veis.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que estÃ¡ plenamente ciente das obrigaÃ§Ãµes legais, tÃ©cnicas e administrativas relativas Ã  execuÃ§Ã£o da parceria firmada com a AdministraÃ§Ã£o PÃºblica, bem como da necessidade de prestar contas dos recursos recebidos, conforme a legislaÃ§Ã£o vigente, em especial a Lei nÂº 13.019/2014 e demais normativos aplicÃ¡veis.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -150,7 +150,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de Estrutura Operacional': (inst, rep) => `DECLARAÃ‡ÃƒO DE ESTRUTURA OPERACIONAL
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que dispÃµe de estrutura fÃ­sica, tÃ©cnica, operacional e de pessoal qualificado, adequada e suficiente para a execuÃ§Ã£o do objeto pactuado, conforme os requisitos estabelecidos na legislaÃ§Ã£o vigente, em especial na Lei nÂº 13.019/2014 e demais normativos aplicÃ¡veis.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que dispÃµe de estrutura fÃ­sica, tÃ©cnica, operacional e de pessoal qualificado, adequada e suficiente para a execuÃ§Ã£o do objeto pactuado, conforme os requisitos estabelecidos na legislaÃ§Ã£o vigente, em especial na Lei nÂº 13.019/2014 e demais normativos aplicÃ¡veis.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -164,7 +164,7 @@ ${inst.nome_fantasia || inst.nome_completo || 'TEIAA'}`,
 
   'DeclaraÃ§Ã£o de Veracidade': (inst, rep) => `DECLARAÃ‡ÃƒO DE VERACIDADE
 
-A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Juruena, 73, AgriÃµes, TeresÃ³polis â€“ RJ'}, declara, sob as penas da lei, que todas as informaÃ§Ãµes e documentos apresentados para fins de celebraÃ§Ã£o da presente parceria sÃ£o verdadeiros, completos e condizentes com a realidade institucional, responsabilizando-se integralmente por sua autenticidade e exatidÃ£o, nos termos da legislaÃ§Ã£o vigente.
+A ${inst.nome_completo || 'TEIAA'}, inscrita no CNPJ sob o nÂº ${inst.cnpj || '27.837.768/0001-70'}, com sede Ã  ${inst.endereco || 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis/RJ, CEP 25953-200'}, declara, sob as penas da lei, que todas as informaÃ§Ãµes e documentos apresentados para fins de celebraÃ§Ã£o da presente parceria sÃ£o verdadeiros, completos e condizentes com a realidade institucional, responsabilizando-se integralmente por sua autenticidade e exatidÃ£o, nos termos da legislaÃ§Ã£o vigente.
 
 Por ser expressÃ£o da verdade, firma a presente para os devidos fins legais.
 
@@ -625,3 +625,4 @@ export default function DocumentosFiscais() {
       </div>
   )
 }
+
