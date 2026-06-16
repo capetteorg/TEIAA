@@ -222,9 +222,15 @@ export default function UsuariosAtendidos() {
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
 
   async function excluir(id) {
-    await supabase.from('usuarios_atendidos').delete().eq('id', id)
+    const { error } = await supabase.from('usuarios_atendidos').delete().eq('id', id)
     setConfirmandoExcluir(null)
-    carregar()
+    if (error) {
+      setMsg('Erro ao excluir: ' + error.message)
+    } else {
+      setMsg('Usuário excluído.')
+      carregar()
+    }
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
 
@@ -516,6 +522,7 @@ export default function UsuariosAtendidos() {
                               {usuarioEhTeacolher(u) && (
                                 <button onClick={() => gerarPDFAnexoTeacolher(u, { projetoNome: nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || 'Projeto TEAcolher' })} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
                               )}
+                              <button type="button" onClick={() => setConfirmandoExcluir(u.id)} style={s.btn('#FEF2F2','#A32D2D')}>Excluir</button>
                             </div>
                           </td>
                         </tr>
