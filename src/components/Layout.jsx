@@ -192,7 +192,7 @@ export default function Layout() {
     <div style={{
       width: colapsado && !isMobile ? 64 : 228,
       transition: 'width .2s cubic-bezier(.2,.8,.3,1)',
-      background: 'rgba(255,255,255,0.52)',
+      background: isMobile ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.52)',
       borderRight: '0.5px solid #E0DDD5',
       display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%',
     }}>
@@ -392,7 +392,7 @@ export default function Layout() {
       {isMobile && menuAberto && (
         <>
           <div onClick={() => setMenuAberto(false)} className="drawer-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 99 }} />
-          <div className="drawer-mobile" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 240, overflowY: 'auto' }}>
+          <div className="drawer-mobile" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, width: 240, overflowY: 'auto', background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(12px)' }}>
             {sidebar}
           </div>
         </>
