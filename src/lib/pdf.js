@@ -1,24 +1,21 @@
 // =============================================
-// GERADOR DE PDF — FINOSC CAPETTE
+// GERADOR DE PDF — AGENDO INTEGRA TEIAA
 // Usa window.print() com CSS otimizado
 // =============================================
 
-const CAPETTE_INFO = {
-  nome: 'Casa do Pequeno Trabalhador de Teresópolis',
-  cnpj: '29.213.717/0001-01',
+const TEIAA_INFO = {
+  nome: 'Associação TEIAA - Troca de Experiências e Integração entre Amigos de Autistas',
+  cnpj: '27.837.768/0001-70',
   registros: [
-    'Certificado de entidade de fins filantrópicos: Proc. 200606/77',
-    'Instituição de utilidade pública Federal — Dec. 89.439/94',
-    'Estadual — Dec. 6.651/83 · Municipal — Lei 868/76',
-    'Conselho Nacional de Serviço Social do MEC Reg. 236.580/76',
-    'Coordenadoria Estadual de Desenvolvimento Social Reg. nº 166/76',
-    'Certificado de Reg. no Cadastro da FEEM nº 0189',
-    'Prefeitura Municipal de Teresópolis Reg. nº 03/76 · Código CENSO: 33042694',
+    'Associação de Pais e Amigos de Autistas de Teresópolis',
+    'CTA - Centro TEIAA de Atendimentos',
+    'Atuação: inclusão social, defesa de direitos e apoio a pessoas com TEA',
+    'Sistema AGENDO Integra para gestão institucional e prestação de contas',
   ],
-  endereco: 'Rua Juruena, 73, Agriões, Teresópolis — RJ',
-  whatsapp: '(21) 3726-1753',
-  email: 'capette@capette.org',
-  instagram: 'CAPETTE74',
+  endereco: 'Rua Prefeito Sebastião Teixeira, 58, Várzea, Teresópolis — RJ, CEP 25953-200',
+  whatsapp: '(21) 97335-8220',
+  email: 'associacaoteiaa@gmail.com',
+  site: 'www.associacaoteiaa.org.br',
 }
 
 // CSS base para todos os relatórios
@@ -339,13 +336,13 @@ function htmlCabecalho(opts = {}) {
     return `
   <div class="cab-full">
     <div>
-      <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:56px;width:auto;object-fit:contain;display:block"
-        onerror="this.outerHTML='<div style=\'display:flex;flex-direction:column;gap:2px\'><div style=\'display:flex;gap:1px\'><span style=\'font-size:20px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:20px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:20px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:20px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:20px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:20px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:20px;font-weight:900;color:#E8207A\'>E</span></div><div style=\'font-size:9px;color:#888\'>Desde 1974</div></div>'" />
+      <img src="https://teiaa.agendoas.com/logo.png" alt="TEIAA" style="height:56px;width:auto;object-fit:contain;display:block"
+        onerror="this.outerHTML='<div style=\'display:flex;flex-direction:column;gap:2px\'><div style=\'font-size:20px;font-weight:900;color:#0E7EA8;letter-spacing:.04em\'>TEIAA</div><div style=\'font-size:9px;color:#888\'>Centro TEIAA de Atendimentos</div></div>'" />
     </div>
     <div class="cab-full-dir">
-      <strong>${CAPETTE_INFO.nome}</strong>
-      <div class="cnpj">CNPJ: ${CAPETTE_INFO.cnpj}</div>
-      <div class="cab-registros">${CAPETTE_INFO.registros.join('<br>')}</div>
+      <strong>${TEIAA_INFO.nome}</strong>
+      <div class="cnpj">CNPJ: ${TEIAA_INFO.cnpj}</div>
+      <div class="cab-registros">${TEIAA_INFO.registros.join('<br>')}</div>
     </div>
   </div>`
   }
@@ -354,7 +351,7 @@ function htmlCabecalho(opts = {}) {
   <div class="cab">
     <div>
       <div class="cab-nome">${opts.titulo || 'Relatório Financeiro'}</div>
-      <div class="cab-sub">${CAPETTE_INFO.nome} · ${opts.sub || 'CAPETTE'}</div>
+      <div class="cab-sub">${TEIAA_INFO.nome} · ${opts.sub || 'TEIAA'}</div>
     </div>
     <div class="cab-dir">
       AGENDO Integra<span>${opts.ref || ''}</span>
@@ -367,7 +364,7 @@ function htmlRodape(opts = {}) {
   const protocolo = opts.protocolo || ''
   return `
   <div class="rodape">
-    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div>${TEIAA_INFO.endereco} · ${TEIAA_INFO.whatsapp} · ${TEIAA_INFO.email}</div>
     <div class="rodape-sistema">AGENDO Integra · Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${protocolo ? ' · ' + protocolo : ''}</div>
   </div>`
 }
@@ -424,11 +421,11 @@ ${paisagem ? '@page { size: A4 landscape; margin: 0; } .pg { width: 297mm; min-h
 function cabFull(subtitulo) {
   return `
   <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0E7EA8;padding-bottom:11px;margin-bottom:18px">
-    <div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:46px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='<div style=\'display:flex;gap:1px\'><span style=\'font-size:16px;font-weight:900;color:#F5C800\'>C</span><span style=\'font-size:16px;font-weight:900;color:#F4821F\'>A</span><span style=\'font-size:16px;font-weight:900;color:#8B2FC9\'>P</span><span style=\'font-size:16px;font-weight:900;color:#E8212A\'>E</span><span style=\'font-size:16px;font-weight:900;color:#6BBF2B\'>T</span><span style=\'font-size:16px;font-weight:900;color:#0E7EA8\'>T</span><span style=\'font-size:16px;font-weight:900;color:#E8207A\'>E</span></div><div style=\'font-size:8px;color:#888\'>Desde 1974</div>'" /></div>
+    <div><img src="https://teiaa.agendoas.com/logo.png" alt="TEIAA" style="height:46px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='<div style=\'font-size:16px;font-weight:900;color:#0E7EA8;letter-spacing:.04em\'>TEIAA</div><div style=\'font-size:8px;color:#888\'>Centro TEIAA de Atendimentos</div>'" /></div>
     <div style="text-align:right;font-size:9px;color:#5F6874;max-width:260px;line-height:1.5">
-      <div style="font-size:11px;font-weight:700;color:#20252C">${CAPETTE_INFO.nome}</div>
-      <div style="font-size:9.5px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${CAPETTE_INFO.cnpj}</div>
-      <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
+      <div style="font-size:11px;font-weight:700;color:#20252C">${TEIAA_INFO.nome}</div>
+      <div style="font-size:9.5px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${TEIAA_INFO.cnpj}</div>
+      <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${TEIAA_INFO.registros.slice(0,3).join('<br>')}</div>
     </div>
   </div>
   ${subtitulo ? `<div style="font-size:9px;color:#626B76;margin-bottom:12px">${subtitulo}</div>` : ''}
@@ -493,7 +490,7 @@ function secTitle(texto) {
 function rodape(protocolo) {
   return `
   <div style="border-top:1px solid #D7D0C2;padding-top:8px;display:flex;justify-content:space-between;color:#66717E;font-size:8.5px;margin-top:14px">
-    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div>${TEIAA_INFO.endereco} · ${TEIAA_INFO.whatsapp} · ${TEIAA_INFO.email}</div>
     <div><strong style="color:#06344F">AGENDO Integra</strong> · ${protocolo}</div>
   </div>`
 }
@@ -512,7 +509,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const periodoLabel = `${fmtData(dataInicio)} a ${fmtData(dataFim)}`
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-CONC`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-CONC`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const contaNome = contaDados?.nome || 'Conta'
   const bancNome  = contaDados?.banco || '—'
@@ -588,7 +585,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
     </tr>${subLinhas}`
   }).join('')
 
-  const logoFallback = `<div style="display:flex;gap:1px"><span style="font-size:16px;font-weight:900;color:#F5C800">C</span><span style="font-size:16px;font-weight:900;color:#F4821F">A</span><span style="font-size:16px;font-weight:900;color:#8B2FC9">P</span><span style="font-size:16px;font-weight:900;color:#E8212A">E</span><span style="font-size:16px;font-weight:900;color:#6BBF2B">T</span><span style="font-size:16px;font-weight:900;color:#0E7EA8">T</span><span style="font-size:16px;font-weight:900;color:#E8207A">E</span></div><div style="font-size:8px;color:#888">Desde 1974</div>`
+  const logoFallback = `<div style="font-size:16px;font-weight:900;color:#0E7EA8;letter-spacing:.04em">TEIAA</div><div style="font-size:8px;color:#888">Centro TEIAA de Atendimentos</div>`
 
   // ── Cabeçalho compacto para páginas internas ──
   const cabecalhoPagina = `
@@ -606,7 +603,7 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
 
   const rodapeHtml = `
   <div style="border-top:1px solid #D7D0C2;padding-top:8px;display:flex;justify-content:space-between;color:#9199A2;font-size:8px;margin-top:20px">
-    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div>${TEIAA_INFO.endereco} · ${TEIAA_INFO.whatsapp} · ${TEIAA_INFO.email}</div>
     <div>AGENDO Integra · ${protocolo}</div>
   </div>`
 
@@ -620,14 +617,14 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
     <!-- ── CABEÇALHO COM LOGO ── -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #0E7EA8;padding-bottom:14px;margin-bottom:20px">
       <div>
-        <img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE"
+        <img src="https://teiaa.agendoas.com/logo.png" alt="TEIAA"
           style="height:50px;width:auto;object-fit:contain;display:block"
           onerror="this.outerHTML='${logoFallback}'" />
       </div>
       <div style="text-align:right;font-size:9px;color:#5F6874;max-width:290px;line-height:1.6">
-        <div style="font-size:12px;font-weight:700;color:#20252C;margin-bottom:2px">${CAPETTE_INFO.nome}</div>
-        <div style="font-size:9.5px;font-weight:700;color:#444;margin-bottom:3px">CNPJ: ${CAPETTE_INFO.cnpj}</div>
-        <div style="font-size:7.5px;color:#9199A2;line-height:1.6">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
+        <div style="font-size:12px;font-weight:700;color:#20252C;margin-bottom:2px">${TEIAA_INFO.nome}</div>
+        <div style="font-size:9.5px;font-weight:700;color:#444;margin-bottom:3px">CNPJ: ${TEIAA_INFO.cnpj}</div>
+        <div style="font-size:7.5px;color:#9199A2;line-height:1.6">${TEIAA_INFO.registros.slice(0,3).join('<br>')}</div>
       </div>
     </div>
 
@@ -661,8 +658,8 @@ export function gerarPDFConciliacao(dados, dataInicio, dataFim, opts = {}) {
     <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #E0DDD5;border-radius:4px;margin-bottom:20px;overflow:hidden">
       <div style="padding:10px 12px;border-right:1px solid #E0DDD5;background:#FAFAF8">
         <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#888780;margin-bottom:4px">Instituição</div>
-        <div style="font-size:9.5px;font-weight:600;color:#1A1F1C;line-height:1.3">${CAPETTE_INFO.nome}</div>
-        <div style="font-size:8px;color:#888780;margin-top:2px">${CAPETTE_INFO.cnpj}</div>
+        <div style="font-size:9.5px;font-weight:600;color:#1A1F1C;line-height:1.3">${TEIAA_INFO.nome}</div>
+        <div style="font-size:8px;color:#888780;margin-top:2px">${TEIAA_INFO.cnpj}</div>
       </div>
       <div style="padding:10px 12px;border-right:1px solid #E0DDD5;background:#FAFAF8">
         <div style="font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:#888780;margin-bottom:4px">Conta analisada</div>
@@ -846,7 +843,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
   const colunasResumo = temSaldoBancario ? 6 : 4
 
   const anoRelatorio = dataFim ? new Date(dataFim+'T12:00:00').getFullYear() : new Date().getFullYear()
-  const protocolo = `AG-CAP-${anoRelatorio}-RF`
+  const protocolo = `AG-TEIAA-${anoRelatorio}-RF`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const contaNome = contaDados?.nome || 'Todas as contas'
   const bancNome = contaDados?.banco || '—'
@@ -899,8 +896,8 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
       <div style="display:grid;grid-template-columns:1fr 1fr">
         <div style="padding:16px 20px 16px 0;border-right:1px solid var(--line-soft)">
           <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:7px">Instituição</div>
-          <div style="font-size:13px;color:#20252C;font-weight:600">${CAPETTE_INFO.nome}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">CNPJ: ${CAPETTE_INFO.cnpj}</div>
+          <div style="font-size:13px;color:#20252C;font-weight:600">${TEIAA_INFO.nome}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">CNPJ: ${TEIAA_INFO.cnpj}</div>
         </div>
         <div style="padding:16px 0 16px 20px">
           <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;color:#6B7280;margin-bottom:7px">Conta analisada</div>
@@ -934,8 +931,8 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
 
     <table style="margin-bottom:24px;font-size:11px">
       <tbody>
-        <tr><td style="color:#6B7280;width:40%;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Instituição titular</td><td style="font-weight:600;border-bottom:1px solid var(--line-soft)">${CAPETTE_INFO.nome}</td></tr>
-        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">CNPJ</td><td style="border-bottom:1px solid var(--line-soft)">${CAPETTE_INFO.cnpj}</td></tr>
+        <tr><td style="color:#6B7280;width:40%;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Instituição titular</td><td style="font-weight:600;border-bottom:1px solid var(--line-soft)">${TEIAA_INFO.nome}</td></tr>
+        <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">CNPJ</td><td style="border-bottom:1px solid var(--line-soft)">${TEIAA_INFO.cnpj}</td></tr>
         <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Sistema gerador</td><td style="border-bottom:1px solid var(--line-soft)">AGENDO Integra — Gestão integrada para OSCs</td></tr>
         <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Protocolo de emissão</td><td style="font-weight:600;border-bottom:1px solid var(--line-soft)">${protocolo}</td></tr>
         <tr><td style="color:#6B7280;padding:9px 9px 9px 0;border-bottom:1px solid var(--line-soft)">Conta analisada</td><td style="border-bottom:1px solid var(--line-soft)">${contaNome} · ${bancNome} · Ag. ${agNome} · Cc. ${ctNum}</td></tr>
@@ -948,7 +945,7 @@ export function gerarPDFRelatorio(dados, dataInicio, dataFim, opts = {}) {
     <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:16px;letter-spacing:-.02em">Resumo executivo</div>
 
     <div style="font-size:12px;line-height:1.65;color:#303842;margin-bottom:20px">
-      O presente relatório consolida as movimentações financeiras registradas na ${contaNome} da CAPETTE, conforme dados lançados no sistema AGENDO Integra, para fins de conferência interna, acompanhamento institucional e suporte à prestação de contas.
+      O presente relatório consolida as movimentações financeiras registradas na ${contaNome} da TEIAA, conforme dados lançados no sistema AGENDO Integra, para fins de conferência interna, acompanhamento institucional e suporte à prestação de contas.
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);margin:20px 0 28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
@@ -1121,7 +1118,7 @@ export function gerarPDFTransparencia(dados, mes) {
     return `<tr><td>${cat}</td><td class="num vermelho">${fmt(val)}</td><td class="num">${total>0?Math.round(val/total*100):0}%</td></tr>`
   }).join('')
 
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-TP`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-TP`
   const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
   const saldo = totalEnt - totalSai
 
@@ -1139,7 +1136,7 @@ export function gerarPDFTransparencia(dados, mes) {
     ${tituloEditorial('Documento público','Transparência','Financeira',`Competência: ${mesLabel}`)}
 
     <div style="border-left:3px solid #0E7EA8;padding:10px 14px;background:#EAF5F8;margin:12px 0;font-size:10px;color:#06344F;line-height:1.55">
-      Este relatório é disponibilizado publicamente pela CAPETTE em cumprimento às obrigações de transparência previstas na Lei nº 13.019/2014 e demais normas aplicáveis às organizações da sociedade civil.
+      Este relatório é disponibilizado publicamente pela TEIAA em cumprimento às obrigações de transparência previstas na Lei nº 13.019/2014 e demais normas aplicáveis às organizações da sociedade civil.
     </div>
 
     ${figuras([
@@ -1202,7 +1199,7 @@ export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
     <td class="center">${m.conciliado?'✓ Conciliado':'Pendente'}</td>
   </tr>`).join('')
 
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-EV`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-EV`
   const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
   const periodoLabel = evento.data_inicio ? (new Date(evento.data_inicio+'T12:00:00').toLocaleDateString('pt-BR') + (evento.data_fim && evento.data_fim!==evento.data_inicio ? ' a '+new Date(evento.data_fim+'T12:00:00').toLocaleDateString('pt-BR') : '')) : '—'
   const pctMeta = evento.meta_financeira > 0 ? Math.round(totalEnt/evento.meta_financeira*100) : null
@@ -1213,7 +1210,7 @@ export function gerarPDFEvento(evento, entradas, saidas, opts = {}) {
     ${tituloEditorial('Relatório de evento', evento.nome||'Evento', '', periodoLabel)}
 
     ${metaGrid([
-      { label:'Tipo', val:'Evento institucional', sub:'Realização CAPETTE' },
+      { label:'Tipo', val:'Evento institucional', sub:'Realização TEIAA' },
       { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
       { label:'Período', val:periodoLabel, sub:'Data de realização' },
       { label:'Meta financeira', val:evento.meta_financeira?fmt(evento.meta_financeira):'—', sub:pctMeta!=null?pctMeta+'% atingido':'' },
@@ -1276,7 +1273,7 @@ export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
     <td class="center">${m.conciliado?'✓':'Pendente'}</td>
   </tr>`).join('')
 
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-CA`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-CA`
   const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
   const periodoLabel = campanha.data_inicio ? (new Date(campanha.data_inicio+'T12:00:00').toLocaleDateString('pt-BR') + (campanha.data_fim?' a '+new Date(campanha.data_fim+'T12:00:00').toLocaleDateString('pt-BR'):'')) : '—'
 
@@ -1286,7 +1283,7 @@ export function gerarPDFCampanha(campanha, entradas, saidas, opts = {}) {
     ${tituloEditorial('Relatório de campanha', campanha.nome||'Campanha', '', periodoLabel)}
 
     ${metaGrid([
-      { label:'Tipo', val:'Campanha de arrecadação', sub:'Realização CAPETTE' },
+      { label:'Tipo', val:'Campanha de arrecadação', sub:'Realização TEIAA' },
       { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
       { label:'Período', val:periodoLabel, sub:'Duração da campanha' },
       { label:'Meta financeira', val:campanha.meta_financeira?fmt(campanha.meta_financeira):'—', sub:pctMeta>0?pctMeta+'% atingido':'' },
@@ -1345,7 +1342,7 @@ export function gerarPDFCobrancas(cobrancas, filtros) {
     <td>${c.ultima_obs||'—'}</td>
   </tr>`).join('')
 
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-COB`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-COB`
   const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
   const statusCor = { 'pago confirmado no extrato':'#2E6F3E', 'pago - aguardando confirmação':'#854F0B', 'em aberto':'#626B76', 'vencido':'#A7352C', 'cancelado':'#9199A2', 'incobrável':'#9199A2' }
   const statusBg  = { 'pago confirmado no extrato':'#EEF8F1', 'pago - aguardando confirmação':'#FFF6E8', 'em aberto':'#F1EFE8', 'vencido':'#FEF2F2', 'cancelado':'#F5F2EA', 'incobrável':'#F5F2EA' }
@@ -1484,19 +1481,19 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
 
   const pctConc = totalMovs > 0 ? Math.round(totalConciliados/totalMovs*100) : 0
 
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-PC`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-PC`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const tipoLabel2 = TIPO_LABEL[conta.tipo_conta] || conta.tipo_conta
 
-  const logoFallback = `<div style="display:flex;gap:1px"><span style="font-size:16px;font-weight:900;color:#F5C800">C</span><span style="font-size:16px;font-weight:900;color:#F4821F">A</span><span style="font-size:16px;font-weight:900;color:#8B2FC9">P</span><span style="font-size:16px;font-weight:900;color:#E8212A">E</span><span style="font-size:16px;font-weight:900;color:#6BBF2B">T</span><span style="font-size:16px;font-weight:900;color:#0E7EA8">T</span><span style="font-size:16px;font-weight:900;color:#E8207A">E</span></div><div style="font-size:8px;color:#888">Desde 1974</div>`
+  const logoFallback = `<div style="font-size:16px;font-weight:900;color:#0E7EA8;letter-spacing:.04em">TEIAA</div><div style="font-size:8px;color:#888">Centro TEIAA de Atendimentos</div>`
 
   const cabFull = `
   <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0E7EA8;padding-bottom:11px;margin-bottom:20px">
-    <div><img src="https://capette-financeiro.vercel.app/logo.png" alt="CAPETTE" style="height:46px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='${logoFallback}'" /></div>
+    <div><img src="https://teiaa.agendoas.com/logo.png" alt="TEIAA" style="height:46px;width:auto;object-fit:contain;display:block" onerror="this.outerHTML='${logoFallback}'" /></div>
     <div style="text-align:right;font-size:9px;color:#5F6874;max-width:260px;line-height:1.5">
-      <div style="font-size:11px;font-weight:700;color:#20252C">${CAPETTE_INFO.nome}</div>
-      <div style="font-size:9.5px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${CAPETTE_INFO.cnpj}</div>
-      <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${CAPETTE_INFO.registros.slice(0,3).join('<br>')}</div>
+      <div style="font-size:11px;font-weight:700;color:#20252C">${TEIAA_INFO.nome}</div>
+      <div style="font-size:9.5px;font-weight:700;color:#20252C;margin:2px 0">CNPJ: ${TEIAA_INFO.cnpj}</div>
+      <div style="font-size:7.5px;color:#9199A2;line-height:1.5">${TEIAA_INFO.registros.slice(0,3).join('<br>')}</div>
     </div>
   </div>`
 
@@ -1504,7 +1501,7 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
   <div style="display:grid;grid-template-columns:1fr auto;gap:16px;border-bottom:1px solid #D7D0C2;padding-bottom:10px;margin-bottom:16px">
     <div>
       <div style="font-size:14px;font-weight:700;color:#06344F;letter-spacing:-.01em">Prestação de Contas — ${tipoLabel2}</div>
-      <div style="margin-top:4px;color:#66717E;font-size:9px">${CAPETTE_INFO.nome} · ${protocolo}</div>
+      <div style="margin-top:4px;color:#66717E;font-size:9px">${TEIAA_INFO.nome} · ${protocolo}</div>
     </div>
     <div style="text-align:right;font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#06344F">
       AGENDO Integra<span style="display:block;margin-top:3px;color:#0E7EA8;font-weight:400;text-transform:none;letter-spacing:0">${protocolo}</span>
@@ -1513,7 +1510,7 @@ export function gerarPDFPrestacaoContas(dados, pendencias, tipo, opts = {}) {
 
   const rodapeHtml = `
   <div style="border-top:1px solid #D7D0C2;padding-top:9px;display:flex;justify-content:space-between;color:#66717E;font-size:8.5px;margin-top:18px">
-    <div>${CAPETTE_INFO.endereco} · ${CAPETTE_INFO.whatsapp} · ${CAPETTE_INFO.email}</div>
+    <div>${TEIAA_INFO.endereco} · ${TEIAA_INFO.whatsapp} · ${TEIAA_INFO.email}</div>
     <div><strong style="color:#06344F">AGENDO Integra</strong> · ${protocolo}</div>
   </div>`
 
@@ -1675,7 +1672,7 @@ export function gerarPDFParecer({ fechamento, movs, instituicao }) {
   const vicon = { aprovado:'✓', aprovado_ressalva:'!', reprovado:'✗' }
   const vlabel= { aprovado:'Aprovado', aprovado_ressalva:'Aprovado com ressalva', reprovado:'Reprovado' }
   const tipo_apr = fechamento.tipo_aprovacao || 'aprovado'
-  const protocolo = `AG-CAP-${fechamento.competencia||new Date().getFullYear()}-CF`
+  const protocolo = `AG-TEIAA-${fechamento.competencia||new Date().getFullYear()}-CF`
   const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
 
   const html = `
@@ -1684,7 +1681,7 @@ export function gerarPDFParecer({ fechamento, movs, instituicao }) {
     ${tituloEditorial('Documento do Conselho Fiscal','Parecer','Mensal',`Competência: ${fmtMes(fechamento.competencia)}`)}
 
     ${metaGrid([
-      { label:'Instituição', val:CAPETTE_INFO.nome, sub:'CNPJ: '+CAPETTE_INFO.cnpj },
+      { label:'Instituição', val:TEIAA_INFO.nome, sub:'CNPJ: '+TEIAA_INFO.cnpj },
       { label:'Competência', val:fmtMes(fechamento.competencia), sub:'Período mensal' },
       { label:'Protocolo', val:protocolo, sub:'Emitido em '+dataEmissao },
       { label:'Modalidade', val:modalLabel[fechamento.modalidade_reuniao]||fechamento.modalidade_reuniao||'—', sub:fechamento.data_reuniao?'Reunião em '+fmtData(fechamento.data_reuniao):'—' },
@@ -1754,7 +1751,7 @@ export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
       </tr>`
     }).join('')
 
-  const protocolo = `AG-CAP-${ano}-CFAN`
+  const protocolo = `AG-TEIAA-${ano}-CFAN`
   const dataEmissao = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
   const tipoLabel2 = { aprovado:'Aprovado', aprovado_ressalva:'Aprovado c/ ressalva', reprovado:'Reprovado' }
   const tipoCor2 = { aprovado:'#2E6F3E', aprovado_ressalva:'#854F0B', reprovado:'#A7352C' }
@@ -1812,7 +1809,7 @@ export function gerarPDFParecerAnual({ ano, fechamentos, movs, instituicao }) {
 // =============================================
 export function gerarPDFPlanoAcao(dados, opts = {}) {
   const { plano, projetosCompletos, presidente } = dados
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-PA`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-PA`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const periodoLabel = plano?.periodo_inicio ? `${fmtData(plano.periodo_inicio)} a ${fmtData(plano.periodo_fim)}` : '—'
@@ -1920,7 +1917,7 @@ export function gerarPDFPlanoAcao(dados, opts = {}) {
 // =============================================
 export function gerarPDFRelatAnual(dados, opts = {}) {
   const { plano, projetosCompletos, totalEntGeral, totalDespGeral, totalAtendGeral, totalUsersGeral } = dados
-  const protocolo = `AG-CAP-${plano?.periodo_inicio?.slice(0,4)||new Date().getFullYear()}-RA`
+  const protocolo = `AG-TEIAA-${plano?.periodo_inicio?.slice(0,4)||new Date().getFullYear()}-RA`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const ano = plano?.periodo_inicio?.slice(0,4) || new Date().getFullYear()
@@ -2024,7 +2021,7 @@ export function gerarPDFRelatAnual(dados, opts = {}) {
 // =============================================
 export function gerarPDFEquipe(dados, opts = {}) {
   const { lista, porTipo, porSit } = dados
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-EQ`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-EQ`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const ativos = lista.filter(e=>e.situacao==='ativo').length
@@ -2040,7 +2037,7 @@ export function gerarPDFEquipe(dados, opts = {}) {
 
   const html = `
   <div class="pg">
-    ${htmlCabecalho({ titulo:'Relatório de Equipe', sub:`${CAPETTE_INFO.nome} · Emitido em ${dataEmissao}`, ref:protocolo })}
+    ${htmlCabecalho({ titulo:'Relatório de Equipe', sub:`${TEIAA_INFO.nome} · Emitido em ${dataEmissao}`, ref:protocolo })}
 
     <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Equipe</div>
 
@@ -2085,7 +2082,7 @@ export function gerarPDFEquipe(dados, opts = {}) {
 // =============================================
 export function gerarPDFUsuariosAtendidos(dados, periodoLabel, opts = {}) {
   const { lista, ativos, desligados, faixas } = dados
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-UA`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-UA`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
@@ -2102,7 +2099,7 @@ export function gerarPDFUsuariosAtendidos(dados, periodoLabel, opts = {}) {
 
   const html = `
   <div class="pg">
-    ${htmlCabecalho({ titulo:'Usuários Atendidos', sub:`${CAPETTE_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+    ${htmlCabecalho({ titulo:'Usuários Atendidos', sub:`${TEIAA_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
 
     <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Usuários Atendidos</div>
 
@@ -2163,7 +2160,7 @@ export function gerarPDFUsuariosAtendidos(dados, periodoLabel, opts = {}) {
 // =============================================
 export function gerarPDFAtendimentos(dados, periodoLabel, opts = {}) {
   const { lista, totalPart, porTipo, porProjeto } = dados
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-AT`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-AT`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
@@ -2182,7 +2179,7 @@ export function gerarPDFAtendimentos(dados, periodoLabel, opts = {}) {
 
   const html = `
   <div class="pg">
-    ${htmlCabecalho({ titulo:'Relatório de Atendimentos', sub:`${CAPETTE_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+    ${htmlCabecalho({ titulo:'Relatório de Atendimentos', sub:`${TEIAA_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
 
     <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Atendimentos</div>
 
@@ -2250,7 +2247,7 @@ export function gerarPDFAtendimentos(dados, periodoLabel, opts = {}) {
 // =============================================
 export function gerarPDFDoacoes(dados, periodoLabel, opts = {}) {
   const { lista, totalEstimado, porCategoria, porDoador } = dados
-  const protocolo = `AG-CAP-${new Date().getFullYear()}-DO`
+  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-DO`
   const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
 
@@ -2269,7 +2266,7 @@ export function gerarPDFDoacoes(dados, periodoLabel, opts = {}) {
 
   const html = `
   <div class="pg">
-    ${htmlCabecalho({ titulo:'Relatório de Doações', sub:`${CAPETTE_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+    ${htmlCabecalho({ titulo:'Relatório de Doações', sub:`${TEIAA_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
 
     <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Doações Recebidas</div>
 
@@ -2329,4 +2326,291 @@ export function gerarPDFDoacoes(dados, periodoLabel, opts = {}) {
   </div>`
 
   abrirImpressao(html, 'Relatório de Doações', true)
+}
+
+
+// =============================================
+// ANEXO I — FORMULÁRIO DE CADASTRO PROJETO TEACOLHER
+// =============================================
+export function gerarPDFAnexoTeacolher(usuario = {}, opts = {}) {
+  const esc = v => String(v ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+
+  const norm = v => String(v ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
+  const fmtData = d => {
+    if (!d) return ''
+    const dt = new Date(String(d).includes('T') ? d : d + 'T12:00:00')
+    if (Number.isNaN(dt.getTime())) return esc(d)
+    return dt.toLocaleDateString('pt-BR')
+  }
+
+  const fmtMoeda = v => {
+    if (v === null || v === undefined || v === '') return ''
+    const n = Number(v)
+    if (Number.isNaN(n)) return esc(v)
+    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
+
+  const generoAtual = norm(usuario.genero)
+  const defAtual = norm(usuario.tipo_deficiencia)
+
+  const marcadoGenero = label => {
+    const alvo = norm(label)
+    const aliases = {
+      'mulher cis': ['mulher cis', 'feminino cis', 'mulhercis'],
+      'mulher trans': ['mulher trans', 'mulhertrans'],
+      'homem cis': ['homem cis', 'masculino cis', 'homemcis'],
+      'homem trans': ['homem trans', 'homemtrans'],
+      'pessoa nao binaria': ['pessoa nao binaria', 'nao binario', 'nao binaria', 'não binária'],
+      'prefiro nao informar': ['prefiro nao informar', 'nao informar', 'não informar'],
+      'outro': ['outro', 'outra']
+    }
+    const lista = aliases[alvo] || [alvo]
+    return lista.some(item => generoAtual === norm(item)) ? '☑' : '☐'
+  }
+
+  const marcadoDef = label => {
+    const alvo = norm(label)
+    const aliases = {
+      'deficiencia fisica': ['deficiencia fisica', 'física', 'fisica'],
+      'deficiencia auditiva': ['deficiencia auditiva', 'auditiva'],
+      'deficiencia visual': ['deficiencia visual', 'visual'],
+      'deficiencia intelectual': ['deficiencia intelectual', 'intelectual'],
+      'deficiencia mental psicossocial': ['deficiencia mental psicossocial', 'mental psicossocial', 'psicossocial'],
+      'deficiencia multipla': ['deficiencia multipla', 'multipla', 'múltipla']
+    }
+    const lista = aliases[alvo] || [alvo]
+    return lista.some(item => defAtual === norm(item)) ? '☑' : '☐'
+  }
+
+  const campo = (label, valor, extra = '') => `
+    <div class="campo ${extra}">
+      <div class="campo-label">${label}</div>
+      <div class="campo-valor">${valor ? esc(valor) : '&nbsp;'}</div>
+    </div>`
+
+  const campoHtml = (label, valorHtml, extra = '') => `
+    <div class="campo ${extra}">
+      <div class="campo-label">${label}</div>
+      <div class="campo-valor">${valorHtml || '&nbsp;'}</div>
+    </div>`
+
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  const protocolo = `AG-TEIAA-${ano}-TEACOLHER`
+
+  const generoOutro = usuario.genero_outro || (generoAtual === 'outro' ? usuario.genero : '')
+  const cidade = usuario.cidade || 'Teresópolis'
+
+  const css = `
+    .anexo-titulo {
+      text-align:center;
+      margin: 10px 0 14px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      background: var(--agendo-soft);
+    }
+    .anexo-titulo h1 {
+      font-size: 14px;
+      letter-spacing: .08em;
+      color: var(--agendo-dark);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .anexo-titulo div { font-size: 10px; color: var(--muted); }
+    .bloco {
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .bloco h2 {
+      background: var(--agendo-dark);
+      color: #fff;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 7px 9px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--line-soft);
+    }
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--line-soft);
+    }
+    .campo {
+      min-height: 38px;
+      padding: 7px 8px;
+      border-right: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .campo:nth-child(2n) { border-right: none; }
+    .form-grid-3 .campo:nth-child(2n) { border-right: 1px solid var(--line-soft); }
+    .form-grid-3 .campo:nth-child(3n) { border-right: none; }
+    .campo.full {
+      grid-column: 1 / -1;
+      border-right: none;
+    }
+    .campo-label {
+      color: #6B7280;
+      font-size: 7.5px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+    .campo-valor {
+      color: #20252C;
+      font-size: 10.5px;
+      line-height: 1.35;
+      min-height: 13px;
+    }
+    .check-wrap {
+      padding: 8px 9px 9px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 18px;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .check-item { white-space: nowrap; }
+    .declaracao {
+      padding: 10px 12px;
+      font-size: 10.5px;
+      line-height: 1.65;
+      color: #20252C;
+      text-align: justify;
+    }
+    .linha-data {
+      margin-top: 14px;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .linha-assinatura {
+      margin: 30px auto 4px;
+      width: 78%;
+      border-bottom: 1px solid #20252C;
+      height: 28px;
+    }
+    .assinatura-label {
+      text-align: center;
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .obs {
+      padding: 7px 9px;
+      background: #F8F7F2;
+      color: #626B76;
+      font-size: 8.5px;
+      border-top: 1px solid var(--line-soft);
+    }
+  `
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ tipo: 'full' })}
+
+    <div class="anexo-titulo">
+      <h1>Anexo I — Modelo de Formulário de Cadastro</h1>
+      <div>Projeto TEAcolher · Cadastro de participante / responsável legal</div>
+    </div>
+
+    <div class="bloco">
+      <h2>1. Dados pessoais</h2>
+      <div class="form-grid">
+        ${campo('Nome completo', usuario.nome)}
+        ${campoHtml('Data de nascimento', esc(fmtData(usuario.data_nascimento)))}
+      </div>
+      <div class="form-grid-3">
+        ${campo('Tipo sanguíneo', usuario.tipo_sanguineo)}
+        ${campo('CPF', usuario.cpf)}
+        ${campo('RG', usuario.rg)}
+      </div>
+      <div class="form-grid">
+        ${campo('Endereço', usuario.endereco)}
+        ${campo('Bairro', usuario.bairro)}
+        ${campo('Cidade', cidade)}
+        ${campo('Telefone/WhatsApp', usuario.telefone)}
+        ${campo('E-mail', usuario.email, 'full')}
+      </div>
+
+      <div class="campo full" style="border-right:none">
+        <div class="campo-label">Gênero</div>
+        <div class="check-wrap">
+          <div class="check-item">${marcadoGenero('Mulher cis')} Mulher cis</div>
+          <div class="check-item">${marcadoGenero('Mulher trans')} Mulher trans</div>
+          <div class="check-item">${marcadoGenero('Homem cis')} Homem cis</div>
+          <div class="check-item">${marcadoGenero('Homem trans')} Homem trans</div>
+          <div class="check-item">${marcadoGenero('Pessoa não binária')} Pessoa não binária</div>
+          <div class="check-item">${marcadoGenero('Prefiro não informar')} Prefiro não informar</div>
+          <div class="check-item" style="grid-column:1 / -1">${marcadoGenero('Outro')} Outro: ${esc(generoOutro || '____________________________')}</div>
+        </div>
+      </div>
+
+      <div class="campo full" style="border-right:none">
+        <div class="campo-label">Tipo de deficiência</div>
+        <div class="check-wrap">
+          <div class="check-item">${marcadoDef('Deficiência Física')} Deficiência Física</div>
+          <div class="check-item">${marcadoDef('Deficiência Auditiva')} Deficiência Auditiva</div>
+          <div class="check-item">${marcadoDef('Deficiência Visual')} Deficiência Visual</div>
+          <div class="check-item">${marcadoDef('Deficiência Intelectual')} Deficiência Intelectual</div>
+          <div class="check-item">${marcadoDef('Deficiência Mental/Psicossocial')} Deficiência Mental/Psicossocial</div>
+          <div class="check-item">${marcadoDef('Deficiência Múltipla')} Deficiência Múltipla</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        ${campo('Forneça aqui detalhes sobre a deficiência', usuario.deficiencia_detalhes, 'full')}
+      </div>
+    </div>
+
+    <div class="bloco">
+      <h2>2. Informações complementares</h2>
+      <div class="form-grid">
+        ${campo('Nome de contato de familiar ou cuidador', usuario.contato_familiar_nome)}
+        ${campo('Relação com o participante (parentesco)', usuario.contato_familiar_parentesco)}
+        ${campo('Telefone de contato do familiar/cuidador', usuario.contato_familiar_telefone)}
+        ${campoHtml('Renda familiar bruta', esc(fmtMoeda(usuario.renda_familiar_bruta)))}
+        ${campo('Número de pessoas que residem no núcleo familiar', usuario.pessoas_nucleo_familiar, 'full')}
+      </div>
+    </div>
+
+    <div class="bloco">
+      <h2>3. Declaração</h2>
+      <div class="declaracao">
+        Declaro, sob pena do artigo 299 do Código Penal Brasileiro, que as informações prestadas são verdadeiras e que resido oficialmente no município indicado. Autorizo o uso dos dados fornecidos para fins de seleção e acompanhamento no âmbito do Projeto TEAcolher.
+
+        <div class="linha-data">
+          ${esc(cidade || '______________________')}, _____ de __________________________ de ____________.
+        </div>
+
+        <div class="linha-assinatura"></div>
+        <div class="assinatura-label">Assinatura do participante ou responsável legal</div>
+      </div>
+    </div>
+
+    <div class="obs">
+      Documento gerado pelo AGENDO Integra para apoio ao cadastro e acompanhamento do Projeto TEAcolher. Protocolo: ${protocolo}.
+    </div>
+
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(`<style>${css}</style>${html}`, 'Anexo I — Projeto TEAcolher')
 }

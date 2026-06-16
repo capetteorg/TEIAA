@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { gerarPDFAnexoTeacolher } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -11,6 +12,25 @@ const MOTIVOS_SAIDA = [
   'Transferência para outro serviço', 'Encaminhamento para a rede',
   'Idade limite do projeto', 'Solicitação da família / responsável',
   'Encerramento do projeto', 'Outro',
+]
+
+const GENEROS = [
+  'Mulher cis',
+  'Mulher trans',
+  'Homem cis',
+  'Homem trans',
+  'Pessoa não binária',
+  'Prefiro não informar',
+  'Outro',
+]
+
+const TIPOS_DEFICIENCIA = [
+  'Deficiência Física',
+  'Deficiência Auditiva',
+  'Deficiência Visual',
+  'Deficiência Intelectual',
+  'Deficiência Mental/Psicossocial',
+  'Deficiência Múltipla',
 ]
 const SITUACAO_COR = {
   'ativo': ['#EAF3DE','#3B6D11'],
@@ -23,6 +43,10 @@ const SITUACAO_COR = {
 const FORM_VAZIO = {
   nome:'', nis:'', cpf:'', data_nascimento:'', projeto_id:'',
   data_ingresso:'', data_saida:'', motivo_saida:'', situacao:'ativo', observacoes:'',
+  tipo_sanguineo:'', genero:'', genero_outro:'', rg:'', endereco:'', bairro:'', cidade:'Teresópolis',
+  telefone:'', email:'', tipo_deficiencia:'', deficiencia_detalhes:'',
+  contato_familiar_nome:'', contato_familiar_parentesco:'', contato_familiar_telefone:'',
+  renda_familiar_bruta:'', pessoas_nucleo_familiar:'',
 }
 
 export default function UsuariosAtendidos() {
@@ -44,6 +68,20 @@ export default function UsuariosAtendidos() {
     supabase.from('projetos').select('id,nome').eq('aceita_atendimentos', true).order('nome').then(({ data }) => setProjetos(data || []))
     carregar()
   }, [])
+
+  const projetoSelecionado = projetos.find(p => String(p.id) === String(form.projeto_id))
+  const formEhTeacolher = projetoSelecionado?.nome?.toLowerCase().includes('teacolher')
+
+  function usuarioEhTeacolher(usuario) {
+    return usuario?.projeto?.nome?.toLowerCase().includes('teacolher')
+  }
+
+  function parseMoedaBR(valor) {
+    if (valor === null || valor === undefined || valor === '') return null
+    const limpo = String(valor).replace(/[^0-9,.-]/g, '').replace(/\./g, '').replace(',', '.')
+    const numero = Number(limpo)
+    return Number.isFinite(numero) ? numero : null
+  }
 
   async function carregar() {
     setLoading(true)
@@ -74,6 +112,22 @@ export default function UsuariosAtendidos() {
       data_ingresso: form.data_ingresso || null,
       data_saida: form.data_saida || null,
       motivo_saida: form.motivo_saida || null,
+      tipo_sanguineo: form.tipo_sanguineo || null,
+      genero: form.genero || null,
+      genero_outro: form.genero === 'Outro' ? (form.genero_outro || null) : null,
+      rg: form.rg || null,
+      endereco: form.endereco || null,
+      bairro: form.bairro || null,
+      cidade: form.cidade || null,
+      telefone: form.telefone || null,
+      email: form.email || null,
+      tipo_deficiencia: form.tipo_deficiencia || null,
+      deficiencia_detalhes: form.deficiencia_detalhes || null,
+      contato_familiar_nome: form.contato_familiar_nome || null,
+      contato_familiar_parentesco: form.contato_familiar_parentesco || null,
+      contato_familiar_telefone: form.contato_familiar_telefone || null,
+      renda_familiar_bruta: parseMoedaBR(form.renda_familiar_bruta),
+      pessoas_nucleo_familiar: form.pessoas_nucleo_familiar ? parseInt(form.pessoas_nucleo_familiar) : null,
     }
     let error
     if (editando) {
@@ -93,6 +147,12 @@ export default function UsuariosAtendidos() {
       projeto_id:u.projeto_id||'', data_ingresso:u.data_ingresso||'',
       data_saida:u.data_saida||'', motivo_saida:u.motivo_saida||'',
       situacao:u.situacao, observacoes:u.observacoes||'',
+      tipo_sanguineo:u.tipo_sanguineo||'', genero:u.genero||'', genero_outro:u.genero_outro||'',
+      rg:u.rg||'', endereco:u.endereco||'', bairro:u.bairro||'', cidade:u.cidade||'Teresópolis',
+      telefone:u.telefone||'', email:u.email||'', tipo_deficiencia:u.tipo_deficiencia||'',
+      deficiencia_detalhes:u.deficiencia_detalhes||'', contato_familiar_nome:u.contato_familiar_nome||'',
+      contato_familiar_parentesco:u.contato_familiar_parentesco||'', contato_familiar_telefone:u.contato_familiar_telefone||'',
+      renda_familiar_bruta:u.renda_familiar_bruta ?? '', pessoas_nucleo_familiar:u.pessoas_nucleo_familiar ?? '',
     })
     setEditando(u.id)
     setMostrarForm(true)
@@ -225,6 +285,103 @@ export default function UsuariosAtendidos() {
                 </select>
               </div>
             )}
+            {formEhTeacolher && (
+              <div style={{ margin:'14px 0', padding:14, border:'1px solid #BBDCEA', borderRadius:12, background:'#F5FBFD' }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#06344F', marginBottom:4 }}>Anexo I — Formulário de Cadastro do Projeto TEAcolher</div>
+                <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:12 }}>Campos oficiais para impressão do cadastro do participante.</div>
+
+                <div style={s.grupo('1fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Tipo sanguíneo</label>
+                    <input value={form.tipo_sanguineo} onChange={e=>setForm(f=>({...f,tipo_sanguineo:e.target.value}))} placeholder="Ex.: O+, A-, B+" style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Gênero</label>
+                    <select value={form.genero} onChange={e=>setForm(f=>({...f,genero:e.target.value, genero_outro:e.target.value === 'Outro' ? f.genero_outro : ''}))} style={s.input}>
+                      <option value="">Selecione...</option>
+                      {GENEROS.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                  {form.genero === 'Outro' && (
+                    <div>
+                      <label style={s.label}>Outro gênero</label>
+                      <input value={form.genero_outro} onChange={e=>setForm(f=>({...f,genero_outro:e.target.value}))} style={s.input} />
+                    </div>
+                  )}
+                </div>
+
+                <div style={s.grupo('1fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>RG</label>
+                    <input value={form.rg} onChange={e=>setForm(f=>({...f,rg:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Telefone/WhatsApp</label>
+                    <input value={form.telefone} onChange={e=>setForm(f=>({...f,telefone:e.target.value}))} placeholder="(21) 00000-0000" style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>E-mail</label>
+                    <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={s.input} />
+                  </div>
+                </div>
+
+                <div style={s.grupo('2fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Endereço</label>
+                    <input value={form.endereco} onChange={e=>setForm(f=>({...f,endereco:e.target.value}))} placeholder="Rua, número, complemento" style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Bairro</label>
+                    <input value={form.bairro} onChange={e=>setForm(f=>({...f,bairro:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Cidade</label>
+                    <input value={form.cidade} onChange={e=>setForm(f=>({...f,cidade:e.target.value}))} style={s.input} />
+                  </div>
+                </div>
+
+                <div style={s.grupo('1fr 2fr')}>
+                  <div>
+                    <label style={s.label}>Tipo de deficiência</label>
+                    <select value={form.tipo_deficiencia} onChange={e=>setForm(f=>({...f,tipo_deficiencia:e.target.value}))} style={s.input}>
+                      <option value="">Selecione...</option>
+                      {TIPOS_DEFICIENCIA.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Detalhes sobre a deficiência</label>
+                    <input value={form.deficiencia_detalhes} onChange={e=>setForm(f=>({...f,deficiencia_detalhes:e.target.value}))} placeholder="Diagnóstico, observações, necessidades específicas..." style={s.input} />
+                  </div>
+                </div>
+
+                <div style={s.grupo('2fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Nome do familiar/cuidador</label>
+                    <input value={form.contato_familiar_nome} onChange={e=>setForm(f=>({...f,contato_familiar_nome:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Relação/parentesco</label>
+                    <input value={form.contato_familiar_parentesco} onChange={e=>setForm(f=>({...f,contato_familiar_parentesco:e.target.value}))} style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Telefone do familiar/cuidador</label>
+                    <input value={form.contato_familiar_telefone} onChange={e=>setForm(f=>({...f,contato_familiar_telefone:e.target.value}))} style={s.input} />
+                  </div>
+                </div>
+
+                <div style={s.grupo('1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Renda familiar bruta</label>
+                    <input value={form.renda_familiar_bruta} onChange={e=>setForm(f=>({...f,renda_familiar_bruta:e.target.value}))} placeholder="Ex.: 2500,00" style={s.input} />
+                  </div>
+                  <div>
+                    <label style={s.label}>Número de pessoas no núcleo familiar</label>
+                    <input type="number" min="0" value={form.pessoas_nucleo_familiar} onChange={e=>setForm(f=>({...f,pessoas_nucleo_familiar:e.target.value}))} style={s.input} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div style={{ marginBottom:14 }}>
               <label style={s.label}>Observações</label>
               <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} placeholder="Observações sobre o usuário ou atendimento..." />
@@ -311,7 +468,7 @@ export default function UsuariosAtendidos() {
               <div style={{ maxHeight:520, overflowY:'auto',overflowX:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                   <thead style={{ position:'sticky', top:0 }}>
-                    <tr>{['Nome','Projeto','Idade','Ingresso','Saída','Situação',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
+                    <tr>{['Nome','Projeto','Idade','Ingresso','Saída','Situação','Ações'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
                   </thead>
                   <tbody>
                     {usuarios.map((u,i) => {
@@ -326,7 +483,12 @@ export default function UsuariosAtendidos() {
                           <td style={{ ...s.td, whiteSpace:'nowrap', color:u.data_saida?VERMELHO:'#888780' }}>{fmtData(u.data_saida)}</td>
                           <td style={s.td}><span style={s.badge(bg,cor)}>{u.situacao}</span></td>
                           <td style={s.td}>
-                            <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                              <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                              {usuarioEhTeacolher(u) && (
+                                <button onClick={() => gerarPDFAnexoTeacolher(u, { projetoNome: u.projeto?.nome || 'Projeto TEAcolher' })} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )
