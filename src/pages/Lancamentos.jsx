@@ -5,8 +5,6 @@ import CatSelect from '../components/CatSelect'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
-const SUBCATEGORIA_ABATIMENTO_ID = 53
-
 export default function Lancamentos({ tipo = 'despesa' }) {
   const isMobile = useIsMobile()
   const [lista, setLista] = useState([])
@@ -27,11 +25,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
   const [contaSel, setContaSel] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [msg, setMsg] = useState('')
-
-  // Abatimento de dívida
-  const [dividasAbertas, setDividasAbertas] = useState([])
-  const [dividaId, setDividaId] = useState('')
-  const [valorAbatimento, setValorAbatimento] = useState('')
 
   // Fornecedor
   const [fornecedores, setFornecedores] = useState([])
@@ -74,26 +67,6 @@ export default function Lancamentos({ tipo = 'despesa' }) {
       setSubcategorias([])
     }
   }, [form.categoria_id])
-
-  useEffect(() => {
-    if (parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID) {
-      supabase.from('dividas')
-        .select('*, funcionario:funcionarios(nome)')
-        .eq('status', 'aberta')
-        .order('data_origem', { ascending: false })
-        .then(({ data }) => setDividasAbertas(data || []))
-    } else {
-      setDividasAbertas([])
-      setDividaId('')
-      setValorAbatimento('')
-    }
-  }, [subcategoriaId])
-
-  useEffect(() => {
-    if (parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID && form.valor) {
-      setValorAbatimento(form.valor)
-    }
-  }, [form.valor, subcategoriaId])
 
   async function carregarContas() {
     const { data } = await dbContas.listar()
@@ -243,8 +216,6 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
 
   const rateioTotal = (parseFloat(rateio.educ)||0) + (parseFloat(rateio.social)||0)
   const precisaRateio = contaSel?.preponderancia === 'rateio'
-  const isAbatimento = parseInt(subcategoriaId) === SUBCATEGORIA_ABATIMENTO_ID
-
   const fornecedoresFiltrados = fornecedores.filter(f =>
     !buscaFornecedor || f.nome.toLowerCase().includes(buscaFornecedor.toLowerCase()) ||
     (f.cpf_cnpj||'').includes(buscaFornecedor)
@@ -271,8 +242,6 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
   async function salvar(e) {
     e.preventDefault()
     if (precisaRateio && rateioTotal !== 100) { setMsg('O rateio precisa somar 100%.'); return }
-    if (isAbatimento && !dividaId) { setMsg('Selecione a dívida a ser abatida.'); return }
-    if (isAbatimento && !valorAbatimento) { setMsg('Informe o valor do abatimento.'); return }
 
     setSalvando(true)
 
@@ -297,28 +266,10 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
       await dbRateios.criar(itens)
     }
 
-    if (isAbatimento && dividaId) {
-      const divida = dividasAbertas.find(d => String(d.id) === String(dividaId))
-      const valorAb = parseFloat(valorAbatimento)
-      await supabase.from('pagamentos_divida').insert({
-        divida_id: parseInt(dividaId),
-        valor: valorAb,
-        data_pagamento: form.data,
-        observacoes: `Lançamento financeiro: ${form.descricao}`,
-      })
-      if (divida) {
-        const novoValorPago = Number(divida.valor_pago || 0) + valorAb
-        const novoStatus = novoValorPago >= Number(divida.valor_original) ? 'quitada' : 'aberta'
-        await supabase.from('dividas').update({ valor_pago: novoValorPago, status: novoStatus }).eq('id', divida.id)
-      }
-    }
-
-    setMsg('Lançamento salvo!' + (isAbatimento ? ' Dívida atualizada automaticamente.' : ''))
+    setMsg('Lançamento salvo!')
     setForm(f => ({ ...f, nf: '', valor: '', descricao: '', categoria_id: '', projeto_id: '' }))
     setSubcategoriaId('')
     setSubcategorias([])
-    setDividaId('')
-    setValorAbatimento('')
     setFornecedorId('')
     setBuscaFornecedor('')
     setRateio({ educ: '', social: '' })
@@ -595,43 +546,6 @@ Se não conseguir identificar algum campo, deixe como string vazia.`
                 <option value="">Selecione a subcategoria...</option>
                 {subcategorias.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
               </select>
-            </div>
-          )}
-
-          {/* Bloco abatimento de dívida */}
-          {isAbatimento && (
-            <div style={{ background:'#FEF2F2', border:'0.5px solid #F7C1C1', borderRadius:10, padding:'12px 14px', marginBottom:14 }}>
-              <div style={{ fontSize:12, fontWeight:600, color:'#A32D2D', marginBottom:10 }}>
-                <i className="ti ti-credit-card" style={{marginRight:4}} /> Vincular ao abatimento de dívida
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:10 }}>
-                <div>
-                  <label style={s.label}>Dívida a ser abatida *</label>
-                  <select value={dividaId} onChange={e => setDividaId(e.target.value)} required style={s.input}>
-                    <option value="">Selecione a dívida...</option>
-                    {dividasAbertas.map(d => {
-                      const saldo = Number(d.valor_original||0) - Number(d.valor_pago||0)
-                      return (
-                        <option key={d.id} value={d.id}>
-                          {d.funcionario?.nome} — {d.descricao} (Saldo: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits:2 })})
-                        </option>
-                      )
-                    })}
-                  </select>
-                  {dividasAbertas.length === 0 && (
-                    <div style={{ fontSize:11, color:'#888780', marginTop:4 }}>Nenhuma dívida aberta encontrada.</div>
-                  )}
-                </div>
-                <div>
-                  <label style={s.label}>Valor do abatimento (R$) *</label>
-                  <input type="number" step="0.01" value={valorAbatimento}
-                    onChange={e => setValorAbatimento(e.target.value)}
-                    style={{ ...s.input, color: VERMELHO, fontWeight:500 }} />
-                  <div style={{ fontSize:10, color:'#888780', marginTop:3 }}>
-                    Pode ser diferente do valor do lançamento (parcial)
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
