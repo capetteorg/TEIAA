@@ -66,7 +66,7 @@ export default function UsuariosAtendidos() {
   const isMobile = useIsMobile()
   const { perfil } = useAuth()
   const perfilAtual = perfil?.perfil
-  const podeGerenciarUsuarios = perfilAtual === 'admin'
+  const podeGerenciarUsuarios = perfilAtual === 'admin' || perfilAtual === 'operacional'
   const podeExcluirUsuario = perfilAtual === 'admin'
   const podeImprimirAnexo = perfilAtual === 'admin' || perfilAtual === 'operacional'
   const [usuarios, setUsuarios] = useState([])
