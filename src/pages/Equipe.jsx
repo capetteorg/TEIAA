@@ -58,11 +58,7 @@ const FUNCOES_COM_REGISTRO = ['Assistente Social', 'Pedagoga', 'Psicóloga', 'Pr
 const CONSELHOS = ['CRESS', 'CRP', 'CRN', 'CREFITO', 'CRC', 'OAB', 'CRM', 'CREA', 'Outro']
 
 const PROJETOS_FIXOS = [
-  'Primeira Infância',
-  'Projeto Jardineiro Mirim / Esperança',
-  'Projeto Reparação',
-  'Projeto Mãos que Acolhem',
-  'Atividades com Famílias e Comunidade',
+  'Projeto TEAcolher',
   'Administração Geral da TEIAA',
   'Eventos institucionais',
   'Ações comunitárias',
@@ -220,7 +216,9 @@ export default function Equipe() {
 
   const todosProjetos = [
     ...PROJETOS_FIXOS,
-    ...parcerias.map(p => p.nome_projeto),
+    ...parcerias
+      .map(p => p.nome_projeto)
+      .filter(nome => nome && !/primeira|jardineiro|reparação|reparacao|mãos que acolhem|maos que acolhem|capette/i.test(nome)),
   ]
 
   const todosOrgaos = [...ORGAOS_ORIGEM, ...orgaosExtra]
