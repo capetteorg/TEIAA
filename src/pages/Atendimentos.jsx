@@ -188,8 +188,15 @@ export default function Atendimentos() {
   const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', profissional_id: '', situacao: '' })
 
   const perfilAtual = perfil?.perfil || ''
-  const podeGerenciar = ['admin', 'operacional'].includes(perfilAtual)
-  const podeExcluir = perfilAtual === 'admin'
+  const isAdmin = perfilAtual === 'admin'
+  const isOperacional = perfilAtual === 'operacional'
+  const isTecnico = perfilAtual === 'tecnico'
+  const podeAgendar = isAdmin || isOperacional
+  const podeEditarAgendamento = isAdmin || isOperacional
+  const podeFinalizar = isAdmin || isTecnico
+  const podeEditarRegistro = isAdmin || isTecnico
+  const podeExcluir = isAdmin
+  const podeAcessarFormulario = modoResultado ? podeFinalizar : podeAgendar
 
   useEffect(() => {
     inicializar()
@@ -373,8 +380,12 @@ export default function Atendimentos() {
 
   async function salvar(e) {
     e.preventDefault()
-    if (!podeGerenciar) {
-      setMsg('Erro: seu perfil não tem permissão para registrar atendimento.')
+    if (!modoResultado && !podeAgendar) {
+      setMsg('Erro: seu perfil não tem permissão para criar ou editar agendamento.')
+      return
+    }
+    if (modoResultado && !podeFinalizar) {
+      setMsg('Erro: seu perfil não tem permissão para finalizar atendimento técnico.')
       return
     }
 
@@ -403,7 +414,7 @@ export default function Atendimentos() {
       objetivo_atendimento: objetivo || null,
       area_atendimento: form.area_atendimento || null,
       modalidade_atendimento: form.modalidade_atendimento || null,
-      situacao: modoResultado ? form.situacao : 'agendado',
+      situacao: modoResultado ? form.situacao : (form.situacao || 'agendado'),
       descricao: (modoResultado ? registroFinal : objetivo) || descricaoPadrao,
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : 1,
       publico_participante: form.publico_participante || [],
@@ -484,12 +495,17 @@ export default function Atendimentos() {
         <div>
           <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>Agenda e Execução TEAcolher</div>
           <div style={{ fontSize:12.5, color:'#6B7280', maxWidth:820 }}>
-            Registro técnico para prestação de contas: agenda, atendimento, evolução, orientação familiar, encaminhamentos e acompanhamento.
+            Operacional agenda/remarca. Técnico finaliza o registro técnico para prestação de contas.
           </div>
         </div>
-        {podeGerenciar && (
+        {podeAgendar && (
           <button onClick={() => mostrarForm ? fecharForm() : abrirNovoAgendamento()} style={s.btn(mostrarForm ? '#F1EFE8' : AZUL, mostrarForm ? '#5F5E5A' : '#fff')}>
             {mostrarForm ? 'Cancelar' : '+ Agendar atendimento'}
+          </button>
+        )}
+        {isTecnico && !mostrarForm && (
+          <button onClick={() => { const f={...filtros, situacao:'agendado'}; setFiltros(f); carregar(f, projetoTeacolherId) }} style={s.btn(LARANJA)}>
+            Ver atendimentos para finalizar
           </button>
         )}
       </div>
@@ -500,7 +516,7 @@ export default function Atendimentos() {
         </div>
       )}
 
-      {mostrarForm && podeGerenciar && (
+      {mostrarForm && podeAcessarFormulario && (
         <div style={{ ...s.card, borderColor: modoResultado ? '#C0DD97' : 'rgba(14,126,168,0.35)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
             <span style={{ ...s.badge(modoResultado ? '#EAF3DE' : '#E6F1FB', modoResultado ? '#3B6D11' : '#185FA5') }}>
@@ -538,6 +554,15 @@ export default function Atendimentos() {
                   <input type="time" value={form.hora_fim} onChange={e=>setForm(f=>({...f,hora_fim:e.target.value}))} style={s.input} />
                 </div>
               </div>
+
+              {!modoResultado && (
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Situação do agendamento</label>
+                  <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>
+                    {['agendado','reagendado','cancelado'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                  </select>
+                </div>
+              )}
 
               <div style={s.grupo('1.2fr 1fr')}>
                 <div>
@@ -796,7 +821,7 @@ export default function Atendimentos() {
               </div>
             )}
           </div>
-          {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
+          {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
         </div>
 
         {loading ? (
@@ -807,7 +832,7 @@ export default function Atendimentos() {
             <div style={{ fontSize:12, color:'#888780', maxWidth:560, margin:'0 auto' }}>
               {filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.'}
             </div>
-            {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
+            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
           </div>
         ) : (
           <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
@@ -830,9 +855,9 @@ export default function Atendimentos() {
                       <td style={{ ...s.td, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desfecho_teacolher || '—'}</td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                          {podeGerenciar && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
-                          {podeGerenciar && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
-                          {podeGerenciar && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
+                          {podeFinalizar && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
+                          {podeEditarAgendamento && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
+                          {podeEditarRegistro && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
                           {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={s.btn('#FCEBEB', '#A32D2D')}>Excluir</button>}
                         </div>
                       </td>

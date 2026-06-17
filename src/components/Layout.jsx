@@ -91,10 +91,17 @@ export default function Layout() {
   useEffect(() => { setMenuAberto(false) }, [location.pathname])
 
   useEffect(() => {
-    if (p !== 'operacional') return
-    const rotasPermitidas = ['/painel-operacional', '/usuarios-atendidos', '/atendimentos', '/minha-conta']
-    const rotaLiberada = rotasPermitidas.some(r => location.pathname === r || location.pathname.startsWith(r + '/'))
-    if (!rotaLiberada) navigate('/usuarios-atendidos', { replace: true })
+    if (p === 'operacional') {
+      const rotasPermitidas = ['/painel-operacional', '/usuarios-atendidos', '/atendimentos', '/minha-conta']
+      const rotaLiberada = rotasPermitidas.some(r => location.pathname === r || location.pathname.startsWith(r + '/'))
+      if (!rotaLiberada) navigate('/painel-operacional', { replace: true })
+      return
+    }
+    if (p === 'tecnico') {
+      const rotasPermitidas = ['/painel-tecnico', '/atendimentos', '/minha-conta']
+      const rotaLiberada = rotasPermitidas.some(r => location.pathname === r || location.pathname.startsWith(r + '/'))
+      if (!rotaLiberada) navigate('/painel-tecnico', { replace: true })
+    }
   }, [p, location.pathname, navigate])
 
   useEffect(() => {
@@ -128,8 +135,8 @@ export default function Layout() {
   }
 
   const fecharMenu = () => isMobile && setMenuAberto(false)
-  const perfilLabel = p === 'admin' ? 'Admin' : p === 'diretoria' ? 'Diretoria' : 'Operacional'
-  const perfilCor   = p === 'admin' ? AG_BLUE : p === 'diretoria' ? AG_GREEN : '#E67814'
+  const perfilLabel = p === 'admin' ? 'Admin' : p === 'diretoria' ? 'Diretoria' : p === 'tecnico' ? 'Técnico' : 'Operacional'
+  const perfilCor   = p === 'admin' ? AG_BLUE : p === 'diretoria' ? AG_GREEN : p === 'tecnico' ? '#F4821F' : '#E67814'
 
   function toggleColapsado() {
     setColapsado(v => { localStorage.setItem('menuColapsado', v ? '0' : '1'); return !v })
@@ -148,6 +155,7 @@ export default function Layout() {
   const itensBusca = [
     { to:'/painel-admin', label:'Painel', icon:'layout-dashboard', ok:p==='admin' },
     { to:'/painel-operacional', label:'Painel', icon:'layout-dashboard', ok:p==='operacional' },
+    { to:'/painel-tecnico', label:'Painel Técnico', icon:'stethoscope', ok:p==='tecnico' },
     { to:'/painel-diretoria', label:'Acompanhamento', icon:'layout-dashboard', ok:p==='diretoria' },
     { to:'/importar', label:'Importar extrato', icon:'file-upload', ok:p==='admin' },
     { to:'/conciliacao', label:'Conciliação', icon:'checks', ok:p==='admin' },
@@ -157,7 +165,7 @@ export default function Layout() {
     { to:'/aplicacoes', label:'Aplicações', icon:'chart-line', ok:p==='admin' },
     { to:'/planos-execucao', label:'Plano de Ação', icon:'clipboard-check', ok:p==='admin' },
     { to:'/projetos', label:'Projetos', icon:'folder', ok:p==='admin' },
-    { to:'/atendimentos', label:'Atendimentos', icon:'clipboard-list', ok:p==='admin'||p==='operacional' },
+    { to:'/atendimentos', label:'Atendimentos', icon:'clipboard-list', ok:p==='admin'||p==='operacional'||p==='tecnico' },
     { to:'/usuarios-atendidos', label:'Usuários Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
     { to:'/equipe', label:'Equipe', icon:'users-group', ok:p==='admin' },
     { to:'/doacoes', label:'Doações', icon:'gift', ok:p==='admin' },
@@ -256,9 +264,10 @@ export default function Layout() {
         <NavSecao colapsado={colapsado} label="Principal" />
         <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/painel-operacional" icon="layout-dashboard"  label="Painel"              visivel={p==='operacional'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/painel-tecnico"      icon="stethoscope"       label="Painel Técnico"      visivel={p==='tecnico'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
 
-        {p !== 'operacional' && (<>
+        {p === 'admin' && (<>
         <NavSecao colapsado={colapsado} label="Operação diária" aberta={secVisivel("Operação diária")} onToggle={() => toggleSec("Operação diária")} />
         {secVisivel("Operação diária") && (<>
         <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
@@ -278,14 +287,14 @@ export default function Layout() {
         {secVisivel("Programas e projetos") && (<>
         <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'||p==='tecnico'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
 
         </>)}
-        {p !== 'operacional' && (<>
+        {(p === 'admin' || p === 'diretoria') && (<>
         <NavSecao colapsado={colapsado} label="Relatórios" aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")} />
         {secVisivel("Relatórios") && (<>
         <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />

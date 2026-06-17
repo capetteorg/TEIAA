@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Login from './pages/Login'
@@ -23,6 +23,7 @@ import UsuariosAtendidos from './pages/UsuariosAtendidos'
 import Doacoes from './pages/Doacoes'
 import PlanosExecucao from './pages/PlanosExecucao'
 import PainelOperacional from './pages/PainelOperacional'
+import PainelTecnico from './pages/PainelTecnico'
 import RelatoriosCentral from './pages/RelatoriosCentral'
 import EventosCampanhas from './pages/EventosCampanhas'
 import PrestacaoContas from './pages/PrestacaoContas'
@@ -49,10 +50,21 @@ function RotaProtegida({ children, perfisPermitidos }) {
     const p = perfil?.perfil
     if (p === 'admin') return <Navigate to="/painel-admin" replace />
     if (p === 'diretoria') return <Navigate to="/painel-diretoria" replace />
-    if (p === 'operacional') return <Navigate to="/usuarios-atendidos" replace />
+    if (p === 'operacional') return <Navigate to="/painel-operacional" replace />
+    if (p === 'tecnico') return <Navigate to="/painel-tecnico" replace />
     return <Navigate to="/login" replace />
   }
   return children
+}
+
+function RedirecionarPerfil() {
+  const { perfil } = useAuth()
+  const p = perfil?.perfil
+  if (p === 'admin') return <Navigate to="/painel-admin" replace />
+  if (p === 'diretoria') return <Navigate to="/painel-diretoria" replace />
+  if (p === 'operacional') return <Navigate to="/painel-operacional" replace />
+  if (p === 'tecnico') return <Navigate to="/painel-tecnico" replace />
+  return <Navigate to="/login" replace />
 }
 
 export default function App() {
@@ -61,15 +73,16 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/painel" replace />} />
+      <Route path="/login" element={!user ? <Login /> : <RedirecionarPerfil />} />
       <Route path="transparencia" element={<Sociedade />} />
       <Route path="/nova-senha" element={<NovaSenha />} />
 
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
-        <Route index element={<Navigate to="/painel-admin" replace />} />
-        <Route path="painel" element={<Painel />} />
+        <Route index element={<RedirecionarPerfil />} />
+        <Route path="painel" element={<RedirecionarPerfil />} />
         <Route path="painel-admin" element={<RotaProtegida perfisPermitidos={['admin']}><PainelAdmin /></RotaProtegida>} />
         <Route path="painel-operacional" element={<RotaProtegida perfisPermitidos={['operacional']}><PainelOperacional /></RotaProtegida>} />
+        <Route path="painel-tecnico" element={<RotaProtegida perfisPermitidos={['tecnico']}><PainelTecnico /></RotaProtegida>} />
         <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="parcerias" element={<RotaProtegida perfisPermitidos={['admin']}><Parcerias /></RotaProtegida>} />
         <Route path="parcerias/:id" element={<RotaProtegida perfisPermitidos={['admin']}><ParceriaDetalhe /></RotaProtegida>} />
@@ -93,7 +106,7 @@ export default function App() {
         <Route path="eventos-campanhas" element={<RotaProtegida perfisPermitidos={['admin']}><EventosCampanhas /></RotaProtegida>} />
         <Route path="doacoes" element={<RotaProtegida perfisPermitidos={['admin']}><Doacoes /></RotaProtegida>} />
         <Route path="usuarios-atendidos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><UsuariosAtendidos /></RotaProtegida>} />
-        <Route path="atendimentos" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><Atendimentos /></RotaProtegida>} />
+        <Route path="atendimentos" element={<RotaProtegida perfisPermitidos={['admin','operacional','tecnico']}><Atendimentos /></RotaProtegida>} />
         <Route path="equipe" element={<RotaProtegida perfisPermitidos={['admin']}><Equipe /></RotaProtegida>} />
         <Route path="categorias" element={<RotaProtegida perfisPermitidos={['admin']}><Categorias /></RotaProtegida>} />
         <Route path="contas" element={<RotaProtegida perfisPermitidos={['admin']}><Contas /></RotaProtegida>} />

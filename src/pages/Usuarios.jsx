@@ -6,6 +6,7 @@ const PERFIS = {
   admin:       { label: 'Administrador', cor: '#0E7EA8', bg: '#E6F1FB' },
   diretoria:   { label: 'Diretoria',     cor: '#185FA5', bg: '#E6F1FB' },
   operacional: { label: 'Operacional',   cor: '#3B6D11', bg: '#EAF3DE' },
+  tecnico:     { label: 'Técnico',       cor: '#854F0B', bg: '#FAEEDA' },
 }
 
 const FORM_VAZIO = { email: '', nome: '', perfil: 'operacional', senha: '' }
@@ -238,6 +239,7 @@ export default function Usuarios() {
                       <select value={formEdit.perfil} onChange={e => setFormEdit(f => ({ ...f, perfil: e.target.value }))}
                         style={s.input}>
                         <option value="operacional">Operacional</option>
+                        <option value="tecnico">Técnico</option>
                         <option value="diretoria">Diretoria</option>
                         <option value="admin">Administrador</option>
                       </select>
@@ -282,8 +284,9 @@ export default function Usuarios() {
               <div>
                 <label style={s.label}>Perfil de acesso</label>
                 <select value={form.perfil} onChange={e => setForm(f => ({ ...f, perfil: e.target.value }))} style={s.input}>
-                  <option value="operacional">Operacional — atendimentos, doações, cobranças</option>
-                  <option value="diretoria">Diretoria — visualização financeira</option>
+                  <option value="operacional">Operacional — cadastro, agenda, remarcação e impressão de agenda</option>
+                  <option value="tecnico">Técnico — finalização do atendimento e registro técnico</option>
+                  <option value="diretoria">Diretoria — visualização e acompanhamento</option>
                   <option value="admin">Administrador — acesso total</option>
                 </select>
               </div>
@@ -300,25 +303,25 @@ export default function Usuarios() {
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Permissões por perfil</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
-              <tr>{['Função','Administrador','Diretoria','Operacional'].map(h => (
+              <tr>{['Função','Administrador','Diretoria','Operacional','Técnico'].map(h => (
                 <th key={h} style={{ textAlign:'left', padding:'5px 8px', fontSize:11, color:'#888780', borderBottom:'0.5px solid #E8E6DE' }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {[
-                ['Painel e relatórios financeiros',     true,  true,  false],
-                ['Atendimentos e usuários atendidos',   true,  false, true ],
-                ['Doações e eventos',                   true,  false, true ],
-                ['Cobranças',                           true,  false, true ],
-                ['Lançar despesas e entradas',          true,  false, true ],
-                ['Importar extrato / conciliar',        true,  false, false],
-                ['Fechamento / Conselho Fiscal',        true,  false, false],
-                ['Fornecedores, patrimônio, parcerias', true,  false, false],
-                ['Configurações e usuários',            true,  false, false],
-              ].map(([fn, adm, dir, op]) => (
+                ['Painel e prestação de contas geral',       true,  true,  false, false],
+                ['Cadastrar usuário/família',                true,  false, true,  false],
+                ['Agendar/remarcar/cancelar atendimento',    true,  false, true,  false],
+                ['Finalizar atendimento técnico',            true,  false, false, true ],
+                ['Imprimir agenda/listas operacionais',      true,  false, true,  true ],
+                ['Ver histórico técnico de atendimento',     true,  false, false, true ],
+                ['Importar extrato / conciliar',             true,  false, false, false],
+                ['Fechamento / Conselho Fiscal',             true,  false, false, false],
+                ['Configurações e usuários',                 true,  false, false, false],
+              ].map(([fn, adm, dir, op, tec]) => (
                 <tr key={fn}>
                   <td style={{ padding:'7px 8px', borderBottom:'0.5px solid #F1EFE8' }}>{fn}</td>
-                  {[adm, dir, op].map((v, i) => (
+                  {[adm, dir, op, tec].map((v, i) => (
                     <td key={i} style={{ padding:'7px 8px', borderBottom:'0.5px solid #F1EFE8' }}>
                       {v
                         ? <span style={{ fontSize:13, color:'#3B6D11' }}><i className="ti ti-check" /></span>
