@@ -119,6 +119,7 @@ export default function Atendimentos() {
   const [temMais, setTemMais] = useState(false)
   const [projetos, setProjetos] = useState([])
   const [equipe, setEquipe] = useState([])
+  const [projetoEquipe, setProjetoEquipe] = useState([])
   const [usuariosAtendidos, setUsuariosAtendidos] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editando, setEditando] = useState(null)
@@ -134,7 +135,8 @@ export default function Atendimentos() {
 
   useEffect(() => {
     supabase.from('projetos').select('id,nome,tipo').eq('aceita_atendimentos', true).order('nome').then(({ data }) => setProjetos(data || []))
-    supabase.from('equipe').select('id,nome,funcao').eq('situacao','ativo').order('nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('equipe').select('id,nome,funcao,projetos').eq('situacao','ativo').order('nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('projeto_equipe').select('projeto_id,equipe_id').then(({ data }) => setProjetoEquipe(data || []))
     supabase.from('usuarios_atendidos').select('id,nome,situacao,projeto_id').eq('situacao','ativo').order('nome').then(({ data }) => setUsuariosAtendidos(data || []))
     carregar()
   }, [])
@@ -228,6 +230,18 @@ export default function Atendimentos() {
   const isTEAcolher = String(projetoSelecionado?.nome || '').toLowerCase().includes('teacolher')
   const tiposAtendimentoDisponiveis = isTEAcolher ? TIPOS_ATEND_TEACOLHER : TIPOS_ATEND
   const publicosDisponiveis = isTEAcolher ? PUBLICOS_TEACOLHER : PUBLICOS
+  const equipeDisponivel = form.projeto_id ? (() => {
+    const idsVinculados = projetoEquipe
+      .filter(pe => String(pe.projeto_id) === String(form.projeto_id))
+      .map(pe => String(pe.equipe_id))
+    if (idsVinculados.length > 0) {
+      return equipe.filter(e => idsVinculados.includes(String(e.id)))
+    }
+    if (isTEAcolher) {
+      return equipe.filter(e => Array.isArray(e.projetos) && e.projetos.some(pr => String(pr).toLowerCase().includes('teacolher')))
+    }
+    return equipe
+  })() : equipe
   const usuariosDisponiveis = form.projeto_id
     ? usuariosAtendidos.filter(u => String(u.projeto_id) === String(form.projeto_id))
     : usuariosAtendidos
@@ -304,6 +318,8 @@ export default function Atendimentos() {
                   setForm(f=>({
                     ...f,
                     projeto_id:id,
+                    profissional_id:'',
+                    equipe_ids:[],
                     usuario_atendido_id:'',
                     pessoa_atendida:'',
                     tipo_atend: tea ? 'Acolhimento inicial' : 'Atendimento individual',
@@ -443,18 +459,21 @@ export default function Atendimentos() {
                 <label style={s.label}>Profissional responsável *</label>
                 <select value={form.profissional_id} onChange={e=>setForm(f=>({...f,profissional_id:e.target.value}))} style={s.input} required>
                   <option value="">Selecione...</option>
-                  {equipe.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
+                  {equipeDisponivel.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
                 </select>
               </div>
               <div>
                 <label style={s.label}>Equipe participante</label>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:4, maxHeight:80, overflowY:'auto',overflowX:'auto' }}>
-                  {equipe.map(e => (
+                  {equipeDisponivel.map(e => (
                     <button key={e.id} type="button" onClick={() => toggleEquipe(String(e.id))}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.equipe_ids.includes(String(e.id))?VERDE:'#D3D1C7'}`, background:form.equipe_ids.includes(String(e.id))?'#EAF3DE':'#fff', color:form.equipe_ids.includes(String(e.id))?'#3B6D11':'#5F5E5A' }}>
                       {form.equipe_ids.includes(String(e.id)) ? '✓ ' : ''}{e.nome.split(' ')[0]}
                     </button>
                   ))}
+                  {form.projeto_id && equipeDisponivel.length === 0 && (
+                    <span style={{ fontSize:11, color:'#A32D2D' }}>Nenhum profissional vinculado a este projeto.</span>
+                  )}
                 </div>
               </div>
             </div>
