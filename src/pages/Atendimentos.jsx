@@ -88,7 +88,7 @@ const COMPARECIMENTOS_TEACOLHER = [
   'Remarcado',
 ]
 
-const SITUACOES = ['realizado', 'agendado', 'cancelado', 'reagendado', 'em acompanhamento', 'encerrado', 'outro']
+const SITUACOES = ['agendado', 'realizado', 'reagendado', 'cancelado', 'em acompanhamento', 'encerrado', 'outro']
 
 const SITUACAO_COR = {
   'realizado': ['#EAF3DE','#3B6D11'],
@@ -107,7 +107,7 @@ const FORM_VAZIO = {
   responsavel_presente: '', proxima_acao: '',
   descricao: '', qtd_participantes: 1, publico_participante: [],
   pessoa_atendida: '', profissional_id: '', equipe_ids: [],
-  encaminhamentos: '', orgao_encaminhamento: '', situacao: 'realizado', observacoes: '',
+  encaminhamentos: '', orgao_encaminhamento: '', situacao: 'agendado', observacoes: '',
 }
 
 export default function Atendimentos() {
@@ -180,6 +180,12 @@ export default function Atendimentos() {
     setSalvando(true)
     const dados = {
       ...form,
+      descricao: (form.descricao || '').trim() || (form.situacao === 'agendado' ? 'Atendimento agendado.' : 'Registro de atendimento TEAcolher.'),
+      comparecimento: form.comparecimento || null,
+      area_atendimento: form.area_atendimento || null,
+      modalidade_atendimento: form.modalidade_atendimento || null,
+      responsavel_presente: form.responsavel_presente || null,
+      proxima_acao: form.proxima_acao || null,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
       usuario_atendido_id: form.usuario_atendido_id ? parseInt(form.usuario_atendido_id) : null,
       profissional_id: form.profissional_id ? parseInt(form.profissional_id) : null,
@@ -281,12 +287,12 @@ export default function Atendimentos() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Atendimentos / Atividades</div>
-          <div style={{ fontSize:12, color:'#888780' }}>Registro de execução do Projeto TEAcolher — operacional pode cadastrar e editar; exclusão fica restrita ao admin</div>
+          <div style={{ fontSize:12, color:'#888780' }}>Agendamento e acompanhamento dos atendimentos do Projeto TEAcolher</div>
         </div>
         {podeGerenciarAtendimentos && (
           <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
             style={s.btn(mostrarForm ? '#F1EFE8' : '#0E7EA8', mostrarForm ? '#5F5E5A' : '#fff')}>
-            {mostrarForm ? 'Cancelar' : '+ Registrar atendimento TEAcolher'}
+            {mostrarForm ? 'Cancelar' : '+ Agendar atendimento TEAcolher'}
           </button>
         )}
       </div>
@@ -301,7 +307,7 @@ export default function Atendimentos() {
       {mostrarForm && podeGerenciarAtendimentos && (
         <div style={{ ...s.card, borderColor:'#C0DD97' }}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-            {editando ? 'Editar atendimento' : 'Novo atendimento TEAcolher'}
+            {editando ? 'Editar atendimento / registrar resultado' : 'Agendar atendimento TEAcolher'}
           </div>
           <form onSubmit={salvar}>
             <div style={s.grupo('1fr 2fr 1fr')}>
@@ -326,8 +332,9 @@ export default function Atendimentos() {
                     tema: tea ? 'Acolhimento, escuta qualificada e acompanhamento' : f.tema,
                     area_atendimento: tea ? 'Interdisciplinar' : '',
                     modalidade_atendimento: tea ? 'Individual' : '',
-                    comparecimento: tea ? 'Compareceu' : '',
-                    duracao_minutos: tea ? (f.duracao_minutos || 60) : '',
+                    comparecimento: '',
+                    duracao_minutos: '',
+                    situacao: 'agendado',
                     publico_participante: tea ? ['Pessoa com TEA / PCD', 'Famílias / responsáveis'] : [],
                   }))
                 }} style={s.input} required>
@@ -384,14 +391,14 @@ export default function Atendimentos() {
                     </select>
                   </div>
                   <div>
-                    <label style={s.label}>Comparecimento *</label>
-                    <select value={form.comparecimento} onChange={e=>setForm(f=>({...f,comparecimento:e.target.value}))} style={s.input} required>
+                    <label style={s.label}>Comparecimento / resultado</label>
+                    <select value={form.comparecimento} onChange={e=>setForm(f=>({...f,comparecimento:e.target.value}))} style={s.input}>
                       <option value="">Selecione...</option>
                       {COMPARECIMENTOS_TEACOLHER.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={s.label}>Duração (minutos)</label>
+                    <label style={s.label}>Duração realizada (minutos)</label>
                     <input type="number" min="1" value={form.duracao_minutos} onChange={e=>setForm(f=>({...f,duracao_minutos:e.target.value}))} style={s.input} placeholder="Ex: 60" />
                   </div>
                 </div>
@@ -429,10 +436,10 @@ export default function Atendimentos() {
             {/* Pessoa/família atendida fica vinculada ao cadastro acima. */}
 
             <div style={{ marginBottom:10 }}>
-              <label style={s.label}>Descrição / resumo *</label>
+              <label style={s.label}>Observação do agendamento / evolução após atendimento</label>
               <textarea value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))}
-                rows={3} style={{ ...s.input, resize:'vertical' }} required
-                placeholder={isTEAcolher ? "Registre acolhimento/escuta, demanda apresentada, intervenção realizada, resposta do usuário/família e evolução observada." : "Descreva o que foi realizado..."} />
+                rows={3} style={{ ...s.input, resize:'vertical' }}
+                placeholder={isTEAcolher ? "Ao agendar: informe a demanda/motivo. Após realizar: registre acolhimento, intervenção, evolução e encaminhamentos." : "Descreva o que foi agendado ou realizado..."} />
             </div>
 
             <div style={s.grupo('1fr 2fr')}>
@@ -496,7 +503,7 @@ export default function Atendimentos() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
-                {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Registrar'}
+                {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Agendar'}
               </button>
               <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
                 Cancelar
@@ -510,6 +517,7 @@ export default function Atendimentos() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1.25rem' }}>
         {[
           { label:'Total de registros', val:atendimentos.length, cor:AZUL },
+          { label:'Agendados', val:atendimentos.filter(a=>a.situacao==='agendado').length, cor:AZUL },
           { label:'Realizados', val:totalRealizados, cor:VERDE },
           { label:'Total participantes', val:totalParticipantes.toLocaleString('pt-BR'), cor:LARANJA },
           { label:'Em acompanhamento', val:atendimentos.filter(a=>a.situacao==='em acompanhamento').length, cor:'#854F0B' },
