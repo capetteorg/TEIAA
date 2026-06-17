@@ -2158,89 +2158,268 @@ export function gerarPDFUsuariosAtendidos(dados, periodoLabel, opts = {}) {
 // =============================================
 // ATENDIMENTOS
 // =============================================
-export function gerarPDFAtendimentos(dados, periodoLabel, opts = {}) {
-  const { lista, totalPart, porTipo, porProjeto } = dados
-  const protocolo = `AG-TEIAA-${new Date().getFullYear()}-AT`
-  const dataEmissao = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' })
+export function gerarPDFAtendimentos(dados = {}, periodoLabel, opts = {}) {
+  const lista = Array.isArray(dados.lista) ? dados.lista : []
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-TEACOLHER-AT`
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const esc = v => String(v ?? '—')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
 
-  const linhas = lista.map(a => `<tr>
-    <td style="white-space:nowrap;color:#626B76">${fmtData(a.data_atend)}</td>
-    <td style="font-size:8.5px">${a.tipo_atend||'—'}</td>
-    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tema||a.descricao||'—'}</td>
-    <td class="center">${a.qtd_participantes||'—'}</td>
-    <td style="font-size:8.5px">${a.profissional?.nome||'—'}</td>
-    <td style="font-size:8.5px">${a.projeto?.nome||'—'}</td>
-  </tr>`).join('')
+  const valor = v => v === null || v === undefined || v === '' ? '—' : esc(v)
+  const normal = v => String(v || '').toLowerCase().trim()
+  const nomeAtendido = a => a.usuario_atendido?.nome || a.usuario?.nome || a.pessoa_atendida || a.nome_usuario || 'Usuário/família'
+  const nomeProf = a => a.profissional?.nome || a.equipe?.nome || a.profissional_nome || a.tecnico_nome || '—'
+  const nomeProjeto = a => a.projeto?.nome || a.projeto_nome || 'Projeto TEAcolher'
+  const etapa = a => a.etapa_fluxo || a.tipo_atend || 'Atendimento TEAcolher'
+  const tema = a => a.objetivo_atendimento || a.tema || a.descricao || '—'
+  const duracao = a => a.duracao_minutos ? `${a.duracao_minutos} min` : '—'
+  const periodo = periodoLabel || opts.periodoLabel || 'Período selecionado'
+  const totalPart = Number(dados.totalPart ?? lista.reduce((s, a) => s + (Number(a.qtd_participantes) || 0), 0)) || 0
 
-  const linhasTipo = Object.entries(porTipo||{}).sort((a,b)=>b[1]-a[1]).map(([t,v]) =>
-    `<tr><td>${t}</td><td class="num">${v}</td><td class="num">${lista.length>0?Math.round(v/lista.length*100):0}%</td></tr>`
-  ).join('')
+  const realizados = lista.filter(a => normal(a.situacao) === 'realizado').length
+  const pendentes = lista.filter(a => ['agendado','reagendado'].includes(normal(a.situacao))).length
+  const cancelados = lista.filter(a => ['cancelado','desligado','encerrado'].includes(normal(a.situacao))).length
+  const faltas = lista.filter(a => ['faltou','falta justificada','remarcado','cancelado'].includes(String(a.comparecimento || '').toLowerCase()) || ['reagendado','cancelado'].includes(normal(a.situacao))).length
+  const encaminhados = lista.filter(a =>
+    (a.tipo_encaminhamento && a.tipo_encaminhamento !== 'Sem encaminhamento externo') ||
+    (a.rede_encaminhada && a.rede_encaminhada !== 'Não se aplica') ||
+    (a.orgao_encaminhamento || '').trim() ||
+    (a.encaminhamentos || '').trim()
+  ).length
+  const devolutivas = lista.filter(a =>
+    String(a.devolutiva_familia || '').toLowerCase().includes('sim') ||
+    String(a.etapa_fluxo || '').toLowerCase().includes('devolutiva')
+  ).length
+  const familias = new Set(lista.map(a => a.usuario_atendido_id ? String(a.usuario_atendido_id) : nomeAtendido(a)).filter(Boolean)).size
+
+  function agrupar(chaveFn) {
+    const obj = {}
+    lista.forEach(a => {
+      const k = chaveFn(a) || 'Não informado'
+      obj[k] = (obj[k] || 0) + 1
+    })
+    return obj
+  }
+
+  const porProfissional = agrupar(a => nomeProf(a))
+  const porArea = agrupar(a => a.area_atendimento || 'Interdisciplinar')
+  const porModalidade = agrupar(a => a.modalidade_atendimento || 'Não informado')
+  const porComparecimento = agrupar(a => a.comparecimento || a.situacao || 'Não informado')
+  const porDesfecho = agrupar(a => a.desfecho_teacolher || 'Sem desfecho registrado')
+  const porEtapa = agrupar(a => etapa(a))
+
+  const linhasGrupo = (obj, total = lista.length) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+    <tr>
+      <td>${valor(k)}</td>
+      <td class="num">${v}</td>
+      <td class="num">${total > 0 ? Math.round(v / total * 100) : 0}%</td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:#9199A2;padding:8px">Sem dados</td></tr>'
+
+  const linhasDetalhe = lista.map(a => {
+    const sit = a.comparecimento || a.situacao || '—'
+    const enc = a.tipo_encaminhamento && a.tipo_encaminhamento !== 'Sem encaminhamento externo'
+      ? a.tipo_encaminhamento
+      : (a.rede_encaminhada && a.rede_encaminhada !== 'Não se aplica' ? a.rede_encaminhada : (a.encaminhamentos || '—'))
+    return `<tr>
+      <td style="white-space:nowrap;color:#626B76">${fmtData(a.data_atend)}</td>
+      <td style="white-space:nowrap;color:#626B76">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
+      <td><strong>${valor(nomeAtendido(a))}</strong><div style="font-size:7.5px;color:#888;margin-top:2px">${valor(nomeProjeto(a))}</div></td>
+      <td>${valor(nomeProf(a))}</td>
+      <td>${valor(a.area_atendimento || 'Interdisciplinar')}</td>
+      <td>${valor(a.modalidade_atendimento || '—')}</td>
+      <td>${valor(sit)}</td>
+      <td class="num">${duracao(a)}</td>
+      <td>${valor(a.desfecho_teacolher || enc)}</td>
+    </tr>`
+  }).join('')
+
+  const registrosTecnicos = lista.filter(a => a.registro_tecnico || a.demanda_identificada || a.orientacao_familia || a.devolutiva_familia || a.proxima_acao || a.encaminhamentos || a.tipo_encaminhamento || a.desfecho_teacolher)
+  const blocosRegistro = registrosTecnicos.map(a => `
+    <div style="border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:10px;page-break-inside:avoid;background:#FFFEFA">
+      <div style="display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line-soft);padding-bottom:6px;margin-bottom:8px">
+        <div>
+          <div style="font-size:12px;font-weight:800;color:var(--agendo-dark)">${valor(nomeAtendido(a))}</div>
+          <div style="font-size:8.5px;color:#626B76;margin-top:2px">${fmtData(a.data_atend)} · ${valor(nomeProf(a))} · ${valor(a.area_atendimento || 'Interdisciplinar')}</div>
+        </div>
+        <div style="text-align:right;font-size:8.5px;color:#626B76">
+          ${valor(a.comparecimento || a.situacao)}<br>${duracao(a)}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:9px;line-height:1.45">
+        <div><strong>Demanda identificada:</strong><br>${valor(a.demanda_identificada)}</div>
+        <div><strong>Objetivo/etapa:</strong><br>${valor(etapa(a))} · ${valor(tema(a))}</div>
+        <div style="grid-column:1 / -1"><strong>Registro técnico / evolução:</strong><br>${valor(a.registro_tecnico || a.descricao)}</div>
+        <div><strong>Orientação familiar:</strong><br>${valor(a.orientacao_familia)}</div>
+        <div><strong>Devolutiva à família:</strong><br>${valor(a.devolutiva_familia)}</div>
+        <div><strong>Encaminhamento:</strong><br>${valor(a.tipo_encaminhamento || a.rede_encaminhada || a.encaminhamentos)}</div>
+        <div><strong>Próxima ação / desfecho:</strong><br>${valor(a.proxima_acao || a.desfecho_teacolher)}</div>
+      </div>
+    </div>`).join('')
 
   const html = `
   <div class="pg">
-    ${htmlCabecalho({ titulo:'Relatório de Atendimentos', sub:`${TEIAA_INFO.nome} · ${periodoLabel||'Período selecionado'}`, ref:protocolo })}
+    ${htmlCabecalho({ titulo:'Relatório Técnico TEAcolher', sub:`${TEIAA_INFO.nome} · ${periodo}`, ref:protocolo })}
 
-    <div style="font-family:Georgia,serif;font-size:26px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.02em">Atendimentos</div>
+    <div style="font-size:9px;font-weight:700;color:var(--agendo);letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Prestação técnica de atendimentos</div>
+    <div style="font-family:Georgia,serif;font-size:36px;line-height:.95;color:var(--agendo-dark);letter-spacing:-.04em;margin-bottom:10px">Relatório<br>TEAcolher</div>
+    <div style="width:80px;height:2px;background:#A98E54;margin-bottom:12px"></div>
+    <div style="font-size:11.5px;color:#303944;line-height:1.55;margin-bottom:16px">
+      Consolidação dos atendimentos do Projeto TEAcolher para acompanhamento da agenda, execução técnica, encaminhamentos, devolutivas familiares e suporte à prestação de contas.
+    </div>
 
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:18px">
-      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
-        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Atendimentos</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${lista.length}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:16px">
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)"><div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:5px">Atendimentos</div><div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo)">${lista.length}</div></div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)"><div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:5px">Realizados</div><div style="font-family:Georgia,serif;font-size:18px;color:var(--green)">${realizados}</div></div>
+      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)"><div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:5px">Famílias</div><div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo-dark)">${familias}</div></div>
+      <div style="padding:12px 8px"><div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:5px">Participantes</div><div style="font-family:Georgia,serif;font-size:18px;color:var(--agendo)">${totalPart.toLocaleString('pt-BR')}</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      <div class="info-item"><div class="info-label">Pendentes de finalização</div><div class="info-valor" style="color:#854F0B">${pendentes}</div></div>
+      <div class="info-item"><div class="info-label">Faltas/remarcações/cancel.</div><div class="info-valor" style="color:var(--red)">${faltas + cancelados}</div></div>
+      <div class="info-item"><div class="info-label">Encaminhamentos</div><div class="info-valor" style="color:#854F0B">${encaminhados}</div></div>
+      <div class="info-item"><div class="info-label">Devolutivas familiares</div><div class="info-valor" style="color:var(--green)">${devolutivas}</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <div class="secao-titulo secao-titulo-azul">Por profissional</div>
+        <table><thead><tr><th>Profissional</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porProfissional)}</tbody></table>
       </div>
-      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
-        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Participantes</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${totalPart.toLocaleString('pt-BR')}</div>
-      </div>
-      <div style="padding:12px 8px;border-right:1px solid var(--line-soft)">
-        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Tipos</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porTipo||{}).length}</div>
-      </div>
-      <div style="padding:12px 8px">
-        <div style="font-size:7.5px;text-transform:uppercase;color:#6B7280;letter-spacing:.1em;margin-bottom:6px">Projetos</div>
-        <div style="font-family:Georgia,serif;font-size:17px;color:var(--agendo)">${Object.keys(porProjeto||{}).length}</div>
+      <div>
+        <div class="secao-titulo secao-titulo-azul">Por área</div>
+        <table><thead><tr><th>Área</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porArea)}</tbody></table>
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div>
-        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Por tipo</div>
-        <table style="font-size:9px;border-collapse:collapse;width:100%">
-          <thead><tr>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px">Tipo</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">Qtd</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:5px;text-align:right">%</th>
-          </tr></thead>
-          <tbody>${linhasTipo||'<tr><td colspan="3" style="text-align:center;color:#9199A2;padding:8px">—</td></tr>'}</tbody>
-        </table>
+        <div class="secao-titulo secao-titulo-verde">Comparecimento / situação</div>
+        <table><thead><tr><th>Situação</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porComparecimento)}</tbody></table>
       </div>
       <div>
-        <div style="font-family:Georgia,serif;font-size:16px;color:var(--agendo-dark);margin-bottom:9px;letter-spacing:-.02em">Atendimentos realizados</div>
-        <table style="font-size:9px;border-collapse:collapse;width:100%">
-          <thead><tr>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Data</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Tipo</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Tema</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px;text-align:center">Part.</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Profissional</th>
-            <th style="background:#F2F6F7;color:#525B66;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:7px;text-transform:uppercase;letter-spacing:.08em;padding:6px 5px">Projeto</th>
-          </tr></thead>
-          <tbody>
-            ${linhas||'<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum atendimento</td></tr>'}
-            <tr style="background:#F5F2EA;font-weight:700;border-top:1.5px solid var(--line)">
-              <td colspan="3" style="padding:5px;border-bottom:none">Total participantes</td>
-              <td class="center" style="padding:5px;border-bottom:none">${totalPart}</td>
-              <td colspan="2" style="border-bottom:none"></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="secao-titulo secao-titulo-verde">Desfechos</div>
+        <table><thead><tr><th>Desfecho</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porDesfecho)}</tbody></table>
+      </div>
+    </div>
+
+    ${htmlRodape({ protocolo })}
+  </div>
+
+  <div class="pg page-break pg-landscape">
+    ${htmlCabecalho({ titulo:'Relatório Técnico TEAcolher — detalhamento', sub:periodo, ref:protocolo })}
+    <div class="secao-titulo secao-titulo-azul">Lista de atendimentos, agenda e execução</div>
+    <table style="font-size:8.5px">
+      <thead><tr>
+        <th>Data</th><th>Hora</th><th>Usuário/família</th><th>Profissional</th><th>Área</th><th>Modalidade</th><th>Situação</th><th class="num">Duração</th><th>Desfecho / encaminhamento</th>
+      </tr></thead>
+      <tbody>${linhasDetalhe || '<tr><td colspan="9" style="text-align:center;color:#9199A2;padding:12px">Nenhum atendimento no período</td></tr>'}</tbody>
+    </table>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px">
+      <div><div class="secao-titulo secao-titulo-azul">Por etapa do fluxo</div><table><thead><tr><th>Etapa</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porEtapa)}</tbody></table></div>
+      <div><div class="secao-titulo secao-titulo-azul">Por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porModalidade)}</tbody></table></div>
+      <div><div class="secao-titulo secao-titulo-verde">Síntese de controle</div>
+        <table><tbody>
+          <tr><td>Período</td><td class="num">${valor(periodo)}</td></tr>
+          <tr><td>Famílias acompanhadas</td><td class="num">${familias}</td></tr>
+          <tr><td>Atendimentos realizados</td><td class="num">${realizados}</td></tr>
+          <tr><td>Atendimentos pendentes</td><td class="num">${pendentes}</td></tr>
+          <tr><td>Encaminhamentos</td><td class="num">${encaminhados}</td></tr>
+        </tbody></table>
       </div>
     </div>
     ${htmlRodape({ protocolo })}
-  </div>`
+  </div>
 
-  abrirImpressao(html, 'Relatório de Atendimentos', true)
+  ${blocosRegistro ? `
+  <div class="pg page-break">
+    ${htmlCabecalho({ titulo:'Relatório Técnico TEAcolher — registros', sub:periodo, ref:protocolo })}
+    <div class="secao-titulo secao-titulo-verde">Registros técnicos, devolutivas e encaminhamentos</div>
+    ${blocosRegistro}
+    ${htmlRodape({ protocolo })}
+  </div>` : ''}
+  `
+
+  abrirImpressao(html, 'Relatório Técnico TEAcolher', true)
 }
+
+// Agenda limpa do TEAcolher — pode ser usada por painel operacional ou técnico
+export function gerarPDFAgendaTeacolher(lista = [], titulo = 'Agenda TEAcolher', opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-AGENDA`
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const nomeAtendido = a => a.usuario_atendido?.nome || a.usuario?.nome || a.pessoa_atendida || 'Usuário/família'
+  const nomeProf = a => a.profissional?.nome || a.equipe?.nome || a.profissional_nome || '—'
+  const subtitulo = opts.subtitulo || opts.periodoLabel || 'Agenda do Projeto TEAcolher'
+
+  const linhas = (Array.isArray(lista) ? lista : []).map(a => `<tr>
+    <td style="white-space:nowrap">${fmtData(a.data_atend)}</td>
+    <td style="white-space:nowrap">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
+    <td><strong>${esc(nomeAtendido(a))}</strong></td>
+    <td>${esc(nomeProf(a))}</td>
+    <td>${esc(a.area_atendimento || a.etapa_fluxo || a.tipo_atend || 'Atendimento')}</td>
+    <td>${esc(a.situacao || 'agendado')}</td>
+  </tr>`).join('')
+
+  const html = `<div class="pg">
+    ${htmlCabecalho({ titulo, sub:subtitulo, ref:protocolo })}
+    <div class="secao-titulo secao-titulo-azul">Agenda limpa para impressão</div>
+    <table>
+      <thead><tr><th>Data</th><th>Hora</th><th>Usuário/família</th><th>Profissional</th><th>Atendimento</th><th>Situação</th></tr></thead>
+      <tbody>${linhas || '<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum item na agenda</td></tr>'}</tbody>
+    </table>
+    ${htmlRodape({ protocolo })}
+  </div>`
+  abrirImpressao(html, titulo, false)
+}
+
+// Ficha individual do atendimento TEAcolher
+export function gerarPDFFichaAtendimentoTeacolher(a = {}, opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-FICHA-${a.id || 'AT'}`
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const nomeAtendido = a.usuario_atendido?.nome || a.usuario?.nome || a.pessoa_atendida || 'Usuário/família'
+  const nomeProf = a.profissional?.nome || a.equipe?.nome || a.profissional_nome || '—'
+  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value || '—')}</div></div>`
+  const bloco = (label, value) => `<div style="border:1px solid var(--line);border-radius:5px;padding:10px 12px;margin-bottom:10px"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:5px;font-weight:700">${label}</div><div style="font-size:10.5px;line-height:1.55;color:#20252C">${esc(value || '—')}</div></div>`
+
+  const html = `<div class="pg">
+    ${htmlCabecalho({ titulo:'Ficha de Atendimento TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })}
+    <div style="font-family:Georgia,serif;font-size:28px;color:var(--agendo-dark);margin-bottom:14px;letter-spacing:-.03em">Ficha individual do atendimento</div>
+    <div class="info-grid-3">
+      ${item('Usuário/família', nomeAtendido)}
+      ${item('Profissional', nomeProf)}
+      ${item('Data e hora', `${fmtData(a.data_atend)} · ${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}`)}
+      ${item('Área', a.area_atendimento || 'Interdisciplinar')}
+      ${item('Modalidade', a.modalidade_atendimento)}
+      ${item('Situação/comparecimento', a.comparecimento || a.situacao)}
+      ${item('Duração', a.duracao_minutos ? `${a.duracao_minutos} min` : '')}
+      ${item('Etapa do fluxo', a.etapa_fluxo || a.tipo_atend)}
+      ${item('Desfecho', a.desfecho_teacolher)}
+    </div>
+    ${bloco('Demanda identificada', a.demanda_identificada)}
+    ${bloco('Objetivo do atendimento', a.objetivo_atendimento || a.tema)}
+    ${bloco('Registro técnico / evolução', a.registro_tecnico || a.descricao)}
+    ${bloco('Orientação à família', a.orientacao_familia)}
+    ${bloco('Devolutiva familiar', a.devolutiva_familia)}
+    ${bloco('Encaminhamento / rede', [a.tipo_encaminhamento, a.rede_encaminhada, a.encaminhamentos].filter(Boolean).join(' · '))}
+    ${bloco('Próxima ação', a.proxima_acao)}
+    ${htmlAssinaturas(['Profissional responsável', 'Responsável/família', 'Coordenação'])}
+    ${htmlRodape({ protocolo })}
+  </div>`
+  abrirImpressao(html, 'Ficha de Atendimento TEAcolher', false)
+}
+
+// Compatibilidade: nome explícito para relatórios técnicos do TEAcolher
+export function gerarPDFRelatorioTecnicoTeacolher(dados = {}, periodoLabel, opts = {}) {
+  return gerarPDFAtendimentos(dados, periodoLabel, opts)
+}
+
 
 // =============================================
 // DOAÇÕES
