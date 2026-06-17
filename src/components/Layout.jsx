@@ -261,67 +261,75 @@ export default function Layout() {
       {/* Menu */}
       <div className="sidebar-scroll" style={{ overflowY: 'auto', flex: 1, paddingBottom: 8 }}>
 
-        <NavSecao colapsado={colapsado} label="Principal" />
-        <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/painel-operacional" icon="layout-dashboard"  label="Painel"              visivel={p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/painel-tecnico"      icon="stethoscope"       label="Painel Técnico"      visivel={p==='tecnico'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
+        {p === 'tecnico' ? (<>
+          <NavSecao colapsado={colapsado} label="TEAcolher" />
+          <NavItem colapsado={colapsado} to="/painel-tecnico" icon="home" label="Início" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/atendimentos" icon="calendar-event" label="Minha agenda" visivel onClick={fecharMenu} />
+        </>) : p === 'operacional' ? (<>
+          <NavSecao colapsado={colapsado} label="TEAcolher" />
+          <NavItem colapsado={colapsado} to="/painel-operacional" icon="home" label="Início" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="user-plus" label="Cadastrar família" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/atendimentos" icon="calendar-plus" label="Agenda" visivel onClick={fecharMenu} />
+        </>) : (<>
+          <NavSecao colapsado={colapsado} label="Principal" />
+          <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/painel-diretoria"   icon="layout-dashboard"  label="Acompanhamento"      visivel={p==='diretoria'} onClick={fecharMenu} />
 
-        {p === 'admin' && (<>
-        <NavSecao colapsado={colapsado} label="Operação diária" aberta={secVisivel("Operação diária")} onToggle={() => toggleSec("Operação diária")} />
-        {secVisivel("Operação diária") && (<>
-        <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
+          {p === 'admin' && (<>
+            <NavSecao colapsado={colapsado} label="Operação diária" aberta={secVisivel("Operação diária")} onToggle={() => toggleSec("Operação diária")} />
+            {secVisivel("Operação diária") && (<>
+              <NavItem colapsado={colapsado} to="/importar"           icon="file-upload"       label="Importar extrato"    visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/conciliacao"        icon="checks"            label="Conciliação"         visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/lancamentos"        icon="list-details"      label="Lançamentos"         visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/pendencias"         icon="alert-triangle"    label="Pendências"          visivel={p==='admin'} onClick={fecharMenu} badge={badgePendencias} />
+            </>)}
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Gestão financeira" aberta={secVisivel("Gestão financeira")} onToggle={() => toggleSec("Gestão financeira")} />
-        {secVisivel("Gestão financeira") && (<>
-        <NavItem colapsado={colapsado} to="/fornecedores"       icon="building-store"    label="Fornecedores"        visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/aplicacoes"         icon="chart-line"        label="Aplicações"          visivel={p==='admin'} onClick={fecharMenu} />
+            <NavSecao colapsado={colapsado} label="Gestão financeira" aberta={secVisivel("Gestão financeira")} onToggle={() => toggleSec("Gestão financeira")} />
+            {secVisivel("Gestão financeira") && (<>
+              <NavItem colapsado={colapsado} to="/fornecedores"       icon="building-store"    label="Fornecedores"        visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/aplicacoes"         icon="chart-line"        label="Aplicações"          visivel={p==='admin'} onClick={fecharMenu} />
+            </>)}
+          </>)}
 
-        </>)}
-        </>)}
-        <NavSecao colapsado={colapsado} label={p==='tecnico' ? 'Minha rotina' : p==='operacional' ? 'Atendimento TEAcolher' : 'Programas e projetos'} aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")} />
-        {secVisivel("Programas e projetos") && (<>
-        <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label={p==='tecnico' ? 'Minha agenda' : p==='operacional' ? 'Agenda TEAcolher' : 'Atendimentos'} visivel={p==='admin'||p==='operacional'||p==='tecnico'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label={p==='operacional' ? 'Usuários/famílias' : 'Usuários Atendidos'} visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
+          <NavSecao colapsado={colapsado} label="Programas e projetos" aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")} />
+          {secVisivel("Programas e projetos") && (<>
+            <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
+            <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
+            <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'} onClick={fecharMenu} />
+            <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'} onClick={fecharMenu} />
+            <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'} onClick={fecharMenu} />
+            <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
+            <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
+          </>)}
 
-        </>)}
-        {(p === 'admin' || p === 'diretoria') && (<>
-        <NavSecao colapsado={colapsado} label="Relatórios" aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")} />
-        {secVisivel("Relatórios") && (<>
-        <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho"  visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/transparencia"      icon="world"             label="Transparência Pública"  visivel={p==='admin'} onClick={fecharMenu} />
+          {(p === 'admin' || p === 'diretoria') && (<>
+            <NavSecao colapsado={colapsado} label="Relatórios" aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")} />
+            {secVisivel("Relatórios") && (<>
+              <NavItem colapsado={colapsado} to="/relatorios"         icon="report-analytics"  label="Central de Relatórios"  visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/fechamento"         icon="checkup-list"      label="Fechamento / Conselho"  visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/prestacao-contas"   icon="file-certificate"  label="Prestação de Contas"    visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/transparencia"      icon="world"             label="Transparência Pública"  visivel={p==='admin'} onClick={fecharMenu} />
+            </>)}
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Institucional" aberta={secVisivel("Institucional")} onToggle={() => toggleSec("Institucional")} />
-        {secVisivel("Institucional") && (<>
-        <NavItem colapsado={colapsado} to="/instituicao"        icon="building"           label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/parcerias"          icon="file-invoice"       label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/documentos-fiscais" icon="files"              label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
+            <NavSecao colapsado={colapsado} label="Institucional" aberta={secVisivel("Institucional")} onToggle={() => toggleSec("Institucional")} />
+            {secVisivel("Institucional") && (<>
+              <NavItem colapsado={colapsado} to="/instituicao"        icon="building"           label="Instituição"         visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/parcerias"          icon="file-invoice"       label="Instrumentos"        visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/documentos-fiscais" icon="files"              label="Documentos"          visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/patrimonio"         icon="building-warehouse" label="Patrimônio"          visivel={p==='admin'} onClick={fecharMenu} />
+            </>)}
 
-        </>)}
-        <NavSecao colapsado={colapsado} label="Configurações" aberta={secVisivel("Configurações")} onToggle={() => toggleSec("Configurações")} />
-        {secVisivel("Configurações") && (<>
-        <NavItem colapsado={colapsado} to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/configuracoes"      icon="alert-octagon"     label="Zona de perigo"      visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/mensagens-dev"    icon="message-circle"    label="Mensagens"           visivel={p==='admin'} onClick={fecharMenu} />
-
-        </>)}
+            <NavSecao colapsado={colapsado} label="Configurações" aberta={secVisivel("Configurações")} onToggle={() => toggleSec("Configurações")} />
+            {secVisivel("Configurações") && (<>
+              <NavItem colapsado={colapsado} to="/contas"             icon="building-bank"     label="Contas bancárias"    visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/categorias"         icon="tag"               label="Categorias"          visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/classificacoes"     icon="list-tree"         label="Classificações"      visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/usuarios"           icon="user-cog"          label="Usuários"            visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/backup"             icon="database-export"   label="Backup"              visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/configuracoes"      icon="alert-octagon"     label="Zona de perigo"      visivel={p==='admin'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/mensagens-dev"      icon="message-circle"    label="Mensagens"           visivel={p==='admin'} onClick={fecharMenu} />
+            </>)}
+          </>)}
         </>)}
       </div>
 
