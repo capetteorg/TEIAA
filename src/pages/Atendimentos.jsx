@@ -37,7 +37,7 @@ const SITUACAO_COR = {
 
 const FORM_VAZIO = {
   data_atend: new Date().toISOString().slice(0,10),
-  projeto_id: '', tipo_atend: 'Atendimento individual', tema: '',
+  projeto_id: '', usuario_atendido_id: '', tipo_atend: 'Atendimento individual', tema: '',
   descricao: '', qtd_participantes: 1, publico_participante: [],
   pessoa_atendida: '', profissional_id: '', equipe_ids: [],
   encaminhamentos: '', orgao_encaminhamento: '', situacao: 'realizado', observacoes: '',
@@ -45,12 +45,13 @@ const FORM_VAZIO = {
 
 export default function Atendimentos() {
   const isMobile = useIsMobile()
-  const { user } = useAuth()
+  const { user, perfil } = useAuth()
   const [atendimentos, setAtendimentos] = useState([])
   const [limite, setLimite] = useState(300)
   const [temMais, setTemMais] = useState(false)
   const [projetos, setProjetos] = useState([])
   const [equipe, setEquipe] = useState([])
+  const [usuariosAtendidos, setUsuariosAtendidos] = useState([])
   const [form, setForm] = useState(FORM_VAZIO)
   const [editando, setEditando] = useState(null)
   const [mostrarForm, setMostrarForm] = useState(false)
@@ -59,9 +60,14 @@ export default function Atendimentos() {
   const [filtros, setFiltros] = useState({ dataInicio:'', dataFim:'', projeto_id:'', tipo_atend:'', profissional_id:'', situacao:'' })
   const [loading, setLoading] = useState(false)
 
+  const perfilAtual = perfil?.perfil || ''
+  const podeGerenciarAtendimentos = ['admin', 'operacional'].includes(perfilAtual)
+  const podeExcluirAtendimentos = perfilAtual === 'admin'
+
   useEffect(() => {
     supabase.from('projetos').select('id,nome,tipo').eq('aceita_atendimentos', true).order('nome').then(({ data }) => setProjetos(data || []))
     supabase.from('equipe').select('id,nome,funcao').eq('situacao','ativo').order('nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('usuarios_atendidos').select('id,nome,situacao,projeto_id').eq('situacao','ativo').order('nome').then(({ data }) => setUsuariosAtendidos(data || []))
     carregar()
   }, [])
 
@@ -88,10 +94,15 @@ export default function Atendimentos() {
 
   async function salvar(e) {
     e.preventDefault()
+    if (!podeGerenciarAtendimentos) {
+      setMsg('Erro: seu perfil não tem permissão para cadastrar ou editar atendimentos.')
+      return
+    }
     setSalvando(true)
     const dados = {
       ...form,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : null,
+      usuario_atendido_id: form.usuario_atendido_id ? parseInt(form.usuario_atendido_id) : null,
       profissional_id: form.profissional_id ? parseInt(form.profissional_id) : null,
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : null,
       equipe_ids: form.equipe_ids.map(id => parseInt(id)),
@@ -111,7 +122,7 @@ export default function Atendimentos() {
 
   function editar(a) {
     setForm({
-      data_atend: a.data_atend, projeto_id: a.projeto_id||'', tipo_atend: a.tipo_atend,
+      data_atend: a.data_atend, projeto_id: a.projeto_id||'', usuario_atendido_id: a.usuario_atendido_id||'', tipo_atend: a.tipo_atend,
       tema: a.tema||'', descricao: a.descricao, qtd_participantes: a.qtd_participantes||1,
       publico_participante: a.publico_participante||[], pessoa_atendida: a.pessoa_atendida||'',
       profissional_id: a.profissional_id||'', equipe_ids: a.equipe_ids||[],
@@ -135,6 +146,8 @@ export default function Atendimentos() {
   const isIndividual = TIPOS_INDIVIDUAIS.includes(form.tipo_atend)
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const usuarioSelecionado = id => usuariosAtendidos.find(u => String(u.id) === String(id))
+  const nomeUsuarioAtendido = a => usuarioSelecionado(a.usuario_atendido_id)?.nome || a.pessoa_atendida || '—'
 
   // Estatísticas
   const totalParticipantes = atendimentos.reduce((a,m) => a + (Number(m.qtd_participantes)||0), 0)
@@ -165,12 +178,14 @@ export default function Atendimentos() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-0.022em' }}>Atendimentos / Atividades</div>
-          <div style={{ fontSize:12, color:'#888780' }}>Registro de execução institucional</div>
+          <div style={{ fontSize:12, color:'#888780' }}>Registro de execução do Projeto TEAcolher — operacional pode cadastrar e editar; exclusão fica restrita ao admin</div>
         </div>
-        <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-          style={s.btn(mostrarForm ? '#F1EFE8' : '#0E7EA8', mostrarForm ? '#5F5E5A' : '#fff')}>
-          {mostrarForm ? 'Cancelar' : '+ Registrar atendimento'}
-        </button>
+        {podeGerenciarAtendimentos && (
+          <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
+            style={s.btn(mostrarForm ? '#F1EFE8' : '#0E7EA8', mostrarForm ? '#5F5E5A' : '#fff')}>
+            {mostrarForm ? 'Cancelar' : '+ Registrar atendimento TEAcolher'}
+          </button>
+        )}
       </div>
 
       {msg && (
@@ -180,10 +195,10 @@ export default function Atendimentos() {
       )}
 
       {/* Formulário */}
-      {mostrarForm && (
+      {mostrarForm && podeGerenciarAtendimentos && (
         <div style={{ ...s.card, borderColor:'#C0DD97' }}>
           <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-            {editando ? 'Editar registro' : 'Novo atendimento / atividade'}
+            {editando ? 'Editar atendimento' : 'Novo atendimento TEAcolher'}
           </div>
           <form onSubmit={salvar}>
             <div style={s.grupo('1fr 2fr 1fr')}>
@@ -218,13 +233,25 @@ export default function Atendimentos() {
               </div>
             </div>
 
-            {/* Campo específico para individual */}
-            {isIndividual && (
-              <div style={{ marginBottom:10 }}>
-                <label style={s.label}>Pessoa / família atendida</label>
-                <input value={form.pessoa_atendida} onChange={e=>setForm(f=>({...f,pessoa_atendida:e.target.value}))} style={s.input} placeholder="Nome ou identificação (uso interno)" />
+            <div style={s.grupo('1fr 1fr')}>
+              <div>
+                <label style={s.label}>Usuário atendido cadastrado</label>
+                <select value={form.usuario_atendido_id} onChange={e=>{
+                  const id = e.target.value
+                  const usuario = usuariosAtendidos.find(u => String(u.id) === String(id))
+                  setForm(f=>({...f, usuario_atendido_id:id, pessoa_atendida: usuario?.nome || f.pessoa_atendida}))
+                }} style={s.input}>
+                  <option value="">Selecione o usuário atendido...</option>
+                  {usuariosAtendidos.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                </select>
               </div>
-            )}
+              <div>
+                <label style={s.label}>Nome livre / família atendida</label>
+                <input value={form.pessoa_atendida} onChange={e=>setForm(f=>({...f,pessoa_atendida:e.target.value}))} style={s.input} placeholder="Preenche automático ao selecionar o usuário" />
+              </div>
+            </div>
+
+            {/* Pessoa/família atendida fica vinculada ao cadastro acima. */}
 
             <div style={{ marginBottom:10 }}>
               <label style={s.label}>Descrição / resumo *</label>
@@ -372,13 +399,15 @@ export default function Atendimentos() {
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
             <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento registrado</div>
             <div style={{ fontSize:12, color:'#888780', maxWidth:380, margin:'0 auto' }}>Registre atendimentos realizados para alimentar relatórios de execução e prestação de contas.</div>
-            <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Registrar atendimento</button>
+            {podeGerenciarAtendimentos && (
+              <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Registrar atendimento</button>
+            )}
           </div>
         ) : (
           <div style={{ maxHeight:560, overflowY:'auto',overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead style={{ position:'sticky', top:0 }}>
-                <tr>{['Data','Projeto','Tipo','Tema','Profissional','Participantes','Situação',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
+                <tr>{['Data','Projeto','Usuário','Tipo','Profissional','Participantes','Situação',''].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {atendimentos.map((a,i) => {
@@ -387,13 +416,20 @@ export default function Atendimentos() {
                     <tr key={a.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                       <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(a.data_atend)}</td>
                       <td style={{ ...s.td, fontWeight:500, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.projeto?.nome||'—'}</td>
+                      <td style={{ ...s.td, maxWidth:150, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeUsuarioAtendido(a)}</td>
                       <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.tipo_atend}</td>
-                      <td style={{ ...s.td, color:'#888780', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.tema||'—'}</td>
                       <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.profissional?.nome?.split(' ').slice(0,2).join(' ')||'—'}</td>
                       <td style={{ ...s.td, textAlign:'center' }}>{a.qtd_participantes||'—'}</td>
                       <td style={s.td}><span style={s.badge(bg,cor)}>{a.situacao}</span></td>
                       <td style={s.td}>
-                        <button onClick={() => editar(a)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                        <div style={{ display:'flex', gap:6 }}>
+                          {podeGerenciarAtendimentos && (
+                            <button onClick={() => editar(a)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                          )}
+                          {podeExcluirAtendimentos && (
+                            <button onClick={() => setConfirmandoExcluir(a.id)} style={s.btn('#FCEBEB','#A32D2D')}>Excluir</button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )

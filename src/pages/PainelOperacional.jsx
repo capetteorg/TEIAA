@@ -100,6 +100,10 @@ export default function PainelOperacional() {
             style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 700, borderRadius: 9, border: 'none', background: AG_BLUE, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             <i className="ti ti-user-plus" /> Cadastrar usuário
           </button>
+          <button onClick={() => navigate('/atendimentos')}
+            style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 700, borderRadius: 9, border: '0.5px solid rgba(14,126,168,0.25)', background: 'rgba(14,126,168,0.08)', color: '#06344F', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <i className="ti ti-clipboard-plus" /> Atendimento
+          </button>
           {!isMobile && (
             <button onClick={() => navigate('/usuarios-atendidos')}
               style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, borderRadius: 9, border: '0.5px solid #D3D1C7', background: 'rgba(255,255,255,0.8)', color: '#5F5E5A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -113,7 +117,7 @@ export default function PainelOperacional() {
         <div style={{ ...card, borderLeft: '3px solid rgba(14,126,168,.45)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#06344F', marginBottom: 4 }}>Painel operacional da TEIAA</div>
           <div style={{ fontSize: 12, color: '#5F5E5A', lineHeight: 1.45 }}>
-            Este perfil está liberado para cadastrar, editar e consultar usuários atendidos, além de imprimir o Anexo I do Projeto TEAcolher quando disponível.
+            Este perfil está liberado para cadastrar, editar e consultar usuários atendidos, registrar atendimentos do Projeto TEAcolher e imprimir o Anexo I quando disponível.
           </div>
         </div>
 
@@ -149,6 +153,10 @@ export default function PainelOperacional() {
             <button onClick={() => navigate('/usuarios-atendidos')}
               style={{ marginTop: 10, width: '100%', background: AG_BLUE, border: 'none', borderRadius: 10, padding: '11px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <i className="ti ti-user-plus" /> + Cadastrar usuário atendido
+            </button>
+            <button onClick={() => navigate('/atendimentos')}
+              style={{ marginTop: 8, width: '100%', background: '#06344F', border: 'none', borderRadius: 10, padding: '11px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <i className="ti ti-clipboard-plus" /> + Registrar atendimento TEAcolher
             </button>
           </div>
 
