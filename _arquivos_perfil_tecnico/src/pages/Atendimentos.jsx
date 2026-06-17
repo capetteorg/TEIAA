@@ -188,28 +188,13 @@ export default function Atendimentos() {
   const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', profissional_id: '', situacao: '' })
 
   const perfilAtual = perfil?.perfil || ''
-  const isAdmin = perfilAtual === 'admin'
-  const isOperacional = perfilAtual === 'operacional'
-  const isTecnico = perfilAtual === 'tecnico'
-  const tecnicoEquipeId = perfil?.equipe_id ? String(perfil.equipe_id) : ''
-  const tecnicoNome = perfil?.nome || 'Técnico'
-  const podeAgendar = isAdmin || isOperacional
-  const podeEditarAgendamento = isAdmin || isOperacional
-  const podeFinalizar = isAdmin || isTecnico
-  const podeEditarRegistro = isAdmin || isTecnico
-  const podeExcluir = isAdmin
-  const podeAcessarFormulario = modoResultado ? podeFinalizar : podeAgendar
+  const podeGerenciar = ['admin', 'operacional'].includes(perfilAtual)
+  const podeExcluir = perfilAtual === 'admin'
 
   useEffect(() => {
     inicializar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (!projetoTeacolherId) return
-    carregar(filtros, projetoTeacolherId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [perfilAtual, tecnicoEquipeId, projetoTeacolherId])
 
   useEffect(() => {
     if (!projetoTeacolherId) return
@@ -265,15 +250,9 @@ export default function Atendimentos() {
       qLista = qLista.eq('projeto_id', parseInt(teaId))
     }
 
-    if (isTecnico) {
-      const idTecnico = tecnicoEquipeId ? parseInt(tecnicoEquipeId) : -999999
-      qTodos = qTodos.eq('profissional_id', idTecnico)
-      qLista = qLista.eq('profissional_id', idTecnico)
-    }
-
     if (f.dataInicio) qLista = qLista.gte('data_atend', f.dataInicio)
     if (f.dataFim) qLista = qLista.lte('data_atend', f.dataFim)
-    if (!isTecnico && f.profissional_id) qLista = qLista.eq('profissional_id', parseInt(f.profissional_id))
+    if (f.profissional_id) qLista = qLista.eq('profissional_id', parseInt(f.profissional_id))
     if (f.situacao) qLista = qLista.eq('situacao', f.situacao)
 
     const [todosRes, listaRes] = await Promise.all([qTodos, qLista])
@@ -311,147 +290,6 @@ export default function Atendimentos() {
   const nomeAtendido = a => nomeUsuario(a.usuario_atendido_id) || a.pessoa_atendida || '—'
   const etapaAtendimento = a => a.etapa_fluxo || a.tipo_atend || '—'
   const ehAgendado = a => ['agendado', 'reagendado'].includes(String(a.situacao || '').toLowerCase())
-  const atendimentoDoTecnico = a => !isTecnico || (tecnicoEquipeId && String(a.profissional_id) === String(tecnicoEquipeId))
-  const podeAtuarNoAtendimento = a => isAdmin || (isTecnico && atendimentoDoTecnico(a))
-
-  function escapeHtml(v = '') {
-    return String(v ?? '').replace(/[&<>"']/g, ch => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;',
-    }[ch]))
-  }
-
-  function abrirJanelaImpressao(titulo, conteudo) {
-    const win = window.open('', '_blank', 'width=960,height=720')
-    if (!win) {
-      setMsg('Erro: o navegador bloqueou a janela de impressão. Libere pop-ups para imprimir.')
-      return
-    }
-
-    win.document.write(`<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(titulo)}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #1f2937; margin: 0; padding: 24px; background: #fff; }
-    .topo { border-bottom: 2px solid #0E7EA8; padding-bottom: 12px; margin-bottom: 18px; }
-    .org { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; font-weight: 700; }
-    h1 { margin: 4px 0 2px; font-size: 22px; color: #06344F; }
-    .sub { font-size: 12px; color: #64748b; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
-    .campo { border: 1px solid #e5e7eb; border-radius: 10px; padding: 9px 10px; min-height: 44px; }
-    .rotulo { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-    .valor { font-size: 13px; color: #111827; white-space: pre-wrap; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th { text-align: left; font-size: 11px; color: #475569; background: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 8px; }
-    td { font-size: 12px; border-bottom: 1px solid #e5e7eb; padding: 8px; vertical-align: top; }
-    .assinatura { margin-top: 42px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
-    .linha { border-top: 1px solid #111827; text-align: center; padding-top: 6px; font-size: 11px; color: #334155; }
-    .rodape { margin-top: 18px; font-size: 10px; color: #94a3b8; }
-    @media print {
-      body { padding: 16mm; }
-      .no-print { display: none !important; }
-      .campo { break-inside: avoid; }
-      table { break-inside: auto; }
-      tr { break-inside: avoid; break-after: auto; }
-    }
-  </style>
-</head>
-<body>${conteudo}</body>
-</html>`)
-    win.document.close()
-    win.focus()
-    setTimeout(() => win.print(), 250)
-  }
-
-  function imprimirAgenda() {
-    const titulo = isTecnico ? 'Minha agenda TEAcolher' : 'Agenda TEAcolher'
-    const profissionalFiltro = isTecnico ? (profissional(tecnicoEquipeId)?.nome || tecnicoNome) : (filtros.profissional_id ? profissional(filtros.profissional_id)?.nome : 'Todos os profissionais')
-    const linhas = atendimentos.map(a => `
-      <tr>
-        <td>${escapeHtml(fmtData(a.data_atend))}</td>
-        <td>${escapeHtml(fmtHora(a.hora_inicio))}</td>
-        <td>${escapeHtml(nomeAtendido(a))}</td>
-        <td>${escapeHtml(etapaAtendimento(a))}</td>
-        <td>${escapeHtml(a.area_atendimento || '—')}</td>
-        <td>${escapeHtml(profissionalNome(a.profissional_id))}</td>
-        <td>${escapeHtml(a.situacao || '—')}</td>
-      </tr>
-    `).join('')
-
-    abrirJanelaImpressao(titulo, `
-      <div class="topo">
-        <div class="org">Associação TEIAA · Projeto TEAcolher</div>
-        <h1>${escapeHtml(titulo)}</h1>
-        <div class="sub">Lista limpa para conferência, execução e assinatura. Emitido em ${escapeHtml(new Date().toLocaleString('pt-BR'))}.</div>
-      </div>
-      <div class="grid">
-        <div class="campo"><div class="rotulo">Profissional</div><div class="valor">${escapeHtml(profissionalFiltro || '—')}</div></div>
-        <div class="campo"><div class="rotulo">Registros na lista</div><div class="valor">${atendimentos.length}</div></div>
-        <div class="campo"><div class="rotulo">Data início</div><div class="valor">${escapeHtml(filtros.dataInicio ? fmtData(filtros.dataInicio) : 'Não filtrado')}</div></div>
-        <div class="campo"><div class="rotulo">Data fim</div><div class="valor">${escapeHtml(filtros.dataFim ? fmtData(filtros.dataFim) : 'Não filtrado')}</div></div>
-      </div>
-      <table>
-        <thead>
-          <tr><th>Data</th><th>Hora</th><th>Usuário/família</th><th>Etapa</th><th>Área</th><th>Profissional</th><th>Situação</th></tr>
-        </thead>
-        <tbody>${linhas || '<tr><td colspan="7">Nenhum atendimento encontrado.</td></tr>'}</tbody>
-      </table>
-      <div class="assinatura">
-        <div class="linha">Assinatura do profissional</div>
-        <div class="linha">Coordenação / conferência</div>
-      </div>
-      <div class="rodape">Documento gerado pelo AGENDO Integra · TEAcolher.</div>
-    `)
-  }
-
-  function imprimirFicha(a) {
-    const prof = profissional(a.profissional_id)
-    const campo = (rotulo, valor) => `
-      <div class="campo">
-        <div class="rotulo">${escapeHtml(rotulo)}</div>
-        <div class="valor">${escapeHtml(valor || '—')}</div>
-      </div>
-    `
-
-    abrirJanelaImpressao('Ficha de atendimento TEAcolher', `
-      <div class="topo">
-        <div class="org">Associação TEIAA · Projeto TEAcolher</div>
-        <h1>Ficha de atendimento TEAcolher</h1>
-        <div class="sub">Registro individual para agenda, execução técnica e prestação de contas.</div>
-      </div>
-      <div class="grid">
-        ${campo('Data', fmtData(a.data_atend))}
-        ${campo('Horário', `${fmtHora(a.hora_inicio)} às ${fmtHora(a.hora_fim)}`)}
-        ${campo('Usuário/família', nomeAtendido(a))}
-        ${campo('Profissional responsável', prof ? `${prof.nome} — ${prof.funcao || ''}` : '—')}
-        ${campo('Etapa do fluxo', etapaAtendimento(a))}
-        ${campo('Área / modalidade', `${a.area_atendimento || '—'} · ${a.modalidade_atendimento || '—'}`)}
-        ${campo('Situação', a.situacao)}
-        ${campo('Comparecimento', a.comparecimento)}
-        ${campo('Duração', a.duracao_minutos ? `${a.duracao_minutos} minutos` : '—')}
-        ${campo('Participantes', a.participantes_atendimento)}
-      </div>
-      ${campo('Objetivo / observação do agendamento', a.objetivo_atendimento || a.tema || a.descricao)}
-      ${campo('Demanda identificada', a.demanda_identificada)}
-      ${campo('Registro técnico / evolução', a.registro_tecnico)}
-      ${campo('Orientação prestada à família', a.orientacao_familia)}
-      ${campo('Devolutiva à família', a.devolutiva_familia)}
-      ${campo('Encaminhamento', [a.tipo_encaminhamento, a.rede_encaminhada, a.encaminhamentos].filter(Boolean).join(' · '))}
-      ${campo('Próxima ação', a.proxima_acao)}
-      ${campo('Desfecho TEAcolher', a.desfecho_teacolher)}
-      <div class="assinatura">
-        <div class="linha">Assinatura do profissional</div>
-        <div class="linha">Assinatura do responsável / conferência</div>
-      </div>
-      <div class="rodape">Documento gerado pelo AGENDO Integra · TEAcolher.</div>
-    `)
-  }
 
   function abrirNovoAgendamento(teaId = projetoTeacolherId) {
     setForm({ ...FORM_VAZIO, projeto_id: teaId || '' })
@@ -474,10 +312,6 @@ export default function Atendimentos() {
   }
 
   function montarForm(a, finalizar = false) {
-    if (finalizar && isTecnico && !atendimentoDoTecnico(a)) {
-      setMsg('Erro: técnico só pode finalizar atendimento direcionado a ele.')
-      return
-    }
     const etapa = a.etapa_fluxo || a.tipo_atend || 'Acolhimento inicial'
     setForm({
       data_atend: a.data_atend || new Date().toISOString().slice(0, 10),
@@ -539,20 +373,8 @@ export default function Atendimentos() {
 
   async function salvar(e) {
     e.preventDefault()
-    if (!modoResultado && !podeAgendar) {
-      setMsg('Erro: seu perfil não tem permissão para criar ou editar agendamento.')
-      return
-    }
-    if (modoResultado && !podeFinalizar) {
-      setMsg('Erro: seu perfil não tem permissão para finalizar atendimento técnico.')
-      return
-    }
-    if (modoResultado && isTecnico && !tecnicoEquipeId) {
-      setMsg('Erro: seu perfil técnico não está vinculado a um profissional da equipe.')
-      return
-    }
-    if (modoResultado && isTecnico && String(form.profissional_id) !== String(tecnicoEquipeId)) {
-      setMsg('Erro: técnico só pode finalizar atendimento direcionado a ele.')
+    if (!podeGerenciar) {
+      setMsg('Erro: seu perfil não tem permissão para registrar atendimento.')
       return
     }
 
@@ -581,7 +403,7 @@ export default function Atendimentos() {
       objetivo_atendimento: objetivo || null,
       area_atendimento: form.area_atendimento || null,
       modalidade_atendimento: form.modalidade_atendimento || null,
-      situacao: modoResultado ? form.situacao : (form.situacao || 'agendado'),
+      situacao: modoResultado ? form.situacao : 'agendado',
       descricao: (modoResultado ? registroFinal : objetivo) || descricaoPadrao,
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : 1,
       publico_participante: form.publico_participante || [],
@@ -660,23 +482,14 @@ export default function Atendimentos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>
-            {isTecnico ? 'Minha agenda TEAcolher' : 'Agenda e Execução TEAcolher'}
-          </div>
+          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>Agenda e Execução TEAcolher</div>
           <div style={{ fontSize:12.5, color:'#6B7280', maxWidth:820 }}>
-            {isTecnico
-              ? 'Aqui aparecem somente os atendimentos direcionados a você. Finalize apenas sua própria agenda técnica.'
-              : 'Operacional agenda/remarca. Técnico finaliza o registro técnico para prestação de contas.'}
+            Registro técnico para prestação de contas: agenda, atendimento, evolução, orientação familiar, encaminhamentos e acompanhamento.
           </div>
         </div>
-        {podeAgendar && (
+        {podeGerenciar && (
           <button onClick={() => mostrarForm ? fecharForm() : abrirNovoAgendamento()} style={s.btn(mostrarForm ? '#F1EFE8' : AZUL, mostrarForm ? '#5F5E5A' : '#fff')}>
             {mostrarForm ? 'Cancelar' : '+ Agendar atendimento'}
-          </button>
-        )}
-        {isTecnico && !mostrarForm && (
-          <button onClick={() => { const f={...filtros, situacao:'agendado'}; setFiltros(f); carregar(f, projetoTeacolherId) }} style={s.btn(LARANJA)}>
-            Ver meus atendimentos pendentes
           </button>
         )}
       </div>
@@ -687,13 +500,7 @@ export default function Atendimentos() {
         </div>
       )}
 
-      {isTecnico && !tecnicoEquipeId && (
-        <div style={{ fontSize:12, padding:'10px 12px', borderRadius:10, marginBottom:'1rem', background:'#FEF2F2', color:'#A32D2D', border:'0.5px solid #FECACA' }}>
-          Seu usuário técnico ainda não está vinculado a um profissional da equipe. Peça ao administrador para preencher o campo equipe_id no cadastro do usuário.
-        </div>
-      )}
-
-      {mostrarForm && podeAcessarFormulario && (
+      {mostrarForm && podeGerenciar && (
         <div style={{ ...s.card, borderColor: modoResultado ? '#C0DD97' : 'rgba(14,126,168,0.35)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
             <span style={{ ...s.badge(modoResultado ? '#EAF3DE' : '#E6F1FB', modoResultado ? '#3B6D11' : '#185FA5') }}>
@@ -732,15 +539,6 @@ export default function Atendimentos() {
                 </div>
               </div>
 
-              {!modoResultado && (
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Situação do agendamento</label>
-                  <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>
-                    {['agendado','reagendado','cancelado'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                  </select>
-                </div>
-              )}
-
               <div style={s.grupo('1.2fr 1fr')}>
                 <div>
                   <label style={s.label}>Usuário/família cadastrada *</label>
@@ -758,17 +556,10 @@ export default function Atendimentos() {
               <div style={s.grupo('1fr 1fr 1fr')}>
                 <div>
                   <label style={s.label}>Profissional responsável *</label>
-                  <select
-                    value={form.profissional_id}
-                    onChange={e=>setForm(f=>({...f,profissional_id:e.target.value}))}
-                    style={{ ...s.input, background:modoResultado && isTecnico ? '#F8FAFC' : '#fff', color:modoResultado && isTecnico ? '#334155' : undefined }}
-                    required
-                    disabled={modoResultado && isTecnico}
-                  >
+                  <select value={form.profissional_id} onChange={e=>setForm(f=>({...f,profissional_id:e.target.value}))} style={s.input} required>
                     <option value="">Selecione...</option>
-                    {(isTecnico ? equipeTEAcolher.filter(e => String(e.id) === String(tecnicoEquipeId)) : equipeTEAcolher).map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
+                    {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
                   </select>
-                  {modoResultado && isTecnico && <div style={{ fontSize:10.5, color:'#64748B', marginTop:3 }}>Travado no profissional logado.</div>}
                 </div>
                 <div>
                   <label style={s.label}>Área / especialidade *</label>
@@ -976,14 +767,10 @@ export default function Atendimentos() {
           </div>
           <div>
             <label style={s.label}>Profissional</label>
-            {isTecnico ? (
-              <input value={profissional(tecnicoEquipeId)?.nome || 'Minha agenda'} readOnly style={{ ...s.input, background:'#F8FAFC', color:ESCURO, fontWeight:600 }} />
-            ) : (
-              <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
-                <option value="">Todos</option>
-                {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
-              </select>
-            )}
+            <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
+              <option value="">Todos</option>
+              {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
+            </select>
           </div>
           <div>
             <label style={s.label}>Situação</label>
@@ -1002,21 +789,14 @@ export default function Atendimentos() {
       <div style={s.card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
           <div>
-            <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>
-              {isTecnico ? `${atendimentos.length} registros na minha agenda` : `${atendimentos.length} registros TEAcolher`}
-            </div>
+            <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>{atendimentos.length} registros TEAcolher</div>
             {(filtros.situacao || filtros.profissional_id || filtros.dataInicio || filtros.dataFim) && (
               <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
-                {isTecnico ? 'Lista filtrada dentro da sua agenda técnica.' : 'Lista filtrada. Os cards acima contam todos os atendimentos do TEAcolher.'}
+                Lista filtrada. Os cards acima contam todos os atendimentos do TEAcolher.
               </div>
             )}
           </div>
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            <button onClick={imprimirAgenda} style={s.btn('#F1EFE8', '#5F5E5A')}>
-              {isTecnico ? 'Imprimir minha agenda' : 'Imprimir lista'}
-            </button>
-            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
-          </div>
+          {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
         </div>
 
         {loading ? (
@@ -1025,11 +805,9 @@ export default function Atendimentos() {
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
             <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento TEAcolher encontrado nesta lista</div>
             <div style={{ fontSize:12, color:'#888780', maxWidth:560, margin:'0 auto' }}>
-              {isTecnico
-                ? (filtros.situacao ? `Você está filtrando por "${filtros.situacao}" dentro da sua agenda.` : 'Não há atendimentos direcionados a você nesta lista.')
-                : (filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.')}
+              {filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.'}
             </div>
-            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
+            {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
           </div>
         ) : (
           <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
@@ -1052,10 +830,9 @@ export default function Atendimentos() {
                       <td style={{ ...s.td, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desfecho_teacolher || '—'}</td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                          {podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
-                          {podeEditarAgendamento && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
-                          {podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
-                          <button onClick={() => imprimirFicha(a)} style={s.btn('#EEF2F7', '#334155')}>Imprimir ficha</button>
+                          {podeGerenciar && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
+                          {podeGerenciar && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
+                          {podeGerenciar && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
                           {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={s.btn('#FCEBEB', '#A32D2D')}>Excluir</button>}
                         </div>
                       </td>
