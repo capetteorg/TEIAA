@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
@@ -152,19 +151,30 @@ export default function Atendimentos() {
 
   async function carregar() {
     setLoading(true)
-    const montar = () => {
-      let q = supabase.from('atendimentos')
-        .select('*, projeto:projetos(nome,tipo), profissional:equipe(nome,funcao)')
-        .order('data_atend', { ascending: false })
-      if (filtros.dataInicio) q = q.gte('data_atend', filtros.dataInicio)
-      if (filtros.dataFim) q = q.lte('data_atend', filtros.dataFim)
-      if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
-      if (filtros.tipo_atend) q = q.eq('tipo_atend', filtros.tipo_atend)
-      if (filtros.profissional_id) q = q.eq('profissional_id', parseInt(filtros.profissional_id))
-      if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
-      return q
+    setMsg('')
+
+    let q = supabase.from('atendimentos')
+      .select('*')
+      .order('data_atend', { ascending: false })
+      .order('id', { ascending: false })
+      .range(0, limite)
+
+    if (filtros.dataInicio) q = q.gte('data_atend', filtros.dataInicio)
+    if (filtros.dataFim) q = q.lte('data_atend', filtros.dataFim)
+    if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
+    if (filtros.tipo_atend) q = q.eq('tipo_atend', filtros.tipo_atend)
+    if (filtros.profissional_id) q = q.eq('profissional_id', parseInt(filtros.profissional_id))
+    if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
+
+    const { data, error } = await q
+    if (error) {
+      setMsg('Erro ao carregar atendimentos: ' + error.message + ' | Código: ' + error.code)
+      setAtendimentos([])
+      setTemMais(false)
+      setLoading(false)
+      return
     }
-    const { data } = await fetchAll(montar, 1000, limite + 1)
+
     const recebidos = data || []
     setTemMais(recebidos.length > limite)
     setAtendimentos(recebidos.slice(0, limite))
@@ -189,6 +199,11 @@ export default function Atendimentos() {
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const usuarioSelecionado = id => usuariosAtendidos.find(u => String(u.id) === String(id))
   const nomeUsuarioAtendido = a => usuarioSelecionado(a.usuario_atendido_id)?.nome || a.pessoa_atendida || '—'
+  const projetoNome = id => projetos.find(p => String(p.id) === String(id))?.nome || '—'
+  const profissionalNome = id => {
+    const prof = equipe.find(e => String(e.id) === String(id))
+    return prof?.nome ? prof.nome.split(' ').slice(0,2).join(' ') : '—'
+  }
   const ehAgendado = a => ['agendado', 'reagendado'].includes(String(a.situacao || '').toLowerCase())
 
   function aplicarProjetoNoForm(id) {
@@ -614,10 +629,10 @@ export default function Atendimentos() {
                   return (
                     <tr key={a.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
                       <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(a.data_atend)}</td>
-                      <td style={{ ...s.td, fontWeight:500, maxWidth:150, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.projeto?.nome||'—'}</td>
+                      <td style={{ ...s.td, fontWeight:500, maxWidth:150, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{projetoNome(a.projeto_id)}</td>
                       <td style={{ ...s.td, maxWidth:150, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeUsuarioAtendido(a)}</td>
                       <td style={{ ...s.td, maxWidth:170, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.tipo_atend}</td>
-                      <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.profissional?.nome?.split(' ').slice(0,2).join(' ')||'—'}</td>
+                      <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profissionalNome(a.profissional_id)}</td>
                       <td style={s.td}><span style={s.badge(bg,cor)}>{a.situacao}</span></td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
