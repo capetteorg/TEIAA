@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
@@ -10,20 +10,29 @@ const AZUL = '#0E7EA8'
 const LARANJA = '#F4821F'
 const ESCURO = '#06344F'
 
-const ETAPAS_TEACOLHER = [
+const ETAPAS_FLUXO = [
   'Captação / demanda espontânea',
   'Acolhimento inicial',
   'Avaliação interdisciplinar',
   'Plano individual/familiar',
-  'Atendimento individual',
+  'Atendimento contínuo',
   'Atendimento familiar / orientação familiar',
-  'Atendimento em grupo',
   'Grupo de apoio e orientação para famílias',
   'Oficina / atividade comunitária',
-  'Atividade socioeducativa',
-  'Encaminhamento SUS/SUAS/Educação',
+  'Encaminhamento externo',
   'Acompanhamento / devolutiva familiar',
   'Desligamento',
+  'Outro',
+]
+
+const ORIGENS_DEMANDA = [
+  'Demanda espontânea',
+  'Encaminhamento da Saúde / SUS',
+  'Encaminhamento da Educação',
+  'Encaminhamento da Assistência Social / SUAS',
+  'Rede comunitária',
+  'Busca ativa',
+  'Retorno / acompanhamento',
   'Outro',
 ]
 
@@ -73,7 +82,43 @@ const COMPARECIMENTOS_TEACOLHER = [
   'Cancelado',
 ]
 
-const SITUACOES = ['agendado', 'realizado', 'reagendado', 'cancelado', 'em acompanhamento', 'encerrado']
+const TIPOS_ENCAMINHAMENTO = [
+  'Sem encaminhamento externo',
+  'SUS',
+  'SUAS',
+  'Educação',
+  'Conselho Tutelar',
+  'Rede de proteção',
+  'Avaliação complementar',
+  'Documentação / laudo',
+  'Benefício social',
+  'Outro',
+]
+
+const REDES_DESTINO = [
+  'Não se aplica',
+  'Unidade Básica de Saúde / SUS',
+  'CAPS / saúde mental',
+  'CRAS',
+  'CREAS',
+  'Escola / Secretaria de Educação',
+  'Conselho Tutelar',
+  'Serviço especializado',
+  'Outro',
+]
+
+const DESFECHOS_TEACOLHER = [
+  'Em acompanhamento',
+  'Aguardar retorno da família',
+  'Manter atendimento contínuo',
+  'Encaminhado para rede',
+  'Devolutiva realizada',
+  'Objetivo atingido',
+  'Encerrado',
+  'Desligado',
+]
+
+const SITUACOES = ['agendado', 'realizado', 'reagendado', 'cancelado', 'em acompanhamento', 'encerrado', 'desligado']
 
 const SITUACAO_COR = {
   realizado: ['#EAF3DE', '#3B6D11'],
@@ -82,17 +127,21 @@ const SITUACAO_COR = {
   reagendado: ['#FAEEDA', '#854F0B'],
   'em acompanhamento': ['#FAEEDA', '#854F0B'],
   encerrado: ['#F1EFE8', '#888780'],
+  desligado: ['#F1EFE8', '#888780'],
 }
 
 const FORM_VAZIO = {
   data_atend: new Date().toISOString().slice(0, 10),
+  hora_inicio: '',
+  hora_fim: '',
   projeto_id: '',
   usuario_atendido_id: '',
   pessoa_atendida: '',
   profissional_id: '',
   equipe_ids: [],
-  tipo_atend: 'Acolhimento inicial',
-  tema: 'Agendamento TEAcolher',
+  etapa_fluxo: 'Acolhimento inicial',
+  origem_demanda: 'Demanda espontânea',
+  objetivo_atendimento: '',
   area_atendimento: 'Interdisciplinar',
   modalidade_atendimento: 'Acolhimento',
   situacao: 'agendado',
@@ -101,10 +150,19 @@ const FORM_VAZIO = {
   publico_participante: ['Pessoa com TEA / PCD', 'Famílias / responsáveis'],
   comparecimento: '',
   duracao_minutos: '',
+  participantes_atendimento: 'Usuário e responsável/família',
+  demanda_identificada: '',
+  registro_tecnico: '',
+  orientacao_familia: '',
+  devolutiva_familia: 'Não registrada',
+  necessita_acompanhamento: 'Sim',
   responsavel_presente: '',
+  tipo_encaminhamento: 'Sem encaminhamento externo',
+  rede_encaminhada: 'Não se aplica',
   encaminhamentos: '',
   orgao_encaminhamento: '',
   proxima_acao: '',
+  desfecho_teacolher: 'Em acompanhamento',
   observacoes: '',
 }
 
@@ -211,17 +269,18 @@ export default function Atendimentos() {
     setLoading(false)
   }
 
-  const equipeTEAcolher = (() => {
+  const equipeTEAcolher = useMemo(() => {
     const idsVinculados = projetoEquipe
       .filter(pe => String(pe.projeto_id) === String(projetoTeacolherId))
       .map(pe => String(pe.equipe_id))
     if (idsVinculados.length > 0) return equipe.filter(e => idsVinculados.includes(String(e.id)))
     return equipe.filter(e => Array.isArray(e.projetos) && e.projetos.some(pr => String(pr).toLowerCase().includes('teacolher')))
-  })()
+  }, [equipe, projetoEquipe, projetoTeacolherId])
 
   const usuariosTEAcolher = usuariosAtendidos.filter(u => String(u.projeto_id) === String(projetoTeacolherId))
 
   const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const fmtHora = h => h ? String(h).slice(0, 5) : '—'
   const nomeUsuario = id => usuariosAtendidos.find(u => String(u.id) === String(id))?.nome || ''
   const profissional = id => equipe.find(e => String(e.id) === String(id))
   const profissionalNome = id => {
@@ -229,6 +288,7 @@ export default function Atendimentos() {
     return p?.nome ? p.nome.split(' ').slice(0, 2).join(' ') : '—'
   }
   const nomeAtendido = a => nomeUsuario(a.usuario_atendido_id) || a.pessoa_atendida || '—'
+  const etapaAtendimento = a => a.etapa_fluxo || a.tipo_atend || '—'
   const ehAgendado = a => ['agendado', 'reagendado'].includes(String(a.situacao || '').toLowerCase())
 
   function abrirNovoAgendamento(teaId = projetoTeacolherId) {
@@ -252,15 +312,19 @@ export default function Atendimentos() {
   }
 
   function montarForm(a, finalizar = false) {
+    const etapa = a.etapa_fluxo || a.tipo_atend || 'Acolhimento inicial'
     setForm({
       data_atend: a.data_atend || new Date().toISOString().slice(0, 10),
+      hora_inicio: a.hora_inicio ? String(a.hora_inicio).slice(0, 5) : '',
+      hora_fim: a.hora_fim ? String(a.hora_fim).slice(0, 5) : '',
       projeto_id: a.projeto_id || projetoTeacolherId || '',
       usuario_atendido_id: a.usuario_atendido_id || '',
       pessoa_atendida: a.pessoa_atendida || nomeUsuario(a.usuario_atendido_id) || '',
       profissional_id: a.profissional_id || '',
       equipe_ids: (a.equipe_ids || []).map(String),
-      tipo_atend: a.tipo_atend || 'Acolhimento inicial',
-      tema: a.tema || 'Agendamento TEAcolher',
+      etapa_fluxo: etapa,
+      origem_demanda: a.origem_demanda || 'Demanda espontânea',
+      objetivo_atendimento: a.objetivo_atendimento || a.tema || '',
       area_atendimento: a.area_atendimento || 'Interdisciplinar',
       modalidade_atendimento: a.modalidade_atendimento || 'Acolhimento',
       situacao: finalizar && ehAgendado(a) ? 'realizado' : (a.situacao || 'agendado'),
@@ -269,10 +333,19 @@ export default function Atendimentos() {
       publico_participante: a.publico_participante || ['Pessoa com TEA / PCD', 'Famílias / responsáveis'],
       comparecimento: finalizar && !a.comparecimento ? 'Compareceu' : (a.comparecimento || ''),
       duracao_minutos: a.duracao_minutos || '',
+      participantes_atendimento: a.participantes_atendimento || 'Usuário e responsável/família',
+      demanda_identificada: a.demanda_identificada || '',
+      registro_tecnico: a.registro_tecnico || a.descricao || '',
+      orientacao_familia: a.orientacao_familia || '',
+      devolutiva_familia: a.devolutiva_familia || 'Não registrada',
+      necessita_acompanhamento: a.necessita_acompanhamento || 'Sim',
       responsavel_presente: a.responsavel_presente || '',
+      tipo_encaminhamento: a.tipo_encaminhamento || 'Sem encaminhamento externo',
+      rede_encaminhada: a.rede_encaminhada || a.orgao_encaminhamento || 'Não se aplica',
       encaminhamentos: a.encaminhamentos || '',
       orgao_encaminhamento: a.orgao_encaminhamento || '',
       proxima_acao: a.proxima_acao || '',
+      desfecho_teacolher: a.desfecho_teacolher || 'Em acompanhamento',
       observacoes: a.observacoes || '',
     })
     setEditando(a.id)
@@ -308,27 +381,47 @@ export default function Atendimentos() {
     setSalvando(true)
 
     const descricaoPadrao = modoResultado ? 'Atendimento finalizado.' : 'Atendimento agendado.'
+    const registroFinal = (form.registro_tecnico || form.descricao || '').trim()
+    const objetivo = (form.objetivo_atendimento || form.descricao || '').trim()
+    const redeDestino = form.rede_encaminhada && form.rede_encaminhada !== 'Não se aplica'
+      ? form.rede_encaminhada
+      : (form.orgao_encaminhamento || '')
+
     const dados = {
       data_atend: form.data_atend,
+      hora_inicio: form.hora_inicio || null,
+      hora_fim: form.hora_fim || null,
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : (projetoTeacolherId ? parseInt(projetoTeacolherId) : null),
       usuario_atendido_id: form.usuario_atendido_id ? parseInt(form.usuario_atendido_id) : null,
       pessoa_atendida: form.pessoa_atendida || null,
       profissional_id: form.profissional_id ? parseInt(form.profissional_id) : null,
       equipe_ids: modoResultado ? form.equipe_ids.map(id => parseInt(id)) : [],
-      tipo_atend: form.tipo_atend,
-      tema: form.tema || 'Atendimento TEAcolher',
+      tipo_atend: form.etapa_fluxo || 'Atendimento TEAcolher',
+      tema: objetivo || 'Atendimento TEAcolher',
+      etapa_fluxo: form.etapa_fluxo || null,
+      origem_demanda: form.origem_demanda || null,
+      objetivo_atendimento: objetivo || null,
       area_atendimento: form.area_atendimento || null,
       modalidade_atendimento: form.modalidade_atendimento || null,
       situacao: modoResultado ? form.situacao : 'agendado',
-      descricao: (form.descricao || '').trim() || descricaoPadrao,
+      descricao: (modoResultado ? registroFinal : objetivo) || descricaoPadrao,
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : 1,
       publico_participante: form.publico_participante || [],
       comparecimento: modoResultado ? (form.comparecimento || null) : null,
       duracao_minutos: modoResultado && form.duracao_minutos ? parseInt(form.duracao_minutos) : null,
+      participantes_atendimento: modoResultado ? (form.participantes_atendimento || null) : null,
+      demanda_identificada: modoResultado ? (form.demanda_identificada || null) : null,
+      registro_tecnico: modoResultado ? (registroFinal || null) : null,
+      orientacao_familia: modoResultado ? (form.orientacao_familia || null) : null,
+      devolutiva_familia: modoResultado ? (form.devolutiva_familia || null) : null,
+      necessita_acompanhamento: modoResultado ? (form.necessita_acompanhamento || null) : null,
       responsavel_presente: modoResultado ? (form.responsavel_presente || null) : null,
+      tipo_encaminhamento: modoResultado ? (form.tipo_encaminhamento || 'Sem encaminhamento externo') : null,
+      rede_encaminhada: modoResultado ? (form.rede_encaminhada || 'Não se aplica') : null,
       encaminhamentos: modoResultado ? (form.encaminhamentos || '') : '',
-      orgao_encaminhamento: modoResultado ? (form.orgao_encaminhamento || '') : '',
+      orgao_encaminhamento: modoResultado ? redeDestino : '',
       proxima_acao: modoResultado ? (form.proxima_acao || null) : null,
+      desfecho_teacolher: modoResultado ? (form.desfecho_teacolher || null) : null,
       observacoes: form.observacoes || null,
     }
 
@@ -342,14 +435,14 @@ export default function Atendimentos() {
     if (error) setMsg('Erro ao salvar: ' + error.message + ' | Código: ' + error.code)
     else if (!data || data.length === 0) setMsg('Erro: o registro não foi salvo. Verifique permissões.')
     else {
-      setMsg(modoResultado ? 'Atendimento finalizado com sucesso. Ele saiu dos agendados e entrou nos realizados.' : 'Agendamento salvo com sucesso.')
+      setMsg(modoResultado ? 'Atendimento finalizado e registrado para prestação de contas técnica.' : 'Agendamento TEAcolher salvo com sucesso.')
       fecharForm()
       const filtrosDepois = modoResultado ? { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' } : filtros
       if (modoResultado) setFiltros(filtrosDepois)
       carregar(filtrosDepois, projetoTeacolherId)
     }
     setSalvando(false)
-    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
+    setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 5000)
   }
 
   async function excluir(id) {
@@ -362,10 +455,17 @@ export default function Atendimentos() {
   const baseMetricas = todosAtendimentos.length ? todosAtendimentos : atendimentos
   const totalAgendados = baseMetricas.filter(a => ['agendado', 'reagendado'].includes(a.situacao)).length
   const hojeAgendados = baseMetricas.filter(a => a.data_atend === hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
-  const totalRealizados = baseMetricas.filter(a => a.situacao === 'realizado').length
   const totalFinalizar = baseMetricas.filter(a => a.data_atend <= hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
+  const totalRealizados = baseMetricas.filter(a => a.situacao === 'realizado').length
   const faltasRemarcacoes = baseMetricas.filter(a => ['Faltou', 'Falta justificada', 'Remarcado', 'Cancelado'].includes(a.comparecimento) || ['reagendado', 'cancelado'].includes(a.situacao)).length
-  const totalEncaminhados = baseMetricas.filter(a => (a.encaminhamentos || '').trim() || (a.orgao_encaminhamento || '').trim()).length
+  const totalEncaminhados = baseMetricas.filter(a =>
+    (a.tipo_encaminhamento && a.tipo_encaminhamento !== 'Sem encaminhamento externo') ||
+    (a.encaminhamentos || '').trim() ||
+    (a.rede_encaminhada && a.rede_encaminhada !== 'Não se aplica') ||
+    (a.orgao_encaminhamento || '').trim()
+  ).length
+  const totalDevolutivas = baseMetricas.filter(a => String(a.devolutiva_familia || '').toLowerCase().includes('sim') || String(a.etapa_fluxo || '').toLowerCase().includes('devolutiva')).length
+  const familiasAcompanhadas = new Set(baseMetricas.filter(a => a.usuario_atendido_id).map(a => String(a.usuario_atendido_id))).size
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
@@ -382,9 +482,9 @@ export default function Atendimentos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>Agenda TEAcolher</div>
-          <div style={{ fontSize:12.5, color:'#6B7280', maxWidth:760 }}>
-            Núcleo interdisciplinar para PCD/TEA e famílias: agende, acompanhe e finalize os atendimentos com registro técnico.
+          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>Agenda e Execução TEAcolher</div>
+          <div style={{ fontSize:12.5, color:'#6B7280', maxWidth:820 }}>
+            Registro técnico para prestação de contas: agenda, atendimento, evolução, orientação familiar, encaminhamentos e acompanhamento.
           </div>
         </div>
         {podeGerenciar && (
@@ -404,37 +504,38 @@ export default function Atendimentos() {
         <div style={{ ...s.card, borderColor: modoResultado ? '#C0DD97' : 'rgba(14,126,168,0.35)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
             <span style={{ ...s.badge(modoResultado ? '#EAF3DE' : '#E6F1FB', modoResultado ? '#3B6D11' : '#185FA5') }}>
-              {modoResultado ? '2. Finalização' : '1. Agendamento'}
+              {modoResultado ? '2. Finalização técnica' : '1. Agendamento'}
             </span>
             <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>
-              {modoResultado ? 'Registrar resultado do atendimento' : 'Agendar atendimento TEAcolher'}
+              {modoResultado ? 'Registrar execução do atendimento' : 'Agendar atendimento TEAcolher'}
             </div>
           </div>
 
           <div style={{ fontSize:11.5, color:'#5F5E5A', marginBottom:12 }}>
             {modoResultado
-              ? 'Aqui entram os dados que provam a execução: comparecimento, duração, evolução, orientação familiar, encaminhamento e próxima ação.'
-              : 'Aqui entram somente os dados de agenda: quem será atendido, quando, por qual profissional, etapa do fluxo e objetivo.'}
+              ? 'Nesta etapa entram os dados que provam a execução: comparecimento, evolução técnica, orientação familiar, encaminhamentos, devolutiva e desfecho.'
+              : 'Nesta etapa entram somente os dados de agenda: quem será atendido, quando, por qual profissional, etapa do fluxo, origem da demanda e objetivo.'}
           </div>
 
           <form onSubmit={salvar}>
             <div style={{ ...s.card, background:'rgba(14,126,168,0.05)', boxShadow:'none', borderColor:'rgba(14,126,168,0.18)' }}>
               <div style={{ fontSize:12, fontWeight:700, color:ESCURO, marginBottom:8 }}>Dados do agendamento</div>
-              <div style={s.grupo('1fr 1fr 1fr')}>
+              <div style={s.grupo('1fr 1fr 1fr 1fr')}>
                 <div>
                   <label style={s.label}>Projeto</label>
                   <input value="Projeto TEAcolher" readOnly style={{ ...s.input, background:'#F8FAFC', color:ESCURO, fontWeight:600 }} />
                 </div>
                 <div>
-                  <label style={s.label}>Data do atendimento *</label>
+                  <label style={s.label}>Data *</label>
                   <input type="date" value={form.data_atend} onChange={e=>setForm(f=>({...f,data_atend:e.target.value}))} style={s.input} required />
                 </div>
                 <div>
-                  <label style={s.label}>Profissional responsável *</label>
-                  <select value={form.profissional_id} onChange={e=>setForm(f=>({...f,profissional_id:e.target.value}))} style={s.input} required>
-                    <option value="">Selecione...</option>
-                    {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
-                  </select>
+                  <label style={s.label}>Hora início</label>
+                  <input type="time" value={form.hora_inicio} onChange={e=>setForm(f=>({...f,hora_inicio:e.target.value}))} style={s.input} />
+                </div>
+                <div>
+                  <label style={s.label}>Hora fim prevista</label>
+                  <input type="time" value={form.hora_fim} onChange={e=>setForm(f=>({...f,hora_fim:e.target.value}))} style={s.input} />
                 </div>
               </div>
 
@@ -454,9 +555,10 @@ export default function Atendimentos() {
 
               <div style={s.grupo('1fr 1fr 1fr')}>
                 <div>
-                  <label style={s.label}>Etapa do fluxo TEAcolher *</label>
-                  <select value={form.tipo_atend} onChange={e=>setForm(f=>({...f,tipo_atend:e.target.value}))} style={s.input} required>
-                    {ETAPAS_TEACOLHER.map(t => <option key={t} value={t}>{t}</option>)}
+                  <label style={s.label}>Profissional responsável *</label>
+                  <select value={form.profissional_id} onChange={e=>setForm(f=>({...f,profissional_id:e.target.value}))} style={s.input} required>
+                    <option value="">Selecione...</option>
+                    {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
                   </select>
                 </div>
                 <div>
@@ -473,17 +575,32 @@ export default function Atendimentos() {
                 </div>
               </div>
 
+              <div style={s.grupo('1fr 1fr')}>
+                <div>
+                  <label style={s.label}>Etapa do fluxo TEAcolher *</label>
+                  <select value={form.etapa_fluxo} onChange={e=>setForm(f=>({...f,etapa_fluxo:e.target.value}))} style={s.input} required>
+                    {ETAPAS_FLUXO.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={s.label}>Origem da demanda</label>
+                  <select value={form.origem_demanda} onChange={e=>setForm(f=>({...f,origem_demanda:e.target.value}))} style={s.input}>
+                    {ORIGENS_DEMANDA.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+
               {!modoResultado && (
                 <div>
                   <label style={s.label}>Objetivo/observação do agendamento</label>
-                  <textarea value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} rows={3} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: acolhimento inicial, avaliação interdisciplinar, devolutiva familiar, grupo de orientação, oficina comunitária..." />
+                  <textarea value={form.objetivo_atendimento} onChange={e=>setForm(f=>({...f,objetivo_atendimento:e.target.value, descricao:e.target.value}))} rows={3} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: acolhimento inicial, avaliação interdisciplinar, devolutiva familiar, grupo de orientação, oficina comunitária..." />
                 </div>
               )}
             </div>
 
             {modoResultado && (
               <div style={{ ...s.card, background:'rgba(150,193,31,0.08)', borderColor:'rgba(150,193,31,0.35)', boxShadow:'none' }}>
-                <div style={{ fontSize:12, fontWeight:700, color:'#3B6D11', marginBottom:8 }}>Resultado / acompanhamento</div>
+                <div style={{ fontSize:12, fontWeight:700, color:'#3B6D11', marginBottom:8 }}>Resultado técnico / prestação de contas</div>
                 <div style={s.grupo('1fr 1fr 1fr 1fr')}>
                   <div>
                     <label style={s.label}>Situação final *</label>
@@ -510,18 +627,74 @@ export default function Atendimentos() {
 
                 <div style={s.grupo('1fr 1fr')}>
                   <div>
-                    <label style={s.label}>Responsável presente</label>
-                    <input value={form.responsavel_presente} onChange={e=>setForm(f=>({...f,responsavel_presente:e.target.value}))} style={s.input} placeholder="Nome do responsável, se houver" />
+                    <label style={s.label}>Quem participou</label>
+                    <input value={form.participantes_atendimento} onChange={e=>setForm(f=>({...f,participantes_atendimento:e.target.value}))} style={s.input} placeholder="Ex: usuário, mãe/responsável, família, grupo..." />
                   </div>
                   <div>
-                    <label style={s.label}>Próxima ação</label>
-                    <input value={form.proxima_acao} onChange={e=>setForm(f=>({...f,proxima_acao:e.target.value}))} style={s.input} placeholder="Ex: manter acompanhamento, agendar devolutiva, encaminhar ao CRAS..." />
+                    <label style={s.label}>Responsável presente</label>
+                    <input value={form.responsavel_presente} onChange={e=>setForm(f=>({...f,responsavel_presente:e.target.value}))} style={s.input} placeholder="Nome do responsável, se houver" />
                   </div>
                 </div>
 
                 <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Evolução / registro técnico *</label>
-                  <textarea value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} rows={4} style={{ ...s.input, resize:'vertical' }} required placeholder="Registre acolhimento, escuta qualificada, intervenção realizada, orientação à família, evolução observada e encaminhamentos." />
+                  <label style={s.label}>Demanda identificada</label>
+                  <textarea value={form.demanda_identificada} onChange={e=>setForm(f=>({...f,demanda_identificada:e.target.value}))} rows={2} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: necessidade de orientação familiar, avaliação interdisciplinar, dificuldade de rotina, encaminhamento de rede..." />
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Registro técnico / evolução *</label>
+                  <textarea value={form.registro_tecnico} onChange={e=>setForm(f=>({...f,registro_tecnico:e.target.value, descricao:e.target.value}))} rows={4} style={{ ...s.input, resize:'vertical' }} required placeholder="Registre acolhimento, escuta qualificada, intervenção realizada, orientação à família, evolução observada e encaminhamentos." />
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Orientação prestada à família</label>
+                  <textarea value={form.orientacao_familia} onChange={e=>setForm(f=>({...f,orientacao_familia:e.target.value}))} rows={2} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: orientações sobre rotina, acesso à rede, encaminhamentos, continuidade do acompanhamento..." />
+                </div>
+
+                <div style={s.grupo('1fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Devolutiva à família</label>
+                    <select value={form.devolutiva_familia} onChange={e=>setForm(f=>({...f,devolutiva_familia:e.target.value}))} style={s.input}>
+                      {['Sim', 'Não', 'Não se aplica', 'Não registrada'].map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Necessita acompanhamento?</label>
+                    <select value={form.necessita_acompanhamento} onChange={e=>setForm(f=>({...f,necessita_acompanhamento:e.target.value}))} style={s.input}>
+                      {['Sim', 'Não', 'Reavaliar', 'Encaminhado para rede'].map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Desfecho TEAcolher</label>
+                    <select value={form.desfecho_teacolher} onChange={e=>setForm(f=>({...f,desfecho_teacolher:e.target.value}))} style={s.input}>
+                      {DESFECHOS_TEACOLHER.map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={s.grupo('1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Tipo de encaminhamento</label>
+                    <select value={form.tipo_encaminhamento} onChange={e=>setForm(f=>({...f,tipo_encaminhamento:e.target.value}))} style={s.input}>
+                      {TIPOS_ENCAMINHAMENTO.map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Rede encaminhada</label>
+                    <select value={form.rede_encaminhada} onChange={e=>setForm(f=>({...f,rede_encaminhada:e.target.value, orgao_encaminhamento:e.target.value}))} style={s.input}>
+                      {REDES_DESTINO.map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Detalhamento do encaminhamento</label>
+                  <input value={form.encaminhamentos} onChange={e=>setForm(f=>({...f,encaminhamentos:e.target.value}))} style={s.input} placeholder="Ex: UBS, CRAS, escola, avaliação complementar, documentação..." />
+                </div>
+
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Próxima ação</label>
+                  <input value={form.proxima_acao} onChange={e=>setForm(f=>({...f,proxima_acao:e.target.value}))} style={s.input} placeholder="Ex: novo atendimento, devolutiva, grupo familiar, encaminhamento para rede..." />
                 </div>
 
                 <div style={{ marginBottom:10 }}>
@@ -532,17 +705,6 @@ export default function Atendimentos() {
                         {form.publico_participante.includes(pub) ? '✓ ' : ''}{pub}
                       </button>
                     ))}
-                  </div>
-                </div>
-
-                <div style={s.grupo('2fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Encaminhamentos realizados</label>
-                    <input value={form.encaminhamentos} onChange={e=>setForm(f=>({...f,encaminhamentos:e.target.value}))} style={s.input} placeholder="Ex: UBS, CAPS, CRAS, CREAS, escola, avaliação complementar..." />
-                  </div>
-                  <div>
-                    <label style={s.label}>Órgão / rede de destino</label>
-                    <input value={form.orgao_encaminhamento} onChange={e=>setForm(f=>({...f,orgao_encaminhamento:e.target.value}))} style={s.input} placeholder="Ex: SUS, SUAS, Educação..." />
                   </div>
                 </div>
 
@@ -566,7 +728,7 @@ export default function Atendimentos() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>
-                {salvando ? 'Salvando...' : modoResultado ? 'Finalizar atendimento' : editando ? 'Salvar agendamento' : '+ Agendar'}
+                {salvando ? 'Salvando...' : modoResultado ? 'Salvar execução / finalizar' : editando ? 'Salvar agendamento' : '+ Agendar'}
               </button>
               <button type="button" onClick={fecharForm} style={s.btn('#F1EFE8', '#5F5E5A')}>Cancelar</button>
             </div>
@@ -574,14 +736,16 @@ export default function Atendimentos() {
         </div>
       )}
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(145px, 1fr))', gap:8, marginBottom:'1rem' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1rem' }}>
         {[
+          { label:'Famílias acompanhadas', val:familiasAcompanhadas, cor:ESCURO },
           { label:'Agendados', val:totalAgendados, cor:AZUL },
           { label:'Hoje', val:hojeAgendados, cor:ESCURO },
           { label:'A finalizar', val:totalFinalizar, cor:LARANJA },
           { label:'Realizados', val:totalRealizados, cor:VERDE },
           { label:'Faltas/remarcações', val:faltasRemarcacoes, cor:VERMELHO },
           { label:'Encaminhados', val:totalEncaminhados, cor:'#854F0B' },
+          { label:'Devolutivas', val:totalDevolutivas, cor:'#3B6D11' },
         ].map(m => (
           <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
@@ -591,7 +755,7 @@ export default function Atendimentos() {
       </div>
 
       <div style={{ ...s.card, marginBottom:'1rem' }}>
-        <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Filtros da agenda TEAcolher</div>
+        <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Filtros da agenda e execução</div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8 }}>
           <div>
             <label style={s.label}>Data início</label>
@@ -640,8 +804,8 @@ export default function Atendimentos() {
         ) : atendimentos.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
             <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento TEAcolher encontrado nesta lista</div>
-            <div style={{ fontSize:12, color:'#888780', maxWidth:520, margin:'0 auto' }}>
-              {filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Se acabou de finalizar, o atendimento saiu dos agendados e entrou em realizados.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.'}
+            <div style={{ fontSize:12, color:'#888780', maxWidth:560, margin:'0 auto' }}>
+              {filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.'}
             </div>
             {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
           </div>
@@ -649,7 +813,7 @@ export default function Atendimentos() {
           <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead style={{ position:'sticky', top:0 }}>
-                <tr>{['Data', 'Usuário/família', 'Etapa', 'Área', 'Profissional', 'Situação', 'Ações'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+                <tr>{['Data', 'Hora', 'Usuário/família', 'Etapa', 'Área', 'Profissional', 'Situação', 'Desfecho', 'Ações'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {atendimentos.map((a, i) => {
@@ -657,11 +821,13 @@ export default function Atendimentos() {
                   return (
                     <tr key={a.id} style={{ background:i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
                       <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(a.data_atend)}</td>
+                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtHora(a.hora_inicio)}</td>
                       <td style={{ ...s.td, fontWeight:600, maxWidth:170, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</td>
-                      <td style={{ ...s.td, maxWidth:190, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.tipo_atend || '—'}</td>
+                      <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{etapaAtendimento(a)}</td>
                       <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.area_atendimento || '—'}</td>
                       <td style={{ ...s.td, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profissionalNome(a.profissional_id)}</td>
                       <td style={s.td}><span style={s.badge(bg, cor)}>{a.situacao}</span></td>
+                      <td style={{ ...s.td, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desfecho_teacolher || '—'}</td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                           {podeGerenciar && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
