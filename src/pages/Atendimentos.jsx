@@ -51,6 +51,28 @@ const AREAS_TEACOLHER = [
   'Outro',
 ]
 
+// Liga a função/cargo do profissional (cadastro da equipe) à área de atendimento do TEAcolher,
+// pra área não ficar solta e desencontrada do profissional escolhido no agendamento.
+function areaPelaFuncao(funcao = '') {
+  const f = String(funcao || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const mapa = [
+    [['psicolog'], 'Psicologia'],
+    [['fisioterap'], 'Fisioterapia'],
+    [['nutri'], 'Nutrição'],
+    [['psicomotric'], 'Psicomotricidade'],
+    [['neuropsicopedagog', 'psicopedagog'], 'Neuropsicopedagogia'],
+    [['fonoaudiolog', 'fono'], 'Fonoaudiologia'],
+    [['ocupacional'], 'Terapia ocupacional'],
+    [['assistente social', 'servico social'], 'Serviço social'],
+    [['socioeducad', 'socioeducativ'], 'Socioeducativo'],
+    [['orientador familiar', 'orientacao familiar'], 'Orientação familiar'],
+  ]
+  for (const [chaves, area] of mapa) {
+    if (chaves.some(c => f.includes(c))) return area
+  }
+  return null
+}
+
 const MODALIDADES_TEACOLHER = [
   'Individual',
   'Familiar',
@@ -909,7 +931,12 @@ export default function Atendimentos() {
                   <label style={s.label}>Profissional responsável *</label>
                   <select
                     value={form.profissional_id}
-                    onChange={e=>setForm(f=>({...f,profissional_id:e.target.value}))}
+                    onChange={e => {
+                      const id = e.target.value
+                      const prof = equipeTEAcolher.find(x => String(x.id) === String(id))
+                      const areaSugerida = prof ? areaPelaFuncao(prof.funcao) : null
+                      setForm(f => ({ ...f, profissional_id: id, ...(areaSugerida ? { area_atendimento: areaSugerida } : {}) }))
+                    }}
                     style={{ ...s.input, background:modoResultado && isTecnico ? '#F8FAFC' : '#fff', color:modoResultado && isTecnico ? '#334155' : undefined }}
                     required
                     disabled={modoResultado && isTecnico}
@@ -924,6 +951,7 @@ export default function Atendimentos() {
                   <select value={form.area_atendimento} onChange={e=>setForm(f=>({...f,area_atendimento:e.target.value}))} style={s.input} required>
                     {AREAS_TEACOLHER.map(a => <option key={a} value={a}>{a}</option>)}
                   </select>
+                  <div style={{ fontSize:10.5, color:'#94A3B8', marginTop:3 }}>Preenchida automaticamente pela função do profissional. Pode trocar se precisar.</div>
                 </div>
                 <div>
                   <label style={s.label}>Modalidade *</label>
