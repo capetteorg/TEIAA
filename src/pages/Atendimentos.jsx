@@ -113,6 +113,7 @@ export default function Atendimentos() {
   const { perfil } = useAuth()
   const location = useLocation()
   const [atendimentos, setAtendimentos] = useState([])
+  const [todosAtendimentos, setTodosAtendimentos] = useState([])
   const [projetos, setProjetos] = useState([])
   const [projetoTeacolherId, setProjetoTeacolherId] = useState('')
   const [equipe, setEquipe] = useState([])
@@ -174,24 +175,38 @@ export default function Atendimentos() {
     setLoading(true)
     setMsg('')
 
-    let q = supabase.from('atendimentos')
+    let qTodos = supabase.from('atendimentos')
+      .select('*')
+      .order('data_atend', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(1000)
+
+    let qLista = supabase.from('atendimentos')
       .select('*')
       .order('data_atend', { ascending: false })
       .order('id', { ascending: false })
       .limit(500)
 
-    if (teaId) q = q.eq('projeto_id', parseInt(teaId))
-    if (f.dataInicio) q = q.gte('data_atend', f.dataInicio)
-    if (f.dataFim) q = q.lte('data_atend', f.dataFim)
-    if (f.profissional_id) q = q.eq('profissional_id', parseInt(f.profissional_id))
-    if (f.situacao) q = q.eq('situacao', f.situacao)
+    if (teaId) {
+      qTodos = qTodos.eq('projeto_id', parseInt(teaId))
+      qLista = qLista.eq('projeto_id', parseInt(teaId))
+    }
 
-    const { data, error } = await q
-    if (error) {
-      setMsg('Erro ao carregar atendimentos: ' + error.message + ' | Código: ' + error.code)
+    if (f.dataInicio) qLista = qLista.gte('data_atend', f.dataInicio)
+    if (f.dataFim) qLista = qLista.lte('data_atend', f.dataFim)
+    if (f.profissional_id) qLista = qLista.eq('profissional_id', parseInt(f.profissional_id))
+    if (f.situacao) qLista = qLista.eq('situacao', f.situacao)
+
+    const [todosRes, listaRes] = await Promise.all([qTodos, qLista])
+
+    if (todosRes.error || listaRes.error) {
+      const err = todosRes.error || listaRes.error
+      setMsg('Erro ao carregar atendimentos: ' + err.message + ' | Código: ' + err.code)
+      setTodosAtendimentos([])
       setAtendimentos([])
     } else {
-      setAtendimentos(data || [])
+      setTodosAtendimentos(todosRes.data || [])
+      setAtendimentos(listaRes.data || [])
     }
     setLoading(false)
   }
@@ -327,9 +342,11 @@ export default function Atendimentos() {
     if (error) setMsg('Erro ao salvar: ' + error.message + ' | Código: ' + error.code)
     else if (!data || data.length === 0) setMsg('Erro: o registro não foi salvo. Verifique permissões.')
     else {
-      setMsg(modoResultado ? 'Atendimento finalizado com sucesso.' : 'Agendamento salvo com sucesso.')
+      setMsg(modoResultado ? 'Atendimento finalizado com sucesso. Ele saiu dos agendados e entrou nos realizados.' : 'Agendamento salvo com sucesso.')
       fecharForm()
-      carregar(filtros, projetoTeacolherId)
+      const filtrosDepois = modoResultado ? { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' } : filtros
+      if (modoResultado) setFiltros(filtrosDepois)
+      carregar(filtrosDepois, projetoTeacolherId)
     }
     setSalvando(false)
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
@@ -342,12 +359,13 @@ export default function Atendimentos() {
   }
 
   const hoje = new Date().toISOString().slice(0, 10)
-  const totalAgendados = atendimentos.filter(a => ['agendado', 'reagendado'].includes(a.situacao)).length
-  const hojeAgendados = atendimentos.filter(a => a.data_atend === hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
-  const totalRealizados = atendimentos.filter(a => a.situacao === 'realizado').length
-  const totalFinalizar = atendimentos.filter(a => a.data_atend <= hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
-  const faltasRemarcacoes = atendimentos.filter(a => ['Faltou', 'Falta justificada', 'Remarcado', 'Cancelado'].includes(a.comparecimento) || ['reagendado', 'cancelado'].includes(a.situacao)).length
-  const totalEncaminhados = atendimentos.filter(a => (a.encaminhamentos || '').trim() || (a.orgao_encaminhamento || '').trim()).length
+  const baseMetricas = todosAtendimentos.length ? todosAtendimentos : atendimentos
+  const totalAgendados = baseMetricas.filter(a => ['agendado', 'reagendado'].includes(a.situacao)).length
+  const hojeAgendados = baseMetricas.filter(a => a.data_atend === hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
+  const totalRealizados = baseMetricas.filter(a => a.situacao === 'realizado').length
+  const totalFinalizar = baseMetricas.filter(a => a.data_atend <= hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
+  const faltasRemarcacoes = baseMetricas.filter(a => ['Faltou', 'Falta justificada', 'Remarcado', 'Cancelado'].includes(a.comparecimento) || ['reagendado', 'cancelado'].includes(a.situacao)).length
+  const totalEncaminhados = baseMetricas.filter(a => (a.encaminhamentos || '').trim() || (a.orgao_encaminhamento || '').trim()).length
 
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
@@ -606,7 +624,14 @@ export default function Atendimentos() {
 
       <div style={s.card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
-          <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>{atendimentos.length} registros TEAcolher</div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>{atendimentos.length} registros TEAcolher</div>
+            {(filtros.situacao || filtros.profissional_id || filtros.dataInicio || filtros.dataFim) && (
+              <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
+                Lista filtrada. Os cards acima contam todos os atendimentos do TEAcolher.
+              </div>
+            )}
+          </div>
           {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
         </div>
 
@@ -614,8 +639,10 @@ export default function Atendimentos() {
           <div style={{ padding:'1.25rem', color:'#888780', fontSize:12 }}>Carregando agenda...</div>
         ) : atendimentos.length === 0 ? (
           <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-            <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento TEAcolher encontrado</div>
-            <div style={{ fontSize:12, color:'#888780', maxWidth:460, margin:'0 auto' }}>Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.</div>
+            <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento TEAcolher encontrado nesta lista</div>
+            <div style={{ fontSize:12, color:'#888780', maxWidth:520, margin:'0 auto' }}>
+              {filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Se acabou de finalizar, o atendimento saiu dos agendados e entrou em realizados.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.'}
+            </div>
             {podeGerenciar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
           </div>
         ) : (
