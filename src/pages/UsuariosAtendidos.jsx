@@ -206,6 +206,27 @@ export default function UsuariosAtendidos() {
   }
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const fmtMoeda = v => v !== null && v !== undefined && v !== ''
+    ? 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '—'
+
+  function mediaNumerica(valores) {
+    const nums = valores.map(v => Number(v)).filter(v => Number.isFinite(v) && v > 0)
+    if (nums.length === 0) return null
+    return nums.reduce((a, v) => a + v, 0) / nums.length
+  }
+
+  function contarPorCampo(lista, campo, vazio = 'Não informado') {
+    return lista.reduce((acc, item) => {
+      const valor = item?.[campo] || vazio
+      acc[valor] = (acc[valor] || 0) + 1
+      return acc
+    }, {})
+  }
+
+  function perc(qtd, total) {
+    return total > 0 ? Math.round((qtd / total) * 100) : 0
+  }
 
   // Métricas
   const ativos = usuarios.filter(u => u.situacao === 'ativo').length
@@ -215,6 +236,29 @@ export default function UsuariosAtendidos() {
     if (!porProjeto[nome]) porProjeto[nome] = { ativo:0, total:0 }
     porProjeto[nome].total++
     if (u.situacao === 'ativo') porProjeto[nome].ativo++
+  })
+
+  const usuariosTeacolher = usuarios.filter(usuarioEhTeacolher)
+  const totalTeacolher = usuariosTeacolher.length
+  const ativosTeacolher = usuariosTeacolher.filter(u => u.situacao === 'ativo').length
+  const comTelefoneTeacolher = usuariosTeacolher.filter(u => u.telefone).length
+  const comResponsavelTeacolher = usuariosTeacolher.filter(u => u.contato_familiar_nome || u.contato_familiar_telefone).length
+  const rendaMediaTeacolher = mediaNumerica(usuariosTeacolher.map(u => u.renda_familiar_bruta))
+  const nucleoMedioTeacolher = mediaNumerica(usuariosTeacolher.map(u => u.pessoas_nucleo_familiar))
+  const generosTeacolher = contarPorCampo(usuariosTeacolher, 'genero')
+  const deficienciasTeacolher = contarPorCampo(usuariosTeacolher, 'tipo_deficiencia')
+  const bairrosTeacolher = contarPorCampo(usuariosTeacolher, 'bairro')
+  const incompletosTeacolher = usuariosTeacolher.filter(u => !u.cpf || !u.data_nascimento || !u.telefone || !u.tipo_deficiencia || !u.contato_familiar_nome)
+  const faixasTeacolher = { '0 a 5': 0, '6 a 11': 0, '12 a 17': 0, '18 a 29': 0, '30 a 59': 0, '60+': 0, 'Sem idade': 0 }
+  usuariosTeacolher.forEach(u => {
+    const idade = calcIdade(u.data_nascimento)
+    if (idade === null) faixasTeacolher['Sem idade']++
+    else if (idade <= 5) faixasTeacolher['0 a 5']++
+    else if (idade <= 11) faixasTeacolher['6 a 11']++
+    else if (idade <= 17) faixasTeacolher['12 a 17']++
+    else if (idade <= 29) faixasTeacolher['18 a 29']++
+    else if (idade <= 59) faixasTeacolher['30 a 59']++
+    else faixasTeacolher['60+']++
   })
 
   const s = {
@@ -452,6 +496,7 @@ export default function UsuariosAtendidos() {
       {/* Abas */}
       <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
         <button onClick={() => setAbaAtiva('lista')} style={s.tab(abaAtiva==='lista')}>Lista</button>
+        <button onClick={() => setAbaAtiva('teacolher')} style={s.tab(abaAtiva==='teacolher')}>Dashboard TEAcolher</button>
         <button onClick={() => setAbaAtiva('relatorio')} style={s.tab(abaAtiva==='relatorio')}>Relatório / Quantitativo</button>
       </div>
 
@@ -565,6 +610,126 @@ export default function UsuariosAtendidos() {
             )}
           </div>
         </>
+      )}
+
+      {/* ABA DASHBOARD TEACOLHER */}
+      {abaAtiva === 'teacolher' && (
+        <div>
+          <div style={{ ...s.card, borderLeft:'3px solid rgba(14,126,168,.45)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, flexWrap:'wrap' }}>
+              <div>
+                <div style={{ fontSize:16, fontWeight:700, color:'#06344F', marginBottom:4 }}>Dashboard do Projeto TEAcolher</div>
+                <div style={{ fontSize:12, color:'#5F5E5A', lineHeight:1.45 }}>Perfil consolidado dos usuários vinculados ao Projeto TEAcolher, com base nos cadastros carregados na tela.</div>
+              </div>
+              {podeGerenciarUsuarios && (
+                <button onClick={() => { setAbaAtiva('lista'); setMostrarForm(true); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn(AZUL)}>
+                  + Cadastrar usuário
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px,1fr))', gap:8, marginBottom:'1rem' }}>
+            {[
+              { label:'Total TEAcolher', val:totalTeacolher, cor:AZUL },
+              { label:'Ativos', val:ativosTeacolher, cor:VERDE },
+              { label:'Com telefone', val:`${comTelefoneTeacolher} (${perc(comTelefoneTeacolher,totalTeacolher)}%)`, cor:'#06344F' },
+              { label:'Com responsável', val:`${comResponsavelTeacolher} (${perc(comResponsavelTeacolher,totalTeacolher)}%)`, cor:'#3B6D11' },
+              { label:'Renda média', val:fmtMoeda(rendaMediaTeacolher), cor:'#854F0B' },
+              { label:'Núcleo familiar médio', val:nucleoMedioTeacolher ? nucleoMedioTeacolher.toFixed(1).replace('.', ',') : '—', cor:'#185FA5' },
+            ].map(k => (
+              <div key={k.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize:9.5, color:'#888780', marginBottom:4, textTransform:'uppercase', letterSpacing:'.08em' }}>{k.label}</div>
+                <div style={{ fontSize:18, fontWeight:700, color:k.cor }}>{k.val}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:10, marginBottom:10 }}>
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Faixa etária</div>
+              {Object.entries(faixasTeacolher).map(([faixa, count]) => (
+                <div key={faixa} style={{ marginBottom:8 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:3 }}>
+                    <span>{faixa}</span><span style={{ color:'#888780' }}>{count} · {perc(count,totalTeacolher)}%</span>
+                  </div>
+                  <div style={{ height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                    <div style={{ height:'100%', width:`${perc(count,totalTeacolher)}%`, background:AZUL, borderRadius:99 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Tipo de deficiência</div>
+              {Object.entries(deficienciasTeacolher).sort((a,b)=>b[1]-a[1]).map(([tipo, count]) => (
+                <div key={tipo} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                  <span>{tipo}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
+                </div>
+              ))}
+              {totalTeacolher === 0 && <div style={{ fontSize:12, color:'#888780' }}>Nenhum usuário vinculado ao TEAcolher.</div>}
+            </div>
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:10, marginBottom:10 }}>
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Gênero</div>
+              {Object.entries(generosTeacolher).sort((a,b)=>b[1]-a[1]).map(([genero, count]) => (
+                <div key={genero} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                  <span>{genero}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Bairros mais frequentes</div>
+              {Object.entries(bairrosTeacolher).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([bairro, count]) => (
+                <div key={bairro} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                  <span>{bairro}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={s.card}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginBottom:'.85rem', flexWrap:'wrap' }}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600, color:'#06344F' }}>Cadastros com dados incompletos</div>
+                <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Faltando CPF, nascimento, telefone, deficiência ou contato familiar.</div>
+              </div>
+              <span style={s.badge(incompletosTeacolher.length ? '#FFF6ED' : '#EAF3DE', incompletosTeacolher.length ? '#854F0B' : '#3B6D11')}>
+                {incompletosTeacolher.length} pendente(s)
+              </span>
+            </div>
+            {incompletosTeacolher.length === 0 ? (
+              <div style={{ fontSize:12, color:'#3B6D11' }}>Todos os cadastros do TEAcolher estão com os campos principais preenchidos.</div>
+            ) : (
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead><tr>{['Nome','Faltando','Ação'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {incompletosTeacolher.slice(0,12).map(u => {
+                      const faltando = [
+                        !u.cpf && 'CPF',
+                        !u.data_nascimento && 'Nascimento',
+                        !u.telefone && 'Telefone',
+                        !u.tipo_deficiencia && 'Deficiência',
+                        !u.contato_familiar_nome && 'Contato familiar',
+                      ].filter(Boolean).join(', ')
+                      return (
+                        <tr key={u.id}>
+                          <td style={s.td}>{u.nome}</td>
+                          <td style={{ ...s.td, color:'#854F0B' }}>{faltando}</td>
+                          <td style={s.td}><button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ABA RELATÓRIO */}
