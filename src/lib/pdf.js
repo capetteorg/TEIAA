@@ -2196,11 +2196,25 @@ export function gerarPDFAtendimentos(dados = {}, periodoLabel, opts = {}) {
   ).length
   const familias = new Set(lista.map(a => a.usuario_atendido_id ? String(a.usuario_atendido_id) : nomeAtendido(a)).filter(Boolean)).size
 
+  const ehDireto = a => Array.isArray(a.publico_participante) && a.publico_participante.includes('Pessoa com TEA / PCD')
+  const diretos = lista.filter(ehDireto).length
+  const indiretos = lista.length - diretos
+
   function agrupar(chaveFn) {
     const obj = {}
     lista.forEach(a => {
       const k = chaveFn(a) || 'Não informado'
       obj[k] = (obj[k] || 0) + 1
+    })
+    return obj
+  }
+
+  function agruparMulti(arrFn) {
+    const obj = {}
+    lista.forEach(a => {
+      const vals = arrFn(a)
+      const arr = Array.isArray(vals) && vals.length ? vals : ['Não informado']
+      arr.forEach(v => { obj[v] = (obj[v] || 0) + 1 })
     })
     return obj
   }
@@ -2211,6 +2225,7 @@ export function gerarPDFAtendimentos(dados = {}, periodoLabel, opts = {}) {
   const porComparecimento = agrupar(a => a.comparecimento || a.situacao || 'Não informado')
   const porDesfecho = agrupar(a => a.desfecho_teacolher || 'Sem desfecho registrado')
   const porEtapa = agrupar(a => etapa(a))
+  const porPublico = agruparMulti(a => a.publico_participante)
 
   const linhasGrupo = (obj, total = lista.length) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
     <tr>
@@ -2285,6 +2300,11 @@ export function gerarPDFAtendimentos(dados = {}, periodoLabel, opts = {}) {
       <div class="info-item"><div class="info-label">Devolutivas familiares</div><div class="info-valor" style="color:var(--green)">${devolutivas}</div></div>
     </div>
 
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div class="info-item"><div class="info-label">Atendimento direto (pessoa com TEA/PCD)</div><div class="info-valor azul">${diretos}</div></div>
+      <div class="info-item"><div class="info-label">Atendimento indireto (só família/núcleo)</div><div class="info-valor">${indiretos}</div></div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div>
         <div class="secao-titulo secao-titulo-azul">Por profissional</div>
@@ -2320,9 +2340,10 @@ export function gerarPDFAtendimentos(dados = {}, periodoLabel, opts = {}) {
       <tbody>${linhasDetalhe || '<tr><td colspan="9" style="text-align:center;color:#9199A2;padding:12px">Nenhum atendimento no período</td></tr>'}</tbody>
     </table>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:14px">
       <div><div class="secao-titulo secao-titulo-azul">Por etapa do fluxo</div><table><thead><tr><th>Etapa</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porEtapa)}</tbody></table></div>
       <div><div class="secao-titulo secao-titulo-azul">Por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porModalidade)}</tbody></table></div>
+      <div><div class="secao-titulo secao-titulo-azul">Por público atendido</div><table><thead><tr><th>Público</th><th class="num">Qtd</th><th class="num">%</th></tr></thead><tbody>${linhasGrupo(porPublico)}</tbody></table></div>
       <div><div class="secao-titulo secao-titulo-verde">Síntese de controle</div>
         <table><tbody>
           <tr><td>Período</td><td class="num">${valor(periodo)}</td></tr>
@@ -2850,4 +2871,77 @@ export function gerarPDFAgendaTecnicoTeacolher(lista = [], opts = {}) {
     ocultarProfissional: true,
     protocolo: opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-AGENDA-TEC`,
   })
+}
+
+// =============================================
+// CRONOGRAMA DE EXECUÇÃO — espelha a tabela oficial do edital (ações x meses), pra prestação
+// de contas não financeira bater exatamente com o que a Secretaria de Estado vai cobrar.
+// =============================================
+export function gerarPDFCronogramaTeacolher(lista = [], opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-CRONOGRAMA`
+  const totalMeses = opts.totalMeses || 11
+  const itens = (Array.isArray(lista) ? lista : []).filter(a => String(a.situacao || '').toLowerCase() === 'realizado')
+
+  // Define os meses do projeto. Se a data oficial de início (opts.dataInicioProjeto) não for
+  // passada, usa os meses que aparecem nos próprios atendimentos — funciona, mas é menos preciso
+  // que informar a data real de início do convênio.
+  let meses = []
+  if (opts.dataInicioProjeto) {
+    const ini = new Date(opts.dataInicioProjeto + 'T12:00:00')
+    for (let i = 0; i < totalMeses; i++) {
+      const d = new Date(ini.getFullYear(), ini.getMonth() + i, 1)
+      meses.push({ chave: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: `Mês ${i + 1}`, sub: d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) })
+    }
+  } else {
+    const chaves = Array.from(new Set(itens.map(a => String(a.data_atend || '').slice(0, 7)).filter(Boolean))).sort()
+    meses = chaves.slice(0, totalMeses).map((chave, i) => {
+      const [ano, mes] = chave.split('-')
+      const d = new Date(Number(ano), Number(mes) - 1, 1)
+      return { chave, label: `Mês ${i + 1}`, sub: d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) }
+    })
+  }
+
+  const contarPorMes = filtroFn => meses.map(m => itens.filter(a => String(a.data_atend || '').slice(0, 7) === m.chave && filtroFn(a)).length)
+
+  const linhaAuto = (rotulo, contagens) => `
+    <tr>
+      <td style="text-align:left">${rotulo}</td>
+      ${contagens.map(q => `<td class="center" style="${q > 0 ? 'background:#EEF8F1;color:var(--green);font-weight:700' : 'color:#B4B2A9'}">${q > 0 ? q : '—'}</td>`).join('')}
+    </tr>`
+
+  const linhaManual = (rotulo, indiceMesMarcado) => `
+    <tr>
+      <td style="text-align:left">${rotulo} <span style="color:#9199A2;font-size:8px">(confirmação administrativa, não vem dos atendimentos)</span></td>
+      ${meses.map((m, i) => `<td class="center" style="${i === indiceMesMarcado ? 'background:#FFF6E8;color:#854F0B;font-weight:700' : 'color:#B4B2A9'}">${i === indiceMesMarcado ? 'X' : '—'}</td>`).join('')}
+    </tr>`
+
+  const corpo = meses.length === 0 ? '' : `
+        ${linhaManual('Implementar 4 núcleos com equipes multidisciplinares', 0)}
+        ${linhaManual('Formalização de parcerias institucionais', 0)}
+        ${linhaAuto('Realização de atendimentos individuais e coletivos', contarPorMes(() => true))}
+        ${linhaAuto('Criação de grupos de apoio e orientação para famílias', contarPorMes(a => a.etapa_fluxo === 'Grupo de apoio e orientação para famílias'))}
+        ${linhaAuto('Oficinas e atividades comunitárias', contarPorMes(a => a.etapa_fluxo === 'Oficina / atividade comunitária'))}
+        ${linhaAuto('Avaliação participativa com beneficiários e parceiros institucionais', contarPorMes(a => a.etapa_fluxo === 'Avaliação participativa trimestral'))}`
+
+  const html = `<div class="pg pg-landscape">
+    ${htmlCabecalho({ titulo: 'Cronograma de Execução — Projeto TEAcolher', sub: 'Ações x meses, no mesmo formato da proposta apresentada à Secretaria de Estado', ref: protocolo })}
+    <div class="secao-titulo secao-titulo-azul">Ações previstas x meses de execução</div>
+    ${meses.length === 0 ? `
+    <div style="text-align:center;color:#9199A2;padding:24px;font-size:11px">
+      Nenhum atendimento realizado encontrado para montar os meses. Informe a data de início do
+      projeto (opts.dataInicioProjeto) ou aguarde ter ao menos um atendimento finalizado.
+    </div>` : `
+    <table style="font-size:9px">
+      <thead><tr><th style="text-align:left">Ação (etapa do edital)</th>${meses.map(m => `<th class="center">${m.label}<br><span style="font-weight:400;text-transform:none;font-size:7.5px">${m.sub}</span></th>`).join('')}</tr></thead>
+      <tbody>${corpo}</tbody>
+    </table>`}
+    <div style="font-size:9px;color:#626B76;margin-top:10px;line-height:1.5">
+      Os números mostram quantos atendimentos realizados naquele mês correspondem à ação. As duas
+      primeiras linhas são marcações administrativas (implantação física dos núcleos e formalização
+      de parcerias) — não vêm da agenda de atendimentos, ajuste manualmente se a data real for outra.
+    </div>
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Cronograma de Execução TEAcolher', true)
 }

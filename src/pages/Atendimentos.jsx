@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
+import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher } from '../lib/pdf'
 
 const VERDE = '#6BBF2B'
 const VERMELHO = '#E8212A'
@@ -19,6 +20,7 @@ const ETAPAS_FLUXO = [
   'Atendimento familiar / orientação familiar',
   'Grupo de apoio e orientação para famílias',
   'Oficina / atividade comunitária',
+  'Avaliação participativa trimestral',
   'Encaminhamento externo',
   'Acompanhamento / devolutiva familiar',
   'Desligamento',
@@ -449,6 +451,17 @@ export default function Atendimentos() {
     `)
   }
 
+  function gerarRelatorioCompleto() {
+    gerarPDFAtendimentos({ lista: todosAtendimentos }, 'Todo o histórico do Projeto TEAcolher')
+  }
+
+  function gerarCronograma() {
+    // Sem a data oficial de início do convênio, o cronograma usa os meses que aparecem nos
+    // próprios atendimentos. Se você souber a data exata (ex.: '2026-02-01'), me diga e eu
+    // troco esse valor pra bater 100% com o Mês 1 oficial do contrato.
+    gerarPDFCronogramaTeacolher(todosAtendimentos)
+  }
+
   function imprimirFicha(a) {
     const prof = profissional(a.profissional_id)
     const campo = (rotulo, valor) => `
@@ -811,6 +824,8 @@ export default function Atendimentos() {
             <button onClick={imprimirAgenda} style={s.btn('#F1EFE8', '#5F5E5A')}>
               {isTecnico ? 'Imprimir minha agenda' : 'Imprimir lista'}
             </button>
+            {isAdmin && <button onClick={gerarRelatorioCompleto} style={s.btn('#EEF2F7', '#334155')}>Relatório TEAcolher completo</button>}
+            {isAdmin && <button onClick={gerarCronograma} style={s.btn('#EEF2F7', '#334155')}>Cronograma de execução</button>}
             {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
           </div>
         </div>
