@@ -24,6 +24,70 @@ const PUBLICOS = [
   'Homens autores de violência', 'Crianças e adolescentes impactados por violência', 'Outro',
 ]
 
+const TIPOS_ATEND_TEACOLHER = [
+  'Acolhimento inicial',
+  'Avaliação interdisciplinar',
+  'Atendimento individual',
+  'Atendimento familiar / orientação familiar',
+  'Atendimento em grupo',
+  'Grupo de apoio e orientação para famílias',
+  'Oficina / atividade comunitária',
+  'Atividade socioeducativa',
+  'Encaminhamento externo',
+  'Acompanhamento / devolutiva familiar',
+  'Desligamento',
+  'Outro',
+]
+
+const PUBLICOS_TEACOLHER = [
+  'Pessoa com TEA / PCD',
+  'Crianças',
+  'Adolescentes',
+  'Adultos',
+  'Famílias / responsáveis',
+  'Núcleo familiar',
+  'Comunidade',
+  'Equipe multiprofissional',
+  'Rede SUS',
+  'Rede SUAS',
+  'Rede de Educação',
+  'Outro',
+]
+
+const AREAS_TEACOLHER = [
+  'Interdisciplinar',
+  'Psicologia',
+  'Fisioterapia',
+  'Nutrição',
+  'Psicomotricidade',
+  'Neuropsicopedagogia',
+  'Fonoaudiologia',
+  'Terapia ocupacional',
+  'Serviço social',
+  'Socioeducativo',
+  'Orientação familiar',
+  'Outro',
+]
+
+const MODALIDADES_TEACOLHER = [
+  'Individual',
+  'Familiar',
+  'Grupo',
+  'Oficina',
+  'Acolhimento',
+  'Avaliação',
+  'Encaminhamento',
+  'Devolutiva',
+  'Acompanhamento',
+]
+
+const COMPARECIMENTOS_TEACOLHER = [
+  'Compareceu',
+  'Faltou',
+  'Falta justificada',
+  'Remarcado',
+]
+
 const SITUACOES = ['realizado', 'agendado', 'cancelado', 'reagendado', 'em acompanhamento', 'encerrado', 'outro']
 
 const SITUACAO_COR = {
@@ -39,6 +103,8 @@ const SITUACAO_COR = {
 const FORM_VAZIO = {
   data_atend: new Date().toISOString().slice(0,10),
   projeto_id: '', usuario_atendido_id: '', tipo_atend: 'Atendimento individual', tema: '',
+  area_atendimento: '', modalidade_atendimento: '', comparecimento: '', duracao_minutos: '',
+  responsavel_presente: '', proxima_acao: '',
   descricao: '', qtd_participantes: 1, publico_participante: [],
   pessoa_atendida: '', profissional_id: '', equipe_ids: [],
   encaminhamentos: '', orgao_encaminhamento: '', situacao: 'realizado', observacoes: '',
@@ -116,6 +182,7 @@ export default function Atendimentos() {
       usuario_atendido_id: form.usuario_atendido_id ? parseInt(form.usuario_atendido_id) : null,
       profissional_id: form.profissional_id ? parseInt(form.profissional_id) : null,
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : null,
+      duracao_minutos: form.duracao_minutos ? parseInt(form.duracao_minutos) : null,
       equipe_ids: form.equipe_ids.map(id => parseInt(id)),
     }
     let error, data
@@ -135,6 +202,9 @@ export default function Atendimentos() {
     setForm({
       data_atend: a.data_atend, projeto_id: a.projeto_id||'', usuario_atendido_id: a.usuario_atendido_id||'', tipo_atend: a.tipo_atend,
       tema: a.tema||'', descricao: a.descricao, qtd_participantes: a.qtd_participantes||1,
+      area_atendimento: a.area_atendimento||'', modalidade_atendimento: a.modalidade_atendimento||'',
+      comparecimento: a.comparecimento||'', duracao_minutos: a.duracao_minutos||'',
+      responsavel_presente: a.responsavel_presente||'', proxima_acao: a.proxima_acao||'',
       publico_participante: a.publico_participante||[], pessoa_atendida: a.pessoa_atendida||'',
       profissional_id: a.profissional_id||'', equipe_ids: a.equipe_ids||[],
       encaminhamentos: a.encaminhamentos||'', orgao_encaminhamento: a.orgao_encaminhamento||'',
@@ -154,7 +224,15 @@ export default function Atendimentos() {
     setForm(f => ({ ...f, equipe_ids: f.equipe_ids.includes(sid) ? f.equipe_ids.filter(e => e !== sid) : [...f.equipe_ids, sid] }))
   }
 
-  const isIndividual = TIPOS_INDIVIDUAIS.includes(form.tipo_atend)
+  const projetoSelecionado = projetos.find(p => String(p.id) === String(form.projeto_id))
+  const isTEAcolher = String(projetoSelecionado?.nome || '').toLowerCase().includes('teacolher')
+  const tiposAtendimentoDisponiveis = isTEAcolher ? TIPOS_ATEND_TEACOLHER : TIPOS_ATEND
+  const publicosDisponiveis = isTEAcolher ? PUBLICOS_TEACOLHER : PUBLICOS
+  const usuariosDisponiveis = form.projeto_id
+    ? usuariosAtendidos.filter(u => String(u.projeto_id) === String(form.projeto_id))
+    : usuariosAtendidos
+  const tiposIndividuaisAtuais = [...TIPOS_INDIVIDUAIS, 'Acolhimento inicial', 'Avaliação interdisciplinar', 'Atendimento familiar / orientação familiar', 'Encaminhamento externo', 'Acompanhamento / devolutiva familiar', 'Desligamento']
+  const isIndividual = tiposIndividuaisAtuais.includes(form.tipo_atend)
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const usuarioSelecionado = id => usuariosAtendidos.find(u => String(u.id) === String(id))
@@ -219,7 +297,24 @@ export default function Atendimentos() {
               </div>
               <div>
                 <label style={s.label}>Projeto / Serviço / Ação vinculada *</label>
-                <select value={form.projeto_id} onChange={e=>setForm(f=>({...f,projeto_id:e.target.value}))} style={s.input} required>
+                <select value={form.projeto_id} onChange={e=>{
+                  const id = e.target.value
+                  const projeto = projetos.find(p => String(p.id) === String(id))
+                  const tea = String(projeto?.nome || '').toLowerCase().includes('teacolher')
+                  setForm(f=>({
+                    ...f,
+                    projeto_id:id,
+                    usuario_atendido_id:'',
+                    pessoa_atendida:'',
+                    tipo_atend: tea ? 'Acolhimento inicial' : 'Atendimento individual',
+                    tema: tea ? 'Acolhimento, escuta qualificada e acompanhamento' : f.tema,
+                    area_atendimento: tea ? 'Interdisciplinar' : '',
+                    modalidade_atendimento: tea ? 'Individual' : '',
+                    comparecimento: tea ? 'Compareceu' : '',
+                    duracao_minutos: tea ? (f.duracao_minutos || 60) : '',
+                    publico_participante: tea ? ['Pessoa com TEA / PCD', 'Famílias / responsáveis'] : [],
+                  }))
+                }} style={s.input} required>
                   <option value="">Selecione o projeto...</option>
                   {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
@@ -231,18 +326,71 @@ export default function Atendimentos() {
                 </select>
               </div>
             </div>
+
+            {isTEAcolher && (
+              <div style={{ ...s.card, marginBottom:10, background:'rgba(14,126,168,0.055)', borderColor:'rgba(14,126,168,0.22)', boxShadow:'none' }}>
+                <div style={{ fontSize:12, fontWeight:700, color:'#06344F', marginBottom:4 }}>Atendimento personalizado para o Projeto TEAcolher</div>
+                <div style={{ fontSize:11.5, color:'#5F5E5A', lineHeight:1.45 }}>
+                  Núcleo Teresópolis: Rua Prefeito Sebastião, 58, Várzea. Público prioritário: pessoas com TEA/PCD e seus familiares.
+                  Registre acolhimento, escuta qualificada, atendimento individual/coletivo, orientação familiar, oficinas, encaminhamentos e acompanhamento.
+                </div>
+              </div>
+            )}
+
             <div style={s.grupo('1fr 1fr')}>
               <div>
                 <label style={s.label}>Tipo de atendimento / atividade *</label>
                 <select value={form.tipo_atend} onChange={e=>setForm(f=>({...f,tipo_atend:e.target.value}))} style={s.input} required>
-                  {TIPOS_ATEND.map(t => <option key={t} value={t}>{t}</option>)}
+                  {tiposAtendimentoDisponiveis.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <label style={s.label}>Tema / motivo</label>
-                <input value={form.tema} onChange={e=>setForm(f=>({...f,tema:e.target.value}))} style={s.input} placeholder="Ex: Fortalecimento de vínculos, Orientação social..." />
+                <input value={form.tema} onChange={e=>setForm(f=>({...f,tema:e.target.value}))} style={s.input} placeholder={isTEAcolher ? "Ex: Acolhimento inicial, orientação familiar, oficina, encaminhamento..." : "Ex: Fortalecimento de vínculos, Orientação social..."} />
               </div>
             </div>
+
+            {isTEAcolher && (
+              <>
+                <div style={s.grupo('1fr 1fr 1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Área do atendimento TEAcolher *</label>
+                    <select value={form.area_atendimento} onChange={e=>setForm(f=>({...f,area_atendimento:e.target.value}))} style={s.input} required>
+                      <option value="">Selecione...</option>
+                      {AREAS_TEACOLHER.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Modalidade *</label>
+                    <select value={form.modalidade_atendimento} onChange={e=>setForm(f=>({...f,modalidade_atendimento:e.target.value}))} style={s.input} required>
+                      <option value="">Selecione...</option>
+                      {MODALIDADES_TEACOLHER.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Comparecimento *</label>
+                    <select value={form.comparecimento} onChange={e=>setForm(f=>({...f,comparecimento:e.target.value}))} style={s.input} required>
+                      <option value="">Selecione...</option>
+                      {COMPARECIMENTOS_TEACOLHER.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={s.label}>Duração (minutos)</label>
+                    <input type="number" min="1" value={form.duracao_minutos} onChange={e=>setForm(f=>({...f,duracao_minutos:e.target.value}))} style={s.input} placeholder="Ex: 60" />
+                  </div>
+                </div>
+                <div style={s.grupo('1fr 1fr')}>
+                  <div>
+                    <label style={s.label}>Responsável presente</label>
+                    <input value={form.responsavel_presente} onChange={e=>setForm(f=>({...f,responsavel_presente:e.target.value}))} style={s.input} placeholder="Nome do responsável, se houver" />
+                  </div>
+                  <div>
+                    <label style={s.label}>Próxima ação</label>
+                    <input value={form.proxima_acao} onChange={e=>setForm(f=>({...f,proxima_acao:e.target.value}))} style={s.input} placeholder="Ex: manter acompanhamento, agendar devolutiva, encaminhar ao CRAS..." />
+                  </div>
+                </div>
+              </>
+            )}
 
             <div style={s.grupo('1fr 1fr')}>
               <div>
@@ -253,7 +401,7 @@ export default function Atendimentos() {
                   setForm(f=>({...f, usuario_atendido_id:id, pessoa_atendida: usuario?.nome || f.pessoa_atendida}))
                 }} style={s.input}>
                   <option value="">Selecione o usuário atendido...</option>
-                  {usuariosAtendidos.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                  {usuariosDisponiveis.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
                 </select>
               </div>
               <div>
@@ -268,7 +416,7 @@ export default function Atendimentos() {
               <label style={s.label}>Descrição / resumo *</label>
               <textarea value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))}
                 rows={3} style={{ ...s.input, resize:'vertical' }} required
-                placeholder="Descreva o que foi realizado..." />
+                placeholder={isTEAcolher ? "Registre acolhimento/escuta, demanda apresentada, intervenção realizada, resposta do usuário/família e evolução observada." : "Descreva o que foi realizado..."} />
             </div>
 
             <div style={s.grupo('1fr 2fr')}>
@@ -280,7 +428,7 @@ export default function Atendimentos() {
               <div>
                 <label style={s.label}>Público participante</label>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-                  {PUBLICOS.map(pub => (
+                  {publicosDisponiveis.map(pub => (
                     <button key={pub} type="button" onClick={() => togglePublico(pub)}
                       style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.publico_participante.includes(pub)?AZUL:'#D3D1C7'}`, background:form.publico_participante.includes(pub)?'#E6F1FB':'#fff', color:form.publico_participante.includes(pub)?'#185FA5':'#5F5E5A' }}>
                       {form.publico_participante.includes(pub) ? '✓ ' : ''}{pub}
@@ -314,11 +462,11 @@ export default function Atendimentos() {
             <div style={s.grupo('2fr 1fr')}>
               <div>
                 <label style={s.label}>Encaminhamentos realizados</label>
-                <input value={form.encaminhamentos} onChange={e=>setForm(f=>({...f,encaminhamentos:e.target.value}))} style={s.input} placeholder="Descreva encaminhamentos..." />
+                <input value={form.encaminhamentos} onChange={e=>setForm(f=>({...f,encaminhamentos:e.target.value}))} style={s.input} placeholder={isTEAcolher ? "Ex: UBS, CAPS, CRAS, CREAS, escola, avaliação complementar..." : "Descreva encaminhamentos..."} />
               </div>
               <div>
                 <label style={s.label}>Órgão / rede de destino</label>
-                <input value={form.orgao_encaminhamento} onChange={e=>setForm(f=>({...f,orgao_encaminhamento:e.target.value}))} style={s.input} placeholder="Ex: CRAS, CREAS, SME..." />
+                <input value={form.orgao_encaminhamento} onChange={e=>setForm(f=>({...f,orgao_encaminhamento:e.target.value}))} style={s.input} placeholder={isTEAcolher ? "Ex: SUS, SUAS, Educação, CRAS, CREAS, UBS..." : "Ex: CRAS, CREAS, SME..."} />
               </div>
             </div>
 
