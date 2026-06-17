@@ -88,7 +88,7 @@ export default function PainelTecnico() {
           supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoId).eq('profissional_id', equipeId).lte('data_atend', hoje).in('situacao', ['agendado','reagendado']),
           supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoId).eq('profissional_id', equipeId).gte('data_atend', inicioMes).eq('situacao', 'realizado'),
           supabase.from('atendimentos').select(selectLista).eq('projeto_id', projetoId).eq('profissional_id', equipeId).eq('data_atend', hoje).in('situacao', ['agendado','reagendado']).order('hora_inicio', { ascending:true }).limit(6),
-          supabase.from('atendimentos').select(selectLista).eq('projeto_id', projetoId).eq('profissional_id', equipeId).lte('data_atend', hoje).in('situacao', ['agendado','reagendado']).order('data_atend', { ascending:true }).order('hora_inicio', { ascending:true }).limit(6),
+          supabase.from('atendimentos').select(selectLista).eq('projeto_id', projetoId).eq('profissional_id', equipeId).lt('data_atend', hoje).in('situacao', ['agendado','reagendado']).order('data_atend', { ascending:true }).order('hora_inicio', { ascending:true }).limit(6),
         ])
 
         const erro = hojeRes.error || finalizarRes.error || realizadosRes.error || listaHoje.error || listaPendentes.error
@@ -205,8 +205,10 @@ export default function PainelTecnico() {
       ? { texto: 'Ver agenda de hoje', desc: `${dados.hoje} atendimento(s) marcados para hoje`, icon:'calendar-event', cor: AG_BLUE, rota: destino('') }
       : { texto: 'Ver minha agenda', desc: 'Consultar próximos atendimentos', icon:'calendar', cor: AG_BLUE, rota: destino('') }
 
+  const abrirAtendimento = a => navigate(`/atendimentos?abrir=${a.id}${a.situacao === 'realizado' ? '' : '&acao=finalizar'}`)
+
   const itemAgenda = a => (
-    <button key={a.id} onClick={() => navigate(destino(a.situacao === 'realizado' ? 'realizado' : 'agendado'))}
+    <button key={a.id} onClick={() => abrirAtendimento(a)}
       style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'11px 0', borderBottom:'0.5px solid #F1EFE8', cursor:'pointer', display:'grid', gridTemplateColumns:'58px 1fr auto', gap:10, alignItems:'center' }}>
       <div style={{ fontSize:16, fontWeight:900, color:DARK }}>{fmtHora(a.hora_inicio) || '—'}</div>
       <div style={{ minWidth:0 }}>
@@ -300,7 +302,8 @@ export default function PainelTecnico() {
 
         {pendentes.length > 0 && (
           <div style={{ ...card, padding:16 }}>
-            <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:10 }}>Pendentes para finalizar</div>
+            <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>Atrasados (data já passou)</div>
+            <div style={{ fontSize:11.5, color:'#888780', marginBottom:10 }}>Não confundir com "Agenda de hoje" — são atendimentos de dias anteriores ainda sem finalização.</div>
             {pendentes.map(itemAgenda)}
           </div>
         )}

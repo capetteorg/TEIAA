@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
@@ -186,6 +186,7 @@ export default function Atendimentos() {
   const [msg, setMsg] = useState('')
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', profissional_id: '', situacao: '' })
+  const abrirProcessadoRef = useRef(null)
 
   const perfilAtual = perfil?.perfil || ''
   const isAdmin = perfilAtual === 'admin'
@@ -222,6 +223,22 @@ export default function Atendimentos() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, projetoTeacolherId])
+
+  // Abre direto o atendimento específico vindo de um link (ex.: "Agenda de hoje" do painel
+  // técnico/operacional). Sem isso, qualquer linha clicada caía sempre na mesma lista genérica.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const idAbrir = params.get('abrir')
+    if (!idAbrir) { abrirProcessadoRef.current = null; return }
+    if (abrirProcessadoRef.current === idAbrir) return
+    if (todosAtendimentos.length === 0) return
+    const alvo = todosAtendimentos.find(a => String(a.id) === String(idAbrir))
+    if (alvo) {
+      montarForm(alvo, params.get('acao') === 'finalizar')
+      abrirProcessadoRef.current = idAbrir
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, todosAtendimentos])
 
   async function inicializar() {
     setLoading(true)

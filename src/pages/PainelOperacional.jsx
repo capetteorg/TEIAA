@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { gerarPDFAgendaTeacolher } from '../lib/pdf'
 
 const AG_BLUE = '#0E7EA8'
 const DARK = '#06344F'
@@ -141,59 +142,16 @@ export default function PainelOperacional() {
   }
 
   function imprimirAgenda(titulo, itens) {
-    const linhas = (itens || []).map(a => `
-      <tr>
-        <td>${fmtData(a.data_atend)}</td>
-        <td>${fmtHora(a.hora_inicio)}</td>
-        <td>${a.pessoa_atendida || 'Usuário/família'}</td>
-        <td>${profissionalNome(a.profissional_id)}</td>
-        <td>${a.etapa_fluxo || a.tipo_atend || 'Atendimento'}</td>
-        <td>${a.situacao || 'agendado'}</td>
-      </tr>
-    `).join('')
-
-    const html = `
-      <!doctype html>
-      <html>
-        <head>
-          <title>${titulo}</title>
-          <style>
-            body { font-family: Arial, sans-serif; color:#1f2933; margin:32px; }
-            .topo { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0E7EA8; padding-bottom:12px; margin-bottom:18px; }
-            h1 { font-size:20px; margin:0; color:#06344F; }
-            .sub { font-size:12px; color:#667085; margin-top:4px; }
-            table { width:100%; border-collapse:collapse; font-size:12px; }
-            th { text-align:left; background:#F3F7FA; color:#06344F; padding:8px; border-bottom:1px solid #D0D5DD; }
-            td { padding:8px; border-bottom:1px solid #EAECF0; vertical-align:top; }
-            .rodape { margin-top:22px; font-size:11px; color:#667085; }
-            @media print { body { margin:18mm; } }
-          </style>
-        </head>
-        <body>
-          <div class="topo">
-            <div>
-              <h1>${titulo}</h1>
-              <div class="sub">Projeto TEAcolher · Associação TEIAA</div>
-            </div>
-            <div class="sub">Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}</div>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Data</th><th>Hora</th><th>Usuário/família</th><th>Profissional</th><th>Etapa</th><th>Situação</th></tr>
-            </thead>
-            <tbody>${linhas || '<tr><td colspan="6">Nenhum atendimento encontrado.</td></tr>'}</tbody>
-          </table>
-          <div class="rodape">Documento operacional para conferência de agenda. A evolução técnica é registrada somente pelo perfil Técnico.</div>
-        </body>
-      </html>
-    `
-
-    const win = window.open('', '_blank', 'width=1000,height=700')
-    if (!win) return window.print()
-    win.document.open()
-    win.document.write(html)
-    win.document.close()
-    setTimeout(() => { win.focus(); win.print() }, 250)
+    const hojeFmt = new Date().toLocaleDateString('pt-BR')
+    const periodoLabel = /hoje/i.test(titulo) ? `Hoje, ${hojeFmt}`
+      : /atrasad/i.test(titulo) ? 'Anteriores a hoje'
+      : /próximo/i.test(titulo) ? `A partir de ${hojeFmt}`
+      : hojeFmt
+    const itensComProfissional = (itens || []).map(a => ({ ...a, profissional_nome: profissionalNome(a.profissional_id) }))
+    gerarPDFAgendaTeacolher(itensComProfissional, titulo, {
+      subtitulo: 'Projeto TEAcolher · Associação TEIAA',
+      periodoLabel,
+    })
   }
 
   const linhaAgenda = (a, i, total) => (
@@ -210,7 +168,7 @@ export default function PainelOperacional() {
         <div style={{ fontSize:11.5, color:'#667085', marginTop:3 }}>{!isMobile && `${fmtData(a.data_atend)} · `}{profissionalNome(a.profissional_id)}</div>
         <div style={{ fontSize:11, color:'#8B949E', marginTop:2 }}>{a.etapa_fluxo || a.tipo_atend || 'Atendimento TEAcolher'}</div>
       </div>
-      <button onClick={() => abrirAgenda('situacao=agendado')} style={{ border:'none', borderRadius:10, background:'#F1EFE8', color:'#5F5E5A', fontSize:11, fontWeight:800, padding:'8px 10px', cursor:'pointer' }}>
+      <button onClick={() => navigate(`/atendimentos?abrir=${a.id}`)} style={{ border:'none', borderRadius:10, background:'#F1EFE8', color:'#5F5E5A', fontSize:11, fontWeight:800, padding:'8px 10px', cursor:'pointer' }}>
         editar/remarcar
       </button>
     </div>
