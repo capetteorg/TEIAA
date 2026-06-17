@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -8,229 +8,261 @@ const AG_BLUE = '#0E7EA8'
 const DARK = '#06344F'
 const GREEN = '#6BBF2B'
 const ORANGE = '#F4821F'
-const RED = '#E8212A'
 const TOPBAR_H = 62
+
+const cardBase = {
+  background: 'rgba(255,255,255,0.94)',
+  border: '0.5px solid #E8E6DE',
+  borderRadius: 16,
+  boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+}
 
 export default function PainelOperacional() {
   const navigate = useNavigate()
   const { perfil } = useAuth()
   const isMobile = useIsMobile()
-  const [dados, setDados] = useState({ usuarios: 0, ativos: 0, teacolher: 0, hoje: 0, finalizar: 0, realizadosMes: 0 })
-  const [usuariosRecentes, setUsuariosRecentes] = useState([])
-  const [agenda, setAgenda] = useState([])
-  const [projetos, setProjetos] = useState([])
+
   const [loading, setLoading] = useState(true)
+  const [projetos, setProjetos] = useState([])
+  const [dados, setDados] = useState({ usuarios: 0, hoje: 0, finalizar: 0, realizadosMes: 0 })
+  const [agendaHoje, setAgendaHoje] = useState([])
+  const [pendentes, setPendentes] = useState([])
+  const [realizadosRecentes, setRealizadosRecentes] = useState([])
 
   useEffect(() => {
     let mounted = true
+
     async function carregar() {
       setLoading(true)
+
       const hoje = new Date().toISOString().slice(0, 10)
       const inicioMes = hoje.slice(0, 8) + '01'
 
-      const [usuariosTotal, usuariosAtivos, listaProjetos, recentes] = await Promise.all([
-        supabase.from('usuarios_atendidos').select('id', { count:'exact', head:true }),
-        supabase.from('usuarios_atendidos').select('id', { count:'exact', head:true }).eq('situacao', 'ativo'),
-        supabase.from('projetos').select('id,nome').eq('aceita_atendimentos', true).order('nome'),
-        supabase.from('usuarios_atendidos')
-          .select('id,nome,situacao,projeto_id,data_ingresso,criado_em')
-          .order('criado_em', { ascending:false })
-          .limit(6),
-      ])
+      const { data: projetosData = [] } = await supabase
+        .from('projetos')
+        .select('id,nome,aceita_atendimentos')
+        .eq('aceita_atendimentos', true)
+        .order('nome')
 
       if (!mounted) return
 
-      const projetosData = listaProjetos.data || []
       const projetoTea = projetosData.find(p => String(p.nome || '').toLowerCase().includes('teacolher'))
-      let totalTea = 0
-      let agendaHoje = 0
-      let pendentesFinalizar = 0
-      let realizadosMes = 0
-      let agendaData = []
+      const projetoId = projetoTea?.id || null
 
-      if (projetoTea?.id) {
-        const [countTea, agendaHojeRes, finalizarRes, realizadosRes, listaAgenda] = await Promise.all([
-          supabase.from('usuarios_atendidos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoTea.id),
-          supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoTea.id).eq('data_atend', hoje).in('situacao', ['agendado', 'reagendado']),
-          supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoTea.id).lte('data_atend', hoje).in('situacao', ['agendado', 'reagendado']),
-          supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoTea.id).gte('data_atend', inicioMes).eq('situacao', 'realizado'),
+      let totalUsuarios = 0
+      let agendaCount = 0
+      let pendentesCount = 0
+      let realizadosCount = 0
+      let hojeLista = []
+      let pendentesLista = []
+      let realizadosLista = []
+
+      if (projetoId) {
+        const [usuariosRes, agendaCountRes, pendentesCountRes, realizadosCountRes, hojeRes, pendentesRes, realizadosRes] = await Promise.all([
+          supabase.from('usuarios_atendidos').select('id', { count: 'exact', head: true }).eq('projeto_id', projetoId),
+          supabase.from('atendimentos').select('id', { count: 'exact', head: true }).eq('projeto_id', projetoId).eq('data_atend', hoje).in('situacao', ['agendado', 'reagendado']),
+          supabase.from('atendimentos').select('id', { count: 'exact', head: true }).eq('projeto_id', projetoId).lte('data_atend', hoje).in('situacao', ['agendado', 'reagendado']),
+          supabase.from('atendimentos').select('id', { count: 'exact', head: true }).eq('projeto_id', projetoId).gte('data_atend', inicioMes).eq('situacao', 'realizado'),
           supabase.from('atendimentos')
-            .select('id,data_atend,hora_inicio,pessoa_atendida,usuario_atendido_id,profissional_id,etapa_fluxo,tipo_atend,situacao')
-            .eq('projeto_id', projetoTea.id)
-            .order('data_atend', { ascending:true })
-            .order('hora_inicio', { ascending:true })
-            .limit(8),
+            .select('id,data_atend,hora_inicio,pessoa_atendida,tipo_atend,etapa_fluxo,situacao')
+            .eq('projeto_id', projetoId)
+            .eq('data_atend', hoje)
+            .in('situacao', ['agendado', 'reagendado'])
+            .order('hora_inicio', { ascending: true })
+            .limit(5),
+          supabase.from('atendimentos')
+            .select('id,data_atend,hora_inicio,pessoa_atendida,tipo_atend,etapa_fluxo,situacao')
+            .eq('projeto_id', projetoId)
+            .lte('data_atend', hoje)
+            .in('situacao', ['agendado', 'reagendado'])
+            .order('data_atend', { ascending: true })
+            .order('hora_inicio', { ascending: true })
+            .limit(5),
+          supabase.from('atendimentos')
+            .select('id,data_atend,hora_inicio,pessoa_atendida,tipo_atend,etapa_fluxo,situacao')
+            .eq('projeto_id', projetoId)
+            .eq('situacao', 'realizado')
+            .order('data_atend', { ascending: false })
+            .order('hora_inicio', { ascending: false })
+            .limit(5),
         ])
-        totalTea = countTea.count || 0
-        agendaHoje = agendaHojeRes.count || 0
-        pendentesFinalizar = finalizarRes.count || 0
-        realizadosMes = realizadosRes.count || 0
-        agendaData = listaAgenda.data || []
+
+        totalUsuarios = usuariosRes.count || 0
+        agendaCount = agendaCountRes.count || 0
+        pendentesCount = pendentesCountRes.count || 0
+        realizadosCount = realizadosCountRes.count || 0
+        hojeLista = hojeRes.data || []
+        pendentesLista = pendentesRes.data || []
+        realizadosLista = realizadosRes.data || []
       }
 
       if (!mounted) return
       setProjetos(projetosData)
-      setUsuariosRecentes(recentes.data || [])
-      setAgenda(agendaData)
-      setDados({
-        usuarios: usuariosTotal.count || 0,
-        ativos: usuariosAtivos.count || 0,
-        teacolher: totalTea,
-        hoje: agendaHoje,
-        finalizar: pendentesFinalizar,
-        realizadosMes,
-      })
+      setDados({ usuarios: totalUsuarios, hoje: agendaCount, finalizar: pendentesCount, realizadosMes: realizadosCount })
+      setAgendaHoje(hojeLista)
+      setPendentes(pendentesLista)
+      setRealizadosRecentes(realizadosLista)
       setLoading(false)
     }
+
     carregar()
     return () => { mounted = false }
   }, [])
 
-  const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
-  const fmtHora = h => h ? String(h).slice(0, 5) : '—'
   const hora = new Date().getHours()
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
-  const nome = perfil?.nome?.split(' ')[0] || ''
-  const nomeProjeto = id => projetos.find(p => String(p.id) === String(id))?.nome || 'Sem projeto'
+  const nome = perfil?.nome?.split(' ')[0] || 'TEIAA'
 
-  const card = {
-    background: 'rgba(255,255,255,0.92)',
-    border: '0.5px solid #E8E6DE',
-    borderRadius: 14,
-    boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
-    padding: '14px 16px',
-  }
+  const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const fmtHora = h => h ? String(h).slice(0, 5) : ''
+  const subtituloAt = a => [a.etapa_fluxo || a.tipo_atend || 'Atendimento', fmtData(a.data_atend), fmtHora(a.hora_inicio)].filter(Boolean).join(' · ')
 
-  const btnPrincipal = {
-    width: '100%', border: 'none', borderRadius: 12, padding: '15px 16px', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', color: '#fff', fontWeight: 700,
-  }
+  const resumoCards = useMemo(() => ([
+    { label: 'Usuários TEAcolher', value: dados.usuarios, color: DARK, icon: 'users' },
+    { label: 'Agendados hoje', value: dados.hoje, color: AG_BLUE, icon: 'calendar-event' },
+    { label: 'Para finalizar', value: dados.finalizar, color: ORANGE, icon: 'clipboard-check' },
+    { label: 'Realizados no mês', value: dados.realizadosMes, color: GREEN, icon: 'checkup-list' },
+  ]), [dados])
+
+  const actionCard = (num, titulo, desc, icon, color, onClick) => (
+    <button onClick={onClick} style={{ ...cardBase, width:'100%', padding: '16px', cursor:'pointer', textAlign:'left', display:'flex', gap:14, alignItems:'center', background:'#fff' }}>
+      <div style={{ width:40, height:40, borderRadius:12, background: color, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontWeight:800 }}>
+        {num}
+      </div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+          <i className={`ti ti-${icon}`} style={{ color }} />
+          <div style={{ fontSize:15, fontWeight:800, color:DARK }}>{titulo}</div>
+        </div>
+        <div style={{ fontSize:12, color:'#6B6A66', lineHeight:1.4 }}>{desc}</div>
+      </div>
+      <i className="ti ti-chevron-right" style={{ color:'#B4B2A9', fontSize:18 }} />
+    </button>
+  )
+
+  const listCard = (titulo, desc, badge, badgeColor, items, empty, ctaLabel, ctaAction) => (
+    <div style={{ ...cardBase, padding:16 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, gap:8 }}>
+        <div>
+          <div style={{ fontSize:14, fontWeight:800, color:DARK }}>{titulo}</div>
+          {desc && <div style={{ fontSize:11.5, color:'#888780', marginTop:2 }}>{desc}</div>}
+        </div>
+        {badge !== undefined && <div style={{ padding:'4px 10px', borderRadius:999, background: badgeColor || '#F3F7FA', color:DARK, fontSize:12, fontWeight:700 }}>{badge}</div>}
+      </div>
+      {loading ? (
+        <div style={{ fontSize:12, color:'#B4B2A9', textAlign:'center', padding:'16px 0' }}>Carregando...</div>
+      ) : items.length === 0 ? (
+        <div style={{ textAlign:'center', padding:'14px 0 4px' }}>
+          <div style={{ fontSize:12, color:'#99978F', marginBottom:10 }}>{empty}</div>
+          {ctaLabel && <button onClick={ctaAction} style={{ padding:'8px 12px', borderRadius:10, border:'none', background:AG_BLUE, color:'#fff', fontWeight:700, cursor:'pointer' }}>{ctaLabel}</button>}
+        </div>
+      ) : (
+        <div style={{ display:'grid', gap:8 }}>
+          {items.map((a, i) => (
+            <div key={a.id || i} style={{ border:'0.5px solid #ECE8DF', borderRadius:12, padding:'10px 12px', display:'flex', justifyContent:'space-between', gap:10, alignItems:'center' }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.pessoa_atendida || 'Usuário/família'}</div>
+                <div style={{ fontSize:11.5, color:'#7A7974', marginTop:2 }}>{subtituloAt(a)}</div>
+              </div>
+              <button
+                onClick={() => navigate(a.situacao === 'realizado' ? '/atendimentos?situacao=realizado' : '/atendimentos?situacao=agendado')}
+                style={{ padding:'5px 9px', borderRadius:999, border:'none', background: a.situacao === 'realizado' ? '#EAF3DE' : '#E6F1FB', color: a.situacao === 'realizado' ? '#3B6D11' : '#185FA5', fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0 }}
+              >
+                {a.situacao === 'realizado' ? 'ver' : 'finalizar'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <div>
-      <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: isMobile ? '0 12px' : '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8E6DE', flexShrink: 0 }}>
+      <div style={{ height: TOPBAR_H, background:'rgba(255,255,255,0.82)', borderBottom:'0.5px solid #E0DDD5', padding:isMobile ? '0 12px' : '0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:5 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <div style={{ width:52, height:52, borderRadius:'50%', overflow:'hidden', border:'2px solid #E8E6DE', flexShrink:0 }}>
             {perfil?.avatar_url ? (
-              <img src={perfil.avatar_url} alt={perfil.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${perfil.foto_position || '50%'}` }} />
+              <img src={perfil.avatar_url} alt={perfil.nome} style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:`center ${perfil.foto_position || '50%'}` }} />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: perfil?.cor_avatar || AG_BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#fff' }}>
+              <div style={{ width:'100%', height:'100%', background: perfil?.cor_avatar || AG_BLUE, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:700, color:'#fff' }}>
                 {(perfil?.nome || 'U').slice(0,2).toUpperCase()}
               </div>
             )}
           </div>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: DARK, letterSpacing: '-.03em', lineHeight: 1 }}>
-              {saudacao}{nome ? `, ${nome}` : ''}!
+            <div style={{ fontSize: isMobile ? 17 : 20, fontWeight:800, color:DARK, letterSpacing:'-.03em', lineHeight:1.05 }}>
+              {saudacao}, {nome}!
             </div>
-            <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>
-              Fluxo operacional do Projeto TEAcolher
+            <div style={{ fontSize:12, color:'#6B6A66', marginTop:4 }}>
+              Painel operacional do Projeto TEAcolher
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-          <button onClick={() => navigate('/atendimentos?novo=1')} style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 700, borderRadius: 9, border: 'none', background: AG_BLUE, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <i className="ti ti-calendar-plus" /> Agendar
-          </button>
-          {!isMobile && (
-            <button onClick={() => navigate('/atendimentos?situacao=agendado')} style={{ padding: '7px 14px', fontSize: 12, fontWeight: 700, borderRadius: 9, border: '0.5px solid rgba(244,130,31,0.3)', background: 'rgba(244,130,31,0.08)', color: '#854F0B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <i className="ti ti-checkup-list" /> Finalizar
+
+        {!isMobile && (
+          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+            <button onClick={() => navigate('/usuarios-atendidos')} style={{ padding:'8px 14px', borderRadius:10, border:'0.5px solid #D9D6CC', background:'#fff', color:DARK, fontWeight:700, cursor:'pointer' }}>
+              <i className="ti ti-user-plus" /> Usuário
             </button>
-          )}
-        </div>
+            <button onClick={() => navigate('/atendimentos?novo=1')} style={{ padding:'8px 14px', borderRadius:10, border:'none', background:AG_BLUE, color:'#fff', fontWeight:700, cursor:'pointer' }}>
+              <i className="ti ti-calendar-plus" /> Agendar
+            </button>
+          </div>
+        )}
       </div>
 
-      <div style={{ padding: isMobile ? '12px' : '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ ...card, borderLeft: '3px solid rgba(14,126,168,.45)' }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: DARK, marginBottom: 4 }}>O que fazer agora?</div>
-          <div style={{ fontSize: 12, color: '#5F5E5A', lineHeight: 1.45 }}>
-            Primeiro cadastre o usuário/família. Depois agende o atendimento. Após a realização, finalize o registro técnico para alimentar a prestação de contas do TEAcolher.
+      <div style={{ padding: isMobile ? '12px' : '20px 24px', display:'grid', gap:14 }}>
+        <div style={{ ...cardBase, padding:'14px 16px' }}>
+          <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:6 }}>Fluxo simples</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8, alignItems:'center', fontSize:12 }}>
+            <span style={{ padding:'6px 10px', borderRadius:999, background:'#EEF6FB', color:DARK, fontWeight:700 }}>1. Cadastrar usuário/família</span>
+            <span style={{ color:'#B4B2A9' }}>→</span>
+            <span style={{ padding:'6px 10px', borderRadius:999, background:'#EEF6FB', color:DARK, fontWeight:700 }}>2. Agendar atendimento</span>
+            <span style={{ color:'#B4B2A9' }}>→</span>
+            <span style={{ padding:'6px 10px', borderRadius:999, background:'#EEF6FB', color:DARK, fontWeight:700 }}>3. Finalizar registro técnico</span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4,1fr)', gap: 10 }}>
-          {[
-            { label: 'Usuários TEAcolher', val: loading ? '...' : dados.teacolher, cor: DARK },
-            { label: 'Agenda de hoje', val: loading ? '...' : dados.hoje, cor: AG_BLUE },
-            { label: 'A finalizar', val: loading ? '...' : dados.finalizar, cor: ORANGE },
-            { label: 'Realizados no mês', val: loading ? '...' : dados.realizadosMes, cor: GREEN },
-          ].map(k => (
-            <div key={k.label} style={{ ...card, position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: k.cor }} />
-              <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '.1em', color: '#6C7A86', marginBottom: 8 }}>{k.label}</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: k.cor, letterSpacing: '-.03em' }}>{k.val}</div>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap:10 }}>
+          {resumoCards.map(c => (
+            <div key={c.label} style={{ ...cardBase, padding:'14px 16px', position:'relative', overflow:'hidden' }}>
+              <div style={{ position:'absolute', inset:'0 auto auto 0', width:'100%', height:3, background:c.color }} />
+              <div style={{ fontSize:11, color:'#7A8893', marginBottom:6 }}>{c.label}</div>
+              <div style={{ fontSize: isMobile ? 24 : 28, fontWeight:800, color:c.color, lineHeight:1 }}>{loading ? '...' : c.value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, alignItems: 'start' }}>
-          <div style={{ ...card }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 14 }}>Fluxo principal</div>
-            <div style={{ display: 'grid', gap: 10 }}>
-              <button onClick={() => navigate('/usuarios-atendidos')} style={{ ...btnPrincipal, background: AG_BLUE }}>
-                <i className="ti ti-user-plus" style={{ fontSize: 23 }} />
-                <div><div>Cadastrar usuário/família</div><div style={{ fontSize: 11, opacity: .85, fontWeight: 500 }}>Inscrição e dados do público atendido</div></div>
-              </button>
-              <button onClick={() => navigate('/atendimentos?novo=1')} style={{ ...btnPrincipal, background: DARK }}>
-                <i className="ti ti-calendar-plus" style={{ fontSize: 23 }} />
-                <div><div>Agendar atendimento TEAcolher</div><div style={{ fontSize: 11, opacity: .85, fontWeight: 500 }}>Data, horário, profissional, etapa e objetivo</div></div>
-              </button>
-              <button onClick={() => navigate('/atendimentos?situacao=agendado')} style={{ ...btnPrincipal, background: ORANGE }}>
-                <i className="ti ti-check" style={{ fontSize: 23 }} />
-                <div><div>Finalizar atendimento realizado</div><div style={{ fontSize: 11, opacity: .9, fontWeight: 500 }}>Evolução, comparecimento, encaminhamento e próxima ação</div></div>
-              </button>
-              <button onClick={() => navigate('/atendimentos')} style={{ ...btnPrincipal, background: GREEN }}>
-                <i className="ti ti-report-analytics" style={{ fontSize: 23 }} />
-                <div><div>Ver agenda e execução</div><div style={{ fontSize: 11, opacity: .9, fontWeight: 500 }}>Base da prestação de contas técnica</div></div>
-              </button>
-            </div>
-          </div>
-
-          <div style={{ ...card }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9' }}>Agenda e pendências</div>
-              <button onClick={() => navigate('/atendimentos')} style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '0.5px solid #D3D1C7', background: 'transparent', color: '#5F5E5A', cursor: 'pointer' }}>Ver tudo</button>
-            </div>
-            {loading ? (
-              <div style={{ color: '#B4B2A9', fontSize: 12, padding: '1rem 0', textAlign: 'center' }}>Carregando...</div>
-            ) : agenda.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                <i className="ti ti-calendar" style={{ fontSize: 28, color: '#D3D1C7', display: 'block', marginBottom: 8 }} />
-                <div style={{ fontSize: 12, color: '#B4B2A9' }}>Nenhum atendimento na agenda</div>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(320px, 420px) 1fr', gap:14, alignItems:'start' }}>
+          <div style={{ display:'grid', gap:10 }}>
+            <div style={{ ...cardBase, padding:16 }}>
+              <div style={{ fontSize:14, fontWeight:800, color:DARK, marginBottom:12 }}>O que você quer fazer?</div>
+              <div style={{ display:'grid', gap:10 }}>
+                {actionCard('1', 'Cadastrar usuário/família', 'Abrir cadastro do público atendido do TEAcolher.', 'users', AG_BLUE, () => navigate('/usuarios-atendidos'))}
+                {actionCard('2', 'Agendar atendimento', 'Registrar data, horário, profissional, etapa e objetivo.', 'calendar-plus', DARK, () => navigate('/atendimentos?novo=1'))}
+                {actionCard('3', 'Finalizar atendimento', 'Completar comparecimento, evolução, encaminhamentos e próxima ação.', 'clipboard-check', ORANGE, () => navigate('/atendimentos?situacao=agendado'))}
+                {actionCard('4', 'Ver agenda e execução', 'Consultar todos os registros e acompanhar a prestação de contas técnica.', 'report-analytics', GREEN, () => navigate('/atendimentos'))}
               </div>
-            ) : agenda.map((a, i) => (
-              <div key={a.id || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: i < agenda.length - 1 ? '0.5px solid #F1EFE8' : 'none' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 600, color: '#2C2C2A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.pessoa_atendida || 'Usuário/família'}</div>
-                  <div style={{ fontSize: 10.5, color: '#888780', marginTop: 1 }}>{a.etapa_fluxo || a.tipo_atend || 'Atendimento'} · {fmtData(a.data_atend)} {fmtHora(a.hora_inicio)}</div>
-                </div>
-                <button onClick={() => navigate('/atendimentos?situacao=' + encodeURIComponent(a.situacao || 'agendado'))} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 99, border:'none', background: a.situacao === 'realizado' ? '#EAF3DE' : '#E6F1FB', color: a.situacao === 'realizado' ? '#3B6D11' : '#185FA5', cursor:'pointer' }}>
-                  {a.situacao || '—'}
+            </div>
+
+            {isMobile && (
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                <button onClick={() => navigate('/usuarios-atendidos')} style={{ padding:'10px 12px', borderRadius:12, border:'0.5px solid #D9D6CC', background:'#fff', fontWeight:700, color:DARK, cursor:'pointer' }}>
+                  + Usuário
+                </button>
+                <button onClick={() => navigate('/atendimentos?novo=1')} style={{ padding:'10px 12px', borderRadius:12, border:'none', background:AG_BLUE, fontWeight:700, color:'#fff', cursor:'pointer' }}>
+                  + Agendar
                 </button>
               </div>
-            ))}
+            )}
           </div>
-        </div>
 
-        <div style={{ ...card }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9' }}>Últimos usuários cadastrados</div>
-            <button onClick={() => navigate('/usuarios-atendidos')} style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '0.5px solid #D3D1C7', background: 'transparent', color: '#5F5E5A', cursor: 'pointer' }}>Ver usuários</button>
+          <div style={{ display:'grid', gap:14 }}>
+            {listCard('Agenda de hoje', 'Atendimentos marcados para hoje.', dados.hoje, '#E6F1FB', agendaHoje, 'Nenhum atendimento agendado para hoje.', 'Agendar atendimento', () => navigate('/atendimentos?novo=1'))}
+            {listCard('Pendentes de finalização', 'Atendimentos agendados que ainda precisam de registro técnico.', dados.finalizar, '#FFF1E4', pendentes, 'Não há atendimentos pendentes para finalizar.', 'Ir para atendimentos', () => navigate('/atendimentos?situacao=agendado'))}
+            {listCard('Últimos realizados', 'Registros finalizados recentemente.', dados.realizadosMes, '#EAF3DE', realizadosRecentes, 'Nenhum atendimento realizado registrado ainda.', 'Ver agenda', () => navigate('/atendimentos?situacao=realizado'))}
           </div>
-          {usuariosRecentes.length === 0 ? (
-            <div style={{ fontSize:12, color:'#888780', textAlign:'center', padding:'1rem 0' }}>Nenhum usuário cadastrado</div>
-          ) : usuariosRecentes.map((u, i) => (
-            <div key={u.id || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '7px 0', borderBottom: i < usuariosRecentes.length - 1 ? '0.5px solid #F1EFE8' : 'none' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 500, color: '#2C2C2A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nome || '—'}</div>
-                <div style={{ fontSize: 10.5, color: '#888780', marginTop: 1 }}>{nomeProjeto(u.projeto_id)}</div>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
-                <div style={{ fontSize: 10.5, color: '#888780' }}>{fmtData(u.data_ingresso)}</div>
-                <div style={{ fontSize: 10, color: u.situacao === 'ativo' ? '#3B6D11' : '#888780', marginTop: 1 }}>{u.situacao || '—'}</div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
