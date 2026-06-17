@@ -2793,3 +2793,21 @@ export function gerarPDFAnexoTeacolher(usuario = {}, opts = {}) {
 
   abrirImpressao(`<style>${css}</style>${html}`, 'Anexo I — Projeto TEAcolher')
 }
+
+
+// Agenda técnica individual do TEAcolher: diária, semanal ou mensal.
+// Usada pelo perfil técnico para imprimir somente os próprios atendimentos.
+export function gerarPDFAgendaTecnicoTeacolher(lista = [], opts = {}) {
+  const profissional = opts.profissionalNome || 'Profissional técnico'
+  const funcao = opts.funcao ? ` · ${opts.funcao}` : ''
+  const periodo = opts.periodoLabel || 'Período selecionado'
+  const titulo = opts.titulo || 'Minha agenda técnica TEAcolher'
+  const subtitulo = `Profissional: ${profissional}${funcao} · ${periodo}`
+
+  return gerarPDFAgendaTeacolher(lista, titulo, {
+    ...opts,
+    subtitulo,
+    periodoLabel: periodo,
+    protocolo: opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-AGENDA-TEC`,
+  })
+}

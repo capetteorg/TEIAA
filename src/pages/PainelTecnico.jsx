@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { gerarPDFAgendaTecnicoTeacolher } from '../lib/pdf'
 
 const AG_BLUE = '#0E7EA8'
 const DARK = '#06344F'
@@ -25,6 +26,7 @@ export default function PainelTecnico() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [profissionalAtual, setProfissionalAtual] = useState({ id: null, nome: '', funcao: '' })
+  const [projetoTeacolherId, setProjetoTeacolherId] = useState(null)
   const [dados, setDados] = useState({ hoje: 0, finalizar: 0, realizadosMes: 0, acompanhados: 0 })
   const [agendaHoje, setAgendaHoje] = useState([])
   const [pendentes, setPendentes] = useState([])
@@ -78,6 +80,7 @@ export default function PainelTecnico() {
 
       const projetoTea = (projetos || []).find(p => String(p.nome || '').toLowerCase().includes('teacolher'))
       const projetoId = projetoTea?.id
+      if (mounted) setProjetoTeacolherId(projetoId || null)
 
       let hojeCount = 0
       let finalizarCount = 0
@@ -201,80 +204,91 @@ export default function PainelTecnico() {
     justifyContent:'space-between',
   })
 
-  function imprimirMinhaAgenda() {
-    const itens = [...agendaHoje]
-    pendentes.forEach(p => {
-      if (!itens.some(i => String(i.id) === String(p.id))) itens.push(p)
-    })
-    itens.sort((a, b) => String(a.data_atend || '').localeCompare(String(b.data_atend || '')) || String(a.hora_inicio || '').localeCompare(String(b.hora_inicio || '')))
+  function dataLocalISO(data = new Date()) {
+    const d = new Date(data)
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+    return d.toISOString().slice(0, 10)
+  }
 
-    const esc = v => String(v || '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]))
-    const linhas = itens.length
-      ? itens.map(a => `
-        <tr>
-          <td>${esc(fmtData(a.data_atend))}</td>
-          <td>${esc(fmtHora(a.hora_inicio))}</td>
-          <td>${esc(a.pessoa_atendida || 'Usuário/família')}</td>
-          <td>${esc(a.etapa_fluxo || a.tipo_atend || 'Atendimento')}</td>
-          <td>${esc(a.situacao || '')}</td>
-        </tr>
-      `).join('')
-      : '<tr><td colspan="5" class="vazio">Nenhum atendimento encontrado para impressão.</td></tr>'
+  function periodoAgenda(tipo) {
+    const base = new Date()
+    const inicio = new Date(base)
+    const fim = new Date(base)
 
-    const w = window.open('', '_blank', 'width=920,height=700')
-    if (!w) {
-      window.print()
+    if (tipo === 'semana') {
+      const dia = base.getDay()
+      const diffSegunda = dia === 0 ? -6 : 1 - dia
+      inicio.setDate(base.getDate() + diffSegunda)
+      fim.setTime(inicio.getTime())
+      fim.setDate(inicio.getDate() + 6)
+    }
+
+    if (tipo === 'mes') {
+      inicio.setDate(1)
+      fim.setMonth(base.getMonth() + 1)
+      fim.setDate(0)
+    }
+
+    return {
+      inicio: dataLocalISO(inicio),
+      fim: dataLocalISO(fim),
+    }
+  }
+
+  function labelPeriodo(tipo, inicio, fim) {
+    if (tipo === 'dia') return `Dia ${fmtData(inicio)}`
+    if (tipo === 'semana') return `Semana de ${fmtData(inicio)} a ${fmtData(fim)}`
+    return `Mês de ${new Date(inicio + 'T12:00:00').toLocaleDateString('pt-BR', { month:'long', year:'numeric' })}`
+  }
+
+  async function imprimirAgendaPeriodo(tipo = 'dia') {
+    if (!profissionalAtual.id) {
+      setMsg('Não foi possível imprimir: este usuário técnico ainda não está vinculado à equipe.')
       return
     }
 
-    w.document.write(`<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<title>Minha agenda TEAcolher</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; color: #1f2933; margin: 28px; }
-  .topo { border-bottom: 2px solid #0E7EA8; padding-bottom: 12px; margin-bottom: 18px; }
-  h1 { margin: 0; font-size: 20px; color: #06344F; }
-  .sub { margin-top: 6px; font-size: 12px; color: #5F5E5A; line-height: 1.45; }
-  table { width: 100%; border-collapse: collapse; margin-top: 14px; }
-  th { text-align: left; background: #F3F7FA; color: #06344F; font-size: 11px; padding: 9px; border: 1px solid #DDE6EE; }
-  td { font-size: 11px; padding: 9px; border: 1px solid #E5E7EB; vertical-align: top; }
-  .vazio { text-align: center; color: #777; padding: 24px; }
-  .rodape { margin-top: 18px; font-size: 10px; color: #777; }
-  @media print { body { margin: 18px; } }
-</style>
-</head>
-<body>
-  <div class="topo">
-    <h1>Minha agenda TEAcolher</h1>
-    <div class="sub">
-      Profissional: <strong>${esc(profissionalAtual.nome || perfil?.nome || 'Técnico')}</strong>${profissionalAtual.funcao ? ' · ' + esc(profissionalAtual.funcao) : ''}<br />
-      Impressão gerada em ${esc(new Date().toLocaleString('pt-BR'))}
-    </div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Hora</th>
-        <th>Usuário/família</th>
-        <th>Atendimento</th>
-        <th>Situação</th>
-      </tr>
-    </thead>
-    <tbody>${linhas}</tbody>
-  </table>
-  <div class="rodape">AGENDO Integra · TEIAA · Projeto TEAcolher</div>
-</body>
-</html>`)
-    w.document.close()
-    w.focus()
-    setTimeout(() => {
-      w.print()
-      w.close()
-    }, 300)
+    if (!projetoTeacolherId) {
+      setMsg('Não foi possível imprimir: Projeto TEAcolher não encontrado.')
+      return
+    }
+
+    const { inicio, fim } = periodoAgenda(tipo)
+
+    const { data, error } = await supabase
+      .from('atendimentos')
+      .select('id,data_atend,hora_inicio,hora_fim,pessoa_atendida,usuario_atendido_id,etapa_fluxo,tipo_atend,situacao,area_atendimento,modalidade_atendimento,comparecimento,desfecho_teacolher,profissional_id')
+      .eq('projeto_id', projetoTeacolherId)
+      .eq('profissional_id', profissionalAtual.id)
+      .gte('data_atend', inicio)
+      .lte('data_atend', fim)
+      .order('data_atend', { ascending:true })
+      .order('hora_inicio', { ascending:true })
+
+    if (error) {
+      setMsg('Erro ao gerar impressão da agenda: ' + error.message)
+      return
+    }
+
+    const periodoLabel = labelPeriodo(tipo, inicio, fim)
+    const titulo = tipo === 'dia'
+      ? 'Minha agenda diária TEAcolher'
+      : tipo === 'semana'
+        ? 'Minha agenda semanal TEAcolher'
+        : 'Minha agenda mensal TEAcolher'
+
+    gerarPDFAgendaTecnicoTeacolher(
+      (data || []).map(a => ({
+        ...a,
+        profissional_nome: profissionalAtual.nome,
+      })),
+      {
+        titulo,
+        periodoLabel,
+        profissionalNome: profissionalAtual.nome || perfil?.nome || 'Técnico',
+        funcao: profissionalAtual.funcao || '',
+        tipo,
+      }
+    )
   }
 
   const lista = (titulo, subtitulo, itens, vazio, acao, cor, labelBotao = 'abrir') => (
@@ -349,10 +363,12 @@ export default function PainelTecnico() {
               <button onClick={() => navigate(destino('agendado'))} style={btn(ORANGE)}><span><i className="ti ti-clipboard-check" /> Finalizar atendimento</span><i className="ti ti-chevron-right" /></button>
               <button onClick={() => navigate(destino(''))} style={btn(AG_BLUE)}><span><i className="ti ti-calendar" /> Ver minha agenda</span><i className="ti ti-chevron-right" /></button>
               <button onClick={() => navigate(destino('realizado'))} style={btn(GREEN)}><span><i className="ti ti-history" /> Ver meus realizados</span><i className="ti ti-chevron-right" /></button>
-              <button onClick={imprimirMinhaAgenda} style={btn('#F1EFE8', '#5F5E5A')}><span><i className="ti ti-printer" /> Imprimir minha agenda</span><i className="ti ti-printer" /></button>
+              <button onClick={() => imprimirAgendaPeriodo('dia')} style={btn('#F1EFE8', '#5F5E5A')}><span><i className="ti ti-printer" /> Imprimir agenda de hoje</span><i className="ti ti-calendar" /></button>
+              <button onClick={() => imprimirAgendaPeriodo('semana')} style={btn('#F1EFE8', '#5F5E5A')}><span><i className="ti ti-printer" /> Imprimir agenda da semana</span><i className="ti ti-calendar-week" /></button>
+              <button onClick={() => imprimirAgendaPeriodo('mes')} style={btn('#F1EFE8', '#5F5E5A')}><span><i className="ti ti-printer" /> Imprimir agenda do mês</span><i className="ti ti-calendar-month" /></button>
             </div>
             <div style={{ marginTop:12, padding:'10px 12px', borderRadius:12, background:'rgba(14,126,168,0.06)', color:'#5F5E5A', fontSize:11.5, lineHeight:1.45 }}>
-              O sistema já filtra automaticamente pelo seu vínculo técnico. Não é necessário escolher profissional.
+              O sistema já filtra automaticamente pelo seu vínculo técnico. As impressões diária, semanal e mensal saem somente com a sua agenda.
             </div>
           </div>
 
