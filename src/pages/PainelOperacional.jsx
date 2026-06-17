@@ -102,7 +102,7 @@ export default function PainelOperacional() {
           </button>
           <button onClick={() => navigate('/atendimentos')}
             style={{ padding: isMobile ? '6px 10px' : '7px 16px', fontSize: isMobile ? 11 : 12, fontWeight: 700, borderRadius: 9, border: '0.5px solid rgba(14,126,168,0.25)', background: 'rgba(14,126,168,0.08)', color: '#06344F', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <i className="ti ti-clipboard-plus" /> Atendimento
+            <i className="ti ti-clipboard-list" /> Ver atendimentos
           </button>
           {!isMobile && (
             <button onClick={() => navigate('/usuarios-atendidos')}
@@ -154,7 +154,7 @@ export default function PainelOperacional() {
               style={{ marginTop: 10, width: '100%', background: AG_BLUE, border: 'none', borderRadius: 10, padding: '11px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <i className="ti ti-user-plus" /> + Cadastrar usuário atendido
             </button>
-            <button onClick={() => navigate('/atendimentos')}
+            <button onClick={() => navigate('/atendimentos?novo=1')}
               style={{ marginTop: 8, width: '100%', background: '#06344F', border: 'none', borderRadius: 10, padding: '11px 14px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <i className="ti ti-clipboard-plus" /> + Registrar atendimento TEAcolher
             </button>

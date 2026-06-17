@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
+import { useLocation } from 'react-router-dom'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -46,6 +47,7 @@ const FORM_VAZIO = {
 export default function Atendimentos() {
   const isMobile = useIsMobile()
   const { user, perfil } = useAuth()
+  const location = useLocation()
   const [atendimentos, setAtendimentos] = useState([])
   const [limite, setLimite] = useState(300)
   const [temMais, setTemMais] = useState(false)
@@ -70,6 +72,15 @@ export default function Atendimentos() {
     supabase.from('usuarios_atendidos').select('id,nome,situacao,projeto_id').eq('situacao','ativo').order('nome').then(({ data }) => setUsuariosAtendidos(data || []))
     carregar()
   }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('novo') === '1') {
+      setEditando(null)
+      setForm(FORM_VAZIO)
+      setMostrarForm(true)
+    }
+  }, [location.search])
 
   async function carregar() {
     setLoading(true)
