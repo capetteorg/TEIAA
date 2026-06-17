@@ -2351,27 +2351,66 @@ export function gerarPDFAtendimentos(dados = {}, periodoLabel, opts = {}) {
 // Agenda limpa do TEAcolher — pode ser usada por painel operacional ou técnico
 export function gerarPDFAgendaTeacolher(lista = [], titulo = 'Agenda TEAcolher', opts = {}) {
   const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-AGENDA`
-  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
   const nomeAtendido = a => a.usuario_atendido?.nome || a.usuario?.nome || a.pessoa_atendida || 'Usuário/família'
   const nomeProf = a => a.profissional?.nome || a.equipe?.nome || a.profissional_nome || '—'
   const subtitulo = opts.subtitulo || opts.periodoLabel || 'Agenda do Projeto TEAcolher'
+  const ocultarProf = !!opts.ocultarProfissional
+  const nCols = ocultarProf ? 4 : 5
 
-  const linhas = (Array.isArray(lista) ? lista : []).map(a => `<tr>
-    <td style="white-space:nowrap">${fmtData(a.data_atend)}</td>
-    <td style="white-space:nowrap">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
-    <td><strong>${esc(nomeAtendido(a))}</strong></td>
-    <td>${esc(nomeProf(a))}</td>
-    <td>${esc(a.area_atendimento || a.etapa_fluxo || a.tipo_atend || 'Atendimento')}</td>
-    <td>${esc(a.situacao || 'agendado')}</td>
-  </tr>`).join('')
+  // Cabeçalho de cada grupo de dia: "Quarta-feira, 17/06/2026"
+  const cabecalhoDia = d => {
+    if (!d) return 'Sem data definida'
+    const dt = new Date(d + 'T12:00:00')
+    const dia = dt.toLocaleDateString('pt-BR', { weekday: 'long' })
+    return dia.charAt(0).toUpperCase() + dia.slice(1) + ', ' + dt.toLocaleDateString('pt-BR')
+  }
+
+  // Cor da faixa lateral de cada linha, conforme a situação
+  const corSituacao = s => {
+    const v = (s || '').toLowerCase()
+    if (v.includes('realiz')) return 'var(--green)'
+    if (v.includes('cancel') || v.includes('falt')) return 'var(--red)'
+    return 'var(--agendo)'
+  }
+
+  const itens = Array.isArray(lista) ? lista : []
+  const total = itens.length
+  const realizados = itens.filter(a => (a.situacao || '').toLowerCase().includes('realiz')).length
+  const pendentes = total - realizados
+
+  // Agrupa por data, mantendo a ordem de chegada (a lista já vem ordenada por data/hora)
+  const grupos = []
+  itens.forEach(a => {
+    const chave = a.data_atend || ''
+    let g = grupos.find(g => g.chave === chave)
+    if (!g) { g = { chave, itens: [] }; grupos.push(g) }
+    g.itens.push(a)
+  })
+
+  const corpo = grupos.map(g => {
+    const linhaDia = `<tr><td colspan="${nCols}" style="background:var(--soft);font-weight:700;font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--agendo-dark);padding:7px 9px;border-bottom:1px solid var(--line)">${cabecalhoDia(g.chave)}</td></tr>`
+    const linhasItens = g.itens.map(a => `<tr style="border-left:3px solid ${corSituacao(a.situacao)}">
+      <td style="white-space:nowrap">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
+      <td><strong>${esc(nomeAtendido(a))}</strong></td>
+      ${ocultarProf ? '' : `<td>${esc(nomeProf(a))}</td>`}
+      <td>${esc(a.area_atendimento || a.etapa_fluxo || a.tipo_atend || 'Atendimento')}</td>
+      <td>${esc(a.situacao || 'agendado')}</td>
+    </tr>`).join('')
+    return linhaDia + linhasItens
+  }).join('')
 
   const html = `<div class="pg">
     ${htmlCabecalho({ titulo, sub:subtitulo, ref:protocolo })}
-    <div class="secao-titulo secao-titulo-azul">Agenda limpa para impressão</div>
+    <div class="resumo-grid" style="margin-bottom:16px">
+      <div class="resumo-item"><div class="resumo-label">Total no período</div><div class="resumo-valor azul">${total}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Realizados</div><div class="resumo-valor verde">${realizados}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Pendentes</div><div class="resumo-valor">${pendentes}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Período</div><div class="resumo-valor" style="font-size:10px">${esc(opts.periodoLabel || '—')}</div></div>
+    </div>
     <table>
-      <thead><tr><th>Data</th><th>Hora</th><th>Usuário/família</th><th>Profissional</th><th>Atendimento</th><th>Situação</th></tr></thead>
-      <tbody>${linhas || '<tr><td colspan="6" style="text-align:center;color:#9199A2;padding:12px">Nenhum item na agenda</td></tr>'}</tbody>
+      <thead><tr><th>Hora</th><th>Usuário/família</th>${ocultarProf ? '' : '<th>Profissional</th>'}<th>Atendimento</th><th>Situação</th></tr></thead>
+      <tbody>${corpo || `<tr><td colspan="${nCols}" style="text-align:center;color:#9199A2;padding:12px">Nenhum item na agenda</td></tr>`}</tbody>
     </table>
     ${htmlRodape({ protocolo })}
   </div>`
@@ -2808,6 +2847,7 @@ export function gerarPDFAgendaTecnicoTeacolher(lista = [], opts = {}) {
     ...opts,
     subtitulo,
     periodoLabel: periodo,
+    ocultarProfissional: true,
     protocolo: opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-AGENDA-TEC`,
   })
 }
