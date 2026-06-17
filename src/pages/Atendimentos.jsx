@@ -453,12 +453,19 @@ export default function Atendimentos() {
     `)
   }
 
+  function rolarParaFormulario() {
+    setTimeout(() => {
+      const el = document.getElementById('form-atendimento-teacolher')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 120)
+  }
+
   function abrirNovoAgendamento(teaId = projetoTeacolherId) {
     setForm({ ...FORM_VAZIO, projeto_id: teaId || '' })
     setEditando(null)
     setModoResultado(false)
     setMostrarForm(true)
-    window.scrollTo(0, 0)
+    rolarParaFormulario()
   }
 
   function fecharForm() {
@@ -517,7 +524,8 @@ export default function Atendimentos() {
     setEditando(a.id)
     setModoResultado(finalizar || !ehAgendado(a))
     setMostrarForm(true)
-    window.scrollTo(0, 0)
+    setMsg(finalizar ? 'Formulário de finalização aberto abaixo da lista.' : 'Formulário de edição aberto abaixo da lista.')
+    rolarParaFormulario()
   }
 
   function togglePublico(pub) {
@@ -693,8 +701,132 @@ export default function Atendimentos() {
         </div>
       )}
 
+
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1rem' }}>
+        {[
+          { label:'Famílias acompanhadas', val:familiasAcompanhadas, cor:ESCURO },
+          { label:'Agendados', val:totalAgendados, cor:AZUL },
+          { label:'Hoje', val:hojeAgendados, cor:ESCURO },
+          { label:'A finalizar', val:totalFinalizar, cor:LARANJA },
+          { label:'Realizados', val:totalRealizados, cor:VERDE },
+          { label:'Faltas/remarcações', val:faltasRemarcacoes, cor:VERMELHO },
+          { label:'Encaminhados', val:totalEncaminhados, cor:'#854F0B' },
+          { label:'Devolutivas', val:totalDevolutivas, cor:'#3B6D11' },
+        ].map(m => (
+          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
+            <div style={{ fontSize:20, fontWeight:700, color:m.cor }}>{m.val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ ...s.card, marginBottom:'1rem' }}>
+        <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Filtros da agenda e execução</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8 }}>
+          <div>
+            <label style={s.label}>Data início</label>
+            <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
+          </div>
+          <div>
+            <label style={s.label}>Data fim</label>
+            <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
+          </div>
+          <div>
+            <label style={s.label}>Profissional</label>
+            {isTecnico ? (
+              <input value={profissional(tecnicoEquipeId)?.nome || 'Minha agenda'} readOnly style={{ ...s.input, background:'#F8FAFC', color:ESCURO, fontWeight:600 }} />
+            ) : (
+              <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
+                <option value="">Todos</option>
+                {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
+              </select>
+            )}
+          </div>
+          <div>
+            <label style={s.label}>Situação</label>
+            <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
+              <option value="">Todas</option>
+              {SITUACOES.map(sit => <option key={sit} value={sit}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:8, marginTop:8 }}>
+          <button onClick={() => carregar(filtros, projetoTeacolherId)} style={s.btn(AZUL)}>Filtrar</button>
+          <button onClick={() => { const limpa = { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' }; setFiltros(limpa); carregar(limpa, projetoTeacolherId) }} style={s.btn('#F1EFE8', '#5F5E5A')}>Limpar filtros</button>
+        </div>
+      </div>
+
+      <div style={s.card}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
+          <div>
+            <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>
+              {isTecnico ? `${atendimentos.length} registros na minha agenda` : `${atendimentos.length} registros TEAcolher`}
+            </div>
+            {(filtros.situacao || filtros.profissional_id || filtros.dataInicio || filtros.dataFim) && (
+              <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
+                {isTecnico ? 'Lista filtrada dentro da sua agenda técnica.' : 'Lista filtrada. Os cards acima contam todos os atendimentos do TEAcolher.'}
+              </div>
+            )}
+          </div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <button onClick={imprimirAgenda} style={s.btn('#F1EFE8', '#5F5E5A')}>
+              {isTecnico ? 'Imprimir minha agenda' : 'Imprimir lista'}
+            </button>
+            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ padding:'1.25rem', color:'#888780', fontSize:12 }}>Carregando agenda...</div>
+        ) : atendimentos.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento TEAcolher encontrado nesta lista</div>
+            <div style={{ fontSize:12, color:'#888780', maxWidth:560, margin:'0 auto' }}>
+              {isTecnico
+                ? (filtros.situacao ? `Você está filtrando por "${filtros.situacao}" dentro da sua agenda.` : 'Não há atendimentos direcionados a você nesta lista.')
+                : (filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.')}
+            </div>
+            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
+          </div>
+        ) : (
+          <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead style={{ position:'sticky', top:0 }}>
+                <tr>{['Data', 'Hora', 'Usuário/família', 'Etapa', 'Área', 'Profissional', 'Situação', 'Desfecho', 'Ações'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {atendimentos.map((a, i) => {
+                  const [bg, cor] = SITUACAO_COR[a.situacao] || ['#F1EFE8', '#888780']
+                  return (
+                    <tr key={a.id} style={{ background:i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
+                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(a.data_atend)}</td>
+                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtHora(a.hora_inicio)}</td>
+                      <td style={{ ...s.td, fontWeight:600, maxWidth:170, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</td>
+                      <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{etapaAtendimento(a)}</td>
+                      <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.area_atendimento || '—'}</td>
+                      <td style={{ ...s.td, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profissionalNome(a.profissional_id)}</td>
+                      <td style={s.td}><span style={s.badge(bg, cor)}>{a.situacao}</span></td>
+                      <td style={{ ...s.td, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desfecho_teacolher || '—'}</td>
+                      <td style={s.td}>
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                          {podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
+                          {podeEditarAgendamento && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
+                          {podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
+                          <button onClick={() => imprimirFicha(a)} style={s.btn('#EEF2F7', '#334155')}>Imprimir ficha</button>
+                          {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={s.btn('#FCEBEB', '#A32D2D')}>Excluir</button>}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {mostrarForm && podeAcessarFormulario && (
-        <div style={{ ...s.card, borderColor: modoResultado ? '#C0DD97' : 'rgba(14,126,168,0.35)' }}>
+        <div id="form-atendimento-teacolher" style={{ ...s.card, borderColor: modoResultado ? '#C0DD97' : 'rgba(14,126,168,0.35)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
             <span style={{ ...s.badge(modoResultado ? '#EAF3DE' : '#E6F1FB', modoResultado ? '#3B6D11' : '#185FA5') }}>
               {modoResultado ? '2. Finalização técnica' : '1. Agendamento'}
@@ -945,128 +1077,6 @@ export default function Atendimentos() {
         </div>
       )}
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1rem' }}>
-        {[
-          { label:'Famílias acompanhadas', val:familiasAcompanhadas, cor:ESCURO },
-          { label:'Agendados', val:totalAgendados, cor:AZUL },
-          { label:'Hoje', val:hojeAgendados, cor:ESCURO },
-          { label:'A finalizar', val:totalFinalizar, cor:LARANJA },
-          { label:'Realizados', val:totalRealizados, cor:VERDE },
-          { label:'Faltas/remarcações', val:faltasRemarcacoes, cor:VERMELHO },
-          { label:'Encaminhados', val:totalEncaminhados, cor:'#854F0B' },
-          { label:'Devolutivas', val:totalDevolutivas, cor:'#3B6D11' },
-        ].map(m => (
-          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-            <div style={{ fontSize:20, fontWeight:700, color:m.cor }}>{m.val}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ ...s.card, marginBottom:'1rem' }}>
-        <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Filtros da agenda e execução</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8 }}>
-          <div>
-            <label style={s.label}>Data início</label>
-            <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
-          </div>
-          <div>
-            <label style={s.label}>Data fim</label>
-            <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
-          </div>
-          <div>
-            <label style={s.label}>Profissional</label>
-            {isTecnico ? (
-              <input value={profissional(tecnicoEquipeId)?.nome || 'Minha agenda'} readOnly style={{ ...s.input, background:'#F8FAFC', color:ESCURO, fontWeight:600 }} />
-            ) : (
-              <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
-                <option value="">Todos</option>
-                {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
-              </select>
-            )}
-          </div>
-          <div>
-            <label style={s.label}>Situação</label>
-            <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
-              <option value="">Todas</option>
-              {SITUACOES.map(sit => <option key={sit} value={sit}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{ display:'flex', gap:8, marginTop:8 }}>
-          <button onClick={() => carregar(filtros, projetoTeacolherId)} style={s.btn(AZUL)}>Filtrar</button>
-          <button onClick={() => { const limpa = { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' }; setFiltros(limpa); carregar(limpa, projetoTeacolherId) }} style={s.btn('#F1EFE8', '#5F5E5A')}>Limpar filtros</button>
-        </div>
-      </div>
-
-      <div style={s.card}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
-          <div>
-            <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>
-              {isTecnico ? `${atendimentos.length} registros na minha agenda` : `${atendimentos.length} registros TEAcolher`}
-            </div>
-            {(filtros.situacao || filtros.profissional_id || filtros.dataInicio || filtros.dataFim) && (
-              <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
-                {isTecnico ? 'Lista filtrada dentro da sua agenda técnica.' : 'Lista filtrada. Os cards acima contam todos os atendimentos do TEAcolher.'}
-              </div>
-            )}
-          </div>
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            <button onClick={imprimirAgenda} style={s.btn('#F1EFE8', '#5F5E5A')}>
-              {isTecnico ? 'Imprimir minha agenda' : 'Imprimir lista'}
-            </button>
-            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
-          </div>
-        </div>
-
-        {loading ? (
-          <div style={{ padding:'1.25rem', color:'#888780', fontSize:12 }}>Carregando agenda...</div>
-        ) : atendimentos.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-            <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', marginBottom:4 }}>Nenhum atendimento TEAcolher encontrado nesta lista</div>
-            <div style={{ fontSize:12, color:'#888780', maxWidth:560, margin:'0 auto' }}>
-              {isTecnico
-                ? (filtros.situacao ? `Você está filtrando por "${filtros.situacao}" dentro da sua agenda.` : 'Não há atendimentos direcionados a você nesta lista.')
-                : (filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.')}
-            </div>
-            {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
-          </div>
-        ) : (
-          <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-              <thead style={{ position:'sticky', top:0 }}>
-                <tr>{['Data', 'Hora', 'Usuário/família', 'Etapa', 'Área', 'Profissional', 'Situação', 'Desfecho', 'Ações'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {atendimentos.map((a, i) => {
-                  const [bg, cor] = SITUACAO_COR[a.situacao] || ['#F1EFE8', '#888780']
-                  return (
-                    <tr key={a.id} style={{ background:i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
-                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(a.data_atend)}</td>
-                      <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtHora(a.hora_inicio)}</td>
-                      <td style={{ ...s.td, fontWeight:600, maxWidth:170, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</td>
-                      <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{etapaAtendimento(a)}</td>
-                      <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.area_atendimento || '—'}</td>
-                      <td style={{ ...s.td, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profissionalNome(a.profissional_id)}</td>
-                      <td style={s.td}><span style={s.badge(bg, cor)}>{a.situacao}</span></td>
-                      <td style={{ ...s.td, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desfecho_teacolher || '—'}</td>
-                      <td style={s.td}>
-                        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                          {podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
-                          {podeEditarAgendamento && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
-                          {podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
-                          <button onClick={() => imprimirFicha(a)} style={s.btn('#EEF2F7', '#334155')}>Imprimir ficha</button>
-                          {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={s.btn('#FCEBEB', '#A32D2D')}>Excluir</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
