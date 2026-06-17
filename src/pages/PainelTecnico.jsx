@@ -8,6 +8,7 @@ const AG_BLUE = '#0E7EA8'
 const DARK = '#06344F'
 const GREEN = '#6BBF2B'
 const ORANGE = '#F4821F'
+const RED = '#E63214'
 const TOPBAR_H = 62
 
 const card = {
@@ -19,9 +20,11 @@ const card = {
 
 export default function PainelTecnico() {
   const navigate = useNavigate()
-  const { perfil } = useAuth()
+  const { perfil, user } = useAuth()
   const isMobile = useIsMobile()
   const [loading, setLoading] = useState(true)
+  const [msg, setMsg] = useState('')
+  const [profissionalAtual, setProfissionalAtual] = useState({ id: null, nome: '', funcao: '' })
   const [dados, setDados] = useState({ hoje: 0, finalizar: 0, realizadosMes: 0, acompanhados: 0 })
   const [agendaHoje, setAgendaHoje] = useState([])
   const [pendentes, setPendentes] = useState([])
@@ -29,16 +32,49 @@ export default function PainelTecnico() {
 
   useEffect(() => {
     let mounted = true
+
     async function carregar() {
       setLoading(true)
+      setMsg('')
+
       const hoje = new Date().toISOString().slice(0, 10)
       const inicioMes = hoje.slice(0, 8) + '01'
 
-      const { data: projetos } = await supabase
-        .from('projetos')
-        .select('id,nome')
-        .eq('aceita_atendimentos', true)
-        .order('nome')
+      let equipeId = perfil?.equipe_id || null
+
+      if (!equipeId && user?.id) {
+        const { data: usuarioPerfil } = await supabase
+          .from('usuarios')
+          .select('equipe_id')
+          .eq('id', user.id)
+          .maybeSingle()
+        equipeId = usuarioPerfil?.equipe_id || null
+      }
+
+      if (!equipeId) {
+        if (!mounted) return
+        setProfissionalAtual({ id: null, nome: perfil?.nome || 'Técnico', funcao: '' })
+        setDados({ hoje: 0, finalizar: 0, realizadosMes: 0, acompanhados: 0 })
+        setAgendaHoje([])
+        setPendentes([])
+        setRealizados([])
+        setMsg('Este usuário técnico ainda não está vinculado a um profissional da equipe. Vincule o campo equipe_id na tabela usuarios.')
+        setLoading(false)
+        return
+      }
+
+      const [{ data: projetos }, { data: profissional }] = await Promise.all([
+        supabase
+          .from('projetos')
+          .select('id,nome')
+          .eq('aceita_atendimentos', true)
+          .order('nome'),
+        supabase
+          .from('equipe')
+          .select('id,nome,funcao')
+          .eq('id', equipeId)
+          .maybeSingle(),
+      ])
 
       const projetoTea = (projetos || []).find(p => String(p.nome || '').toLowerCase().includes('teacolher'))
       const projetoId = projetoTea?.id
@@ -52,15 +88,70 @@ export default function PainelTecnico() {
       let realizadosLista = []
 
       if (projetoId) {
+        const selectLista = 'id,data_atend,hora_inicio,hora_fim,pessoa_atendida,usuario_atendido_id,etapa_fluxo,tipo_atend,situacao,area_atendimento,modalidade_atendimento,comparecimento,desfecho_teacolher,profissional_id'
+
         const [hojeRes, finalizarRes, realizadosRes, listaHoje, listaPendentes, listaRealizados, acompanhadosRes] = await Promise.all([
-          supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoId).eq('data_atend', hoje).in('situacao', ['agendado','reagendado']),
-          supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoId).lte('data_atend', hoje).in('situacao', ['agendado','reagendado']),
-          supabase.from('atendimentos').select('id', { count:'exact', head:true }).eq('projeto_id', projetoId).gte('data_atend', inicioMes).eq('situacao', 'realizado'),
-          supabase.from('atendimentos').select('id,data_atend,hora_inicio,pessoa_atendida,etapa_fluxo,tipo_atend,situacao').eq('projeto_id', projetoId).eq('data_atend', hoje).in('situacao', ['agendado','reagendado']).order('hora_inicio', { ascending:true }).limit(6),
-          supabase.from('atendimentos').select('id,data_atend,hora_inicio,pessoa_atendida,etapa_fluxo,tipo_atend,situacao').eq('projeto_id', projetoId).lte('data_atend', hoje).in('situacao', ['agendado','reagendado']).order('data_atend', { ascending:true }).order('hora_inicio', { ascending:true }).limit(6),
-          supabase.from('atendimentos').select('id,data_atend,hora_inicio,pessoa_atendida,etapa_fluxo,tipo_atend,situacao').eq('projeto_id', projetoId).eq('situacao', 'realizado').order('data_atend', { ascending:false }).limit(6),
-          supabase.from('atendimentos').select('usuario_atendido_id').eq('projeto_id', projetoId).not('usuario_atendido_id', 'is', null),
+          supabase
+            .from('atendimentos')
+            .select('id', { count:'exact', head:true })
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .eq('data_atend', hoje)
+            .in('situacao', ['agendado','reagendado']),
+          supabase
+            .from('atendimentos')
+            .select('id', { count:'exact', head:true })
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .lte('data_atend', hoje)
+            .in('situacao', ['agendado','reagendado']),
+          supabase
+            .from('atendimentos')
+            .select('id', { count:'exact', head:true })
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .gte('data_atend', inicioMes)
+            .eq('situacao', 'realizado'),
+          supabase
+            .from('atendimentos')
+            .select(selectLista)
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .eq('data_atend', hoje)
+            .in('situacao', ['agendado','reagendado'])
+            .order('hora_inicio', { ascending:true })
+            .limit(8),
+          supabase
+            .from('atendimentos')
+            .select(selectLista)
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .lte('data_atend', hoje)
+            .in('situacao', ['agendado','reagendado'])
+            .order('data_atend', { ascending:true })
+            .order('hora_inicio', { ascending:true })
+            .limit(8),
+          supabase
+            .from('atendimentos')
+            .select(selectLista)
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .eq('situacao', 'realizado')
+            .order('data_atend', { ascending:false })
+            .limit(8),
+          supabase
+            .from('atendimentos')
+            .select('usuario_atendido_id')
+            .eq('projeto_id', projetoId)
+            .eq('profissional_id', equipeId)
+            .not('usuario_atendido_id', 'is', null),
         ])
+
+        const erro = hojeRes.error || finalizarRes.error || realizadosRes.error || listaHoje.error || listaPendentes.error || listaRealizados.error || acompanhadosRes.error
+        if (erro) {
+          setMsg('Erro ao carregar sua agenda técnica: ' + erro.message)
+        }
+
         hojeCount = hojeRes.count || 0
         finalizarCount = finalizarRes.count || 0
         realizadosCount = realizadosRes.count || 0
@@ -71,44 +162,140 @@ export default function PainelTecnico() {
       }
 
       if (!mounted) return
+      setProfissionalAtual({
+        id: equipeId,
+        nome: profissional?.nome || perfil?.nome || 'Técnico',
+        funcao: profissional?.funcao || '',
+      })
       setDados({ hoje: hojeCount, finalizar: finalizarCount, realizadosMes: realizadosCount, acompanhados })
       setAgendaHoje(hojeLista)
       setPendentes(pendentesLista)
       setRealizados(realizadosLista)
       setLoading(false)
     }
+
     carregar()
     return () => { mounted = false }
-  }, [])
+  }, [perfil?.equipe_id, perfil?.nome, user?.id])
 
   const fmtData = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const fmtHora = h => h ? String(h).slice(0, 5) : ''
-  const nome = perfil?.nome?.split(' ')[0] || 'Técnico'
+  const nome = (profissionalAtual.nome || perfil?.nome || 'Técnico').split(' ')[0]
   const hora = new Date().getHours()
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
   const detalhe = a => [a.etapa_fluxo || a.tipo_atend || 'Atendimento', fmtData(a.data_atend), fmtHora(a.hora_inicio)].filter(Boolean).join(' · ')
+  const destino = situacao => situacao ? `/atendimentos?situacao=${situacao}` : '/atendimentos'
 
-  const btn = (bg, color = '#fff') => ({ border:'none', borderRadius:12, padding:'12px 14px', background:bg, color, fontWeight:800, cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10 })
+  const btn = (bg, color = '#fff') => ({
+    border:'none',
+    borderRadius:12,
+    padding:'12px 14px',
+    background:bg,
+    color,
+    fontWeight:800,
+    cursor:'pointer',
+    textAlign:'left',
+    display:'flex',
+    alignItems:'center',
+    gap:10,
+    justifyContent:'space-between',
+  })
 
-  const lista = (titulo, subtitulo, itens, vazio, acao, cor) => (
+  function imprimirMinhaAgenda() {
+    const itens = [...agendaHoje]
+    pendentes.forEach(p => {
+      if (!itens.some(i => String(i.id) === String(p.id))) itens.push(p)
+    })
+    itens.sort((a, b) => String(a.data_atend || '').localeCompare(String(b.data_atend || '')) || String(a.hora_inicio || '').localeCompare(String(b.hora_inicio || '')))
+
+    const esc = v => String(v || '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]))
+    const linhas = itens.length
+      ? itens.map(a => `
+        <tr>
+          <td>${esc(fmtData(a.data_atend))}</td>
+          <td>${esc(fmtHora(a.hora_inicio))}</td>
+          <td>${esc(a.pessoa_atendida || 'Usuário/família')}</td>
+          <td>${esc(a.etapa_fluxo || a.tipo_atend || 'Atendimento')}</td>
+          <td>${esc(a.situacao || '')}</td>
+        </tr>
+      `).join('')
+      : '<tr><td colspan="5" class="vazio">Nenhum atendimento encontrado para impressão.</td></tr>'
+
+    const w = window.open('', '_blank', 'width=920,height=700')
+    if (!w) {
+      window.print()
+      return
+    }
+
+    w.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Minha agenda TEAcolher</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #1f2933; margin: 28px; }
+  .topo { border-bottom: 2px solid #0E7EA8; padding-bottom: 12px; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 20px; color: #06344F; }
+  .sub { margin-top: 6px; font-size: 12px; color: #5F5E5A; line-height: 1.45; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  th { text-align: left; background: #F3F7FA; color: #06344F; font-size: 11px; padding: 9px; border: 1px solid #DDE6EE; }
+  td { font-size: 11px; padding: 9px; border: 1px solid #E5E7EB; vertical-align: top; }
+  .vazio { text-align: center; color: #777; padding: 24px; }
+  .rodape { margin-top: 18px; font-size: 10px; color: #777; }
+  @media print { body { margin: 18px; } }
+</style>
+</head>
+<body>
+  <div class="topo">
+    <h1>Minha agenda TEAcolher</h1>
+    <div class="sub">
+      Profissional: <strong>${esc(profissionalAtual.nome || perfil?.nome || 'Técnico')}</strong>${profissionalAtual.funcao ? ' · ' + esc(profissionalAtual.funcao) : ''}<br />
+      Impressão gerada em ${esc(new Date().toLocaleString('pt-BR'))}
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Hora</th>
+        <th>Usuário/família</th>
+        <th>Atendimento</th>
+        <th>Situação</th>
+      </tr>
+    </thead>
+    <tbody>${linhas}</tbody>
+  </table>
+  <div class="rodape">AGENDO Integra · TEIAA · Projeto TEAcolher</div>
+</body>
+</html>`)
+    w.document.close()
+    w.focus()
+    setTimeout(() => {
+      w.print()
+      w.close()
+    }, 300)
+  }
+
+  const lista = (titulo, subtitulo, itens, vazio, acao, cor, labelBotao = 'abrir') => (
     <div style={{ ...card, padding:16 }}>
       <div style={{ display:'flex', justifyContent:'space-between', gap:8, alignItems:'center', marginBottom:12 }}>
         <div>
           <div style={{ fontSize:14, fontWeight:800, color:DARK }}>{titulo}</div>
           <div style={{ fontSize:11.5, color:'#888780', marginTop:2 }}>{subtitulo}</div>
         </div>
-        <button onClick={acao} style={{ fontSize:11, border:'none', borderRadius:99, background:cor, color:'#fff', padding:'5px 10px', fontWeight:700, cursor:'pointer' }}>abrir</button>
+        <button onClick={acao} style={{ fontSize:11, border:'none', borderRadius:99, background:cor, color:'#fff', padding:'5px 10px', fontWeight:700, cursor:'pointer' }}>{labelBotao}</button>
       </div>
-      {loading ? <div style={{ fontSize:12, color:'#B4B2A9', padding:'1rem 0', textAlign:'center' }}>Carregando...</div> : itens.length === 0 ? (
+      {loading ? <div style={{ fontSize:12, color:'#B4B2A9', padding:'1rem 0', textAlign:'center' }}>Carregando sua agenda...</div> : itens.length === 0 ? (
         <div style={{ fontSize:12, color:'#99978F', padding:'1rem 0', textAlign:'center' }}>{vazio}</div>
       ) : itens.map((a, i) => (
-        <div key={a.id || i} style={{ display:'flex', justifyContent:'space-between', gap:10, padding:'9px 0', borderBottom:i < itens.length - 1 ? '0.5px solid #F1EFE8' : 'none' }}>
+        <button key={a.id || i} onClick={() => acao()} style={{ width:'100%', border:'none', background:'transparent', textAlign:'left', display:'flex', justifyContent:'space-between', gap:10, padding:'10px 0', borderBottom:i < itens.length - 1 ? '0.5px solid #F1EFE8' : 'none', cursor:'pointer' }}>
           <div style={{ minWidth:0 }}>
-            <div style={{ fontSize:12.5, fontWeight:700, color:'#2C2C2A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.pessoa_atendida || 'Usuário/família'}</div>
+            <div style={{ fontSize:12.5, fontWeight:800, color:'#2C2C2A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.pessoa_atendida || 'Usuário/família'}</div>
             <div style={{ fontSize:11, color:'#7A7974', marginTop:2 }}>{detalhe(a)}</div>
           </div>
-          <span style={{ fontSize:10.5, color:cor, fontWeight:700, flexShrink:0 }}>{a.situacao}</span>
-        </div>
+          <span style={{ fontSize:10.5, color:cor, fontWeight:800, flexShrink:0 }}>{a.situacao}</span>
+        </button>
       ))}
     </div>
   )
@@ -118,23 +305,34 @@ export default function PainelTecnico() {
       <div style={{ height:TOPBAR_H, background:'rgba(255,255,255,0.82)', borderBottom:'0.5px solid #E0DDD5', padding:isMobile ? '0 12px' : '0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:5 }}>
         <div>
           <div style={{ fontSize:isMobile ? 17 : 20, fontWeight:800, color:DARK }}>{saudacao}, {nome}!</div>
-          <div style={{ fontSize:12, color:'#6B6A66', marginTop:3 }}>Painel técnico do Projeto TEAcolher</div>
+          <div style={{ fontSize:12, color:'#6B6A66', marginTop:3 }}>
+            Minha agenda técnica · Projeto TEAcolher
+            {profissionalAtual.funcao ? ` · ${profissionalAtual.funcao}` : ''}
+          </div>
         </div>
-        {!isMobile && <button onClick={() => navigate('/atendimentos?situacao=agendado')} style={btn(ORANGE)}><i className="ti ti-clipboard-check" /> Finalizar atendimentos</button>}
+        {!isMobile && <button onClick={() => navigate(destino('agendado'))} style={btn(ORANGE)}><span><i className="ti ti-clipboard-check" /> Finalizar meus atendimentos</span></button>}
       </div>
 
       <div style={{ padding:isMobile ? '12px' : '20px 24px', display:'grid', gap:14 }}>
+        {msg && (
+          <div style={{ ...card, padding:14, borderLeft:`3px solid ${RED}`, color:'#A32D2D', fontSize:12, fontWeight:700 }}>
+            {msg}
+          </div>
+        )}
+
         <div style={{ ...card, padding:16, borderLeft:'3px solid rgba(244,130,31,.6)' }}>
-          <div style={{ fontSize:14, fontWeight:800, color:DARK, marginBottom:4 }}>Sua função técnica</div>
-          <div style={{ fontSize:12, color:'#5F5E5A', lineHeight:1.45 }}>Você consulta a agenda, finaliza os atendimentos realizados e registra a evolução técnica, orientação à família, encaminhamentos e próxima ação.</div>
+          <div style={{ fontSize:14, fontWeight:800, color:DARK, marginBottom:4 }}>Sua rotina técnica</div>
+          <div style={{ fontSize:12, color:'#5F5E5A', lineHeight:1.45 }}>
+            Aqui aparece somente a sua agenda. Você finaliza apenas atendimentos direcionados ao seu usuário técnico e registra evolução, orientação familiar, encaminhamentos e próxima ação.
+          </div>
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns:isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap:10 }}>
           {[
-            ['Agenda hoje', dados.hoje, AG_BLUE],
-            ['Para finalizar', dados.finalizar, ORANGE],
-            ['Realizados no mês', dados.realizadosMes, GREEN],
-            ['Famílias acompanhadas', dados.acompanhados, DARK],
+            ['Minha agenda hoje', dados.hoje, AG_BLUE],
+            ['Meus pendentes', dados.finalizar, ORANGE],
+            ['Meus realizados no mês', dados.realizadosMes, GREEN],
+            ['Famílias acompanhadas por mim', dados.acompanhados, DARK],
           ].map(([label, value, color]) => (
             <div key={label} style={{ ...card, padding:'14px 16px', position:'relative', overflow:'hidden' }}>
               <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:color }} />
@@ -146,19 +344,22 @@ export default function PainelTecnico() {
 
         <div style={{ display:'grid', gridTemplateColumns:isMobile ? '1fr' : '360px 1fr', gap:14, alignItems:'start' }}>
           <div style={{ ...card, padding:16 }}>
-            <div style={{ fontSize:14, fontWeight:800, color:DARK, marginBottom:12 }}>Ações técnicas</div>
+            <div style={{ fontSize:14, fontWeight:800, color:DARK, marginBottom:12 }}>O que você quer fazer?</div>
             <div style={{ display:'grid', gap:10 }}>
-              <button onClick={() => navigate('/atendimentos?situacao=agendado')} style={btn(ORANGE)}><i className="ti ti-clipboard-check" /> Finalizar atendimento</button>
-              <button onClick={() => navigate('/atendimentos')} style={btn(AG_BLUE)}><i className="ti ti-calendar" /> Ver agenda técnica</button>
-              <button onClick={() => navigate('/atendimentos?situacao=realizado')} style={btn(GREEN)}><i className="ti ti-history" /> Histórico realizado</button>
-              <button onClick={() => window.print()} style={btn('#F1EFE8', '#5F5E5A')}><i className="ti ti-printer" /> Imprimir tela atual</button>
+              <button onClick={() => navigate(destino('agendado'))} style={btn(ORANGE)}><span><i className="ti ti-clipboard-check" /> Finalizar atendimento</span><i className="ti ti-chevron-right" /></button>
+              <button onClick={() => navigate(destino(''))} style={btn(AG_BLUE)}><span><i className="ti ti-calendar" /> Ver minha agenda</span><i className="ti ti-chevron-right" /></button>
+              <button onClick={() => navigate(destino('realizado'))} style={btn(GREEN)}><span><i className="ti ti-history" /> Ver meus realizados</span><i className="ti ti-chevron-right" /></button>
+              <button onClick={imprimirMinhaAgenda} style={btn('#F1EFE8', '#5F5E5A')}><span><i className="ti ti-printer" /> Imprimir minha agenda</span><i className="ti ti-printer" /></button>
+            </div>
+            <div style={{ marginTop:12, padding:'10px 12px', borderRadius:12, background:'rgba(14,126,168,0.06)', color:'#5F5E5A', fontSize:11.5, lineHeight:1.45 }}>
+              O sistema já filtra automaticamente pelo seu vínculo técnico. Não é necessário escolher profissional.
             </div>
           </div>
 
           <div style={{ display:'grid', gap:14 }}>
-            {lista('Agenda de hoje', 'Atendimentos técnicos marcados para hoje.', agendaHoje, 'Nenhum atendimento técnico na agenda de hoje.', () => navigate('/atendimentos'), AG_BLUE)}
-            {lista('Pendentes de finalização', 'Agendamentos que precisam de evolução/registro técnico.', pendentes, 'Não há pendências técnicas para finalizar.', () => navigate('/atendimentos?situacao=agendado'), ORANGE)}
-            {lista('Últimos realizados', 'Atendimentos finalizados recentemente.', realizados, 'Nenhum atendimento realizado ainda.', () => navigate('/atendimentos?situacao=realizado'), GREEN)}
+            {lista('Minha agenda de hoje', 'Somente atendimentos marcados para você hoje.', agendaHoje, 'Você não tem atendimento técnico na agenda de hoje.', () => navigate(destino('')), AG_BLUE, 'ver agenda')}
+            {lista('Meus atendimentos pendentes', 'Atendimentos seus que precisam de evolução/registro técnico.', pendentes, 'Você não tem pendências técnicas para finalizar.', () => navigate(destino('agendado')), ORANGE, 'finalizar')}
+            {lista('Meus últimos realizados', 'Atendimentos que você já finalizou recentemente.', realizados, 'Você ainda não finalizou atendimentos.', () => navigate(destino('realizado')), GREEN, 'histórico')}
           </div>
         </div>
       </div>

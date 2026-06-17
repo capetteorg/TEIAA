@@ -165,8 +165,8 @@ export default function Layout() {
     { to:'/aplicacoes', label:'Aplicações', icon:'chart-line', ok:p==='admin' },
     { to:'/planos-execucao', label:'Plano de Ação', icon:'clipboard-check', ok:p==='admin' },
     { to:'/projetos', label:'Projetos', icon:'folder', ok:p==='admin' },
-    { to:'/atendimentos', label:'Atendimentos', icon:'clipboard-list', ok:p==='admin'||p==='operacional'||p==='tecnico' },
-    { to:'/usuarios-atendidos', label:'Usuários Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
+    { to:'/atendimentos', label:p==='tecnico' ? 'Minha agenda' : p==='operacional' ? 'Agenda TEAcolher' : 'Atendimentos', icon:'clipboard-list', ok:p==='admin'||p==='operacional'||p==='tecnico' },
+    { to:'/usuarios-atendidos', label:p==='operacional' ? 'Usuários/famílias' : 'Usuários Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
     { to:'/equipe', label:'Equipe', icon:'users-group', ok:p==='admin' },
     { to:'/doacoes', label:'Doações', icon:'gift', ok:p==='admin' },
     { to:'/eventos-campanhas', label:'Eventos e Campanhas', icon:'calendar-event', ok:p==='admin' },
@@ -283,12 +283,12 @@ export default function Layout() {
 
         </>)}
         </>)}
-        <NavSecao colapsado={colapsado} label="Programas e projetos" aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")} />
+        <NavSecao colapsado={colapsado} label={p==='tecnico' ? 'Minha rotina' : p==='operacional' ? 'Atendimento TEAcolher' : 'Programas e projetos'} aberta={secVisivel("Programas e projetos")} onToggle={() => toggleSec("Programas e projetos")} />
         {secVisivel("Programas e projetos") && (<>
         <NavItem colapsado={colapsado} to="/planos-execucao"    icon="clipboard-check"   label="Plano de Ação"       visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/projetos"           icon="folder"            label="Projetos"            visivel={p==='admin'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label="Atendimentos"        visivel={p==='admin'||p==='operacional'||p==='tecnico'} onClick={fecharMenu} />
-        <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label="Usuários Atendidos"  visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/atendimentos"       icon="clipboard-list"    label={p==='tecnico' ? 'Minha agenda' : p==='operacional' ? 'Agenda TEAcolher' : 'Atendimentos'} visivel={p==='admin'||p==='operacional'||p==='tecnico'} onClick={fecharMenu} />
+        <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="users"             label={p==='operacional' ? 'Usuários/famílias' : 'Usuários Atendidos'} visivel={p==='admin'||p==='operacional'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/equipe"             icon="users-group"       label="Equipe"              visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/doacoes"            icon="gift"              label="Doações"             visivel={p==='admin'} onClick={fecharMenu} />
         <NavItem colapsado={colapsado} to="/eventos-campanhas"  icon="calendar-event"    label="Eventos e Campanhas" visivel={p==='admin'} onClick={fecharMenu} />
