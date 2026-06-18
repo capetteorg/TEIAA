@@ -30,6 +30,9 @@ export default function PainelOperacional() {
   const [proximos, setProximos] = useState([])
   const [equipe, setEquipe] = useState([])
   const [erro, setErro] = useState('')
+  const [fichaUsuario, setFichaUsuario] = useState(null) // modal de ficha
+  const [fichaAtendimentos, setFichaAtendimentos] = useState([])
+  const [fichaLoading, setFichaLoading] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -132,6 +135,20 @@ export default function PainelOperacional() {
 
   const proximosSemHoje = useMemo(() => proximos.filter(a => a.data_atend !== new Date().toISOString().slice(0, 10)).slice(0, 6), [proximos])
 
+  async function abrirFichaUsuario(usuarioId) {
+    if (!usuarioId) return
+    setFichaLoading(true)
+    setFichaUsuario(null)
+    setFichaAtendimentos([])
+    const [usuRes, atRes] = await Promise.all([
+      supabase.from('usuarios_atendidos').select('*').eq('id', usuarioId).single(),
+      supabase.from('atendimentos').select('id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,desfecho_teacolher,profissional_id').eq('usuario_atendido_id', usuarioId).order('data_atend', { ascending:false }).limit(30),
+    ])
+    setFichaUsuario(usuRes.data || null)
+    setFichaAtendimentos(atRes.data || [])
+    setFichaLoading(false)
+  }
+
   const botao = (bg, color = '#fff') => ({
     border:'none', borderRadius:14, padding:'15px 16px', background:bg, color, fontWeight:800,
     cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left', width:'100%', minHeight:66,
@@ -164,7 +181,9 @@ export default function PainelOperacional() {
         {isMobile && <div style={{ fontSize:11, color:'#667085' }}>{fmtData(a.data_atend)}</div>}
       </div>
       <div style={{ minWidth:0 }}>
-        <div style={{ fontSize:13.5, fontWeight:900, color:'#2C2C2A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.pessoa_atendida || 'Usuário/família'}</div>
+        <button onClick={() => abrirFichaUsuario(a.usuario_atendido_id)} style={{ border:'none', background:'none', padding:0, cursor:'pointer', textAlign:'left' }}>
+          <div style={{ fontSize:13.5, fontWeight:900, color:AG_BLUE, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textDecoration:'underline dotted' }}>{a.pessoa_atendida || 'Usuário/família'}</div>
+        </button>
         <div style={{ fontSize:11.5, color:'#667085', marginTop:3 }}>{!isMobile && `${fmtData(a.data_atend)} · `}{profissionalNome(a.profissional_id)}</div>
         <div style={{ fontSize:11, color:'#8B949E', marginTop:2 }}>{a.etapa_fluxo || a.tipo_atend || 'Atendimento TEAcolher'}</div>
       </div>
@@ -280,6 +299,59 @@ export default function PainelOperacional() {
           </div>
         </div>
       </div>
+
+      {/* Modal ficha do usuário */}
+      {(fichaLoading || fichaUsuario) && (
+        <div onClick={e => { if(e.target === e.currentTarget) { setFichaUsuario(null); setFichaAtendimentos([]) }}} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:999, display:'flex', alignItems:'flex-start', justifyContent:'flex-end' }}>
+          <div style={{ background:'#fff', width: isMobile ? '100%' : 460, height:'100vh', overflowY:'auto', boxShadow:'-4px 0 24px rgba(0,0,0,0.12)', padding:'24px 20px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <div style={{ fontSize:16, fontWeight:900, color:DARK }}>Ficha do usuário</div>
+              <button onClick={() => { setFichaUsuario(null); setFichaAtendimentos([]) }} style={{ border:'none', background:'#F1EFE8', borderRadius:8, padding:'5px 10px', cursor:'pointer', fontSize:12, color:'#5F5E5A' }}>Fechar</button>
+            </div>
+            {fichaLoading ? (
+              <div style={{ color:'#B4B2A9', fontSize:12, textAlign:'center', paddingTop:40 }}>Carregando...</div>
+            ) : fichaUsuario ? (<>
+              <div style={{ background:'#F7FAFC', borderRadius:12, padding:14, marginBottom:14 }}>
+                <div style={{ fontSize:17, fontWeight:900, color:DARK, marginBottom:6 }}>{fichaUsuario.nome}</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, fontSize:12 }}>
+                  {fichaUsuario.data_nascimento && <div><span style={{ color:'#888780' }}>Nascimento:</span> {fmtData(fichaUsuario.data_nascimento)}</div>}
+                  {fichaUsuario.tipo_deficiencia && <div><span style={{ color:'#888780' }}>Deficiência:</span> {fichaUsuario.tipo_deficiencia}</div>}
+                  {fichaUsuario.telefone && <div><span style={{ color:'#888780' }}>Tel:</span> {fichaUsuario.telefone}</div>}
+                  {fichaUsuario.contato_familiar_nome && <div><span style={{ color:'#888780' }}>Responsável:</span> {fichaUsuario.contato_familiar_nome}</div>}
+                  {fichaUsuario.contato_familiar_telefone && <div><span style={{ color:'#888780' }}>Tel responsável:</span> {fichaUsuario.contato_familiar_telefone}</div>}
+                  {fichaUsuario.data_ingresso && <div><span style={{ color:'#888780' }}>Ingresso:</span> {fmtData(fichaUsuario.data_ingresso)}</div>}
+                  <div><span style={{ color:'#888780' }}>Situação:</span> <span style={{ fontWeight:700, color: fichaUsuario.situacao === 'ativo' ? GREEN : RED }}>{fichaUsuario.situacao}</span></div>
+                </div>
+              </div>
+
+              <div style={{ display:'flex', gap:8, marginBottom:14 }}>
+                <button onClick={() => navigate(`/usuarios-atendidos`)} style={{ border:'none', borderRadius:8, background:AG_BLUE, color:'#fff', fontSize:11, fontWeight:800, padding:'7px 12px', cursor:'pointer' }}>Editar cadastro</button>
+                <button onClick={() => navigate(`/atendimentos?novo=1`)} style={{ border:'none', borderRadius:8, background:DARK, color:'#fff', fontSize:11, fontWeight:800, padding:'7px 12px', cursor:'pointer' }}>+ Agendar atendimento</button>
+              </div>
+
+              <div style={{ fontSize:13, fontWeight:700, color:DARK, marginBottom:8 }}>Histórico de atendimentos ({fichaAtendimentos.length})</div>
+              {fichaAtendimentos.length === 0 ? (
+                <div style={{ fontSize:12, color:'#B4B2A9', textAlign:'center', padding:'1.5rem 0' }}>Nenhum atendimento registrado.</div>
+              ) : fichaAtendimentos.map((a, i) => {
+                const corSit = { realizado:'#EAF3DE', agendado:'#E6F1FB', cancelado:'#FCEBEB', reagendado:'#FFF3E0' }[a.situacao] || '#F1EFE8'
+                const txtSit = { realizado:'#3B6D11', agendado:'#185FA5', cancelado:'#A32D2D', reagendado:'#854F0B' }[a.situacao] || '#5F5E5A'
+                const prof = equipe.find(e => String(e.id) === String(a.profissional_id))
+                return (
+                  <div key={a.id} onClick={() => navigate(`/atendimentos?abrir=${a.id}`)} style={{ padding:'10px 12px', borderRadius:10, border:'0.5px solid #E8E6DE', marginBottom:6, cursor:'pointer', background:i%2===0?'#fff':'#FAFAF8' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:6 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:DARK }}>{fmtData(a.data_atend)} {a.hora_inicio ? `· ${String(a.hora_inicio).slice(0,5)}` : ''}</div>
+                      <span style={{ fontSize:10, fontWeight:600, background:corSit, color:txtSit, borderRadius:99, padding:'2px 7px' }}>{a.situacao}</span>
+                    </div>
+                    <div style={{ fontSize:11.5, color:'#5F5E5A', marginTop:3 }}>{a.etapa_fluxo || 'Atendimento'} {a.area_atendimento ? `· ${a.area_atendimento}` : ''}</div>
+                    {prof && <div style={{ fontSize:11, color:'#94A3B8', marginTop:2 }}>{prof.nome.split(' ').slice(0,2).join(' ')} — {prof.funcao}</div>}
+                    {a.comparecimento && a.comparecimento !== 'Compareceu' && <div style={{ fontSize:11, color:RED, marginTop:2 }}>{a.comparecimento}</div>}
+                  </div>
+                )
+              })}
+            </>) : <div style={{ color:'#A32D2D', fontSize:12, textAlign:'center', paddingTop:40 }}>Usuário não encontrado.</div>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -190,6 +190,32 @@ const FORM_VAZIO = {
   observacoes: '',
 }
 
+const FERIADOS_NACIONAIS_2026 = new Set([
+  '2026-01-01','2026-02-16','2026-02-17',
+  '2026-04-03','2026-04-21','2026-05-01',
+  '2026-06-04','2026-09-07','2026-10-12',
+  '2026-11-02','2026-11-15','2026-11-20','2026-12-25',
+  '2027-01-01',
+])
+
+function gerarDatasRecorrentes(dataInicio, recorrencia, dataFim) {
+  if (!dataInicio || !dataFim || recorrencia === 'unica') return []
+  const datas = []
+  let atual = new Date(dataInicio + 'T12:00:00')
+  const fim = new Date(dataFim + 'T12:00:00')
+  let limite = 0
+  while (atual <= fim && limite < 200) {
+    limite++
+    const str = atual.toISOString().slice(0, 10)
+    if (!FERIADOS_NACIONAIS_2026.has(str)) datas.push(str)
+    if (recorrencia === 'semanal') atual.setDate(atual.getDate() + 7)
+    else if (recorrencia === 'quinzenal') atual.setDate(atual.getDate() + 14)
+    else if (recorrencia === 'mensal') atual = new Date(atual.getFullYear(), atual.getMonth() + 1, atual.getDate(), 12)
+    else break
+  }
+  return datas
+}
+
 export default function Atendimentos() {
   const isMobile = useIsMobile()
   const { perfil } = useAuth()
@@ -211,6 +237,9 @@ export default function Atendimentos() {
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', profissional_id: '', situacao: '' })
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false)
+  const [recorrencia, setRecorrencia] = useState('unica')
+  const [dataFimRecorrencia, setDataFimRecorrencia] = useState('')
+  const [filtroRelatorio, setFiltroRelatorio] = useState({ tipo:'completo', profissional_id:'', usuario_id:'', dataInicio:'', dataFim:'' })
   const abrirProcessadoRef = useRef(null)
 
   const perfilAtual = perfil?.perfil || ''
@@ -568,6 +597,8 @@ export default function Atendimentos() {
     setEditando(null)
     setModoResultado(false)
     setMostrarForm(false)
+    setRecorrencia('unica')
+    setDataFimRecorrencia('')
   }
 
   function preencherUsuario(id) {
@@ -709,6 +740,22 @@ export default function Atendimentos() {
     let error, data
     if (editando) {
       ;({ error, data } = await supabase.from('atendimentos').update(dados).eq('id', editando).select())
+    } else if (!modoResultado && recorrencia !== 'unica' && dataFimRecorrencia) {
+      // Agendamento recorrente: cria um registro pra cada data, pulando feriados
+      const datas = gerarDatasRecorrentes(form.data_atend, recorrencia, dataFimRecorrencia)
+      if (datas.length === 0) {
+        setMsg('Nenhuma data disponível no período selecionado (verifique feriados e datas).')
+        setSalvando(false)
+        return
+      }
+      if (datas.length > 100) {
+        setMsg(`Muitos atendimentos (${datas.length}). Reduza o período ou mude a recorrência.`)
+        setSalvando(false)
+        return
+      }
+      const registros = datas.map(d => ({ ...dados, data_atend: d }))
+      ;({ error, data } = await supabase.from('atendimentos').insert(registros).select())
+      if (!error) setMsg(`${datas.length} atendimentos criados com sucesso (${recorrencia}, pulando feriados).`)
     } else {
       ;({ error, data } = await supabase.from('atendimentos').insert(dados).select())
     }
@@ -854,12 +901,67 @@ export default function Atendimentos() {
       {isAdmin && (
         <div style={{ ...s.card, marginBottom:'1rem', border:'1px solid #D9D6CC', background:'#FAFAF7' }}>
           <div style={{ fontSize:15, fontWeight:900, color:ESCURO, marginBottom:2 }}>Relatórios e prestação de contas — Projeto TEAcolher</div>
-          <div style={{ fontSize:11.5, color:'#888780', marginBottom:12 }}>Sempre puxa o histórico completo do projeto, independente dos filtros acima. Pode levar alguns segundos pra montar.</div>
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            <button onClick={gerarRelatorioCompleto} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#06344F')}>
-              {gerandoRelatorio ? 'Gerando...' : 'Relatório TEAcolher completo'}
+          <div style={{ fontSize:11.5, color:'#888780', marginBottom:10 }}>Filtre por período, profissional ou usuário antes de gerar. Sempre puxa o histórico completo, independente dos filtros da agenda acima.</div>
+          <div style={s.grupo('1fr 1fr 1fr 1fr')}>
+            <div>
+              <label style={s.label}>Período</label>
+              <select value={filtroRelatorio.tipo} onChange={e=>{
+                const tipo = e.target.value
+                const hoje = new Date()
+                let ini='', fim=''
+                if (tipo === 'mensal') { ini = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-01`; fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).toISOString().slice(0,10) }
+                else if (tipo === 'bimestral') { const m = hoje.getMonth()-1; const d = new Date(hoje.getFullYear(), m < 0 ? 11 : m, 1); ini = d.toISOString().slice(0,10); fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).toISOString().slice(0,10) }
+                else if (tipo === 'trimestral') { const m = hoje.getMonth()-2; const d = new Date(hoje.getFullYear(), m < 0 ? 12+m : m, 1); ini = d.toISOString().slice(0,10); fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).toISOString().slice(0,10) }
+                else if (tipo === 'semestral') { const m = hoje.getMonth()-5; const d = new Date(hoje.getFullYear(), m < 0 ? 12+m : m, 1); ini = d.toISOString().slice(0,10); fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).toISOString().slice(0,10) }
+                else if (tipo === 'anual') { ini = `${hoje.getFullYear()}-01-01`; fim = `${hoje.getFullYear()}-12-31` }
+                setFiltroRelatorio(f=>({...f, tipo, dataInicio:ini, dataFim:fim}))
+              }} style={s.input}>
+                <option value="completo">Completo (todo o histórico)</option>
+                <option value="mensal">Este mês</option>
+                <option value="bimestral">Últimos 2 meses</option>
+                <option value="trimestral">Últimos 3 meses</option>
+                <option value="semestral">Últimos 6 meses</option>
+                <option value="anual">Este ano</option>
+                <option value="personalizado">Personalizado</option>
+              </select>
+            </div>
+            {filtroRelatorio.tipo === 'personalizado' && <>
+              <div><label style={s.label}>De</label><input type="date" value={filtroRelatorio.dataInicio} onChange={e=>setFiltroRelatorio(f=>({...f,dataInicio:e.target.value}))} style={s.input} /></div>
+              <div><label style={s.label}>Até</label><input type="date" value={filtroRelatorio.dataFim} onChange={e=>setFiltroRelatorio(f=>({...f,dataFim:e.target.value}))} style={s.input} /></div>
+            </>}
+            <div>
+              <label style={s.label}>Profissional</label>
+              <select value={filtroRelatorio.profissional_id} onChange={e=>setFiltroRelatorio(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
+                <option value="">Todos os profissionais</option>
+                {equipeTEAcolher.map(e=><option key={e.id} value={e.id}>{e.nome.split(' ').slice(0,2).join(' ')} — {e.funcao}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={s.label}>Usuário/família</label>
+              <select value={filtroRelatorio.usuario_id} onChange={e=>setFiltroRelatorio(f=>({...f,usuario_id:e.target.value}))} style={s.input}>
+                <option value="">Todos os usuários</option>
+                {usuariosTEAcolher.map(u=><option key={u.id} value={u.id}>{u.nome}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
+            <button onClick={async () => {
+              setGerandoRelatorio(true); setMsg('')
+              try {
+                let lista = await buscarTodosParaRelatorio()
+                if (filtroRelatorio.dataInicio) lista = lista.filter(a => a.data_atend >= filtroRelatorio.dataInicio)
+                if (filtroRelatorio.dataFim) lista = lista.filter(a => a.data_atend <= filtroRelatorio.dataFim)
+                if (filtroRelatorio.profissional_id) lista = lista.filter(a => String(a.profissional_id) === String(filtroRelatorio.profissional_id))
+                if (filtroRelatorio.usuario_id) lista = lista.filter(a => String(a.usuario_atendido_id) === String(filtroRelatorio.usuario_id))
+                const periodoLabel = filtroRelatorio.dataInicio && filtroRelatorio.dataFim
+                  ? `${fmtData(filtroRelatorio.dataInicio)} a ${fmtData(filtroRelatorio.dataFim)}`
+                  : filtroRelatorio.tipo === 'completo' ? 'Todo o histórico' : filtroRelatorio.tipo
+                gerarPDFAtendimentos({ lista }, periodoLabel)
+              } catch(e) { setMsg('Erro: ' + e.message) } finally { setGerandoRelatorio(false) }
+            }} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#06344F')}>
+              {gerandoRelatorio ? 'Gerando...' : 'Relatório TEAcolher'}
             </button>
-            <button onClick={gerarCronograma} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#06344F')}>
+            <button onClick={gerarCronograma} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#0E7EA8')}>
               {gerandoRelatorio ? 'Gerando...' : 'Cronograma de execução (ações x meses)'}
             </button>
           </div>
@@ -1053,12 +1155,49 @@ export default function Atendimentos() {
                   <textarea value={form.objetivo_atendimento} onChange={e=>setForm(f=>({...f,objetivo_atendimento:e.target.value, descricao:e.target.value}))} rows={3} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: acolhimento inicial, avaliação interdisciplinar, devolutiva familiar, grupo de orientação, oficina comunitária..." />
                 </div>
               )}
+
+              {!modoResultado && !editando && (
+                <div style={{ background:'rgba(14,126,168,0.06)', borderRadius:10, padding:'10px 12px', marginTop:4 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:ESCURO, marginBottom:8 }}>Repetição do agendamento</div>
+                  <div style={s.grupo('1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Frequência</label>
+                      <select value={recorrencia} onChange={e=>setRecorrencia(e.target.value)} style={s.input}>
+                        <option value="unica">Única (padrão)</option>
+                        <option value="semanal">Semanal — toda semana no mesmo dia</option>
+                        <option value="quinzenal">Quinzenal — a cada 2 semanas</option>
+                        <option value="mensal">Mensal — mesmo dia todo mês</option>
+                      </select>
+                    </div>
+                    {recorrencia !== 'unica' && (
+                      <div>
+                        <label style={s.label}>Repetir até *</label>
+                        <input type="date" value={dataFimRecorrencia} onChange={e=>setDataFimRecorrencia(e.target.value)} style={s.input} min={form.data_atend} required />
+                        <div style={{ fontSize:10.5, color:'#64748B', marginTop:3 }}>
+                          {dataFimRecorrencia && form.data_atend ? (
+                            (() => {
+                              const datas = gerarDatasRecorrentes(form.data_atend, recorrencia, dataFimRecorrencia)
+                              return datas.length > 0
+                                ? `${datas.length} atendimento(s) serão criados, pulando feriados nacionais.`
+                                : 'Nenhuma data disponível nesse período.'
+                            })()
+                          ) : 'Escolha até quando repetir.'}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {modoResultado && (
+            {modoResultado && (() => {
+              const faltou = ['Faltou', 'Falta justificada'].includes(form.comparecimento)
+              return (
               <div style={{ ...s.card, background:'rgba(150,193,31,0.08)', borderColor:'rgba(150,193,31,0.35)', boxShadow:'none' }}>
                 <div style={{ fontSize:12, fontWeight:700, color:'#3B6D11', marginBottom:8 }}>Resultado técnico / prestação de contas</div>
-                <div style={s.grupo('1fr 1fr 1fr 1fr')}>
+
+                {/* Linha 1: situação + comparecimento — sempre visível */}
+                <div style={s.grupo('1fr 1fr 1fr')}>
                   <div>
                     <label style={s.label}>Situação final *</label>
                     <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input} required>
@@ -1072,116 +1211,98 @@ export default function Atendimentos() {
                       {COMPARECIMENTOS_TEACOLHER.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
+                  {!faltou && (
+                    <div>
+                      <label style={s.label}>Duração (min)</label>
+                      <input type="number" min="1" value={form.duracao_minutos} onChange={e=>setForm(f=>({...f,duracao_minutos:e.target.value}))} style={s.input} placeholder="Ex: 50" />
+                    </div>
+                  )}
+                </div>
+
+                {/* FALTOU: mostra só o motivo */}
+                {faltou ? (
                   <div>
-                    <label style={s.label}>Duração realizada (min)</label>
-                    <input type="number" min="1" value={form.duracao_minutos} onChange={e=>setForm(f=>({...f,duracao_minutos:e.target.value}))} style={s.input} placeholder="Ex: 60" />
+                    <div style={{ background:'#FEF3CD', border:'1px solid #F4D03F', borderRadius:8, padding:'8px 12px', marginBottom:10, fontSize:11.5, color:'#854F0B' }}>
+                      Falta registrada. Preencha somente o motivo abaixo — os campos técnicos não são necessários.
+                    </div>
+                    <label style={s.label}>Motivo da falta / observação</label>
+                    <textarea value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} rows={3} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: família avisou que não poderia comparecer, problema de transporte, crise da criança..." />
                   </div>
-                  <div>
-                    <label style={s.label}>Participantes</label>
-                    <input type="number" min="1" value={form.qtd_participantes} onChange={e=>setForm(f=>({...f,qtd_participantes:e.target.value}))} style={s.input} />
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom:10 }}>
+                      <label style={s.label}>Registro técnico / evolução *</label>
+                      <textarea value={form.registro_tecnico} onChange={e=>setForm(f=>({...f,registro_tecnico:e.target.value, descricao:e.target.value}))} rows={4} style={{ ...s.input, resize:'vertical' }} required placeholder="Registre o que foi feito: intervenção, orientação, evolução observada, resposta do usuário..." />
+                    </div>
 
-                <div style={s.grupo('1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Quem participou</label>
-                    <input value={form.participantes_atendimento} onChange={e=>setForm(f=>({...f,participantes_atendimento:e.target.value}))} style={s.input} placeholder="Ex: usuário, mãe/responsável, família, grupo..." />
-                  </div>
-                  <div>
-                    <label style={s.label}>Responsável presente</label>
-                    <input value={form.responsavel_presente} onChange={e=>setForm(f=>({...f,responsavel_presente:e.target.value}))} style={s.input} placeholder="Nome do responsável, se houver" />
-                  </div>
-                </div>
+                    <div style={s.grupo('1fr 1fr')}>
+                      <div>
+                        <label style={s.label}>Orientação prestada à família</label>
+                        <textarea value={form.orientacao_familia} onChange={e=>setForm(f=>({...f,orientacao_familia:e.target.value}))} rows={2} style={{ ...s.input, resize:'vertical' }} placeholder="Orientações dadas no atendimento..." />
+                      </div>
+                      <div>
+                        <label style={s.label}>Próxima ação</label>
+                        <input value={form.proxima_acao} onChange={e=>setForm(f=>({...f,proxima_acao:e.target.value}))} style={s.input} placeholder="Ex: retorno em 7 dias, encaminhamento, grupo..." />
+                      </div>
+                    </div>
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Demanda identificada</label>
-                  <textarea value={form.demanda_identificada} onChange={e=>setForm(f=>({...f,demanda_identificada:e.target.value}))} rows={2} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: necessidade de orientação familiar, avaliação interdisciplinar, dificuldade de rotina, encaminhamento de rede..." />
-                </div>
+                    <div style={s.grupo('1fr 1fr 1fr')}>
+                      <div>
+                        <label style={s.label}>Devolutiva à família</label>
+                        <select value={form.devolutiva_familia} onChange={e=>setForm(f=>({...f,devolutiva_familia:e.target.value}))} style={s.input}>
+                          {['Sim','Não','Não se aplica','Não registrada'].map(v=><option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={s.label}>Necessita acompanhamento?</label>
+                        <select value={form.necessita_acompanhamento} onChange={e=>setForm(f=>({...f,necessita_acompanhamento:e.target.value}))} style={s.input}>
+                          {['Sim','Não','Reavaliar','Encaminhado para rede'].map(v=><option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={s.label}>Desfecho TEAcolher</label>
+                        <select value={form.desfecho_teacolher} onChange={e=>setForm(f=>({...f,desfecho_teacolher:e.target.value}))} style={s.input}>
+                          {DESFECHOS_TEACOLHER.map(v=><option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                    </div>
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Registro técnico / evolução *</label>
-                  <textarea value={form.registro_tecnico} onChange={e=>setForm(f=>({...f,registro_tecnico:e.target.value, descricao:e.target.value}))} rows={4} style={{ ...s.input, resize:'vertical' }} required placeholder="Registre acolhimento, escuta qualificada, intervenção realizada, orientação à família, evolução observada e encaminhamentos." />
-                </div>
+                    {/* Encaminhamento — só aparece se marcado */}
+                    <div style={{ marginBottom:10 }}>
+                      <label style={s.label}>Encaminhamento externo?</label>
+                      <select value={form.tipo_encaminhamento} onChange={e=>setForm(f=>({...f,tipo_encaminhamento:e.target.value}))} style={s.input}>
+                        {TIPOS_ENCAMINHAMENTO.map(v=><option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                    {form.tipo_encaminhamento && form.tipo_encaminhamento !== 'Sem encaminhamento externo' && (
+                      <div style={s.grupo('1fr 1fr')}>
+                        <div>
+                          <label style={s.label}>Para onde foi encaminhado</label>
+                          <select value={form.rede_encaminhada} onChange={e=>setForm(f=>({...f,rede_encaminhada:e.target.value,orgao_encaminhamento:e.target.value}))} style={s.input}>
+                            {REDES_DESTINO.map(v=><option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={s.label}>Detalhe do encaminhamento</label>
+                          <input value={form.encaminhamentos} onChange={e=>setForm(f=>({...f,encaminhamentos:e.target.value}))} style={s.input} placeholder="UBS, CRAS, escola, avaliação complementar..." />
+                        </div>
+                      </div>
+                    )}
 
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Orientação prestada à família</label>
-                  <textarea value={form.orientacao_familia} onChange={e=>setForm(f=>({...f,orientacao_familia:e.target.value}))} rows={2} style={{ ...s.input, resize:'vertical' }} placeholder="Ex: orientações sobre rotina, acesso à rede, encaminhamentos, continuidade do acompanhamento..." />
-                </div>
-
-                <div style={s.grupo('1fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Devolutiva à família</label>
-                    <select value={form.devolutiva_familia} onChange={e=>setForm(f=>({...f,devolutiva_familia:e.target.value}))} style={s.input}>
-                      {['Sim', 'Não', 'Não se aplica', 'Não registrada'].map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={s.label}>Necessita acompanhamento?</label>
-                    <select value={form.necessita_acompanhamento} onChange={e=>setForm(f=>({...f,necessita_acompanhamento:e.target.value}))} style={s.input}>
-                      {['Sim', 'Não', 'Reavaliar', 'Encaminhado para rede'].map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={s.label}>Desfecho TEAcolher</label>
-                    <select value={form.desfecho_teacolher} onChange={e=>setForm(f=>({...f,desfecho_teacolher:e.target.value}))} style={s.input}>
-                      {DESFECHOS_TEACOLHER.map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={s.grupo('1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Tipo de encaminhamento</label>
-                    <select value={form.tipo_encaminhamento} onChange={e=>setForm(f=>({...f,tipo_encaminhamento:e.target.value}))} style={s.input}>
-                      {TIPOS_ENCAMINHAMENTO.map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={s.label}>Rede encaminhada</label>
-                    <select value={form.rede_encaminhada} onChange={e=>setForm(f=>({...f,rede_encaminhada:e.target.value, orgao_encaminhamento:e.target.value}))} style={s.input}>
-                      {REDES_DESTINO.map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Detalhamento do encaminhamento</label>
-                  <input value={form.encaminhamentos} onChange={e=>setForm(f=>({...f,encaminhamentos:e.target.value}))} style={s.input} placeholder="Ex: UBS, CRAS, escola, avaliação complementar, documentação..." />
-                </div>
-
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Próxima ação</label>
-                  <input value={form.proxima_acao} onChange={e=>setForm(f=>({...f,proxima_acao:e.target.value}))} style={s.input} placeholder="Ex: novo atendimento, devolutiva, grupo familiar, encaminhamento para rede..." />
-                </div>
-
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Público participante</label>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-                    {PUBLICOS_TEACOLHER.map(pub => (
-                      <button key={pub} type="button" onClick={() => togglePublico(pub)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.publico_participante.includes(pub)?AZUL:'#D3D1C7'}`, background:form.publico_participante.includes(pub)?'#E6F1FB':'#fff', color:form.publico_participante.includes(pub)?'#185FA5':'#5F5E5A' }}>
-                        {form.publico_participante.includes(pub) ? '✓ ' : ''}{pub}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Equipe participante</label>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:4, maxHeight:80, overflowY:'auto', overflowX:'auto' }}>
-                    {equipeTEAcolher.map(e => (
-                      <button key={e.id} type="button" onClick={() => toggleEquipe(String(e.id))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.equipe_ids.includes(String(e.id))?VERDE:'#D3D1C7'}`, background:form.equipe_ids.includes(String(e.id))?'#EAF3DE':'#fff', color:form.equipe_ids.includes(String(e.id))?'#3B6D11':'#5F5E5A' }}>
-                        {form.equipe_ids.includes(String(e.id)) ? '✓ ' : ''}{e.nome.split(' ')[0]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label style={s.label}>Observações internas</label>
-                  <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} />
-                </div>
+                    <div style={{ marginBottom:10 }}>
+                      <label style={s.label}>Público participante</label>
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
+                        {PUBLICOS_TEACOLHER.map(pub => (
+                          <button key={pub} type="button" onClick={()=>togglePublico(pub)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, cursor:'pointer', border:`0.5px solid ${form.publico_participante.includes(pub)?AZUL:'#D3D1C7'}`, background:form.publico_participante.includes(pub)?'#E6F1FB':'#fff', color:form.publico_participante.includes(pub)?'#185FA5':'#5F5E5A' }}>
+                            {form.publico_participante.includes(pub)?'✓ ':''}{pub}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            )}
+            )})()}
 
             <div style={{ display:'flex', gap:8 }}>
               <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':AZUL)}>
