@@ -210,6 +210,7 @@ export default function Atendimentos() {
   const [msg, setMsg] = useState('')
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', profissional_id: '', situacao: '' })
+  const [gerandoRelatorio, setGerandoRelatorio] = useState(false)
   const abrirProcessadoRef = useRef(null)
 
   const perfilAtual = perfil?.perfil || ''
@@ -451,15 +452,57 @@ export default function Atendimentos() {
     `)
   }
 
-  function gerarRelatorioCompleto() {
-    gerarPDFAtendimentos({ lista: todosAtendimentos }, 'Todo o histórico do Projeto TEAcolher')
+  // Busca TODOS os atendimentos do projeto, paginando de 1000 em 1000, sem depender do limite
+  // usado no carregamento normal da tela. Sem isso, projetos com mais de 1000 atendimentos no
+  // total (bem provável em 11 meses de TEAcolher) teriam relatório e cronograma incompletos,
+  // cortando justamente os meses mais antigos sem nenhum aviso.
+  async function buscarTodosParaRelatorio() {
+    const TAMANHO_PAGINA = 1000
+    let pagina = 0
+    let tudo = []
+    while (true) {
+      let q = supabase.from('atendimentos').select('*')
+        .order('data_atend', { ascending: true })
+        .order('id', { ascending: true })
+        .range(pagina * TAMANHO_PAGINA, pagina * TAMANHO_PAGINA + TAMANHO_PAGINA - 1)
+      if (projetoTeacolherId) q = q.eq('projeto_id', parseInt(projetoTeacolherId))
+      const { data, error } = await q
+      if (error) throw error
+      tudo = tudo.concat(data || [])
+      if (!data || data.length < TAMANHO_PAGINA) break
+      pagina++
+      if (pagina > 50) break // segurança: nunca busca mais que 50 mil registros de uma vez
+    }
+    return tudo
   }
 
-  function gerarCronograma() {
-    // Sem a data oficial de início do convênio, o cronograma usa os meses que aparecem nos
-    // próprios atendimentos. Se você souber a data exata (ex.: '2026-02-01'), me diga e eu
-    // troco esse valor pra bater 100% com o Mês 1 oficial do contrato.
-    gerarPDFCronogramaTeacolher(todosAtendimentos)
+  async function gerarRelatorioCompleto() {
+    setGerandoRelatorio(true)
+    setMsg('')
+    try {
+      const tudo = await buscarTodosParaRelatorio()
+      gerarPDFAtendimentos({ lista: tudo }, 'Todo o histórico do Projeto TEAcolher')
+    } catch (e) {
+      setMsg('Erro ao gerar relatório: ' + e.message)
+    } finally {
+      setGerandoRelatorio(false)
+    }
+  }
+
+  async function gerarCronograma() {
+    setGerandoRelatorio(true)
+    setMsg('')
+    try {
+      const tudo = await buscarTodosParaRelatorio()
+      // Sem a data oficial de início do convênio, o cronograma usa os meses que aparecem nos
+      // próprios atendimentos. Se você souber a data exata (ex.: '2026-02-01'), me diga e eu
+      // troco esse valor pra bater 100% com o Mês 1 oficial do contrato.
+      gerarPDFCronogramaTeacolher(tudo)
+    } catch (e) {
+      setMsg('Erro ao gerar cronograma: ' + e.message)
+    } finally {
+      setGerandoRelatorio(false)
+    }
   }
 
   function imprimirFicha(a) {
@@ -808,6 +851,21 @@ export default function Atendimentos() {
         </div>
       </div>
 
+      {isAdmin && (
+        <div style={{ ...s.card, marginBottom:'1rem', border:'1px solid #D9D6CC', background:'#FAFAF7' }}>
+          <div style={{ fontSize:15, fontWeight:900, color:ESCURO, marginBottom:2 }}>Relatórios e prestação de contas — Projeto TEAcolher</div>
+          <div style={{ fontSize:11.5, color:'#888780', marginBottom:12 }}>Sempre puxa o histórico completo do projeto, independente dos filtros acima. Pode levar alguns segundos pra montar.</div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <button onClick={gerarRelatorioCompleto} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#06344F')}>
+              {gerandoRelatorio ? 'Gerando...' : 'Relatório TEAcolher completo'}
+            </button>
+            <button onClick={gerarCronograma} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#06344F')}>
+              {gerandoRelatorio ? 'Gerando...' : 'Cronograma de execução (ações x meses)'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={s.card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
           <div>
@@ -824,8 +882,6 @@ export default function Atendimentos() {
             <button onClick={imprimirAgenda} style={s.btn('#F1EFE8', '#5F5E5A')}>
               {isTecnico ? 'Imprimir minha agenda' : 'Imprimir lista'}
             </button>
-            {isAdmin && <button onClick={gerarRelatorioCompleto} style={s.btn('#EEF2F7', '#334155')}>Relatório TEAcolher completo</button>}
-            {isAdmin && <button onClick={gerarCronograma} style={s.btn('#EEF2F7', '#334155')}>Cronograma de execução</button>}
             {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={s.btn(AZUL)}>+ Agendar atendimento</button>}
           </div>
         </div>
