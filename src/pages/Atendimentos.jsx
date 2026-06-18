@@ -80,11 +80,6 @@ const MODALIDADES_TEACOLHER = [
   'Familiar',
   'Grupo',
   'Oficina',
-  'Acolhimento',
-  'Avaliação',
-  'Encaminhamento',
-  'Devolutiva',
-  'Acompanhamento',
 ]
 
 const PUBLICOS_TEACOLHER = [
@@ -102,8 +97,6 @@ const COMPARECIMENTOS_TEACOLHER = [
   'Compareceu',
   'Faltou',
   'Falta justificada',
-  'Remarcado',
-  'Cancelado',
 ]
 
 const TIPOS_ENCAMINHAMENTO = [
@@ -699,6 +692,13 @@ export default function Atendimentos() {
       ? form.rede_encaminhada
       : (form.orgao_encaminhamento || '')
 
+    // Situação final derivada do comparecimento — sem campo separado pra não duplicar
+    const situacaoFinal = modoResultado
+      ? (['Faltou','Falta justificada'].includes(form.comparecimento) ? 'reagendado'
+        : form.comparecimento === 'Cancelado' ? 'cancelado'
+        : 'realizado')
+      : (form.situacao || 'agendado')
+
     const dados = {
       data_atend: form.data_atend,
       hora_inicio: form.hora_inicio || null,
@@ -715,7 +715,7 @@ export default function Atendimentos() {
       objetivo_atendimento: objetivo || null,
       area_atendimento: form.area_atendimento || null,
       modalidade_atendimento: form.modalidade_atendimento || null,
-      situacao: modoResultado ? form.situacao : (form.situacao || 'agendado'),
+      situacao: situacaoFinal,
       descricao: (modoResultado ? registroFinal : objetivo) || descricaoPadrao,
       qtd_participantes: form.qtd_participantes ? parseInt(form.qtd_participantes) : 1,
       publico_participante: form.publico_participante || [],
@@ -1076,14 +1076,7 @@ export default function Atendimentos() {
                 </div>
               </div>
 
-              {!modoResultado && (
-                <div style={{ marginBottom:10 }}>
-                  <label style={s.label}>Situação do agendamento</label>
-                  <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>
-                    {['agendado','reagendado','cancelado'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                  </select>
-                </div>
-              )}
+              {/* situação fica sempre 'agendado' ao criar — não precisa de campo */}
 
               <div style={s.grupo('1.2fr 1fr')}>
                 <div>
@@ -1192,18 +1185,16 @@ export default function Atendimentos() {
 
             {modoResultado && (() => {
               const faltou = ['Faltou', 'Falta justificada'].includes(form.comparecimento)
+              // Quando faltou: situação vira cancelado/reagendado automaticamente
+              if (faltou && form.situacao === 'realizado') {
+                setTimeout(() => setForm(f => ({...f, situacao: 'reagendado'})), 0)
+              }
               return (
               <div style={{ ...s.card, background:'rgba(150,193,31,0.08)', borderColor:'rgba(150,193,31,0.35)', boxShadow:'none' }}>
                 <div style={{ fontSize:12, fontWeight:700, color:'#3B6D11', marginBottom:8 }}>Resultado técnico / prestação de contas</div>
 
-                {/* Linha 1: situação + comparecimento — sempre visível */}
-                <div style={s.grupo('1fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Situação final *</label>
-                    <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input} required>
-                      {SITUACOES.filter(s => s !== 'agendado').map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                    </select>
-                  </div>
+                {/* Linha 1: comparecimento — sempre visível */}
+                <div style={s.grupo('1fr 1fr')}>
                   <div>
                     <label style={s.label}>Comparecimento *</label>
                     <select value={form.comparecimento} onChange={e=>setForm(f=>({...f,comparecimento:e.target.value}))} style={s.input} required>
@@ -1211,7 +1202,7 @@ export default function Atendimentos() {
                       {COMPARECIMENTOS_TEACOLHER.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-                  {!faltou && (
+                  {!['Faltou','Falta justificada'].includes(form.comparecimento) && (
                     <div>
                       <label style={s.label}>Duração (min)</label>
                       <input type="number" min="1" value={form.duracao_minutos} onChange={e=>setForm(f=>({...f,duracao_minutos:e.target.value}))} style={s.input} placeholder="Ex: 50" />
@@ -1246,13 +1237,7 @@ export default function Atendimentos() {
                       </div>
                     </div>
 
-                    <div style={s.grupo('1fr 1fr 1fr')}>
-                      <div>
-                        <label style={s.label}>Devolutiva à família</label>
-                        <select value={form.devolutiva_familia} onChange={e=>setForm(f=>({...f,devolutiva_familia:e.target.value}))} style={s.input}>
-                          {['Sim','Não','Não se aplica','Não registrada'].map(v=><option key={v} value={v}>{v}</option>)}
-                        </select>
-                      </div>
+                    <div style={s.grupo('1fr 1fr')}>
                       <div>
                         <label style={s.label}>Necessita acompanhamento?</label>
                         <select value={form.necessita_acompanhamento} onChange={e=>setForm(f=>({...f,necessita_acompanhamento:e.target.value}))} style={s.input}>
