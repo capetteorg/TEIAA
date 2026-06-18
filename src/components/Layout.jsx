@@ -265,11 +265,13 @@ export default function Layout() {
           <NavSecao colapsado={colapsado} label="TEAcolher" />
           <NavItem colapsado={colapsado} to="/painel-tecnico" icon="home" label="Início" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/atendimentos" icon="calendar-event" label="Minha agenda" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/painel-tecnico?aba=meus_usuarios" icon="users" label="Meus usuários" visivel onClick={fecharMenu} />
         </>) : p === 'operacional' ? (<>
           <NavSecao colapsado={colapsado} label="TEAcolher" />
           <NavItem colapsado={colapsado} to="/painel-operacional" icon="home" label="Início" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="user-plus" label="Cadastrar família" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/atendimentos" icon="calendar-plus" label="Agenda" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/painel-operacional?aba=profissionais" icon="users-group" label="Por profissional" visivel onClick={fecharMenu} />
         </>) : (<>
           <NavSecao colapsado={colapsado} label="Principal" />
           <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
