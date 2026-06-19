@@ -23,8 +23,9 @@ export default function PainelTecnico() {
   const [agendaHoje, setAgendaHoje] = useState([])
   const [atrasados, setAtrasados] = useState([])
   const [meusUsuarios, setMeusUsuarios] = useState([])
-  const [usuarioExpandido, setUsuarioExpandido] = useState(null) // id do usuário cujos registros estão abertos
-  const [evolucoes, setEvolucoes] = useState({}) // { usuarioId: [atendimentos com registro_tecnico] }
+  const [aba, setAba] = useState('agenda')
+  const [usuarioExpandido, setUsuarioExpandido] = useState(null)
+  const [evolucoes, setEvolucoes] = useState({})
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
