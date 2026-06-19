@@ -244,6 +244,8 @@ export default function Atendimentos() {
   const [recorrencia, setRecorrencia] = useState('unica')
   const [dataFimRecorrencia, setDataFimRecorrencia] = useState('')
   const [filtroRelatorio, setFiltroRelatorio] = useState({ tipo:'completo', profissional_id:'', usuario_id:'', dataInicio:'', dataFim:'' })
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  const [mostrarRelatorios, setMostrarRelatorios] = useState(false)
   const abrirProcessadoRef = useRef(null)
 
   const perfilAtual = perfil?.perfil || ''
@@ -510,19 +512,6 @@ export default function Atendimentos() {
       if (pagina > 50) break // segurança: nunca busca mais que 50 mil registros de uma vez
     }
     return tudo
-  }
-
-  async function gerarRelatorioCompleto() {
-    setGerandoRelatorio(true)
-    setMsg('')
-    try {
-      const tudo = await buscarTodosParaRelatorio()
-      gerarPDFAtendimentos({ lista: tudo }, 'Todo o histórico do Projeto TEAcolher')
-    } catch (e) {
-      setMsg('Erro ao gerar relatório: ' + e.message)
-    } finally {
-      setGerandoRelatorio(false)
-    }
   }
 
   async function gerarCronograma() {
@@ -824,23 +813,18 @@ export default function Atendimentos() {
     <div style={{ padding:'1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>
+          <div style={{ fontSize:22, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>
             {isTecnico ? 'Minha agenda TEAcolher' : 'Agenda e Execução TEAcolher'}
           </div>
-          <div style={{ fontSize:12.5, color:'#6B7280', maxWidth:820 }}>
-            {isTecnico
-              ? 'Aqui aparecem somente os atendimentos direcionados a você. Finalize apenas sua própria agenda técnica.'
-              : 'Operacional agenda/remarca. Técnico finaliza o registro técnico para prestação de contas.'}
-          </div>
+          {!isTecnico && (
+            <div style={{ fontSize:12, color:'#6B7280', maxWidth:780 }}>
+              Operacional agenda/remarca. Técnico finaliza o registro técnico para prestação de contas.
+            </div>
+          )}
         </div>
         {podeAgendar && (
           <button onClick={() => mostrarForm ? fecharForm() : abrirNovoAgendamento()} style={s.btn(mostrarForm ? '#F1EFE8' : AZUL, mostrarForm ? '#5F5E5A' : '#fff')}>
             {mostrarForm ? 'Cancelar' : '+ Agendar atendimento'}
-          </button>
-        )}
-        {isTecnico && !mostrarForm && (
-          <button onClick={() => { const f={...filtros, situacao:'agendado'}; setFiltros(f); carregar(f, projetoTeacolherId) }} style={s.btn(LARANJA)}>
-            Ver meus atendimentos pendentes
           </button>
         )}
       </div>
@@ -857,65 +841,74 @@ export default function Atendimentos() {
         </div>
       )}
 
+      {/* Métricas: só pro admin/operacional. Técnico já vê os números dele no Painel Técnico. */}
+      {!isTecnico && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1rem' }}>
+          {[
+            { label:'Famílias acompanhadas', val:familiasAcompanhadas, cor:ESCURO },
+            { label:'Agendados', val:totalAgendados, cor:AZUL },
+            { label:'Hoje', val:hojeAgendados, cor:ESCURO },
+            { label:'A finalizar', val:totalFinalizar, cor:LARANJA },
+            { label:'Realizados', val:totalRealizados, cor:VERDE },
+            { label:'Faltas/remarcações', val:faltasRemarcacoes, cor:VERMELHO },
+          ].map(m => (
+            <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
+              <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
+              <div style={{ fontSize:20, fontWeight:700, color:m.cor }}>{m.val}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1rem' }}>
-        {[
-          { label:'Famílias acompanhadas', val:familiasAcompanhadas, cor:ESCURO },
-          { label:'Agendados', val:totalAgendados, cor:AZUL },
-          { label:'Hoje', val:hojeAgendados, cor:ESCURO },
-          { label:'A finalizar', val:totalFinalizar, cor:LARANJA },
-          { label:'Realizados', val:totalRealizados, cor:VERDE },
-          { label:'Faltas/remarcações', val:faltasRemarcacoes, cor:VERMELHO },
-          { label:'Encaminhados', val:totalEncaminhados, cor:'#854F0B' },
-          { label:'Devolutivas', val:totalDevolutivas, cor:'#3B6D11' },
-        ].map(m => (
-          <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-            <div style={{ fontSize:20, fontWeight:700, color:m.cor }}>{m.val}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ ...s.card, marginBottom:'1rem' }}>
-        <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Filtros da agenda e execução</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8 }}>
-          <div>
-            <label style={s.label}>Data início</label>
-            <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
-          </div>
-          <div>
-            <label style={s.label}>Data fim</label>
-            <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
-          </div>
-          <div>
-            <label style={s.label}>Profissional</label>
-            {isTecnico ? (
-              <input value={profissional(tecnicoEquipeId)?.nome || 'Minha agenda'} readOnly style={{ ...s.input, background:'#F8FAFC', color:ESCURO, fontWeight:600 }} />
-            ) : (
-              <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
-                <option value="">Todos</option>
-                {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
-              </select>
+      {/* Filtros: colapsados por padrão, só abre quem precisa */}
+      <div style={{ ...s.card, marginBottom:'1rem', padding: mostrarFiltros ? undefined : '8px 14px' }}>
+        <button onClick={() => setMostrarFiltros(v => !v)} style={{ border:'none', background:'none', cursor:'pointer', width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:0, fontSize:12, fontWeight:700, color:ESCURO }}>
+          <span>🔍 Filtros{(filtros.dataInicio||filtros.dataFim||filtros.profissional_id||filtros.situacao) ? ' (ativos)' : ''}</span>
+          <span style={{ color:'#888780' }}>{mostrarFiltros ? '▲ esconder' : '▼ mostrar'}</span>
+        </button>
+        {mostrarFiltros && (<>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8, marginTop:10 }}>
+            <div>
+              <label style={s.label}>Data início</label>
+              <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
+            </div>
+            <div>
+              <label style={s.label}>Data fim</label>
+              <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
+            </div>
+            {!isTecnico && (
+              <div>
+                <label style={s.label}>Profissional</label>
+                <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
+                  <option value="">Todos</option>
+                  {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
+                </select>
+              </div>
             )}
+            <div>
+              <label style={s.label}>Situação</label>
+              <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
+                <option value="">Todas</option>
+                {SITUACOES.map(sit => <option key={sit} value={sit}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</option>)}
+              </select>
+            </div>
           </div>
-          <div>
-            <label style={s.label}>Situação</label>
-            <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
-              <option value="">Todas</option>
-              {SITUACOES.map(sit => <option key={sit} value={sit}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</option>)}
-            </select>
+          <div style={{ display:'flex', gap:8, marginTop:8 }}>
+            <button onClick={() => carregar(filtros, projetoTeacolherId)} style={s.btn(AZUL)}>Filtrar</button>
+            <button onClick={() => { const limpa = { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' }; setFiltros(limpa); carregar(limpa, projetoTeacolherId) }} style={s.btn('#F1EFE8', '#5F5E5A')}>Limpar filtros</button>
           </div>
-        </div>
-        <div style={{ display:'flex', gap:8, marginTop:8 }}>
-          <button onClick={() => carregar(filtros, projetoTeacolherId)} style={s.btn(AZUL)}>Filtrar</button>
-          <button onClick={() => { const limpa = { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' }; setFiltros(limpa); carregar(limpa, projetoTeacolherId) }} style={s.btn('#F1EFE8', '#5F5E5A')}>Limpar filtros</button>
-        </div>
+        </>)}
       </div>
 
+      {/* Relatórios: só admin, colapsado por padrão */}
       {isAdmin && (
-        <div style={{ ...s.card, marginBottom:'1rem', border:'1px solid #D9D6CC', background:'#FAFAF7' }}>
-          <div style={{ fontSize:15, fontWeight:900, color:ESCURO, marginBottom:2 }}>Relatórios e prestação de contas — Projeto TEAcolher</div>
-          <div style={{ fontSize:11.5, color:'#888780', marginBottom:10 }}>Filtre por período, profissional ou usuário antes de gerar. Sempre puxa o histórico completo, independente dos filtros da agenda acima.</div>
+        <div style={{ ...s.card, marginBottom:'1rem', border:'1px solid #D9D6CC', background:'#FAFAF7', padding: mostrarRelatorios ? undefined : '8px 14px' }}>
+          <button onClick={() => setMostrarRelatorios(v => !v)} style={{ border:'none', background:'none', cursor:'pointer', width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:0, fontSize:12, fontWeight:700, color:ESCURO }}>
+            <span>📄 Relatórios e prestação de contas</span>
+            <span style={{ color:'#888780' }}>{mostrarRelatorios ? '▲ esconder' : '▼ mostrar'}</span>
+          </button>
+          {mostrarRelatorios && (<>
+          <div style={{ fontSize:11.5, color:'#888780', margin:'8px 0 10px' }}>Filtre por período, profissional ou usuário antes de gerar. Sempre puxa o histórico completo, independente dos filtros da agenda.</div>
           <div style={s.grupo('1fr 1fr 1fr 1fr')}>
             <div>
               <label style={s.label}>Período</label>
@@ -979,6 +972,7 @@ export default function Atendimentos() {
               {gerandoRelatorio ? 'Gerando...' : 'Cronograma de execução (ações x meses)'}
             </button>
           </div>
+          </>)}
         </div>
       )}
 
@@ -1013,6 +1007,44 @@ export default function Atendimentos() {
                 : (filtros.situacao ? `Você está filtrando por "${filtros.situacao}". Limpe os filtros para ver todos.` : 'Comece agendando. Depois, na lista, use “Finalizar atendimento” para registrar o resultado técnico.')}
             </div>
             {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
+          </div>
+        ) : isMobile ? (
+          /* MOBILE: cards em vez de tabela com scroll horizontal, que cortava colunas e botões */
+          <div style={{ display:'grid', gap:8 }}>
+            {atendimentos.map(a => {
+              const [bg, cor] = SITUACAO_COR[a.situacao] || ['#F1EFE8', '#888780']
+              return (
+                <div key={a.id} style={{ border:'0.5px solid #E8E6DE', borderRadius:12, padding:'12px 14px', background:'#fff' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8, marginBottom:6 }}>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:14, fontWeight:800, color:ESCURO, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</div>
+                      <div style={{ fontSize:12, color:'#5F5E5A', marginTop:2 }}>{fmtData(a.data_atend)} {fmtHora(a.hora_inicio) ? `· ${fmtHora(a.hora_inicio)}` : ''}</div>
+                    </div>
+                    <span style={s.badge(bg, cor)}>{a.situacao}</span>
+                  </div>
+                  <div style={{ fontSize:12, color:'#888780', marginBottom:4 }}>{etapaAtendimento(a)}</div>
+                  {!isTecnico && (a.area_atendimento || a.profissional_id) && (
+                    <div style={{ fontSize:11.5, color:'#888780', marginBottom:4 }}>{[a.area_atendimento, profissionalNome(a.profissional_id)].filter(Boolean).join(' · ')}</div>
+                  )}
+                  {a.desfecho_teacolher && <div style={{ fontSize:11.5, color:'#888780', marginBottom:8 }}>Desfecho: {a.desfecho_teacolher}</div>}
+                  {(() => {
+                    const acoes = []
+                    if (podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a)) acoes.push({ label:'Finalizar', cor:VERDE, fn:() => montarForm(a, true) })
+                    if (podeEditarAgendamento && ehAgendado(a)) acoes.push({ label:'Editar agenda', cor:'#F1EFE8', txt:'#5F5E5A', fn:() => montarForm(a, false) })
+                    if (podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgendado(a)) acoes.push({ label:'Editar registro', cor:'#F1EFE8', txt:'#5F5E5A', fn:() => montarForm(a, true) })
+                    const [principal, ...resto] = acoes
+                    return (<>
+                      {principal && <button onClick={principal.fn} style={{ ...s.btn(principal.cor, principal.txt), width:'100%', marginTop:4, padding:'11px', fontSize:13 }}>{principal.label}</button>}
+                      <div style={{ display:'flex', gap:6, marginTop:6, flexWrap:'wrap' }}>
+                        {resto.map(b => <button key={b.label} onClick={b.fn} style={{ ...s.btn(b.cor, b.txt), flex:'1 1 100px' }}>{b.label}</button>)}
+                        <button onClick={() => imprimirFicha(a)} style={{ ...s.btn('#EEF2F7', '#334155'), flex:'1 1 100px' }}>Imprimir ficha</button>
+                        {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={{ ...s.btn('#FCEBEB', '#A32D2D'), flex:'1 1 100px' }}>Excluir</button>}
+                      </div>
+                    </>)
+                  })()}
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
