@@ -23,7 +23,8 @@ export default function PainelTecnico() {
   const [agendaHoje, setAgendaHoje] = useState([])
   const [atrasados, setAtrasados] = useState([])
   const [meusUsuarios, setMeusUsuarios] = useState([])
-  const [aba, setAba] = useState('agenda')
+  const [usuarioExpandido, setUsuarioExpandido] = useState(null) // id do usuário cujos registros estão abertos
+  const [evolucoes, setEvolucoes] = useState({}) // { usuarioId: [atendimentos com registro_tecnico] }
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -102,6 +103,19 @@ export default function PainelTecnico() {
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const fmtHora = h => h ? String(h).slice(0,5) : ''
+
+  async function abrirEvolucao(uid) {
+    if (usuarioExpandido === uid) { setUsuarioExpandido(null); return }
+    setUsuarioExpandido(uid)
+    if (evolucoes[uid]) return // já carregou
+    const { data } = await supabase.from('atendimentos')
+      .select('id,data_atend,hora_inicio,comparecimento,registro_tecnico,orientacao_familia,proxima_acao,desfecho_teacolher,etapa_fluxo,situacao')
+      .eq('usuario_atendido_id', uid)
+      .eq('profissional_id', prof.id)
+      .order('data_atend', { ascending: false })
+      .limit(20)
+    setEvolucoes(prev => ({ ...prev, [uid]: data || [] }))
+  }
   const hora = new Date().getHours()
   const saudacao = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite'
   const nome = (prof.nome||perfil?.nome||'Técnico').split(' ')[0]
@@ -225,24 +239,62 @@ export default function PainelTecnico() {
             {loading ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#B4B2A9', fontSize:13 }}>Carregando...</div>
               : meusUsuarios.length===0 ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#888780', fontSize:13 }}>Nenhum usuário com agendamento futuro para você.</div>
               : (
-                <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fill,minmax(260px,1fr))', gap:8 }}>
-                  {meusUsuarios.map(u => (
-                    <div key={u.id} style={{ ...card, padding:12 }}>
-                      <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:3 }}>{u.nome}</div>
-                      <div style={{ fontSize:11, color:'#888780', marginBottom:u.outrosProfissionais.length?8:0 }}>
-                        Próx. comigo: {fmtData(u.proxData)}
+                <div style={{ display:'grid', gap:8 }}>
+                  {meusUsuarios.map(u => {
+                    const aberto = usuarioExpandido===u.id
+                    const evs = evolucoes[u.id] || []
+                    return (
+                      <div key={u.id} style={{ ...card, overflow:'hidden' }}>
+                        <button onClick={() => abrirEvolucao(u.id)} style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'12px 14px', cursor:'pointer', display:'grid', gridTemplateColumns:'1fr auto', alignItems:'center', gap:10 }}>
+                          <div>
+                            <div style={{ fontSize:14, fontWeight:800, color:DARK }}>{u.nome}</div>
+                            <div style={{ fontSize:11.5, color:'#888780', marginTop:2 }}>Próx. atendimento: {fmtData(u.proxData)}</div>
+                            {u.outrosProfissionais.length>0 && (
+                              <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
+                                Também com: {u.outrosProfissionais.map(p=>`${p.nome.split(' ')[0]} (${p.funcao})`).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                          <span style={{ fontSize:14, color:'#B4B2A9', transform:aberto?'rotate(90deg)':'none', transition:'.15s' }}>›</span>
+                        </button>
+
+                        {aberto && (
+                          <div style={{ borderTop:'0.5px solid #F1EFE8', background:'#FAFAF8', padding:'12px 14px' }}>
+                            <div style={{ fontSize:12, fontWeight:700, color:DARK, marginBottom:8 }}>Evoluções e registros técnicos</div>
+                            {!evolucoes[u.id] ? (
+                              <div style={{ fontSize:12, color:'#B4B2A9' }}>Carregando...</div>
+                            ) : evs.length===0 ? (
+                              <div style={{ fontSize:12, color:'#888780' }}>Nenhum registro técnico encontrado.</div>
+                            ) : evs.map((ev, i) => {
+                              const faltou = ev.comparecimento && ev.comparecimento !== 'Compareceu'
+                              return (
+                                <div key={ev.id} style={{ marginBottom:10, paddingBottom:10, borderBottom:i<evs.length-1?'0.5px solid #E8E6DE':'none' }}>
+                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:faltou?4:6 }}>
+                                    <div style={{ fontSize:12, fontWeight:700, color:DARK }}>{fmtData(ev.data_atend)} {ev.hora_inicio?`· ${String(ev.hora_inicio).slice(0,5)}`:''}</div>
+                                    <div style={{ display:'flex', gap:5 }}>
+                                      {faltou && <span style={{ fontSize:10, background:'#FCEBEB', color:'#A32D2D', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.comparecimento}</span>}
+                                      <span style={{ fontSize:10, background:ev.situacao==='realizado'?'#EAF3DE':'#E6F1FB', color:ev.situacao==='realizado'?'#3B6D11':'#185FA5', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.situacao}</span>
+                                    </div>
+                                  </div>
+                                  {faltou ? (
+                                    <div style={{ fontSize:11.5, color:'#888780' }}>Falta registrada — sem evolução técnica.</div>
+                                  ) : (<>
+                                    {ev.etapa_fluxo && <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{ev.etapa_fluxo}</div>}
+                                    {ev.registro_tecnico ? (
+                                      <div style={{ fontSize:12, color:'#2C2C2A', lineHeight:1.5, background:'#fff', borderRadius:7, padding:'7px 9px', border:'0.5px solid #E8E6DE', marginBottom:4 }}>{ev.registro_tecnico}</div>
+                                    ) : <div style={{ fontSize:11.5, color:'#B4B2A9', marginBottom:4 }}>Sem registro técnico nesta sessão.</div>}
+                                    {ev.orientacao_familia && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:3 }}><span style={{ fontWeight:600 }}>Orientação: </span>{ev.orientacao_familia}</div>}
+                                    {ev.proxima_acao && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}><span style={{ fontWeight:600 }}>Próxima ação: </span>{ev.proxima_acao}</div>}
+                                    {ev.desfecho_teacolher && <div style={{ fontSize:11, color:'#888780', marginTop:2 }}><span style={{ fontWeight:600 }}>Desfecho: </span>{ev.desfecho_teacolher}</div>}
+                                  </>)}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
-                      {u.outrosProfissionais.length>0 && (
-                        <div style={{ background:'#EEF8F1', borderRadius:7, padding:'6px 8px' }}>
-                          <div style={{ fontSize:10, fontWeight:700, color:'#3B6D11', marginBottom:3 }}>Também com:</div>
-                          {u.outrosProfissionais.map(p => <div key={p.id} style={{ fontSize:11, color:DARK }}>{p.nome.split(' ').slice(0,2).join(' ')} — {p.funcao}</div>)}
-                        </div>
-                      )}
-                      <button onClick={() => navigate('/atendimentos')} style={{ marginTop:8, border:'none', borderRadius:7, background:'#F1EFE8', color:DARK, fontSize:11, fontWeight:700, padding:'5px 9px', cursor:'pointer', width:'100%' }}>
-                        Ver atendimentos →
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
           </div>

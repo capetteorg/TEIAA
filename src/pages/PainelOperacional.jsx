@@ -26,7 +26,7 @@ export default function PainelOperacional() {
   const [fichaAtendimentos, setFichaAtendimentos] = useState([])
   const [fichaLoading, setFichaLoading] = useState(false)
   const [aba, setAba] = useState('agenda')
-  const [periodoImpressao, setPeriodoImpressao] = useState('dia')
+  const [profFiltro, setProfFiltro] = useState('')
   const [profImpressao, setProfImpressao] = useState('')
   const [imprimindo, setImprimindo] = useState(false)
 
@@ -164,7 +164,7 @@ export default function PainelOperacional() {
         </div>
         {!isMobile && (
           <div style={{ display:'flex', gap:8 }}>
-            <button onClick={() => navigate('/usuarios-atendidos')} style={{ border:'0.5px solid #D9D6CC', background:'#fff', borderRadius:9, padding:'7px 13px', color:DARK, fontWeight:700, fontSize:12, cursor:'pointer' }}>+ Cadastrar família</button>
+            <button onClick={() => navigate('/usuarios-atendidos')} style={{ border:'0.5px solid #D9D6CC', background:'#fff', borderRadius:9, padding:'7px 13px', color:DARK, fontWeight:700, fontSize:12, cursor:'pointer' }}>+ Cadastrar usuário</button>
             <button onClick={() => navigate('/atendimentos?novo=1')} style={{ border:'none', background:BLUE, borderRadius:9, padding:'7px 13px', color:'#fff', fontWeight:700, fontSize:12, cursor:'pointer' }}>+ Agendar</button>
           </div>
         )}
@@ -227,37 +227,53 @@ export default function PainelOperacional() {
         )}
 
         {/* ABA POR PROFISSIONAL */}
-        {aba==='profissionais' && (
-          <div style={{ display:'grid', gap:10 }}>
-            {equipe.filter(e => usuariosPorProf[String(e.id)]?.length>0).map(prof => {
-              const lista = usuariosPorProf[String(prof.id)]||[]
-              return (
-                <div key={prof.id} style={{ ...card, padding:14 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-                    <div>
-                      <div style={{ fontSize:13, fontWeight:800, color:DARK }}>{prof.nome.split(' ').slice(0,3).join(' ')}</div>
-                      <div style={{ fontSize:11, color:'#888780' }}>{prof.funcao} · {lista.length} usuário(s)</div>
-                    </div>
-                    <button onClick={() => navigate('/atendimentos')} style={{ border:'none', borderRadius:7, background:BLUE, color:'#fff', fontSize:11, fontWeight:700, padding:'5px 10px', cursor:'pointer' }}>ver agenda</button>
-                  </div>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                    {lista.map(u => (
-                      <button key={u.id} onClick={() => abrirFicha(u.id)} style={{ border:'0.5px solid #E8E6DE', borderRadius:8, background:'#FAFAF8', padding:'6px 10px', cursor:'pointer', textAlign:'left' }}>
-                        <div style={{ fontSize:12, fontWeight:700, color:DARK }}>{u.nome}</div>
-                        <div style={{ fontSize:10, color:'#888780' }}>Próx: {fmtData(u.proxData)}</div>
+        {aba==='profissionais' && (() => {
+          // Monta lista plana de usuários com seus profissionais
+          const usuariosFlat = {}
+          Object.entries(usuariosPorProf).forEach(([profId, lista]) => {
+            const profInfo = equipe.find(e => String(e.id)===String(profId))
+            lista.forEach(u => {
+              const k = String(u.id)
+              if (!usuariosFlat[k]) usuariosFlat[k] = { ...u, profissionais: [] }
+              if (profInfo && !usuariosFlat[k].profissionais.find(p=>String(p.id)===String(profId)))
+                usuariosFlat[k].profissionais.push(profInfo)
+            })
+          })
+          const todos = Object.values(usuariosFlat).sort((a,b) => a.nome > b.nome ? 1 : -1)
+          return (
+            <div style={{ display:'grid', gap:10 }}>
+              <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+                <select value={profFiltro} onChange={e=>setProfFiltro(e.target.value)} style={{ border:'0.5px solid #D3D1C7', borderRadius:9, padding:'8px 12px', fontSize:12, minWidth:220 }}>
+                  <option value="">Todos os profissionais ({todos.length} usuários)</option>
+                  {equipe.filter(e=>usuariosPorProf[String(e.id)]?.length>0).map(e=>(
+                    <option key={e.id} value={String(e.id)}>{e.nome.split(' ').slice(0,2).join(' ')} — {e.funcao} ({usuariosPorProf[String(e.id)]?.length||0})</option>
+                  ))}
+                </select>
+                <div style={{ fontSize:12, color:'#888780' }}>Clique no usuário para ver a ficha completa.</div>
+              </div>
+              {(() => {
+                const filtrados = profFiltro ? (usuariosPorProf[profFiltro]||[]) : todos
+                if (filtrados.length===0) return <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#888780', fontSize:13 }}>Nenhum usuário com agendamento futuro.</div>
+                return (
+                  <div style={{ ...card, padding:14 }}>
+                    {filtrados.map((u, i) => (
+                      <button key={u.id} onClick={() => abrirFicha(u.id)} style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'10px 12px', borderBottom:i<filtrados.length-1?'0.5px solid #F1EFE8':'none', cursor:'pointer', display:'grid', gridTemplateColumns:'1fr auto', alignItems:'center', gap:10 }}>
+                        <div>
+                          <div style={{ fontSize:13, fontWeight:700, color:DARK }}>{u.nome}</div>
+                          <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
+                            {(u.profissionais||[profFiltro && equipe.find(e=>String(e.id)===profFiltro)].filter(Boolean)).map(p=>`${p.nome?.split(' ').slice(0,2).join(' ')} — ${p.funcao}`).join(' · ')}
+                          </div>
+                          <div style={{ fontSize:11, color:'#B4B2A9', marginTop:1 }}>Próx: {fmtData(u.proxData)}</div>
+                        </div>
+                        <span style={{ fontSize:14, color:'#B4B2A9' }}>›</span>
                       </button>
                     ))}
                   </div>
-                </div>
-              )
-            })}
-            {equipe.every(e => !usuariosPorProf[String(e.id)]?.length) && (
-              <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#888780', fontSize:13 }}>
-                Nenhum usuário com agendamento futuro encontrado.
-              </div>
-            )}
-          </div>
-        )}
+                )
+              })()}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Modal ficha */}

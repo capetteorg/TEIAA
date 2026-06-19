@@ -269,7 +269,7 @@ export default function Layout() {
         </>) : p === 'operacional' ? (<>
           <NavSecao colapsado={colapsado} label="TEAcolher" />
           <NavItem colapsado={colapsado} to="/painel-operacional" icon="home" label="Início" visivel onClick={fecharMenu} />
-          <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="user-plus" label="Cadastrar família" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="user-plus" label="Cadastrar usuário" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/atendimentos" icon="calendar-plus" label="Agenda" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/painel-operacional?aba=profissionais" icon="users-group" label="Por profissional" visivel onClick={fecharMenu} />
         </>) : (<>
