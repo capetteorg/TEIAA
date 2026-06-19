@@ -27,6 +27,7 @@ export default function PainelOperacional() {
   const [fichaLoading, setFichaLoading] = useState(false)
   const [aba, setAba] = useState('agenda')
   const [profFiltro, setProfFiltro] = useState('')
+  const [periodoImpressao, setPeriodoImpressao] = useState('dia')
   const [profImpressao, setProfImpressao] = useState('')
   const [imprimindo, setImprimindo] = useState(false)
 
