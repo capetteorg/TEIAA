@@ -105,7 +105,14 @@ export default function PainelOperacional() {
       supabase.from('usuarios_atendidos').select('*').eq('id', uid).single(),
       supabase.from('atendimentos').select('id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id').eq('usuario_atendido_id', uid).order('data_atend', { ascending:false }).limit(30),
     ])
-    setFichaUsuario(uRes.data||null); setFichaAtendimentos(aRes.data||[]); setFichaLoading(false)
+    // Regra padrão em todo o sistema: o próximo agendamento futuro sempre aparece primeiro
+    // (do mais próximo pro mais distante), depois o histórico já realizado do mais recente
+    // pro mais antigo — nunca o atendimento mais distante no topo.
+    const hoje = new Date().toISOString().slice(0, 10)
+    const lista = aRes.data || []
+    const futuros = lista.filter(a => a.data_atend >= hoje && ['agendado','reagendado'].includes(a.situacao)).sort((a,b) => a.data_atend > b.data_atend ? 1 : -1)
+    const passados = lista.filter(a => !(a.data_atend >= hoje && ['agendado','reagendado'].includes(a.situacao)))
+    setFichaUsuario(uRes.data||null); setFichaAtendimentos([...futuros, ...passados]); setFichaLoading(false)
   }
 
   function periodoLabel(tipo) {

@@ -191,6 +191,17 @@ const FERIADOS_NACIONAIS_2026 = new Set([
   '2027-01-01',
 ])
 
+// Regra de ordenação padrão do sistema: o próximo agendamento futuro sempre primeiro
+// (do mais próximo pro mais distante), depois o histórico já realizado, do mais recente
+// pro mais antigo. Usada em toda lista de atendimentos — nunca mostra o mais distante no topo.
+function ordenarProximoPrimeiro(lista) {
+  const hoje = new Date().toISOString().slice(0, 10)
+  const ehFuturo = a => a.data_atend >= hoje && ['agendado', 'reagendado'].includes(a.situacao)
+  const futuros = lista.filter(ehFuturo).sort((a, b) => a.data_atend > b.data_atend ? 1 : a.data_atend < b.data_atend ? -1 : 0)
+  const passados = lista.filter(a => !ehFuturo(a))
+  return [...futuros, ...passados]
+}
+
 function gerarDatasRecorrentes(dataInicio, recorrencia, dataFim) {
   if (!dataInicio || !dataFim || recorrencia === 'unica') return []
   const datas = []
@@ -348,8 +359,11 @@ export default function Atendimentos() {
       setTodosAtendimentos([])
       setAtendimentos([])
     } else {
-      setTodosAtendimentos(todosRes.data || [])
-      setAtendimentos(listaRes.data || [])
+      // Regra padrão em todo o sistema: o próximo agendamento futuro sempre aparece
+      // primeiro (do mais próximo pro mais distante), depois o histórico já realizado
+      // do mais recente pro mais antigo — nunca o atendimento mais distante no topo.
+      setTodosAtendimentos(ordenarProximoPrimeiro(todosRes.data || []))
+      setAtendimentos(ordenarProximoPrimeiro(listaRes.data || []))
     }
     setLoading(false)
   }
