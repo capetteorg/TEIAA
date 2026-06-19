@@ -450,7 +450,7 @@ export default function Atendimentos() {
   }
 
   function imprimirAgenda() {
-    const titulo = isTecnico ? 'Minha agenda TEAcolher' : 'Agenda TEAcolher'
+    const titulo = isTecnico ? 'Meus atendimentos TEAcolher' : 'Agenda TEAcolher'
     const profissionalFiltro = isTecnico ? (profissional(tecnicoEquipeId)?.nome || tecnicoNome) : (filtros.profissional_id ? profissional(filtros.profissional_id)?.nome : 'Todos os profissionais')
     const linhas = atendimentos.map(a => `
       <tr>
@@ -814,7 +814,7 @@ export default function Atendimentos() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:8 }}>
         <div>
           <div style={{ fontSize:22, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>
-            {isTecnico ? 'Minha agenda TEAcolher' : 'Agenda e Execução TEAcolher'}
+            {isTecnico ? 'Meus atendimentos TEAcolher' : 'Agenda e Execução TEAcolher'}
           </div>
           {!isTecnico && (
             <div style={{ fontSize:12, color:'#6B7280', maxWidth:780 }}>
@@ -980,7 +980,7 @@ export default function Atendimentos() {
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
           <div>
             <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>
-              {isTecnico ? `${atendimentos.length} registros na minha agenda` : `${atendimentos.length} registros TEAcolher`}
+              {isTecnico ? `${atendimentos.length} atendimentos meus` : `${atendimentos.length} registros TEAcolher`}
             </div>
             {(filtros.situacao || filtros.profissional_id || filtros.dataInicio || filtros.dataFim) && (
               <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>

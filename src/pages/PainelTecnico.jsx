@@ -200,14 +200,9 @@ export default function PainelTecnico() {
           ))}
         </div>
 
-        {/* Abas */}
-        <div style={{ display:'flex', gap:2, borderBottom:'1px solid #E8E6DE' }}>
-          {[['agenda','📋 Agenda'], ['meus_usuarios','👥 Meus usuários']].map(([k,l]) => (
-            <button key={k} onClick={() => setAba(k)} style={{ border:'none', background:'none', padding:'7px 14px', fontSize:12.5, fontWeight:aba===k?900:500, color:aba===k?BLUE:'#888780', borderBottom:aba===k?`2px solid ${BLUE}`:'2px solid transparent', cursor:'pointer', marginBottom:-1 }}>{l}</button>
-          ))}
-        </div>
+        {/* Conteúdo trocado pelo menu lateral (Minha agenda / Meus usuários), sem aba duplicada aqui dentro */}
 
-        {/* ABA AGENDA */}
+        {/* AGENDA — dashboard do dia */}
         {aba==='agenda' && (
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 240px', gap:12, alignItems:'start' }}>
             <div>
@@ -242,9 +237,11 @@ export default function PainelTecnico() {
           </div>
         )}
 
-        {/* ABA MEUS USUÁRIOS */}
+        {/* MEUS USUÁRIOS — evolução por usuário */}
         {aba==='meus_usuarios' && (
           <div>
+            <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Meus usuários</div>
+            <div style={{ fontSize:11.5, color:'#888780', marginBottom:12 }}>Clique num usuário para ver a evolução completa de cada atendimento.</div>
             {loading ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#B4B2A9', fontSize:13 }}>Carregando...</div>
               : meusUsuarios.length===0 ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#888780', fontSize:13 }}>Nenhum usuário com agendamento futuro para você.</div>
               : (
