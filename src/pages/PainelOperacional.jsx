@@ -24,6 +24,7 @@ export default function PainelOperacional() {
   const [projetoId, setProjetoId] = useState(null)
   const [fichaUsuario, setFichaUsuario] = useState(null)
   const [fichaAtendimentos, setFichaAtendimentos] = useState([])
+  const [fichaItemAberto, setFichaItemAberto] = useState(null)
   const [fichaLoading, setFichaLoading] = useState(false)
   const [aba, setAba] = useState('agenda')
   const [profFiltro, setProfFiltro] = useState('')
@@ -100,9 +101,9 @@ export default function PainelOperacional() {
 
   async function abrirFicha(uid) {
     if (!uid) return
-    setFichaLoading(true); setFichaUsuario(null); setFichaAtendimentos([])
+    setFichaLoading(true); setFichaUsuario(null); setFichaAtendimentos([]); setFichaItemAberto(null)
     const hoje = new Date().toISOString().slice(0, 10)
-    const sel = 'id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id'
+    const sel = 'id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id,registro_tecnico,orientacao_familia,proxima_acao,desfecho_teacolher'
     // Futuros e passados em consultas separadas — um único limit() ordenado por data podia
     // cortar antes de chegar nos agendamentos futuros mais próximos quando há muitas sessões
     // recorrentes distantes, escondendo o atendimento que de fato vem primeiro.
@@ -291,11 +292,11 @@ export default function PainelOperacional() {
 
       {/* Modal ficha */}
       {(fichaLoading || fichaUsuario) && (
-        <div onClick={e => { if(e.target===e.currentTarget){setFichaUsuario(null);setFichaAtendimentos([])}}} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:999, display:'flex', alignItems:'flex-start', justifyContent:'flex-end' }}>
+        <div onClick={e => { if(e.target===e.currentTarget){setFichaUsuario(null);setFichaAtendimentos([]);setFichaItemAberto(null)}}} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:999, display:'flex', alignItems:'flex-start', justifyContent:'flex-end' }}>
           <div style={{ background:'#fff', width:isMobile?'100%':440, height:'100vh', overflowY:'auto', boxShadow:'-4px 0 24px rgba(0,0,0,0.12)', padding:'20px 18px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
               <div style={{ fontSize:15, fontWeight:900, color:DARK }}>Ficha do usuário</div>
-              <button onClick={() => {setFichaUsuario(null);setFichaAtendimentos([])}} style={{ border:'none', background:'#F1EFE8', borderRadius:7, padding:'4px 9px', cursor:'pointer', fontSize:12 }}>Fechar</button>
+              <button onClick={() => {setFichaUsuario(null);setFichaAtendimentos([]);setFichaItemAberto(null)}} style={{ border:'none', background:'#F1EFE8', borderRadius:7, padding:'4px 9px', cursor:'pointer', fontSize:12 }}>Fechar</button>
             </div>
             {fichaLoading ? <div style={{ textAlign:'center', padding:'2rem', color:'#B4B2A9', fontSize:12 }}>Carregando...</div> : fichaUsuario ? (<>
               <div style={{ background:'#F7FAFC', borderRadius:10, padding:12, marginBottom:12 }}>
@@ -328,14 +329,37 @@ export default function PainelOperacional() {
                 const cores = { realizado:['#EAF3DE','#3B6D11'], agendado:['#E6F1FB','#185FA5'], cancelado:['#FCEBEB','#A32D2D'], reagendado:['#FFF3E0','#854F0B'] }
                 const [bg,cor] = cores[a.situacao]||['#F1EFE8','#5F5E5A']
                 const prof = equipe.find(e=>String(e.id)===String(a.profissional_id))
+                const aberto = fichaItemAberto === a.id
+                const faltou = a.comparecimento && a.comparecimento !== 'Compareceu'
+                const temEvolucao = a.registro_tecnico || a.orientacao_familia || a.proxima_acao || a.desfecho_teacolher
                 return (
-                  <div key={a.id} onClick={() => navigate(`/atendimentos?abrir=${a.id}`)} style={{ padding:'9px 11px', borderRadius:9, border:'0.5px solid #E8E6DE', marginBottom:5, cursor:'pointer', background:i%2===0?'#fff':'#FAFAF8' }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:5 }}>
-                      <div style={{ fontSize:12, fontWeight:700, color:DARK }}>{fmtData(a.data_atend)}{a.hora_inicio?` · ${String(a.hora_inicio).slice(0,5)}`:''}</div>
-                      <span style={{ fontSize:10, fontWeight:600, background:bg, color:cor, borderRadius:99, padding:'1px 6px' }}>{a.situacao}</span>
-                    </div>
-                    <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}>{a.etapa_fluxo||'Atendimento'}{a.area_atendimento?` · ${a.area_atendimento}`:''}</div>
-                    {prof && <div style={{ fontSize:10.5, color:'#94A3B8', marginTop:1 }}>{prof.nome.split(' ').slice(0,2).join(' ')} — {prof.funcao}</div>}
+                  <div key={a.id} style={{ borderRadius:9, border:'0.5px solid #E8E6DE', marginBottom:5, overflow:'hidden', background:i%2===0?'#fff':'#FAFAF8' }}>
+                    <button onClick={() => setFichaItemAberto(aberto ? null : a.id)} style={{ width:'100%', border:'none', background:'none', padding:'9px 11px', cursor:'pointer', textAlign:'left' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:5 }}>
+                        <div style={{ fontSize:12, fontWeight:700, color:DARK }}>{fmtData(a.data_atend)}{a.hora_inicio?` · ${String(a.hora_inicio).slice(0,5)}`:''}</div>
+                        <div style={{ display:'flex', gap:5, alignItems:'center' }}>
+                          <span style={{ fontSize:10, fontWeight:600, background:bg, color:cor, borderRadius:99, padding:'1px 6px' }}>{a.situacao}</span>
+                          <span style={{ fontSize:11, color:'#B4B2A9' }}>{aberto?'▲':'▼'}</span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}>{a.etapa_fluxo||'Atendimento'}{a.area_atendimento?` · ${a.area_atendimento}`:''}</div>
+                      {prof && <div style={{ fontSize:10.5, color:'#94A3B8', marginTop:1 }}>{prof.nome.split(' ').slice(0,2).join(' ')} — {prof.funcao}</div>}
+                    </button>
+                    {aberto && (
+                      <div style={{ borderTop:'0.5px solid #E8E6DE', background:'#FAFAF8', padding:'9px 11px' }}>
+                        {faltou ? (
+                          <div style={{ fontSize:11.5, color:'#A32D2D' }}>{a.comparecimento} — sem evolução técnica.</div>
+                        ) : !temEvolucao ? (
+                          <div style={{ fontSize:11.5, color:'#B4B2A9' }}>{a.situacao==='realizado' ? 'Sem registro técnico nesta sessão.' : 'Atendimento ainda não finalizado pelo técnico.'}</div>
+                        ) : (<>
+                          {a.registro_tecnico && <div style={{ fontSize:12, color:'#2C2C2A', lineHeight:1.5, background:'#fff', borderRadius:7, padding:'7px 9px', border:'0.5px solid #E8E6DE', marginBottom:5 }}>{a.registro_tecnico}</div>}
+                          {a.orientacao_familia && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:3 }}><span style={{ fontWeight:600 }}>Orientação: </span>{a.orientacao_familia}</div>}
+                          {a.proxima_acao && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}><span style={{ fontWeight:600 }}>Próxima ação: </span>{a.proxima_acao}</div>}
+                          {a.desfecho_teacolher && <div style={{ fontSize:11, color:'#888780', marginTop:2 }}><span style={{ fontWeight:600 }}>Desfecho: </span>{a.desfecho_teacolher}</div>}
+                        </>)}
+                        <button onClick={() => navigate(`/atendimentos?abrir=${a.id}`)} style={{ marginTop:8, border:'none', borderRadius:7, background:'#F1EFE8', color:DARK, fontSize:10.5, fontWeight:700, padding:'5px 9px', cursor:'pointer' }}>Abrir atendimento completo →</button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
