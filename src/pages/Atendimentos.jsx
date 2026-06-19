@@ -782,22 +782,6 @@ export default function Atendimentos() {
     carregar(filtros, projetoTeacolherId)
   }
 
-  const hoje = new Date().toISOString().slice(0, 10)
-  const baseMetricas = todosAtendimentos.length ? todosAtendimentos : atendimentos
-  const totalAgendados = baseMetricas.filter(a => ['agendado', 'reagendado'].includes(a.situacao)).length
-  const hojeAgendados = baseMetricas.filter(a => a.data_atend === hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
-  const totalFinalizar = baseMetricas.filter(a => a.data_atend <= hoje && ['agendado', 'reagendado'].includes(a.situacao)).length
-  const totalRealizados = baseMetricas.filter(a => a.situacao === 'realizado').length
-  const faltasRemarcacoes = baseMetricas.filter(a => ['Faltou', 'Falta justificada', 'Remarcado', 'Cancelado'].includes(a.comparecimento) || ['reagendado', 'cancelado'].includes(a.situacao)).length
-  const totalEncaminhados = baseMetricas.filter(a =>
-    (a.tipo_encaminhamento && a.tipo_encaminhamento !== 'Sem encaminhamento externo') ||
-    (a.encaminhamentos || '').trim() ||
-    (a.rede_encaminhada && a.rede_encaminhada !== 'Não se aplica') ||
-    (a.orgao_encaminhamento || '').trim()
-  ).length
-  const totalDevolutivas = baseMetricas.filter(a => String(a.devolutiva_familia || '').toLowerCase().includes('sim') || String(a.etapa_fluxo || '').toLowerCase().includes('devolutiva')).length
-  const familiasAcompanhadas = new Set(baseMetricas.filter(a => a.usuario_atendido_id).map(a => String(a.usuario_atendido_id))).size
-
   const s = {
     card: { background:'rgba(255,255,255,0.92)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', padding:'1rem 1.25rem', marginBottom:10 },
     label: { fontSize:12, color:'#5F5E5A', display:'block', marginBottom:3 },
@@ -838,25 +822,6 @@ export default function Atendimentos() {
       {isTecnico && !tecnicoEquipeId && (
         <div style={{ fontSize:12, padding:'10px 12px', borderRadius:10, marginBottom:'1rem', background:'#FEF2F2', color:'#A32D2D', border:'0.5px solid #FECACA' }}>
           Seu usuário técnico ainda não está vinculado a um profissional da equipe. Peça ao administrador para preencher o campo equipe_id no cadastro do usuário.
-        </div>
-      )}
-
-      {/* Métricas: só pro admin/operacional. Técnico já vê os números dele no Painel Técnico. */}
-      {!isTecnico && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8, marginBottom:'1rem' }}>
-          {[
-            { label:'Famílias acompanhadas', val:familiasAcompanhadas, cor:ESCURO },
-            { label:'Agendados', val:totalAgendados, cor:AZUL },
-            { label:'Hoje', val:hojeAgendados, cor:ESCURO },
-            { label:'A finalizar', val:totalFinalizar, cor:LARANJA },
-            { label:'Realizados', val:totalRealizados, cor:VERDE },
-            { label:'Faltas/remarcações', val:faltasRemarcacoes, cor:VERMELHO },
-          ].map(m => (
-            <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-              <div style={{ fontSize:20, fontWeight:700, color:m.cor }}>{m.val}</div>
-            </div>
-          ))}
         </div>
       )}
 
@@ -1022,11 +987,9 @@ export default function Atendimentos() {
                     </div>
                     <span style={s.badge(bg, cor)}>{a.situacao}</span>
                   </div>
-                  <div style={{ fontSize:12, color:'#888780', marginBottom:4 }}>{etapaAtendimento(a)}</div>
-                  {!isTecnico && (a.area_atendimento || a.profissional_id) && (
-                    <div style={{ fontSize:11.5, color:'#888780', marginBottom:4 }}>{[a.area_atendimento, profissionalNome(a.profissional_id)].filter(Boolean).join(' · ')}</div>
+                  {!isTecnico && (
+                    <div style={{ fontSize:11.5, color:'#888780', marginBottom:8 }}>{profissionalNome(a.profissional_id)}</div>
                   )}
-                  {a.desfecho_teacolher && <div style={{ fontSize:11.5, color:'#888780', marginBottom:8 }}>Desfecho: {a.desfecho_teacolher}</div>}
                   {(() => {
                     const acoes = []
                     if (podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a)) acoes.push({ label:'Finalizar', cor:VERDE, fn:() => montarForm(a, true) })
@@ -1050,7 +1013,7 @@ export default function Atendimentos() {
           <div style={{ maxHeight:560, overflowY:'auto', overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead style={{ position:'sticky', top:0 }}>
-                <tr>{['Data', 'Hora', 'Usuário/família', 'Etapa', ...(!isTecnico?['Área','Profissional']:[]), 'Situação', 'Desfecho', 'Ações'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
+                <tr>{['Data', 'Hora', 'Usuário/família', ...(!isTecnico?['Profissional']:[]), 'Situação', 'Ações'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {atendimentos.map((a, i) => {
@@ -1059,12 +1022,9 @@ export default function Atendimentos() {
                     <tr key={a.id} style={{ background:i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
                       <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(a.data_atend)}</td>
                       <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtHora(a.hora_inicio)}</td>
-                      <td style={{ ...s.td, fontWeight:600, maxWidth:170, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</td>
-                      <td style={{ ...s.td, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{etapaAtendimento(a)}</td>
-                      {!isTecnico && <td style={{ ...s.td, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.area_atendimento || '—'}</td>}
-                      {!isTecnico && <td style={{ ...s.td, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profissionalNome(a.profissional_id)}</td>}
+                      <td style={{ ...s.td, fontWeight:600, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</td>
+                      {!isTecnico && <td style={{ ...s.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profissionalNome(a.profissional_id)}</td>}
                       <td style={s.td}><span style={s.badge(bg, cor)}>{a.situacao}</span></td>
-                      <td style={{ ...s.td, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.desfecho_teacolher || '—'}</td>
                       <td style={s.td}>
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                           {podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}

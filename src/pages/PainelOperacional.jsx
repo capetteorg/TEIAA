@@ -252,17 +252,16 @@ export default function PainelOperacional() {
           return (
             <div style={{ display:'grid', gap:10 }}>
               <div>
-                <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Por profissional</div>
-                <div style={{ fontSize:11.5, color:'#888780' }}>Usuários com agendamento futuro, agrupados por profissional.</div>
+                <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Usuários</div>
+                <div style={{ fontSize:11.5, color:'#888780' }}>Veja todos ou filtre por profissional. Clique no usuário para abrir a ficha completa.</div>
               </div>
               <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
                 <select value={profFiltro} onChange={e=>setProfFiltro(e.target.value)} style={{ border:'0.5px solid #D3D1C7', borderRadius:9, padding:'8px 12px', fontSize:12, minWidth:220 }}>
-                  <option value="">Todos os profissionais ({todos.length} usuários)</option>
+                  <option value="">Geral — todos os profissionais ({todos.length} usuários)</option>
                   {equipe.filter(e=>usuariosPorProf[String(e.id)]?.length>0).map(e=>(
                     <option key={e.id} value={String(e.id)}>{e.nome.split(' ').slice(0,2).join(' ')} — {e.funcao} ({usuariosPorProf[String(e.id)]?.length||0})</option>
                   ))}
                 </select>
-                <div style={{ fontSize:12, color:'#888780' }}>Clique no usuário para ver a ficha completa.</div>
               </div>
               {(() => {
                 const filtrados = profFiltro ? (usuariosPorProf[profFiltro]||[]) : todos

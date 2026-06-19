@@ -271,7 +271,7 @@ export default function Layout() {
           <NavItem colapsado={colapsado} to="/painel-operacional" icon="home" label="Resumo do dia" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="user-plus" label="Cadastrar usuário" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/atendimentos" icon="list-check" label="Agenda completa" visivel onClick={fecharMenu} />
-          <NavItem colapsado={colapsado} to="/painel-operacional?aba=profissionais" icon="users-group" label="Por profissional" visivel onClick={fecharMenu} />
+          <NavItem colapsado={colapsado} to="/painel-operacional?aba=profissionais" icon="users-group" label="Usuários" visivel onClick={fecharMenu} />
         </>) : (<>
           <NavSecao colapsado={colapsado} label="Principal" />
           <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
