@@ -248,7 +248,10 @@ export default function UsuariosAtendidos() {
   const generosTeacolher = contarPorCampo(usuariosTeacolher, 'genero')
   const deficienciasTeacolher = contarPorCampo(usuariosTeacolher, 'tipo_deficiencia')
   const bairrosTeacolher = contarPorCampo(usuariosTeacolher, 'bairro')
-  const incompletosTeacolher = usuariosTeacolher.filter(u => !u.cpf || !u.data_nascimento || !u.telefone || !u.tipo_deficiencia || !u.contato_familiar_nome)
+  const incompletosTeacolher = usuariosTeacolher.filter(u =>
+    !u.tipo_deficiencia || !u.deficiencia_detalhes || !u.renda_familiar_bruta || !u.pessoas_nucleo_familiar ||
+    !u.cpf || !u.data_nascimento || !u.telefone || !u.contato_familiar_nome
+  )
   const faixasTeacolher = { '0 a 5': 0, '6 a 11': 0, '12 a 17': 0, '18 a 29': 0, '30 a 59': 0, '60+': 0, 'Sem idade': 0 }
   usuariosTeacolher.forEach(u => {
     const idade = calcIdade(u.data_nascimento)
@@ -694,32 +697,44 @@ export default function UsuariosAtendidos() {
           <div style={s.card}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginBottom:'.85rem', flexWrap:'wrap' }}>
               <div>
-                <div style={{ fontSize:13, fontWeight:600, color:'#06344F' }}>Cadastros com dados incompletos</div>
-                <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Faltando CPF, nascimento, telefone, deficiência ou contato familiar.</div>
+                <div style={{ fontSize:13, fontWeight:600, color:'#06344F' }}>Cadastros pendentes do Anexo I</div>
+                <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Faltando laudo/deficiência, renda familiar ou núcleo familiar — exigidos para prestação de contas.</div>
               </div>
               <span style={s.badge(incompletosTeacolher.length ? '#FFF6ED' : '#EAF3DE', incompletosTeacolher.length ? '#854F0B' : '#3B6D11')}>
                 {incompletosTeacolher.length} pendente(s)
               </span>
             </div>
             {incompletosTeacolher.length === 0 ? (
-              <div style={{ fontSize:12, color:'#3B6D11' }}>Todos os cadastros do TEAcolher estão com os campos principais preenchidos.</div>
+              <div style={{ fontSize:12, color:'#3B6D11' }}>Todos os cadastros do TEAcolher estão com o Anexo I e os dados básicos completos.</div>
             ) : (
               <div style={{ overflowX:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                   <thead><tr>{['Nome','Faltando','Ação'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
                   <tbody>
                     {incompletosTeacolher.slice(0,12).map(u => {
-                      const faltando = [
+                      const faltandoAnexo1 = [
+                        !u.tipo_deficiencia && 'Tipo de deficiência',
+                        !u.deficiencia_detalhes && 'Laudo/detalhes',
+                        !u.renda_familiar_bruta && 'Renda familiar',
+                        !u.pessoas_nucleo_familiar && 'Pessoas no núcleo',
+                      ].filter(Boolean)
+                      const faltandoBasico = [
                         !u.cpf && 'CPF',
                         !u.data_nascimento && 'Nascimento',
                         !u.telefone && 'Telefone',
-                        !u.tipo_deficiencia && 'Deficiência',
                         !u.contato_familiar_nome && 'Contato familiar',
-                      ].filter(Boolean).join(', ')
+                      ].filter(Boolean)
                       return (
                         <tr key={u.id}>
                           <td style={s.td}>{u.nome}</td>
-                          <td style={{ ...s.td, color:'#854F0B' }}>{faltando}</td>
+                          <td style={s.td}>
+                            {faltandoAnexo1.length > 0 && (
+                              <div style={{ color:'#A32D2D', fontWeight:600 }}>Anexo I: {faltandoAnexo1.join(', ')}</div>
+                            )}
+                            {faltandoBasico.length > 0 && (
+                              <div style={{ color:'#9199A2', fontSize:11, marginTop:faltandoAnexo1.length?2:0 }}>Básico: {faltandoBasico.join(', ')}</div>
+                            )}
+                          </td>
                           <td style={s.td}><button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button></td>
                         </tr>
                       )
