@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFAnexoTeacolher } from '../lib/pdf'
+import { gerarPDFAnexoTeacolher, gerarPDFListaUsuariosComProfissionais } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -239,6 +239,52 @@ export default function UsuariosAtendidos() {
   })
 
   const usuariosTeacolher = usuarios.filter(usuarioEhTeacolher)
+  const [imprimindoLista, setImprimindoLista] = useState(false)
+
+  async function imprimirListaComProfissionais() {
+    setImprimindoLista(true)
+    try {
+      const ids = usuariosTeacolher.map(u => u.id)
+      // Busca todos os atendimentos (qualquer situação, não só futuros) pra capturar
+      // todo profissional que já fez acompanhamento com cada usuário — um usuário pode
+      // ter mais de um profissional (ex.: psicóloga + fonoaudióloga).
+      const { data: atendimentosData, error } = await supabase
+        .from('atendimentos')
+        .select('usuario_atendido_id, profissional_id')
+        .in('usuario_atendido_id', ids.length ? ids : [0])
+        .not('profissional_id', 'is', null)
+      if (error) throw error
+
+      const profIds = [...new Set((atendimentosData || []).map(a => a.profissional_id))]
+      let equipeData = []
+      if (profIds.length > 0) {
+        const { data } = await supabase.from('equipe').select('id,nome,funcao').in('id', profIds)
+        equipeData = data || []
+      }
+
+      const profsPorUsuario = {}
+      ;(atendimentosData || []).forEach(a => {
+        const uid = String(a.usuario_atendido_id)
+        if (!profsPorUsuario[uid]) profsPorUsuario[uid] = new Set()
+        profsPorUsuario[uid].add(a.profissional_id)
+      })
+
+      const listaParaImprimir = usuariosTeacolher.map(u => {
+        const idsProf = [...(profsPorUsuario[String(u.id)] || [])]
+        const profissionais = idsProf
+          .map(id => equipeData.find(e => String(e.id) === String(id)))
+          .filter(Boolean)
+        return { ...u, profissionais }
+      })
+
+      gerarPDFListaUsuariosComProfissionais(listaParaImprimir)
+    } catch (e) {
+      alert('Erro ao gerar a lista: ' + e.message)
+    } finally {
+      setImprimindoLista(false)
+    }
+  }
+
   const totalTeacolher = usuariosTeacolher.length
   const ativosTeacolher = usuariosTeacolher.filter(u => u.situacao === 'ativo').length
   const comTelefoneTeacolher = usuariosTeacolher.filter(u => u.telefone).length
@@ -624,11 +670,18 @@ export default function UsuariosAtendidos() {
                 <div style={{ fontSize:16, fontWeight:700, color:'#06344F', marginBottom:4 }}>Dashboard do Projeto TEAcolher</div>
                 <div style={{ fontSize:12, color:'#5F5E5A', lineHeight:1.45 }}>Perfil consolidado dos usuários vinculados ao Projeto TEAcolher, com base nos cadastros carregados na tela.</div>
               </div>
-              {podeGerenciarUsuarios && (
-                <button onClick={() => { setAbaAtiva('lista'); setMostrarForm(true); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn(AZUL)}>
-                  + Cadastrar usuário
-                </button>
-              )}
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                {podeImprimirAnexo && (
+                  <button onClick={imprimirListaComProfissionais} disabled={imprimindoLista} style={s.btn(imprimindoLista ? '#D3D1C7' : '#EEF2F7', '#334155')}>
+                    {imprimindoLista ? 'Gerando...' : 'Imprimir lista com profissionais'}
+                  </button>
+                )}
+                {podeGerenciarUsuarios && (
+                  <button onClick={() => { setAbaAtiva('lista'); setMostrarForm(true); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn(AZUL)}>
+                    + Cadastrar usuário
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

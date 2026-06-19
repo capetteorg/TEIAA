@@ -2945,3 +2945,51 @@ export function gerarPDFCronogramaTeacolher(lista = [], opts = {}) {
 
   abrirImpressao(html, 'Cronograma de Execução TEAcolher', true)
 }
+
+// =============================================
+// LISTA DE USUÁRIOS COM PROFISSIONAIS DE ACOMPANHAMENTO
+// Mostra cada usuário/família do TEAcolher e com qual(is) profissional(is) ele
+// está em acompanhamento — um usuário pode aparecer com mais de um profissional
+// (ex.: psicóloga + fonoaudióloga ao mesmo tempo).
+// =============================================
+export function gerarPDFListaUsuariosComProfissionais(lista = [], opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-USUARIOS`
+  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+
+  const itens = Array.isArray(lista) ? lista : []
+  const comAcompanhamento = itens.filter(u => (u.profissionais || []).length > 0).length
+  const semAcompanhamento = itens.length - comAcompanhamento
+
+  const linhas = itens
+    .slice()
+    .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'))
+    .map(u => {
+      const profs = u.profissionais || []
+      const profsTxt = profs.length > 0
+        ? profs.map(p => `${esc(p.nome)}${p.funcao ? ` (${esc(p.funcao)})` : ''}`).join('; ')
+        : '<span style="color:#B4B2A9">Sem acompanhamento ativo</span>'
+      return `<tr>
+        <td><strong>${esc(u.nome)}</strong></td>
+        <td>${u.data_nascimento ? fmtData(u.data_nascimento) : '—'}</td>
+        <td>${esc(u.contato_familiar_nome || u.telefone)}</td>
+        <td style="${profs.length > 1 ? 'font-weight:600' : ''}">${profsTxt}</td>
+      </tr>`
+    }).join('')
+
+  const html = `<div class="pg pg-landscape">
+    ${htmlCabecalho({ titulo: 'Usuários e Profissionais de Acompanhamento', sub: 'Projeto TEAcolher · Associação TEIAA', ref: protocolo })}
+    <div class="resumo-grid" style="margin-bottom:16px">
+      <div class="resumo-item"><div class="resumo-label">Total de usuários</div><div class="resumo-valor azul">${itens.length}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Com acompanhamento ativo</div><div class="resumo-valor verde">${comAcompanhamento}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Sem acompanhamento no momento</div><div class="resumo-valor">${semAcompanhamento}</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Usuário/família</th><th>Nascimento</th><th>Contato familiar</th><th>Acompanhamento com</th></tr></thead>
+      <tbody>${linhas || '<tr><td colspan="4" style="text-align:center;color:#9199A2;padding:12px">Nenhum usuário encontrado</td></tr>'}</tbody>
+    </table>
+    ${htmlRodape({ protocolo })}
+  </div>`
+
+  abrirImpressao(html, 'Usuários e Profissionais TEAcolher', true)
+}
