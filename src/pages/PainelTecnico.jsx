@@ -115,7 +115,14 @@ export default function PainelTecnico() {
       .eq('profissional_id', prof.id)
       .order('data_atend', { ascending: false })
       .limit(20)
-    setEvolucoes(prev => ({ ...prev, [uid]: data || [] }))
+    // Reordena: o próximo agendamento (futuro) sempre primeiro, depois o histórico já
+    // realizado do mais recente para o mais antigo — assim quem abre vê "o que vem" no topo,
+    // não o atendimento mais distante no futuro.
+    const hoje = new Date().toISOString().slice(0, 10)
+    const lista = data || []
+    const futuros = lista.filter(a => a.data_atend >= hoje && ['agendado', 'reagendado'].includes(a.situacao)).sort((a, b) => a.data_atend > b.data_atend ? 1 : -1)
+    const passados = lista.filter(a => !(a.data_atend >= hoje && ['agendado', 'reagendado'].includes(a.situacao)))
+    setEvolucoes(prev => ({ ...prev, [uid]: [...futuros, ...passados] }))
   }
   const hora = new Date().getHours()
   const saudacao = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite'
