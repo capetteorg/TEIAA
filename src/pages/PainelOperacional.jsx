@@ -202,14 +202,9 @@ export default function PainelOperacional() {
           ))}
         </div>
 
-        {/* Abas */}
-        <div style={{ display:'flex', gap:2, borderBottom:'1px solid #E8E6DE' }}>
-          {[['agenda','📋 Agenda'], ['profissionais','👥 Por profissional']].map(([k,l]) => (
-            <button key={k} onClick={() => setAba(k)} style={{ border:'none', background:'none', padding:'7px 14px', fontSize:12.5, fontWeight:aba===k?900:500, color:aba===k?BLUE:'#888780', borderBottom:aba===k?`2px solid ${BLUE}`:'2px solid transparent', cursor:'pointer', marginBottom:-1 }}>{l}</button>
-          ))}
-        </div>
+        {/* Conteúdo trocado pelo menu lateral (Resumo do dia / Por profissional), sem aba duplicada aqui dentro */}
 
-        {/* ABA AGENDA */}
+        {/* RESUMO DO DIA */}
         {aba==='agenda' && (
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'300px 1fr', gap:14, alignItems:'start' }}>
             {/* Imprimir agenda */}
@@ -256,6 +251,10 @@ export default function PainelOperacional() {
           const todos = Object.values(usuariosFlat).sort((a,b) => a.nome > b.nome ? 1 : -1)
           return (
             <div style={{ display:'grid', gap:10 }}>
+              <div>
+                <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Por profissional</div>
+                <div style={{ fontSize:11.5, color:'#888780' }}>Usuários com agendamento futuro, agrupados por profissional.</div>
+              </div>
               <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
                 <select value={profFiltro} onChange={e=>setProfFiltro(e.target.value)} style={{ border:'0.5px solid #D3D1C7', borderRadius:9, padding:'8px 12px', fontSize:12, minWidth:220 }}>
                   <option value="">Todos os profissionais ({todos.length} usuários)</option>
