@@ -109,20 +109,21 @@ export default function PainelTecnico() {
     if (usuarioExpandido === uid) { setUsuarioExpandido(null); return }
     setUsuarioExpandido(uid)
     if (evolucoes[uid]) return // já carregou
-    const { data } = await supabase.from('atendimentos')
-      .select('id,data_atend,hora_inicio,comparecimento,registro_tecnico,orientacao_familia,proxima_acao,desfecho_teacolher,etapa_fluxo,situacao')
-      .eq('usuario_atendido_id', uid)
-      .eq('profissional_id', prof.id)
-      .order('data_atend', { ascending: false })
-      .limit(20)
-    // Reordena: o próximo agendamento (futuro) sempre primeiro, depois o histórico já
-    // realizado do mais recente para o mais antigo — assim quem abre vê "o que vem" no topo,
-    // não o atendimento mais distante no futuro.
     const hoje = new Date().toISOString().slice(0, 10)
-    const lista = data || []
-    const futuros = lista.filter(a => a.data_atend >= hoje && ['agendado', 'reagendado'].includes(a.situacao)).sort((a, b) => a.data_atend > b.data_atend ? 1 : -1)
-    const passados = lista.filter(a => !(a.data_atend >= hoje && ['agendado', 'reagendado'].includes(a.situacao)))
-    setEvolucoes(prev => ({ ...prev, [uid]: [...futuros, ...passados] }))
+    const sel = 'id,data_atend,hora_inicio,comparecimento,registro_tecnico,orientacao_familia,proxima_acao,desfecho_teacolher,etapa_fluxo,situacao'
+    // Busca futuros e passados em consultas separadas — buscar tudo junto com um único limit()
+    // ordenado por data podia cortar antes de chegar nos agendamentos futuros mais próximos
+    // (ex: muitas sessões recorrentes em dezembro "empurravam" o corte e escondiam um
+    // atendimento de junho, que era o próximo de verdade).
+    const [futurosRes, passadosRes] = await Promise.all([
+      supabase.from('atendimentos').select(sel).eq('usuario_atendido_id', uid).eq('profissional_id', prof.id)
+        .gte('data_atend', hoje).in('situacao', ['agendado', 'reagendado'])
+        .order('data_atend', { ascending: true }).limit(50),
+      supabase.from('atendimentos').select(sel).eq('usuario_atendido_id', uid).eq('profissional_id', prof.id)
+        .or(`data_atend.lt.${hoje},situacao.not.in.(agendado,reagendado)`)
+        .order('data_atend', { ascending: false }).limit(20),
+    ])
+    setEvolucoes(prev => ({ ...prev, [uid]: [...(futurosRes.data || []), ...(passadosRes.data || [])] }))
   }
   const hora = new Date().getHours()
   const saudacao = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite'

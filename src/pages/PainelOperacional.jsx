@@ -101,18 +101,23 @@ export default function PainelOperacional() {
   async function abrirFicha(uid) {
     if (!uid) return
     setFichaLoading(true); setFichaUsuario(null); setFichaAtendimentos([])
-    const [uRes, aRes] = await Promise.all([
-      supabase.from('usuarios_atendidos').select('*').eq('id', uid).single(),
-      supabase.from('atendimentos').select('id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id').eq('usuario_atendido_id', uid).order('data_atend', { ascending:false }).limit(30),
-    ])
-    // Regra padrão em todo o sistema: o próximo agendamento futuro sempre aparece primeiro
-    // (do mais próximo pro mais distante), depois o histórico já realizado do mais recente
-    // pro mais antigo — nunca o atendimento mais distante no topo.
     const hoje = new Date().toISOString().slice(0, 10)
-    const lista = aRes.data || []
-    const futuros = lista.filter(a => a.data_atend >= hoje && ['agendado','reagendado'].includes(a.situacao)).sort((a,b) => a.data_atend > b.data_atend ? 1 : -1)
-    const passados = lista.filter(a => !(a.data_atend >= hoje && ['agendado','reagendado'].includes(a.situacao)))
-    setFichaUsuario(uRes.data||null); setFichaAtendimentos([...futuros, ...passados]); setFichaLoading(false)
+    const sel = 'id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id'
+    // Futuros e passados em consultas separadas — um único limit() ordenado por data podia
+    // cortar antes de chegar nos agendamentos futuros mais próximos quando há muitas sessões
+    // recorrentes distantes, escondendo o atendimento que de fato vem primeiro.
+    const [uRes, futurosRes, passadosRes] = await Promise.all([
+      supabase.from('usuarios_atendidos').select('*').eq('id', uid).single(),
+      supabase.from('atendimentos').select(sel).eq('usuario_atendido_id', uid)
+        .gte('data_atend', hoje).in('situacao', ['agendado', 'reagendado'])
+        .order('data_atend', { ascending:true }).limit(50),
+      supabase.from('atendimentos').select(sel).eq('usuario_atendido_id', uid)
+        .or(`data_atend.lt.${hoje},situacao.not.in.(agendado,reagendado)`)
+        .order('data_atend', { ascending:false }).limit(30),
+    ])
+    setFichaUsuario(uRes.data||null)
+    setFichaAtendimentos([...(futurosRes.data||[]), ...(passadosRes.data||[])])
+    setFichaLoading(false)
   }
 
   function periodoLabel(tipo) {
