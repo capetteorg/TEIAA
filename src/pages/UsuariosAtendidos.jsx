@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFAnexoTeacolher, gerarPDFListaUsuariosComProfissionais } from '../lib/pdf'
+import { gerarPDFListaUsuariosComProfissionais, gerarPDFAnexoOficialTeacolher, gerarPDFTermoAutorizacaoImagem } from '../lib/pdf'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -634,9 +634,10 @@ export default function UsuariosAtendidos() {
                               {podeGerenciarUsuarios && (
                                 <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                               )}
-                              {podeImprimirAnexo && usuarioEhTeacolher(u) && (
-                                <button onClick={() => gerarPDFAnexoTeacolher(u, { projetoNome: nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || 'Projeto TEAcolher' })} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
-                              )}
+                              {podeImprimirAnexo && usuarioEhTeacolher(u) && (<>
+                                <button onClick={() => gerarPDFAnexoOficialTeacolher(u)} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
+                                <button onClick={() => gerarPDFTermoAutorizacaoImagem(u)} style={s.btn('#6B5FA8')}>Termo de Imagem</button>
+                              </>)}
                               {podeExcluirUsuario && (
                                 <button type="button" onClick={() => setConfirmandoExcluir(u.id)} style={s.btn('#FEF2F2','#A32D2D')}>Excluir</button>
                               )}
