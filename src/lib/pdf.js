@@ -3139,12 +3139,12 @@ export function gerarPDFAnexoOficialTeacolher(usuario = {}) {
         Assinatura do responsável legal
       </div>
     </div>
-    <img src="${TEACOLHER_FOOTER_IMG}" style="width:100%;display:block;margin-top:140px" />
+    <img src="${TEACOLHER_FOOTER_IMG}" style="width:100%;display:block;margin-top:auto;padding-top:18px" />
   `
 
   const html = `
-    <div class="pg" style="font-family:Arial,Helvetica,sans-serif">${pagina1}</div>
-    <div class="pg" style="font-family:Arial,Helvetica,sans-serif;page-break-before:always">${pagina2}</div>
+    <div class="pg" style="font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;min-height:297mm;box-sizing:border-box">${pagina1}</div>
+    <div class="pg" style="font-family:Arial,Helvetica,sans-serif;page-break-before:always;display:flex;flex-direction:column;min-height:297mm;box-sizing:border-box">${pagina2}</div>
   `
   abrirImpressao(html, `Formulário de Cadastro TEAcolher - ${usuario.nome || ''}`, false)
 }
@@ -3171,7 +3171,7 @@ export function gerarPDFTermoAutorizacaoImagem(usuario = {}) {
   const endereco = [usuario.endereco, usuario.bairro, usuario.cidade].filter(Boolean).join(', ')
 
   const html = `
-    <div class="pg" style="font-family:Arial,Helvetica,sans-serif">
+    <div class="pg" style="font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;min-height:297mm;box-sizing:border-box">
       <img src="${TEACOLHER_HEADER_IMG}" style="width:100%;display:block;margin-bottom:18px" />
       <div style="text-align:center;font-weight:700;font-size:12px;color:#20252C;margin-bottom:22px;letter-spacing:.01em">
         TERMO DE AUTORIZAÇÃO DE USO DE IMAGEM, VOZ E DADOS PESSOAIS
@@ -3214,7 +3214,7 @@ export function gerarPDFTermoAutorizacaoImagem(usuario = {}) {
       <div style="font-size:10px;color:#20252C;margin-bottom:8px">Local: ${linhaPreenchida('Teresópolis - RJ', '260px')}</div>
       <div style="font-size:10px;color:#20252C">Data: ${linhaPreenchida(new Date().toLocaleDateString('pt-BR'), '140px')}</div>
 
-      <img src="${TEACOLHER_FOOTER_IMG}" style="width:100%;display:block;margin-top:60px" />
+      <img src="${TEACOLHER_FOOTER_IMG}" style="width:100%;display:block;margin-top:auto;padding-top:18px" />
     </div>
   `
   abrirImpressao(html, `Termo de Autorização de Imagem - ${usuario.nome || ''}`, false)
