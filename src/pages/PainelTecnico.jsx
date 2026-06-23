@@ -37,6 +37,7 @@ export default function PainelTecnico() {
     async function carregar() {
       setLoading(true); setMsg('')
       const hoje = new Date().toISOString().slice(0,10)
+
       let eid = perfil?.equipe_id || null
       if (!eid && user?.id) {
         const { data } = await supabase.from('usuarios').select('equipe_id').eq('id', user.id).maybeSingle()
@@ -47,47 +48,63 @@ export default function PainelTecnico() {
         setMsg('Técnico sem vínculo com profissional. Peça ao admin para preencher o equipe_id.')
         setLoading(false); return
       }
+
       const [{ data:projetos }, { data:profData }] = await Promise.all([
         supabase.from('projetos').select('id,nome').eq('aceita_atendimentos', true),
         supabase.from('equipe').select('id,nome,funcao').eq('id', eid).maybeSingle(),
       ])
       const pid = (projetos||[]).find(p => p.nome?.toLowerCase().includes('teacolher'))?.id
       if (mounted) setProjetoId(pid||null)
-
       if (!pid) { if (mounted) { setLoading(false); setMsg('Projeto TEAcolher não encontrado.') } return }
 
       const sel = 'id,data_atend,hora_inicio,pessoa_atendida,usuario_atendido_id,etapa_fluxo,situacao,profissional_id'
+
+      // Agenda de hoje + atrasados + TODOS os usuários já atendidos (sem filtro de data)
       const [lH, lA, lTodos] = await Promise.all([
-        supabase.from('atendimentos').select(sel).eq('projeto_id',pid).eq('profissional_id',eid).eq('data_atend',hoje).in('situacao',['agendado','reagendado']).order('hora_inicio',{ascending:true}).limit(8),
-        supabase.from('atendimentos').select(sel).eq('projeto_id',pid).eq('profissional_id',eid).lt('data_atend',hoje).in('situacao',['agendado','reagendado']).order('data_atend',{ascending:true}).limit(6),
-        supabase.from('atendimentos').select('usuario_atendido_id,pessoa_atendida,data_atend').eq('projeto_id',pid).eq('profissional_id',eid).gte('data_atend',hoje).in('situacao',['agendado','reagendado']).order('data_atend',{ascending:true}).limit(200),
+        supabase.from('atendimentos').select(sel)
+          .eq('projeto_id',pid).eq('profissional_id',eid).eq('data_atend',hoje)
+          .in('situacao',['agendado','reagendado']).order('hora_inicio',{ascending:true}).limit(8),
+        supabase.from('atendimentos').select(sel)
+          .eq('projeto_id',pid).eq('profissional_id',eid).lt('data_atend',hoje)
+          .in('situacao',['agendado','reagendado']).order('data_atend',{ascending:true}).limit(6),
+        // Busca TODOS os atendimentos do técnico (passados e futuros) para montar a lista de usuários
+        supabase.from('atendimentos')
+          .select('usuario_atendido_id,pessoa_atendida,data_atend,situacao')
+          .eq('projeto_id',pid).eq('profissional_id',eid)
+          .order('data_atend',{ascending:false}).limit(500),
       ])
 
+      // Monta mapa de usuários: pega o próximo atendimento futuro ou, se não houver, o último passado
       const uMap = {}
       ;(lTodos.data||[]).forEach(a => {
         if (!a.usuario_atendido_id) return
         const k = String(a.usuario_atendido_id)
-        if (!uMap[k]) uMap[k] = { id:a.usuario_atendido_id, nome:a.pessoa_atendida||'–', proxData:a.data_atend, outrosProfissionais:[] }
+        if (!uMap[k]) {
+          uMap[k] = { id:a.usuario_atendido_id, nome:a.pessoa_atendida||'–', proxData:null, ultimaData:null, temFuturo:false, outrosProfissionais:[] }
+        }
+        const isFuturo = a.data_atend >= hoje && ['agendado','reagendado'].includes(a.situacao)
+        if (isFuturo && (!uMap[k].proxData || a.data_atend < uMap[k].proxData)) {
+          uMap[k].proxData = a.data_atend
+          uMap[k].temFuturo = true
+        }
+        if (!uMap[k].ultimaData || a.data_atend > uMap[k].ultimaData) {
+          uMap[k].ultimaData = a.data_atend
+        }
       })
 
-      const uids = Object.keys(uMap).map(Number).filter(Boolean)
-      if (uids.length > 0) {
-        const { data:outrosA } = await supabase.from('atendimentos').select('usuario_atendido_id,profissional_id').eq('projeto_id',pid).in('usuario_atendido_id',uids).neq('profissional_id',eid).gte('data_atend',hoje).in('situacao',['agendado','reagendado']).limit(200)
-        const outroIds = [...new Set((outrosA||[]).map(a=>a.profissional_id).filter(Boolean))]
-        let outrosP = []
-        if (outroIds.length) { const {data:pRes} = await supabase.from('equipe').select('id,nome,funcao').in('id',outroIds); outrosP = pRes||[] }
-        ;(outrosA||[]).forEach(a => {
-          const k = String(a.usuario_atendido_id)
-          if (!uMap[k]) return
-          const pi = outrosP.find(p => String(p.id)===String(a.profissional_id))
-          if (pi && !uMap[k].outrosProfissionais.find(p=>String(p.id)===String(pi.id))) uMap[k].outrosProfissionais.push(pi)
-        })
-      }
+      // Ordena: primeiro quem tem próximo agendamento (pelo mais próximo), depois os demais (pelo mais recente)
+      const lista = Object.values(uMap).sort((a, b) => {
+        if (a.temFuturo && !b.temFuturo) return -1
+        if (!a.temFuturo && b.temFuturo) return 1
+        if (a.temFuturo && b.temFuturo) return a.proxData > b.proxData ? 1 : -1
+        return a.ultimaData < b.ultimaData ? 1 : -1
+      })
 
       if (!mounted) return
       setProf({ id:eid, nome:profData?.nome||perfil?.nome||'Técnico', funcao:profData?.funcao||'' })
-      setAgendaHoje(lH.data||[]); setAtrasados(lA.data||[])
-      setMeusUsuarios(Object.values(uMap).sort((a,b) => a.proxData>b.proxData?1:-1))
+      setAgendaHoje(lH.data||[])
+      setAtrasados(lA.data||[])
+      setMeusUsuarios(lista)
       setLoading(false)
     }
     carregar()
@@ -130,7 +147,11 @@ export default function PainelTecnico() {
     if (!prof.id||!projetoId) return
     setImprimindo(true)
     const {ini,fim} = periodoLabel(periodo)
-    const {data,error} = await supabase.from('atendimentos').select('id,data_atend,hora_inicio,hora_fim,pessoa_atendida,usuario_atendido_id,etapa_fluxo,situacao,area_atendimento,comparecimento,profissional_id').eq('projeto_id',projetoId).eq('profissional_id',prof.id).gte('data_atend',ini).lte('data_atend',fim).order('data_atend',{ascending:true}).order('hora_inicio',{ascending:true})
+    const {data,error} = await supabase.from('atendimentos')
+      .select('id,data_atend,hora_inicio,hora_fim,pessoa_atendida,usuario_atendido_id,etapa_fluxo,situacao,area_atendimento,comparecimento,profissional_id')
+      .eq('projeto_id',projetoId).eq('profissional_id',prof.id)
+      .gte('data_atend',ini).lte('data_atend',fim)
+      .order('data_atend',{ascending:true}).order('hora_inicio',{ascending:true})
     setImprimindo(false)
     if (error) { setMsg('Erro: '+error.message); return }
     const titulo = periodo==='dia'?'Agenda diária':periodo==='semana'?'Agenda semanal':'Agenda mensal'
@@ -168,9 +189,11 @@ export default function PainelTecnico() {
             <div>
               <div style={{ ...card, padding:14, marginBottom:10 }}>
                 <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:8 }}>Agenda de hoje</div>
-                {loading ? <div style={{ fontSize:12, color:'#B4B2A9', textAlign:'center', padding:'1rem 0' }}>Carregando...</div>
-                  : agendaHoje.length===0 ? <div style={{ fontSize:12, color:'#B4B2A9', textAlign:'center', padding:'1rem 0' }}>Nenhum atendimento hoje.</div>
-                  : agendaHoje.map((a,i) => itemAgenda(a,i,agendaHoje.length))}
+                {loading
+                  ? <div style={{ fontSize:12, color:'#B4B2A9', textAlign:'center', padding:'1rem 0' }}>Carregando...</div>
+                  : agendaHoje.length===0
+                    ? <div style={{ fontSize:12, color:'#B4B2A9', textAlign:'center', padding:'1rem 0' }}>Nenhum atendimento hoje.</div>
+                    : agendaHoje.map((a,i) => itemAgenda(a,i,agendaHoje.length))}
               </div>
               {atrasados.length>0 && (
                 <div style={{ ...card, padding:14, borderLeft:`3px solid ${RED}` }}>
@@ -179,7 +202,6 @@ export default function PainelTecnico() {
                 </div>
               )}
             </div>
-            {/* Imprimir */}
             <div style={{ ...card, padding:14 }}>
               <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:10 }}>Imprimir agenda</div>
               <div style={{ display:'grid', gap:7 }}>
@@ -197,81 +219,83 @@ export default function PainelTecnico() {
           </div>
         )}
 
-        {/* MEUS USUÁRIOS – evolução por usuário */}
+        {/* MEUS USUÁRIOS */}
         {aba==='meus_usuarios' && (
           <div>
             <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Meus usuários</div>
-            <div style={{ fontSize:11.5, color:'#888780', marginBottom:12 }}>Clique num usuário para ver a evolução completa de cada atendimento.</div>
-            {loading ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#B4B2A9', fontSize:13 }}>Carregando...</div>
-              : meusUsuarios.length===0 ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#888780', fontSize:13 }}>Nenhum usuário com agendamento futuro para você.</div>
-              : (
-                <div style={{ display:'grid', gap:8 }}>
-                  {meusUsuarios.map(u => {
-                    const aberto = usuarioExpandido===u.id
-                    const evs = evolucoes[u.id] || []
-                    return (
-                      <div key={u.id} style={{ ...card, overflow:'hidden' }}>
-                        <button onClick={() => abrirEvolucao(u.id)} style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'12px 14px', cursor:'pointer', display:'grid', gridTemplateColumns:'1fr auto', alignItems:'center', gap:10 }}>
-                          <div>
-                            <div style={{ fontSize:14, fontWeight:800, color:DARK }}>{u.nome}</div>
-                            <div style={{ fontSize:11.5, color:'#888780', marginTop:2 }}>Próx. atendimento: {fmtData(u.proxData)}</div>
-                            {u.outrosProfissionais.length>0 && (
-                              <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
-                                Também com: {u.outrosProfissionais.map(p=>`${p.nome.split(' ')[0]} (${p.funcao})`).join(', ')}
+            <div style={{ fontSize:11.5, color:'#888780', marginBottom:12 }}>
+              {meusUsuarios.length > 0 ? `${meusUsuarios.length} usuário(s) atendido(s) por você. Clique para ver as evoluções.` : 'Clique num usuário para ver a evolução completa de cada atendimento.'}
+            </div>
+            {loading
+              ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#B4B2A9', fontSize:13 }}>Carregando...</div>
+              : meusUsuarios.length===0
+                ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#888780', fontSize:13 }}>Nenhum usuário encontrado nos seus atendimentos.</div>
+                : (
+                  <div style={{ display:'grid', gap:8 }}>
+                    {meusUsuarios.map(u => {
+                      const aberto = usuarioExpandido===u.id
+                      const evs = evolucoes[u.id] || []
+                      return (
+                        <div key={u.id} style={{ ...card, overflow:'hidden' }}>
+                          <button onClick={() => abrirEvolucao(u.id)} style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'12px 14px', cursor:'pointer', display:'grid', gridTemplateColumns:'1fr auto', alignItems:'center', gap:10 }}>
+                            <div>
+                              <div style={{ fontSize:14, fontWeight:800, color:DARK }}>{u.nome}</div>
+                              <div style={{ fontSize:11.5, color: u.temFuturo ? BLUE : '#888780', marginTop:2 }}>
+                                {u.temFuturo
+                                  ? `Próx. atendimento: ${fmtData(u.proxData)}`
+                                  : `Último atendimento: ${fmtData(u.ultimaData)}`}
                               </div>
-                            )}
-                          </div>
-                          <span style={{ fontSize:14, color:'#B4B2A9', transform:aberto?'rotate(90deg)':'none', transition:'.15s' }}>›</span>
-                        </button>
+                            </div>
+                            <span style={{ fontSize:14, color:'#B4B2A9', transform:aberto?'rotate(90deg)':'none', transition:'.15s' }}>›</span>
+                          </button>
 
-                        {aberto && (
-                          <div style={{ borderTop:'0.5px solid #F1EFE8', background:'#FAFAF8', padding:'12px 14px' }}>
-                            <div style={{ fontSize:12, fontWeight:700, color:DARK, marginBottom:8 }}>Evoluções e registros técnicos</div>
-                            {!evolucoes[u.id] ? (
-                              <div style={{ fontSize:12, color:'#B4B2A9' }}>Carregando...</div>
-                            ) : evs.length===0 ? (
-                              <div style={{ fontSize:12, color:'#888780' }}>Nenhum registro técnico encontrado.</div>
-                            ) : evs.map((ev, i) => {
-                              const faltou = ev.comparecimento && ev.comparecimento !== 'Compareceu'
-                              const agendado = ['agendado','reagendado'].includes(ev.situacao)
-                              return (
-                                <div key={ev.id} style={{ marginBottom:10, paddingBottom:10, borderBottom:i<evs.length-1?'0.5px solid #E8E6DE':'none' }}>
-                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:faltou?4:6 }}>
-                                    <div style={{ fontSize:12, fontWeight:700, color:agendado?BLUE:DARK }}>
-                                      {fmtData(ev.data_atend)} {ev.hora_inicio?`· ${String(ev.hora_inicio).slice(0,5)}`:''}
-                                      {agendado && <span style={{ fontSize:10, marginLeft:6, background:'#E6F1FB', color:'#185FA5', borderRadius:99, padding:'1px 6px', fontWeight:600 }}>agendado</span>}
-                                    </div>
-                                    <div style={{ display:'flex', gap:5 }}>
-                                      {faltou && <span style={{ fontSize:10, background:'#FCEBEB', color:'#A32D2D', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.comparecimento}</span>}
-                                      {!agendado && <span style={{ fontSize:10, background:ev.situacao==='realizado'?'#EAF3DE':'#E6F1FB', color:ev.situacao==='realizado'?'#3B6D11':'#185FA5', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.situacao}</span>}
-                                    </div>
-                                  </div>
-                                  {agendado ? (
-                                    <div style={{ fontSize:11, color:'#888780' }}>Atendimento ainda não realizado.</div>
-                                  ) : faltou ? (
-                                    <div style={{ fontSize:11.5, color:'#888780' }}>Falta registrada – sem evolução técnica.</div>
-                                  ) : (<>
-                                    {ev.etapa_fluxo && <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{ev.etapa_fluxo}</div>}
-                                    {ev.registro_tecnico ? (
-                                      <div style={{ fontSize:12, color:'#2C2C2A', lineHeight:1.5, background:'#fff', borderRadius:7, padding:'7px 9px', border:'0.5px solid #E8E6DE', marginBottom:4 }}>{ev.registro_tecnico}</div>
-                                    ) : <div style={{ fontSize:11.5, color:'#B4B2A9', marginBottom:4 }}>Sem registro técnico nesta sessão.</div>}
-                                    {ev.orientacao_familia && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:3 }}><span style={{ fontWeight:600 }}>Orientação: </span>{ev.orientacao_familia}</div>}
-                                    {ev.proxima_acao && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}><span style={{ fontWeight:600 }}>Próxima ação: </span>{ev.proxima_acao}</div>}
-                                    {ev.desfecho_teacolher && <div style={{ fontSize:11, color:'#888780', marginTop:2 }}><span style={{ fontWeight:600 }}>Desfecho: </span>{ev.desfecho_teacolher}</div>}
-                                    <button onClick={() => navigate(`/atendimentos?abrir=${ev.id}`)} style={{ marginTop:6, fontSize:11, border:'0.5px solid #D3D1C7', borderRadius:6, background:'#fff', padding:'4px 10px', cursor:'pointer', color:'#5F5E5A' }}>
-                                      Abrir atendimento
-                                    </button>
-                                  </>)}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                          {aberto && (
+                            <div style={{ borderTop:'0.5px solid #F1EFE8', background:'#FAFAF8', padding:'12px 14px' }}>
+                              <div style={{ fontSize:12, fontWeight:700, color:DARK, marginBottom:8 }}>Evoluções e registros técnicos</div>
+                              {!evolucoes[u.id]
+                                ? <div style={{ fontSize:12, color:'#B4B2A9' }}>Carregando...</div>
+                                : evs.length===0
+                                  ? <div style={{ fontSize:12, color:'#888780' }}>Nenhum registro encontrado.</div>
+                                  : evs.map((ev, i) => {
+                                    const faltou = ev.comparecimento && ev.comparecimento !== 'Compareceu'
+                                    const agendado = ['agendado','reagendado'].includes(ev.situacao)
+                                    return (
+                                      <div key={ev.id} style={{ marginBottom:10, paddingBottom:10, borderBottom:i<evs.length-1?'0.5px solid #E8E6DE':'none' }}>
+                                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                                          <div style={{ fontSize:12, fontWeight:700, color:agendado?BLUE:DARK }}>
+                                            {fmtData(ev.data_atend)}{ev.hora_inicio?` · ${String(ev.hora_inicio).slice(0,5)}`:''}
+                                          </div>
+                                          <div style={{ display:'flex', gap:5 }}>
+                                            {faltou && <span style={{ fontSize:10, background:'#FCEBEB', color:'#A32D2D', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.comparecimento}</span>}
+                                            <span style={{ fontSize:10, background:agendado?'#E6F1FB':ev.situacao==='realizado'?'#EAF3DE':'#F1EFE8', color:agendado?'#185FA5':ev.situacao==='realizado'?'#3B6D11':'#888780', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.situacao}</span>
+                                          </div>
+                                        </div>
+                                        {agendado ? (
+                                          <div style={{ fontSize:11, color:'#888780' }}>Atendimento ainda não realizado.</div>
+                                        ) : faltou ? (
+                                          <div style={{ fontSize:11.5, color:'#888780' }}>Falta registrada – sem evolução técnica.</div>
+                                        ) : (<>
+                                          {ev.etapa_fluxo && <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{ev.etapa_fluxo}</div>}
+                                          {ev.registro_tecnico
+                                            ? <div style={{ fontSize:12, color:'#2C2C2A', lineHeight:1.5, background:'#fff', borderRadius:7, padding:'7px 9px', border:'0.5px solid #E8E6DE', marginBottom:4 }}>{ev.registro_tecnico}</div>
+                                            : <div style={{ fontSize:11.5, color:'#B4B2A9', marginBottom:4 }}>Sem registro técnico nesta sessão.</div>}
+                                          {ev.orientacao_familia && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:3 }}><span style={{ fontWeight:600 }}>Orientação: </span>{ev.orientacao_familia}</div>}
+                                          {ev.proxima_acao && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}><span style={{ fontWeight:600 }}>Próxima ação: </span>{ev.proxima_acao}</div>}
+                                          {ev.desfecho_teacolher && <div style={{ fontSize:11, color:'#888780', marginTop:2 }}><span style={{ fontWeight:600 }}>Desfecho: </span>{ev.desfecho_teacolher}</div>}
+                                          <button onClick={() => navigate(`/atendimentos?abrir=${ev.id}`)} style={{ marginTop:6, fontSize:11, border:'0.5px solid #D3D1C7', borderRadius:6, background:'#fff', padding:'4px 10px', cursor:'pointer', color:'#5F5E5A' }}>
+                                            Abrir atendimento
+                                          </button>
+                                        </>)}
+                                      </div>
+                                    )
+                                  })}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
           </div>
         )}
       </div>
