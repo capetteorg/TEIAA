@@ -19,7 +19,6 @@ export default function PainelTecnico() {
   const [projetoId, setProjetoId] = useState(null)
   const [periodo, setPeriodo] = useState('dia')
   const [imprimindo, setImprimindo] = useState(false)
-  const [dados, setDados] = useState({ hoje:0, finalizar:0, realizadosMes:0 })
   const [agendaHoje, setAgendaHoje] = useState([])
   const [atrasados, setAtrasados] = useState([])
   const [meusUsuarios, setMeusUsuarios] = useState([])
@@ -38,7 +37,6 @@ export default function PainelTecnico() {
     async function carregar() {
       setLoading(true); setMsg('')
       const hoje = new Date().toISOString().slice(0,10)
-      const inicioMes = hoje.slice(0,8)+'01'
       let eid = perfil?.equipe_id || null
       if (!eid && user?.id) {
         const { data } = await supabase.from('usuarios').select('equipe_id').eq('id', user.id).maybeSingle()
@@ -59,24 +57,19 @@ export default function PainelTecnico() {
       if (!pid) { if (mounted) { setLoading(false); setMsg('Projeto TEAcolher não encontrado.') } return }
 
       const sel = 'id,data_atend,hora_inicio,pessoa_atendida,usuario_atendido_id,etapa_fluxo,situacao,profissional_id'
-      const [hRes, fRes, rRes, lH, lA, lTodos] = await Promise.all([
-        supabase.from('atendimentos').select('id',{count:'exact',head:true}).eq('projeto_id',pid).eq('profissional_id',eid).eq('data_atend',hoje).in('situacao',['agendado','reagendado']),
-        supabase.from('atendimentos').select('id',{count:'exact',head:true}).eq('projeto_id',pid).eq('profissional_id',eid).lte('data_atend',hoje).in('situacao',['agendado','reagendado']),
-        supabase.from('atendimentos').select('id',{count:'exact',head:true}).eq('projeto_id',pid).eq('profissional_id',eid).gte('data_atend',inicioMes).eq('situacao','realizado'),
+      const [lH, lA, lTodos] = await Promise.all([
         supabase.from('atendimentos').select(sel).eq('projeto_id',pid).eq('profissional_id',eid).eq('data_atend',hoje).in('situacao',['agendado','reagendado']).order('hora_inicio',{ascending:true}).limit(8),
         supabase.from('atendimentos').select(sel).eq('projeto_id',pid).eq('profissional_id',eid).lt('data_atend',hoje).in('situacao',['agendado','reagendado']).order('data_atend',{ascending:true}).limit(6),
         supabase.from('atendimentos').select('usuario_atendido_id,pessoa_atendida,data_atend').eq('projeto_id',pid).eq('profissional_id',eid).gte('data_atend',hoje).in('situacao',['agendado','reagendado']).order('data_atend',{ascending:true}).limit(200),
       ])
 
-      // Meus usuários
       const uMap = {}
       ;(lTodos.data||[]).forEach(a => {
         if (!a.usuario_atendido_id) return
         const k = String(a.usuario_atendido_id)
-        if (!uMap[k]) uMap[k] = { id:a.usuario_atendido_id, nome:a.pessoa_atendida||'—', proxData:a.data_atend, outrosProfissionais:[] }
+        if (!uMap[k]) uMap[k] = { id:a.usuario_atendido_id, nome:a.pessoa_atendida||'–', proxData:a.data_atend, outrosProfissionais:[] }
       })
 
-      // Busca outros profissionais para os mesmos usuários
       const uids = Object.keys(uMap).map(Number).filter(Boolean)
       if (uids.length > 0) {
         const { data:outrosA } = await supabase.from('atendimentos').select('usuario_atendido_id,profissional_id').eq('projeto_id',pid).in('usuario_atendido_id',uids).neq('profissional_id',eid).gte('data_atend',hoje).in('situacao',['agendado','reagendado']).limit(200)
@@ -93,7 +86,6 @@ export default function PainelTecnico() {
 
       if (!mounted) return
       setProf({ id:eid, nome:profData?.nome||perfil?.nome||'Técnico', funcao:profData?.funcao||'' })
-      setDados({ hoje:hRes.count||0, finalizar:fRes.count||0, realizadosMes:rRes.count||0 })
       setAgendaHoje(lH.data||[]); setAtrasados(lA.data||[])
       setMeusUsuarios(Object.values(uMap).sort((a,b) => a.proxData>b.proxData?1:-1))
       setLoading(false)
@@ -102,19 +94,15 @@ export default function PainelTecnico() {
     return () => { mounted = false }
   }, [perfil?.equipe_id, perfil?.nome, user?.id])
 
-  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '–'
   const fmtHora = h => h ? String(h).slice(0,5) : ''
 
   async function abrirEvolucao(uid) {
     if (usuarioExpandido === uid) { setUsuarioExpandido(null); return }
     setUsuarioExpandido(uid)
-    if (evolucoes[uid]) return // já carregou
+    if (evolucoes[uid]) return
     const hoje = new Date().toISOString().slice(0, 10)
     const sel = 'id,data_atend,hora_inicio,comparecimento,registro_tecnico,orientacao_familia,proxima_acao,desfecho_teacolher,etapa_fluxo,situacao'
-    // Busca futuros e passados em consultas separadas — buscar tudo junto com um único limit()
-    // ordenado por data podia cortar antes de chegar nos agendamentos futuros mais próximos
-    // (ex: muitas sessões recorrentes em dezembro "empurravam" o corte e escondiam um
-    // atendimento de junho, que era o próximo de verdade).
     const [futurosRes, passadosRes] = await Promise.all([
       supabase.from('atendimentos').select(sel).eq('usuario_atendido_id', uid).eq('profissional_id', prof.id)
         .gte('data_atend', hoje).in('situacao', ['agendado', 'reagendado'])
@@ -125,6 +113,7 @@ export default function PainelTecnico() {
     ])
     setEvolucoes(prev => ({ ...prev, [uid]: [...(futurosRes.data || []), ...(passadosRes.data || [])] }))
   }
+
   const hora = new Date().getHours()
   const saudacao = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite'
   const nome = (prof.nome||perfil?.nome||'Técnico').split(' ')[0]
@@ -152,7 +141,7 @@ export default function PainelTecnico() {
   const itemAgenda = (a, i, total) => (
     <button key={a.id} onClick={() => navigate(`/atendimentos?abrir=${a.id}${a.situacao==='realizado'?'':'&acao=finalizar'}`)}
       style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'10px 0', borderBottom:i<total-1?'0.5px solid #F1EFE8':'none', cursor:'pointer', display:'grid', gridTemplateColumns:'56px 1fr auto', gap:9, alignItems:'center' }}>
-      <div style={{ fontSize:15, fontWeight:900, color:DARK, textAlign:'center' }}>{fmtHora(a.hora_inicio)||'—'}</div>
+      <div style={{ fontSize:15, fontWeight:900, color:DARK, textAlign:'center' }}>{fmtHora(a.hora_inicio)||'–'}</div>
       <div style={{ minWidth:0 }}>
         <div style={{ fontSize:13, fontWeight:700, color:'#2C2C2A', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.pessoa_atendida||'Usuário/família'}</div>
         <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>{a.etapa_fluxo||'Atendimento'}</div>
@@ -160,12 +149,6 @@ export default function PainelTecnico() {
       <span style={{ fontSize:14, color:'#B4B2A9' }}>›</span>
     </button>
   )
-
-  const acao = dados.finalizar>0
-    ? { texto:'Finalizar pendente', desc:`${dados.finalizar} precisando de registro`, cor:ORANGE, rota:'/atendimentos?situacao=agendado' }
-    : dados.hoje>0
-      ? { texto:'Ver agenda de hoje', desc:`${dados.hoje} atendimentos hoje`, cor:BLUE, rota:'/atendimentos' }
-      : { texto:'Minha agenda', desc:'Sem atendimentos pendentes', cor:BLUE, rota:'/atendimentos' }
 
   return (
     <div>
@@ -179,30 +162,7 @@ export default function PainelTecnico() {
       <div style={{ padding:isMobile?'12px':'16px 24px', display:'grid', gap:12 }}>
         {msg && <div style={{ ...card, padding:12, borderLeft:`3px solid ${RED}`, color:'#A32D2D', fontSize:12 }}>{msg}</div>}
 
-        {/* Card ação */}
-        <div style={{ ...card, padding:16, borderLeft:`4px solid ${acao.cor}`, display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr auto', gap:12, alignItems:'center' }}>
-          <div>
-            <div style={{ fontSize:10.5, color:'#888780', fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', marginBottom:4 }}>O que fazer agora</div>
-            <div style={{ fontSize:isMobile?20:24, fontWeight:900, color:DARK }}>{acao.texto}</div>
-            <div style={{ fontSize:12, color:'#5F5E5A', marginTop:3 }}>{loading?'Carregando…':acao.desc}</div>
-          </div>
-          <button onClick={() => navigate(acao.rota)} style={{ border:'none', borderRadius:12, background:acao.cor, color:'#fff', padding:'13px 16px', fontSize:13, fontWeight:900, cursor:'pointer' }}>Abrir</button>
-        </div>
-
-        {/* 3 cards */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
-          {[['Hoje',dados.hoje,'na agenda',BLUE],['Pendentes',dados.finalizar,'para finalizar',ORANGE],['Mês',dados.realizadosMes,'realizados',GREEN]].map(([l,v,s,c]) => (
-            <div key={l} style={{ ...card, padding:'11px 12px', borderTop:`3px solid ${c}` }}>
-              <div style={{ fontSize:10, color:'#7A8893', fontWeight:700 }}>{l}</div>
-              <div style={{ fontSize:22, fontWeight:900, color:c }}>{loading?'…':v}</div>
-              <div style={{ fontSize:10, color:'#9AA3AF' }}>{s}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Conteúdo trocado pelo menu lateral (Minha agenda / Meus usuários), sem aba duplicada aqui dentro */}
-
-        {/* AGENDA — dashboard do dia */}
+        {/* AGENDA – dashboard do dia */}
         {aba==='agenda' && (
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 240px', gap:12, alignItems:'start' }}>
             <div>
@@ -214,7 +174,7 @@ export default function PainelTecnico() {
               </div>
               {atrasados.length>0 && (
                 <div style={{ ...card, padding:14, borderLeft:`3px solid ${RED}` }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:'#A32D2D', marginBottom:8 }}>Atrasados — data já passou ({atrasados.length})</div>
+                  <div style={{ fontSize:13, fontWeight:800, color:'#A32D2D', marginBottom:8 }}>Atrasados – data já passou ({atrasados.length})</div>
                   {atrasados.map((a,i) => itemAgenda(a,i,atrasados.length))}
                 </div>
               )}
@@ -237,7 +197,7 @@ export default function PainelTecnico() {
           </div>
         )}
 
-        {/* MEUS USUÁRIOS — evolução por usuário */}
+        {/* MEUS USUÁRIOS – evolução por usuário */}
         {aba==='meus_usuarios' && (
           <div>
             <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Meus usuários</div>
@@ -273,17 +233,23 @@ export default function PainelTecnico() {
                               <div style={{ fontSize:12, color:'#888780' }}>Nenhum registro técnico encontrado.</div>
                             ) : evs.map((ev, i) => {
                               const faltou = ev.comparecimento && ev.comparecimento !== 'Compareceu'
+                              const agendado = ['agendado','reagendado'].includes(ev.situacao)
                               return (
                                 <div key={ev.id} style={{ marginBottom:10, paddingBottom:10, borderBottom:i<evs.length-1?'0.5px solid #E8E6DE':'none' }}>
                                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:faltou?4:6 }}>
-                                    <div style={{ fontSize:12, fontWeight:700, color:DARK }}>{fmtData(ev.data_atend)} {ev.hora_inicio?`· ${String(ev.hora_inicio).slice(0,5)}`:''}</div>
+                                    <div style={{ fontSize:12, fontWeight:700, color:agendado?BLUE:DARK }}>
+                                      {fmtData(ev.data_atend)} {ev.hora_inicio?`· ${String(ev.hora_inicio).slice(0,5)}`:''}
+                                      {agendado && <span style={{ fontSize:10, marginLeft:6, background:'#E6F1FB', color:'#185FA5', borderRadius:99, padding:'1px 6px', fontWeight:600 }}>agendado</span>}
+                                    </div>
                                     <div style={{ display:'flex', gap:5 }}>
                                       {faltou && <span style={{ fontSize:10, background:'#FCEBEB', color:'#A32D2D', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.comparecimento}</span>}
-                                      <span style={{ fontSize:10, background:ev.situacao==='realizado'?'#EAF3DE':'#E6F1FB', color:ev.situacao==='realizado'?'#3B6D11':'#185FA5', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.situacao}</span>
+                                      {!agendado && <span style={{ fontSize:10, background:ev.situacao==='realizado'?'#EAF3DE':'#E6F1FB', color:ev.situacao==='realizado'?'#3B6D11':'#185FA5', borderRadius:99, padding:'2px 7px', fontWeight:600 }}>{ev.situacao}</span>}
                                     </div>
                                   </div>
-                                  {faltou ? (
-                                    <div style={{ fontSize:11.5, color:'#888780' }}>Falta registrada — sem evolução técnica.</div>
+                                  {agendado ? (
+                                    <div style={{ fontSize:11, color:'#888780' }}>Atendimento ainda não realizado.</div>
+                                  ) : faltou ? (
+                                    <div style={{ fontSize:11.5, color:'#888780' }}>Falta registrada – sem evolução técnica.</div>
                                   ) : (<>
                                     {ev.etapa_fluxo && <div style={{ fontSize:11, color:'#888780', marginBottom:4 }}>{ev.etapa_fluxo}</div>}
                                     {ev.registro_tecnico ? (
@@ -292,6 +258,9 @@ export default function PainelTecnico() {
                                     {ev.orientacao_familia && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:3 }}><span style={{ fontWeight:600 }}>Orientação: </span>{ev.orientacao_familia}</div>}
                                     {ev.proxima_acao && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}><span style={{ fontWeight:600 }}>Próxima ação: </span>{ev.proxima_acao}</div>}
                                     {ev.desfecho_teacolher && <div style={{ fontSize:11, color:'#888780', marginTop:2 }}><span style={{ fontWeight:600 }}>Desfecho: </span>{ev.desfecho_teacolher}</div>}
+                                    <button onClick={() => navigate(`/atendimentos?abrir=${ev.id}`)} style={{ marginTop:6, fontSize:11, border:'0.5px solid #D3D1C7', borderRadius:6, background:'#fff', padding:'4px 10px', cursor:'pointer', color:'#5F5E5A' }}>
+                                      Abrir atendimento
+                                    </button>
                                   </>)}
                                 </div>
                               )
