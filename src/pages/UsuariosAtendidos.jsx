@@ -16,35 +16,34 @@ const MOTIVOS_SAIDA = [
 ]
 
 const GENEROS = [
-  'Mulher cis',
-  'Mulher trans',
-  'Homem cis',
-  'Homem trans',
-  'Pessoa não binária',
-  'Prefiro não informar',
-  'Outro',
+  'Mulher cis', 'Mulher trans', 'Homem cis', 'Homem trans',
+  'Pessoa não binária', 'Prefiro não informar', 'Outro',
 ]
 
 const TIPOS_DEFICIENCIA = [
-  'Deficiência Física',
-  'Deficiência Auditiva',
-  'Deficiência Visual',
-  'Deficiência Intelectual',
-  'Deficiência Mental/Psicossocial',
-  'Deficiência Múltipla',
-]
-
-const TIPOS_SANGUINEOS = [
-  'A+',
-  'A-',
-  'B+',
-  'B-',
-  'AB+',
-  'AB-',
-  'O+',
-  'O-',
+  'Deficiência física',
+  'Deficiência auditiva',
+  'Deficiência visual',
+  'Deficiência intelectual',
+  'Deficiência psicossocial (ex.: transtornos mentais graves e persistentes)',
+  'Deficiência múltipla',
+  'Não se aplica',
   'Não informado',
 ]
+
+const CONDICOES_NEURODESENVOLVIMENTO = [
+  'Transtorno do Espectro Autista (TEA)',
+  'TDAH',
+  'Transtorno do Desenvolvimento Intelectual',
+  'Transtornos de aprendizagem (dislexia, discalculia, etc.)',
+  'Atraso no desenvolvimento global',
+  'Outro',
+  'Não informado',
+  'Não se aplica',
+]
+
+const TIPOS_SANGUINEOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Não informado']
+
 const SITUACAO_COR = {
   'ativo': ['#EAF3DE','#3B6D11'],
   'desligado': ['#FCEBEB','#A32D2D'],
@@ -57,7 +56,9 @@ const FORM_VAZIO = {
   nome:'', nis:'', cpf:'', data_nascimento:'', projeto_id:'',
   data_ingresso:'', data_saida:'', motivo_saida:'', situacao:'ativo', observacoes:'',
   tipo_sanguineo:'', genero:'', genero_outro:'', rg:'', endereco:'', bairro:'', cidade:'Teresópolis',
-  telefone:'', email:'', tipo_deficiencia:'', deficiencia_detalhes:'',
+  telefone:'', email:'',
+  tipo_deficiencia:[], deficiencia_detalhes:'',
+  condicao_neurodesenvolvimento:[], condicao_neurodesenvolvimento_outro:'',
   contato_familiar_nome:'', contato_familiar_parentesco:'', contato_familiar_telefone:'',
   renda_familiar_bruta:'', pessoas_nucleo_familiar:'',
 }
@@ -81,6 +82,8 @@ export default function UsuariosAtendidos() {
   const [loading, setLoading] = useState(false)
   const [filtros, setFiltros] = useState({ situacao:'', projeto_id:'', dataInicio:'', dataFim:'' })
   const [abaAtiva, setAbaAtiva] = useState('lista')
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+  const [imprimindoLista, setImprimindoLista] = useState(false)
 
   useEffect(() => {
     supabase.from('projetos').select('id,nome').eq('aceita_atendimentos', true).order('nome').then(({ data }) => setProjetos(data || []))
@@ -90,14 +93,14 @@ export default function UsuariosAtendidos() {
   const projetoSelecionado = projetos.find(p => String(p.id) === String(form.projeto_id))
   const formEhTeacolher = projetoSelecionado?.nome?.toLowerCase().includes('teacolher')
 
-  function nomeProjetoPorId(id) {
+  function nomeProjeto(id) {
     if (!id) return ''
     return projetos.find(p => String(p.id) === String(id))?.nome || ''
   }
 
-  function usuarioEhTeacolher(usuario) {
-    const nomeProjeto = usuario?.projeto?.nome || nomeProjetoPorId(usuario?.projeto_id)
-    return nomeProjeto?.toLowerCase().includes('teacolher')
+  function usuarioEhTeacolher(u) {
+    const nome = u?.projeto?.nome || nomeProjeto(u?.projeto_id)
+    return nome?.toLowerCase().includes('teacolher')
   }
 
   function parseMoedaBR(valor) {
@@ -107,12 +110,17 @@ export default function UsuariosAtendidos() {
     return Number.isFinite(numero) ? numero : null
   }
 
+  function toggleArray(campo, valor) {
+    setForm(f => {
+      const atual = Array.isArray(f[campo]) ? f[campo] : []
+      return { ...f, [campo]: atual.includes(valor) ? atual.filter(v => v !== valor) : [...atual, valor] }
+    })
+  }
+
   async function carregar() {
     setLoading(true)
     const montar = () => {
-      let q = supabase.from('usuarios_atendidos')
-        .select('*')
-        .order('nome')
+      let q = supabase.from('usuarios_atendidos').select('*').order('nome')
       if (filtros.situacao) q = q.eq('situacao', filtros.situacao)
       if (filtros.projeto_id) q = q.eq('projeto_id', parseInt(filtros.projeto_id))
       if (filtros.dataInicio) q = q.gte('data_ingresso', filtros.dataInicio)
@@ -135,10 +143,7 @@ export default function UsuariosAtendidos() {
 
   async function salvar(e) {
     e.preventDefault()
-    if (!podeGerenciarUsuarios) {
-      setMsg('Seu perfil tem acesso somente para visualização.')
-      return
-    }
+    if (!podeGerenciarUsuarios) { setMsg('Seu perfil tem acesso somente para visualização.'); return }
     setSalvando(true)
     const dados = {
       ...form,
@@ -156,8 +161,10 @@ export default function UsuariosAtendidos() {
       cidade: form.cidade || null,
       telefone: form.telefone || null,
       email: form.email || null,
-      tipo_deficiencia: form.tipo_deficiencia || null,
+      tipo_deficiencia: Array.isArray(form.tipo_deficiencia) && form.tipo_deficiencia.length > 0 ? form.tipo_deficiencia : null,
       deficiencia_detalhes: form.deficiencia_detalhes || null,
+      condicao_neurodesenvolvimento: Array.isArray(form.condicao_neurodesenvolvimento) && form.condicao_neurodesenvolvimento.length > 0 ? form.condicao_neurodesenvolvimento : null,
+      condicao_neurodesenvolvimento_outro: form.condicao_neurodesenvolvimento?.includes('Outro') ? (form.condicao_neurodesenvolvimento_outro || null) : null,
       contato_familiar_nome: form.contato_familiar_nome || null,
       contato_familiar_parentesco: form.contato_familiar_parentesco || null,
       contato_familiar_telefone: form.contato_familiar_telefone || null,
@@ -184,9 +191,12 @@ export default function UsuariosAtendidos() {
       situacao:u.situacao, observacoes:u.observacoes||'',
       tipo_sanguineo:u.tipo_sanguineo||'', genero:u.genero||'', genero_outro:u.genero_outro||'',
       rg:u.rg||'', endereco:u.endereco||'', bairro:u.bairro||'', cidade:u.cidade||'Teresópolis',
-      telefone:u.telefone||'', email:u.email||'', tipo_deficiencia:u.tipo_deficiencia||'',
-      deficiencia_detalhes:u.deficiencia_detalhes||'', contato_familiar_nome:u.contato_familiar_nome||'',
-      contato_familiar_parentesco:u.contato_familiar_parentesco||'', contato_familiar_telefone:u.contato_familiar_telefone||'',
+      telefone:u.telefone||'', email:u.email||'',
+      tipo_deficiencia: Array.isArray(u.tipo_deficiencia) ? u.tipo_deficiencia : (u.tipo_deficiencia ? [u.tipo_deficiencia] : []),
+      deficiencia_detalhes:u.deficiencia_detalhes||'',
+      condicao_neurodesenvolvimento: Array.isArray(u.condicao_neurodesenvolvimento) ? u.condicao_neurodesenvolvimento : (u.condicao_neurodesenvolvimento ? [u.condicao_neurodesenvolvimento] : []),
+      condicao_neurodesenvolvimento_outro:u.condicao_neurodesenvolvimento_outro||'',
+      contato_familiar_nome:u.contato_familiar_nome||'', contato_familiar_parentesco:u.contato_familiar_parentesco||'', contato_familiar_telefone:u.contato_familiar_telefone||'',
       renda_familiar_bruta:u.renda_familiar_bruta ?? '', pessoas_nucleo_familiar:u.pessoas_nucleo_familiar ?? '',
     })
     setEditando(u.id)
@@ -194,7 +204,6 @@ export default function UsuariosAtendidos() {
     setAbaAtiva('lista')
   }
 
-  // Calcular idade
   function calcIdade(dataNasc) {
     if (!dataNasc) return null
     const hoje = new Date()
@@ -205,10 +214,10 @@ export default function UsuariosAtendidos() {
     return idade
   }
 
-  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '–'
   const fmtMoeda = v => v !== null && v !== undefined && v !== ''
     ? 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '—'
+    : '–'
 
   function mediaNumerica(valores) {
     const nums = valores.map(v => Number(v)).filter(v => Number.isFinite(v) && v > 0)
@@ -224,59 +233,45 @@ export default function UsuariosAtendidos() {
     }, {})
   }
 
-  function perc(qtd, total) {
-    return total > 0 ? Math.round((qtd / total) * 100) : 0
-  }
+  function perc(qtd, total) { return total > 0 ? Math.round((qtd / total) * 100) : 0 }
 
-  // Métricas
   const ativos = usuarios.filter(u => u.situacao === 'ativo').length
   const porProjeto = {}
   usuarios.forEach(u => {
-    const nome = nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || 'Sem projeto'
+    const nome = nomeProjeto(u.projeto_id) || u.projeto?.nome || 'Sem projeto'
     if (!porProjeto[nome]) porProjeto[nome] = { ativo:0, total:0 }
     porProjeto[nome].total++
     if (u.situacao === 'ativo') porProjeto[nome].ativo++
   })
 
   const usuariosTeacolher = usuarios.filter(usuarioEhTeacolher)
-  const [imprimindoLista, setImprimindoLista] = useState(false)
 
   async function imprimirListaComProfissionais() {
     setImprimindoLista(true)
     try {
       const ids = usuariosTeacolher.map(u => u.id)
-      // Busca todos os atendimentos (qualquer situação, não só futuros) pra capturar
-      // todo profissional que já fez acompanhamento com cada usuário — um usuário pode
-      // ter mais de um profissional (ex.: psicóloga + fonoaudióloga).
       const { data: atendimentosData, error } = await supabase
-        .from('atendimentos')
-        .select('usuario_atendido_id, profissional_id')
+        .from('atendimentos').select('usuario_atendido_id, profissional_id')
         .in('usuario_atendido_id', ids.length ? ids : [0])
         .not('profissional_id', 'is', null)
       if (error) throw error
-
       const profIds = [...new Set((atendimentosData || []).map(a => a.profissional_id))]
       let equipeData = []
       if (profIds.length > 0) {
         const { data } = await supabase.from('equipe').select('id,nome,funcao').in('id', profIds)
         equipeData = data || []
       }
-
       const profsPorUsuario = {}
       ;(atendimentosData || []).forEach(a => {
         const uid = String(a.usuario_atendido_id)
         if (!profsPorUsuario[uid]) profsPorUsuario[uid] = new Set()
         profsPorUsuario[uid].add(a.profissional_id)
       })
-
       const listaParaImprimir = usuariosTeacolher.map(u => {
         const idsProf = [...(profsPorUsuario[String(u.id)] || [])]
-        const profissionais = idsProf
-          .map(id => equipeData.find(e => String(e.id) === String(id)))
-          .filter(Boolean)
+        const profissionais = idsProf.map(id => equipeData.find(e => String(e.id) === String(id))).filter(Boolean)
         return { ...u, profissionais }
       })
-
       gerarPDFListaUsuariosComProfissionais(listaParaImprimir)
     } catch (e) {
       alert('Erro ao gerar a lista: ' + e.message)
@@ -292,12 +287,21 @@ export default function UsuariosAtendidos() {
   const rendaMediaTeacolher = mediaNumerica(usuariosTeacolher.map(u => u.renda_familiar_bruta))
   const nucleoMedioTeacolher = mediaNumerica(usuariosTeacolher.map(u => u.pessoas_nucleo_familiar))
   const generosTeacolher = contarPorCampo(usuariosTeacolher, 'genero')
-  const deficienciasTeacolher = contarPorCampo(usuariosTeacolher, 'tipo_deficiencia')
   const bairrosTeacolher = contarPorCampo(usuariosTeacolher, 'bairro')
+
+  const deficienciasTeacolher = {}
+  usuariosTeacolher.forEach(u => {
+    const arr = Array.isArray(u.tipo_deficiencia) ? u.tipo_deficiencia : (u.tipo_deficiencia ? [u.tipo_deficiencia] : ['Não informado'])
+    if (arr.length === 0) { deficienciasTeacolher['Não informado'] = (deficienciasTeacolher['Não informado'] || 0) + 1 }
+    else arr.forEach(v => { deficienciasTeacolher[v] = (deficienciasTeacolher[v] || 0) + 1 })
+  })
+
   const incompletosTeacolher = usuariosTeacolher.filter(u =>
-    !u.tipo_deficiencia || !u.deficiencia_detalhes || !u.renda_familiar_bruta || !u.pessoas_nucleo_familiar ||
+    (!u.tipo_deficiencia || (Array.isArray(u.tipo_deficiencia) && u.tipo_deficiencia.length === 0)) ||
+    !u.deficiencia_detalhes || !u.renda_familiar_bruta || !u.pessoas_nucleo_familiar ||
     !u.cpf || !u.data_nascimento || !u.telefone || !u.contato_familiar_nome
   )
+
   const faixasTeacolher = { '0 a 5': 0, '6 a 11': 0, '12 a 17': 0, '18 a 29': 0, '30 a 59': 0, '60+': 0, 'Sem idade': 0 }
   usuariosTeacolher.forEach(u => {
     const idade = calcIdade(u.data_nascimento)
@@ -322,7 +326,37 @@ export default function UsuariosAtendidos() {
     td: { padding:'8px 10px', borderBottom:'0.5px solid #E8E6DE', fontSize:12, verticalAlign:'middle' },
   }
 
-  const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
+  function CheckboxGroup({ opcoes, campo, label }) {
+    const selecionados = Array.isArray(form[campo]) ? form[campo] : []
+    const campoOutro = campo + '_outro'
+    const temOutro = selecionados.includes('Outro')
+    return (
+      <div style={{ marginBottom:10 }}>
+        <div style={s.label}>{label}</div>
+        <div style={{ border:'0.5px solid #D3D1C7', borderRadius:8, padding:'8px 10px', background:'#fafaf8' }}>
+          {opcoes.map(op => (
+            <label key={op} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 0', fontSize:12, cursor:'pointer', userSelect:'none' }}>
+              <input
+                type="checkbox"
+                checked={selecionados.includes(op)}
+                onChange={() => toggleArray(campo, op)}
+                style={{ accentColor:'#0E7EA8', width:14, height:14 }}
+              />
+              {op}
+            </label>
+          ))}
+        </div>
+        {temOutro && (
+          <input
+            value={form[campoOutro] || ''}
+            onChange={e => setForm(f => ({ ...f, [campoOutro]: e.target.value }))}
+            placeholder="Especifique..."
+            style={{ ...s.input, marginTop:6 }}
+          />
+        )}
+      </div>
+    )
+  }
 
   async function excluir(id) {
     if (!podeExcluirUsuario) {
@@ -332,583 +366,559 @@ export default function UsuariosAtendidos() {
     }
     const { error } = await supabase.from('usuarios_atendidos').delete().eq('id', id)
     setConfirmandoExcluir(null)
-    if (error) {
-      setMsg('Erro ao excluir: ' + error.message)
-    } else {
-      setMsg('Usuário excluído.')
-      carregar()
-    }
+    if (error) { setMsg('Erro ao excluir: ' + error.message) }
+    else { setMsg('Usuário excluído.'); carregar() }
     setTimeout(() => setMsg(m => m && m.includes('Erro') ? m : ''), 4000)
   }
 
-
   return (
-    <div style={{ }}>
-      {/* Topbar */}
-      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Usuários / Público Atendido</div>
+    <div style={{}}>
+      <div style={{ height:62, background:'rgba(255,255,255,0.78)', borderBottom:'0.5px solid #E0DDD5', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:5 }}>
+        <div style={{ fontSize:20, fontWeight:700, color:'#06344F', letterSpacing:'-.022em' }}>Usuários / Público Atendido</div>
       </div>
       <div style={{ padding: isMobile ? '.75rem' : '1.25rem 1.5rem' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
-        <div>
-<div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {usuarios.length} total</div>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', flexWrap:'wrap', gap:8 }}>
+          <div><div style={{ fontSize:12, color:'#888780' }}>{ativos} ativos · {usuarios.length} total</div></div>
+          {podeGerenciarUsuarios && (
+            <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
+              style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
+              {mostrarForm ? 'Cancelar' : '+ Cadastrar usuário'}
+            </button>
+          )}
         </div>
-        {podeGerenciarUsuarios && (
-          <button onClick={() => { setMostrarForm(!mostrarForm); setEditando(null); setForm(FORM_VAZIO) }}
-            style={s.btn(mostrarForm?'#F1EFE8':'#0E7EA8', mostrarForm?'#5F5E5A':'#fff')}>
-            {mostrarForm ? 'Cancelar' : '+ Cadastrar usuário'}
-          </button>
-        )}
-      </div>
 
-      {msg && (
-        <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>
-          {msg}
-        </div>
-      )}
-
-      {/* Formulário */}
-      {mostrarForm && podeGerenciarUsuarios && (
-        <div style={{ ...s.card, borderColor:'#C0DD97' }}>
-          <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
-            {editando ? 'Editar usuário' : 'Cadastrar usuário / público atendido'}
+        {msg && (
+          <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, marginBottom:'1rem', background:!msg.includes('Erro')?'#F2FAE8':'#FEF2F2', color:!msg.includes('Erro')?'#3B6D11':'#A32D2D' }}>
+            {msg}
           </div>
-          <form onSubmit={salvar}>
-            <div style={s.grupo('2fr 1fr 1fr')}>
-              <div>
-                <label style={s.label}>Nome completo *</label>
-                <input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={s.input} required />
-              </div>
-              <div>
-                <label style={s.label}>CPF</label>
-                <input value={form.cpf} onChange={e=>setForm(f=>({...f,cpf:e.target.value}))} placeholder="000.000.000-00" style={s.input} />
-              </div>
-              <div>
-                <label style={s.label}>NIS</label>
-                <input value={form.nis} onChange={e=>setForm(f=>({...f,nis:e.target.value}))} placeholder="NIS/PIS" style={s.input} />
-              </div>
-            </div>
-            <div style={s.grupo('1fr 2fr')}>
-              <div>
-                <label style={s.label}>Data de nascimento</label>
-                <input type="date" value={form.data_nascimento} onChange={e=>setForm(f=>({...f,data_nascimento:e.target.value}))} style={s.input} />
-              </div>
-              <div>
-                <label style={s.label}>Projeto / Serviço / Ação vinculada</label>
-                <select value={form.projeto_id} onChange={e=>setForm(f=>({...f,projeto_id:e.target.value}))} style={s.input}>
-                  <option value="">Selecione o projeto...</option>
-                  {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={s.grupo('1fr 1fr 1fr')}>
-              <div>
-                <label style={s.label}>Data de ingresso</label>
-                <input type="date" value={form.data_ingresso} onChange={e=>setForm(f=>({...f,data_ingresso:e.target.value}))} style={s.input} />
-              </div>
-              <div>
-                <label style={s.label}>Data de saída</label>
-                <input type="date" value={form.data_saida} onChange={e=>setForm(f=>({...f,data_saida:e.target.value}))} style={s.input} />
-              </div>
-              <div>
-                <label style={s.label}>Situação atual</label>
-                <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>
-                  {SITUACOES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                </select>
-              </div>
-            </div>
-            {(form.situacao === 'desligado' || form.situacao === 'encerrado' || form.data_saida) && (
-              <div style={{ marginBottom:10 }}>
-                <label style={s.label}>Motivo da saída</label>
-                <select value={form.motivo_saida} onChange={e=>setForm(f=>({...f,motivo_saida:e.target.value}))} style={s.input}>
-                  <option value="">Selecione...</option>
-                  {MOTIVOS_SAIDA.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-            )}
-            {formEhTeacolher && (
-              <div style={{ margin:'14px 0', padding:14, border:'1px solid #BBDCEA', borderRadius:12, background:'#F5FBFD' }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#06344F', marginBottom:4 }}>Anexo I — Formulário de Cadastro do Projeto TEAcolher</div>
-                <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:12 }}>Campos oficiais para impressão do cadastro do participante.</div>
+        )}
 
-                <div style={s.grupo('1fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Tipo sanguíneo</label>
-                    <select value={form.tipo_sanguineo} onChange={e=>setForm(f=>({...f,tipo_sanguineo:e.target.value}))} style={s.input}>
-                      <option value="">Selecione...</option>
-                      {TIPOS_SANGUINEOS.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={s.label}>Gênero</label>
-                    <select value={form.genero} onChange={e=>setForm(f=>({...f,genero:e.target.value, genero_outro:e.target.value === 'Outro' ? f.genero_outro : ''}))} style={s.input}>
-                      <option value="">Selecione...</option>
-                      {GENEROS.map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
-                  </div>
-                  {form.genero === 'Outro' && (
+        {mostrarForm && podeGerenciarUsuarios && (
+          <div style={{ ...s.card, borderColor:'#C0DD97' }}>
+            <div style={{ fontSize:13, fontWeight:500, marginBottom:'1rem' }}>
+              {editando ? 'Editar usuário' : 'Cadastrar usuário / público atendido'}
+            </div>
+            <form onSubmit={salvar}>
+              <div style={s.grupo('2fr 1fr 1fr')}>
+                <div>
+                  <label style={s.label}>Nome completo *</label>
+                  <input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={s.input} required />
+                </div>
+                <div>
+                  <label style={s.label}>CPF</label>
+                  <input value={form.cpf} onChange={e=>setForm(f=>({...f,cpf:e.target.value}))} placeholder="000.000.000-00" style={s.input} />
+                </div>
+                <div>
+                  <label style={s.label}>NIS</label>
+                  <input value={form.nis} onChange={e=>setForm(f=>({...f,nis:e.target.value}))} placeholder="NIS/PIS" style={s.input} />
+                </div>
+              </div>
+              <div style={s.grupo('1fr 2fr')}>
+                <div>
+                  <label style={s.label}>Data de nascimento</label>
+                  <input type="date" value={form.data_nascimento} onChange={e=>setForm(f=>({...f,data_nascimento:e.target.value}))} style={s.input} />
+                </div>
+                <div>
+                  <label style={s.label}>Projeto / Serviço / Ação vinculada</label>
+                  <select value={form.projeto_id} onChange={e=>setForm(f=>({...f,projeto_id:e.target.value}))} style={s.input}>
+                    <option value="">Selecione o projeto...</option>
+                    {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={s.grupo('1fr 1fr 1fr')}>
+                <div>
+                  <label style={s.label}>Data de ingresso</label>
+                  <input type="date" value={form.data_ingresso} onChange={e=>setForm(f=>({...f,data_ingresso:e.target.value}))} style={s.input} />
+                </div>
+                <div>
+                  <label style={s.label}>Data de saída</label>
+                  <input type="date" value={form.data_saida} onChange={e=>setForm(f=>({...f,data_saida:e.target.value}))} style={s.input} />
+                </div>
+                <div>
+                  <label style={s.label}>Situação atual</label>
+                  <select value={form.situacao} onChange={e=>setForm(f=>({...f,situacao:e.target.value}))} style={s.input}>
+                    {SITUACOES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                  </select>
+                </div>
+              </div>
+              {(form.situacao === 'desligado' || form.situacao === 'encerrado' || form.data_saida) && (
+                <div style={{ marginBottom:10 }}>
+                  <label style={s.label}>Motivo da saída</label>
+                  <select value={form.motivo_saida} onChange={e=>setForm(f=>({...f,motivo_saida:e.target.value}))} style={s.input}>
+                    <option value="">Selecione...</option>
+                    {MOTIVOS_SAIDA.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {formEhTeacolher && (
+                <div style={{ margin:'14px 0', padding:14, border:'1px solid #BBDCEA', borderRadius:12, background:'#F5FBFD' }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#06344F', marginBottom:4 }}>Anexo I — Formulário de Cadastro do Projeto TEAcolher</div>
+                  <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:12 }}>Campos oficiais para impressão do cadastro do participante.</div>
+
+                  <div style={s.grupo('1fr 1fr 1fr')}>
                     <div>
-                      <label style={s.label}>Outro gênero</label>
-                      <input value={form.genero_outro} onChange={e=>setForm(f=>({...f,genero_outro:e.target.value}))} style={s.input} />
+                      <label style={s.label}>Tipo sanguíneo</label>
+                      <select value={form.tipo_sanguineo} onChange={e=>setForm(f=>({...f,tipo_sanguineo:e.target.value}))} style={s.input}>
+                        <option value="">Selecione...</option>
+                        {TIPOS_SANGUINEOS.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={s.label}>Gênero</label>
+                      <select value={form.genero} onChange={e=>setForm(f=>({...f,genero:e.target.value, genero_outro:e.target.value==='Outro'?f.genero_outro:''}))} style={s.input}>
+                        <option value="">Selecione...</option>
+                        {GENEROS.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                    {form.genero === 'Outro' && (
+                      <div>
+                        <label style={s.label}>Outro gênero</label>
+                        <input value={form.genero_outro} onChange={e=>setForm(f=>({...f,genero_outro:e.target.value}))} style={s.input} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={s.grupo('1fr 1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>RG</label>
+                      <input value={form.rg} onChange={e=>setForm(f=>({...f,rg:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Telefone/WhatsApp</label>
+                      <input value={form.telefone} onChange={e=>setForm(f=>({...f,telefone:e.target.value}))} placeholder="(21) 00000-0000" style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>E-mail</label>
+                      <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={s.input} />
+                    </div>
+                  </div>
+
+                  <div style={s.grupo('2fr 1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Endereço</label>
+                      <input value={form.endereco} onChange={e=>setForm(f=>({...f,endereco:e.target.value}))} placeholder="Rua, número, complemento" style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Bairro</label>
+                      <input value={form.bairro} onChange={e=>setForm(f=>({...f,bairro:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Cidade</label>
+                      <input value={form.cidade} onChange={e=>setForm(f=>({...f,cidade:e.target.value}))} style={s.input} />
+                    </div>
+                  </div>
+
+                  <div style={s.grupo(isMobile ? '1fr' : '1fr 1fr')}>
+                    <CheckboxGroup
+                      campo="tipo_deficiencia"
+                      label="Tipo de deficiência (marque todos que se aplicam)"
+                      opcoes={TIPOS_DEFICIENCIA}
+                    />
+                    <CheckboxGroup
+                      campo="condicao_neurodesenvolvimento"
+                      label="Condição do neurodesenvolvimento (marque todos que se aplicam)"
+                      opcoes={CONDICOES_NEURODESENVOLVIMENTO}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom:10 }}>
+                    <label style={s.label}>Informações complementares sobre a condição / deficiência</label>
+                    <input value={form.deficiencia_detalhes} onChange={e=>setForm(f=>({...f,deficiencia_detalhes:e.target.value}))} placeholder="Diagnóstico, observações, necessidades específicas..." style={s.input} />
+                  </div>
+
+                  <div style={s.grupo('2fr 1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Nome do familiar/cuidador</label>
+                      <input value={form.contato_familiar_nome} onChange={e=>setForm(f=>({...f,contato_familiar_nome:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Relação/parentesco</label>
+                      <input value={form.contato_familiar_parentesco} onChange={e=>setForm(f=>({...f,contato_familiar_parentesco:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Telefone do familiar/cuidador</label>
+                      <input value={form.contato_familiar_telefone} onChange={e=>setForm(f=>({...f,contato_familiar_telefone:e.target.value}))} style={s.input} />
+                    </div>
+                  </div>
+
+                  <div style={s.grupo('1fr 1fr')}>
+                    <div>
+                      <label style={s.label}>Renda familiar bruta</label>
+                      <input value={form.renda_familiar_bruta} onChange={e=>setForm(f=>({...f,renda_familiar_bruta:e.target.value}))} placeholder="Ex.: 2500,00" style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Número de pessoas no núcleo familiar</label>
+                      <input type="number" min="0" value={form.pessoas_nucleo_familiar} onChange={e=>setForm(f=>({...f,pessoas_nucleo_familiar:e.target.value}))} style={s.input} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginBottom:14 }}>
+                <label style={s.label}>Observações</label>
+                <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} placeholder="Observações sobre o usuário ou atendimento..." />
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
+                  {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Cadastrar'}
+                </button>
+                <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
+          <button onClick={() => setAbaAtiva('lista')} style={s.tab(abaAtiva==='lista')}>Lista</button>
+          <button onClick={() => setAbaAtiva('teacolher')} style={s.tab(abaAtiva==='teacolher')}>Dashboard TEAcolher</button>
+          <button onClick={() => setAbaAtiva('relatorio')} style={s.tab(abaAtiva==='relatorio')}>Relatório / Quantitativo</button>
+        </div>
+
+        {abaAtiva === 'lista' && (
+          <>
+            <div style={{ ...s.card, marginBottom:'1rem' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8, marginBottom:8 }}>
+                <div>
+                  <label style={s.label}>Situação</label>
+                  <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
+                    <option value="">Todas</option>
+                    {SITUACOES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={s.label}>Projeto</label>
+                  <select value={filtros.projeto_id} onChange={e=>setFiltros(f=>({...f,projeto_id:e.target.value}))} style={s.input}>
+                    <option value="">Todos</option>
+                    {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={s.label}>Ingresso de</label>
+                  <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
+                </div>
+                <div>
+                  <label style={s.label}>Ingresso até</label>
+                  <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={carregar} style={s.btn(AZUL)}>Filtrar</button>
+                <button onClick={() => { setFiltros({ situacao:'', projeto_id:'', dataInicio:'', dataFim:'' }); setTimeout(carregar,100) }} style={s.btn('#F1EFE8','#5F5E5A')}>Limpar</button>
+              </div>
+            </div>
+
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8, marginBottom:'1.25rem' }}>
+              {[
+                { label:'Ativos', val:ativos, cor:VERDE },
+                { label:'Desligados', val:usuarios.filter(u=>u.situacao==='desligado'||u.situacao==='encerrado').length, cor:VERMELHO },
+                { label:'Afastados', val:usuarios.filter(u=>u.situacao==='afastado').length, cor:LARANJA },
+                { label:'Total', val:usuarios.length, cor:AZUL },
+              ].map(m => (
+                <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
+                  <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
+                  <div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={s.card}>
+              {loading ? (
+                <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13,width:'42%',marginBottom:10}} /><div className="skeleton" style={{height:13,width:'68%',marginBottom:10}} /><div className="skeleton" style={{height:13,width:'55%'}} /></div>
+              ) : usuarios.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Nenhum usuário cadastrado</div>
+                  <div style={{ fontSize:12, color:'#888780', maxWidth:380, margin:'0 auto' }}>Cadastre as pessoas atendidas pela instituição para acompanhar atendimentos, projetos e relatórios.</div>
+                  {podeGerenciarUsuarios && (
+                    <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Cadastrar usuário</button>
+                  )}
+                </div>
+              ) : (
+                <div style={{ maxHeight:520, overflowY:'auto', overflowX:'auto' }}>
+                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                    <thead style={{ position:'sticky', top:0 }}>
+                      <tr>{['Nome','Projeto','Idade','Ingresso','Saída','Situação','Ações'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {usuarios.map((u,i) => {
+                        const [bg,cor] = SITUACAO_COR[u.situacao]||['#F1EFE8','#888780']
+                        const idade = calcIdade(u.data_nascimento)
+                        return (
+                          <tr key={u.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
+                            <td style={{ ...s.td, fontWeight:500 }}>{u.nome}</td>
+                            <td style={{ ...s.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeProjeto(u.projeto_id) || u.projeto?.nome || '–'}</td>
+                            <td style={s.td}>{idade !== null ? `${idade} anos` : '–'}</td>
+                            <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(u.data_ingresso)}</td>
+                            <td style={{ ...s.td, whiteSpace:'nowrap', color:u.data_saida?VERMELHO:'#888780' }}>{fmtData(u.data_saida)}</td>
+                            <td style={s.td}><span style={s.badge(bg,cor)}>{u.situacao}</span></td>
+                            <td style={s.td}>
+                              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                                {podeGerenciarUsuarios && (
+                                  <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
+                                )}
+                                {podeImprimirAnexo && usuarioEhTeacolher(u) && (<>
+                                  <button onClick={() => gerarPDFAnexoOficialTeacolher(u)} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
+                                  <button onClick={() => gerarPDFTermoAutorizacaoImagem(u)} style={s.btn('#6B5FA8')}>Termo de Imagem</button>
+                                </>)}
+                                {podeExcluirUsuario && (
+                                  <button type="button" onClick={() => setConfirmandoExcluir(u.id)} style={s.btn('#FEF2F2','#A32D2D')}>Excluir</button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  {temMais && (
+                    <div style={{ textAlign:'center', marginTop:12 }}>
+                      <button onClick={() => setLimite(l => l + 300)}
+                        style={{ padding:'8px 24px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.92)', color:'#5F5E5A', cursor:'pointer' }}>
+                        Carregar mais 300
+                      </button>
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+          </>
+        )}
 
-                <div style={s.grupo('1fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>RG</label>
-                    <input value={form.rg} onChange={e=>setForm(f=>({...f,rg:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Telefone/WhatsApp</label>
-                    <input value={form.telefone} onChange={e=>setForm(f=>({...f,telefone:e.target.value}))} placeholder="(21) 00000-0000" style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>E-mail</label>
-                    <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={s.input} />
-                  </div>
+        {abaAtiva === 'teacolher' && (
+          <div>
+            <div style={{ ...s.card, borderLeft:'3px solid rgba(14,126,168,.45)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, flexWrap:'wrap' }}>
+                <div>
+                  <div style={{ fontSize:16, fontWeight:700, color:'#06344F', marginBottom:4 }}>Dashboard do Projeto TEAcolher</div>
+                  <div style={{ fontSize:12, color:'#5F5E5A', lineHeight:1.45 }}>Perfil consolidado dos usuários vinculados ao Projeto TEAcolher, com base nos cadastros carregados na tela.</div>
                 </div>
-
-                <div style={s.grupo('2fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Endereço</label>
-                    <input value={form.endereco} onChange={e=>setForm(f=>({...f,endereco:e.target.value}))} placeholder="Rua, número, complemento" style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Bairro</label>
-                    <input value={form.bairro} onChange={e=>setForm(f=>({...f,bairro:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Cidade</label>
-                    <input value={form.cidade} onChange={e=>setForm(f=>({...f,cidade:e.target.value}))} style={s.input} />
-                  </div>
-                </div>
-
-                <div style={s.grupo('1fr 2fr')}>
-                  <div>
-                    <label style={s.label}>Tipo de deficiência</label>
-                    <select value={form.tipo_deficiencia} onChange={e=>setForm(f=>({...f,tipo_deficiencia:e.target.value}))} style={s.input}>
-                      <option value="">Selecione...</option>
-                      {TIPOS_DEFICIENCIA.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={s.label}>Detalhes sobre a deficiência</label>
-                    <input value={form.deficiencia_detalhes} onChange={e=>setForm(f=>({...f,deficiencia_detalhes:e.target.value}))} placeholder="Diagnóstico, observações, necessidades específicas..." style={s.input} />
-                  </div>
-                </div>
-
-                <div style={s.grupo('2fr 1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Nome do familiar/cuidador</label>
-                    <input value={form.contato_familiar_nome} onChange={e=>setForm(f=>({...f,contato_familiar_nome:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Relação/parentesco</label>
-                    <input value={form.contato_familiar_parentesco} onChange={e=>setForm(f=>({...f,contato_familiar_parentesco:e.target.value}))} style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Telefone do familiar/cuidador</label>
-                    <input value={form.contato_familiar_telefone} onChange={e=>setForm(f=>({...f,contato_familiar_telefone:e.target.value}))} style={s.input} />
-                  </div>
-                </div>
-
-                <div style={s.grupo('1fr 1fr')}>
-                  <div>
-                    <label style={s.label}>Renda familiar bruta</label>
-                    <input value={form.renda_familiar_bruta} onChange={e=>setForm(f=>({...f,renda_familiar_bruta:e.target.value}))} placeholder="Ex.: 2500,00" style={s.input} />
-                  </div>
-                  <div>
-                    <label style={s.label}>Número de pessoas no núcleo familiar</label>
-                    <input type="number" min="0" value={form.pessoas_nucleo_familiar} onChange={e=>setForm(f=>({...f,pessoas_nucleo_familiar:e.target.value}))} style={s.input} />
-                  </div>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {podeImprimirAnexo && (
+                    <button onClick={imprimirListaComProfissionais} disabled={imprimindoLista} style={s.btn(imprimindoLista?'#D3D1C7':'#EEF2F7','#334155')}>
+                      {imprimindoLista ? 'Gerando...' : 'Imprimir lista com profissionais'}
+                    </button>
+                  )}
+                  {podeGerenciarUsuarios && (
+                    <button onClick={() => { setAbaAtiva('lista'); setMostrarForm(true); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn(AZUL)}>
+                      + Cadastrar usuário
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-
-            <div style={{ marginBottom:14 }}>
-              <label style={s.label}>Observações</label>
-              <input value={form.observacoes} onChange={e=>setForm(f=>({...f,observacoes:e.target.value}))} style={s.input} placeholder="Observações sobre o usuário ou atendimento..." />
             </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <button type="submit" disabled={salvando} style={s.btn(salvando?'#D3D1C7':'#0E7EA8')}>
-                {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : '+ Cadastrar'}
-              </button>
-              <button type="button" onClick={() => { setMostrarForm(false); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn('#F1EFE8','#5F5E5A')}>
-                Cancelar
-              </button>
+
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px,1fr))', gap:8, marginBottom:'1rem' }}>
+              {[
+                { label:'Total TEAcolher', val:totalTeacolher, cor:AZUL },
+                { label:'Ativos', val:ativosTeacolher, cor:VERDE },
+                { label:'Com telefone', val:`${comTelefoneTeacolher} (${perc(comTelefoneTeacolher,totalTeacolher)}%)`, cor:'#06344F' },
+                { label:'Com responsável', val:`${comResponsavelTeacolher} (${perc(comResponsavelTeacolher,totalTeacolher)}%)`, cor:'#3B6D11' },
+                { label:'Renda média', val:fmtMoeda(rendaMediaTeacolher), cor:'#854F0B' },
+                { label:'Núcleo familiar médio', val:nucleoMedioTeacolher ? nucleoMedioTeacolher.toFixed(1).replace('.', ',') : '–', cor:'#185FA5' },
+              ].map(k => (
+                <div key={k.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
+                  <div style={{ fontSize:9.5, color:'#888780', marginBottom:4, textTransform:'uppercase', letterSpacing:'.08em' }}>{k.label}</div>
+                  <div style={{ fontSize:18, fontWeight:700, color:k.cor }}>{k.val}</div>
+                </div>
+              ))}
             </div>
-          </form>
-        </div>
-      )}
 
-      {/* Abas */}
-      <div style={{ display:'flex', gap:6, marginBottom:'1.25rem', flexWrap:'wrap' }}>
-        <button onClick={() => setAbaAtiva('lista')} style={s.tab(abaAtiva==='lista')}>Lista</button>
-        <button onClick={() => setAbaAtiva('teacolher')} style={s.tab(abaAtiva==='teacolher')}>Dashboard TEAcolher</button>
-        <button onClick={() => setAbaAtiva('relatorio')} style={s.tab(abaAtiva==='relatorio')}>Relatório / Quantitativo</button>
-      </div>
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div style={s.card}>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Faixa etária</div>
+                {Object.entries(faixasTeacolher).map(([faixa, count]) => (
+                  <div key={faixa} style={{ marginBottom:8 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:3 }}>
+                      <span>{faixa}</span><span style={{ color:'#888780' }}>{count} · {perc(count,totalTeacolher)}%</span>
+                    </div>
+                    <div style={{ height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${perc(count,totalTeacolher)}%`, background:AZUL, borderRadius:99 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-      {/* ABA LISTA */}
-      {abaAtiva === 'lista' && (
-        <>
-          {/* Filtros */}
-          <div style={{ ...s.card, marginBottom:'1rem' }}>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8, marginBottom:8 }}>
-              <div>
-                <label style={s.label}>Situação</label>
-                <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
-                  <option value="">Todas</option>
-                  {SITUACOES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={s.label}>Projeto</label>
-                <select value={filtros.projeto_id} onChange={e=>setFiltros(f=>({...f,projeto_id:e.target.value}))} style={s.input}>
-                  <option value="">Todos</option>
-                  {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={s.label}>Ingresso de</label>
-                <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
-              </div>
-              <div>
-                <label style={s.label}>Ingresso até</label>
-                <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
+              <div style={s.card}>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Tipo de deficiência</div>
+                {Object.entries(deficienciasTeacolher).sort((a,b)=>b[1]-a[1]).map(([tipo, count]) => (
+                  <div key={tipo} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                    <span>{tipo}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
+                  </div>
+                ))}
+                {totalTeacolher === 0 && <div style={{ fontSize:12, color:'#888780' }}>Nenhum usuário vinculado ao TEAcolher.</div>}
               </div>
             </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <button onClick={carregar} style={s.btn(AZUL)}>Filtrar</button>
-              <button onClick={() => { setFiltros({ situacao:'', projeto_id:'', dataInicio:'', dataFim:'' }); setTimeout(carregar,100) }} style={s.btn('#F1EFE8','#5F5E5A')}>Limpar</button>
-            </div>
-          </div>
 
-          {/* Métricas rápidas */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px,1fr))', gap:8, marginBottom:'1.25rem' }}>
-            {[
-              { label:'Ativos', val:ativos, cor:VERDE },
-              { label:'Desligados', val:usuarios.filter(u=>u.situacao==='desligado'||u.situacao==='encerrado').length, cor:VERMELHO },
-              { label:'Afastados', val:usuarios.filter(u=>u.situacao==='afastado').length, cor:LARANJA },
-              { label:'Total', val:usuarios.length, cor:AZUL },
-            ].map(m => (
-              <div key={m.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.75rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{m.label}</div>
-                <div style={{ fontSize:18, fontWeight:600, color:m.cor }}>{m.val}</div>
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:10, marginBottom:10 }}>
+              <div style={s.card}>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Gênero</div>
+                {Object.entries(generosTeacolher).sort((a,b)=>b[1]-a[1]).map(([genero, count]) => (
+                  <div key={genero} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                    <span>{genero}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          {/* Tabela */}
-          <div style={s.card}>
-            {loading ? (
-              <div style={{ padding:'1.25rem' }}><div className="skeleton" style={{height:13, width:'42%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'68%', marginBottom:10}} /><div className="skeleton" style={{height:13, width:'55%'}} /></div>
-            ) : usuarios.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'2rem', color:'#888780', fontSize:12 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:'#2C2C2A', marginBottom:4 }}>Nenhum usuário cadastrado</div>
-                <div style={{ fontSize:12, color:'#888780', maxWidth:380, margin:'0 auto' }}>Cadastre as pessoas atendidas pela instituição para acompanhar atendimentos, projetos e relatórios.</div>
-                {podeGerenciarUsuarios && (
-                  <button onClick={() => setMostrarForm(true)} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:600, borderRadius:8, border:'none', background:'#0E7EA8', color:'#fff', cursor:'pointer' }}>+ Cadastrar usuário</button>
-                )}
-              </div>
-            ) : (
-              <div style={{ maxHeight:520, overflowY:'auto',overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead style={{ position:'sticky', top:0 }}>
-                    <tr>{['Nome','Projeto','Idade','Ingresso','Saída','Situação','Ações'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr>
-                  </thead>
-                  <tbody>
-                    {usuarios.map((u,i) => {
-                      const [bg,cor] = SITUACAO_COR[u.situacao]||['#F1EFE8','#888780']
-                      const idade = calcIdade(u.data_nascimento)
-                      return (
-                        <tr key={u.id} style={{ background:i%2===0?'#fff':'#FAFAF8' }}>
-                          <td style={{ ...s.td, fontWeight:500 }}>{u.nome}</td>
-                          <td style={{ ...s.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeProjetoPorId(u.projeto_id) || u.projeto?.nome || '—'}</td>
-                          <td style={s.td}>{idade !== null ? `${idade} anos` : '—'}</td>
-                          <td style={{ ...s.td, whiteSpace:'nowrap' }}>{fmtData(u.data_ingresso)}</td>
-                          <td style={{ ...s.td, whiteSpace:'nowrap', color:u.data_saida?VERMELHO:'#888780' }}>{fmtData(u.data_saida)}</td>
-                          <td style={s.td}><span style={s.badge(bg,cor)}>{u.situacao}</span></td>
-                          <td style={s.td}>
-                            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                              {podeGerenciarUsuarios && (
-                                <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
-                              )}
-                              {podeImprimirAnexo && usuarioEhTeacolher(u) && (<>
-                                <button onClick={() => gerarPDFAnexoOficialTeacolher(u)} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
-                                <button onClick={() => gerarPDFTermoAutorizacaoImagem(u)} style={s.btn('#6B5FA8')}>Termo de Imagem</button>
-                              </>)}
-                              {podeExcluirUsuario && (
-                                <button type="button" onClick={() => setConfirmandoExcluir(u.id)} style={s.btn('#FEF2F2','#A32D2D')}>Excluir</button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-          {temMais && (
-            <div style={{ textAlign:'center', marginTop:12 }}>
-              <button onClick={() => setLimite(l => l + 300)}
-                style={{ padding:'8px 24px', fontSize:12, borderRadius:8, border:'0.5px solid #D3D1C7', background:'rgba(255,255,255,0.92)', color:'#5F5E5A', cursor:'pointer' }}>
-                Carregar mais 300
-              </button>
-            </div>
-          )}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* ABA DASHBOARD TEACOLHER */}
-      {abaAtiva === 'teacolher' && (
-        <div>
-          <div style={{ ...s.card, borderLeft:'3px solid rgba(14,126,168,.45)' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, flexWrap:'wrap' }}>
-              <div>
-                <div style={{ fontSize:16, fontWeight:700, color:'#06344F', marginBottom:4 }}>Dashboard do Projeto TEAcolher</div>
-                <div style={{ fontSize:12, color:'#5F5E5A', lineHeight:1.45 }}>Perfil consolidado dos usuários vinculados ao Projeto TEAcolher, com base nos cadastros carregados na tela.</div>
-              </div>
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                {podeImprimirAnexo && (
-                  <button onClick={imprimirListaComProfissionais} disabled={imprimindoLista} style={s.btn(imprimindoLista ? '#D3D1C7' : '#EEF2F7', '#334155')}>
-                    {imprimindoLista ? 'Gerando...' : 'Imprimir lista com profissionais'}
-                  </button>
-                )}
-                {podeGerenciarUsuarios && (
-                  <button onClick={() => { setAbaAtiva('lista'); setMostrarForm(true); setEditando(null); setForm(FORM_VAZIO) }} style={s.btn(AZUL)}>
-                    + Cadastrar usuário
-                  </button>
-                )}
+              <div style={s.card}>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Bairros mais frequentes</div>
+                {Object.entries(bairrosTeacolher).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([bairro, count]) => (
+                  <div key={bairro} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                    <span>{bairro}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px,1fr))', gap:8, marginBottom:'1rem' }}>
-            {[
-              { label:'Total TEAcolher', val:totalTeacolher, cor:AZUL },
-              { label:'Ativos', val:ativosTeacolher, cor:VERDE },
-              { label:'Com telefone', val:`${comTelefoneTeacolher} (${perc(comTelefoneTeacolher,totalTeacolher)}%)`, cor:'#06344F' },
-              { label:'Com responsável', val:`${comResponsavelTeacolher} (${perc(comResponsavelTeacolher,totalTeacolher)}%)`, cor:'#3B6D11' },
-              { label:'Renda média', val:fmtMoeda(rendaMediaTeacolher), cor:'#854F0B' },
-              { label:'Núcleo familiar médio', val:nucleoMedioTeacolher ? nucleoMedioTeacolher.toFixed(1).replace('.', ',') : '—', cor:'#185FA5' },
-            ].map(k => (
-              <div key={k.label} style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'.85rem 1rem', border:'0.5px solid #E8E6DE', boxShadow:'0 1px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ fontSize:9.5, color:'#888780', marginBottom:4, textTransform:'uppercase', letterSpacing:'.08em' }}>{k.label}</div>
-                <div style={{ fontSize:18, fontWeight:700, color:k.cor }}>{k.val}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:10, marginBottom:10 }}>
             <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Faixa etária</div>
-              {Object.entries(faixasTeacolher).map(([faixa, count]) => (
-                <div key={faixa} style={{ marginBottom:8 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginBottom:'.85rem', flexWrap:'wrap' }}>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:'#06344F' }}>Cadastros pendentes do Anexo I</div>
+                  <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Faltando laudo/deficiência, renda familiar ou núcleo familiar – exigidos para prestação de contas.</div>
+                </div>
+                <span style={s.badge(incompletosTeacolher.length?'#FFF6ED':'#EAF3DE', incompletosTeacolher.length?'#854F0B':'#3B6D11')}>
+                  {incompletosTeacolher.length} pendente(s)
+                </span>
+              </div>
+              {incompletosTeacolher.length === 0 ? (
+                <div style={{ fontSize:12, color:'#3B6D11' }}>Todos os cadastros do TEAcolher estão com o Anexo I e os dados básicos completos.</div>
+              ) : (
+                <div style={{ overflowX:'auto' }}>
+                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                    <thead><tr>{['Nome','Faltando','Ação'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {incompletosTeacolher.slice(0,12).map(u => {
+                        const faltandoAnexo1 = [
+                          (!u.tipo_deficiencia || (Array.isArray(u.tipo_deficiencia) && u.tipo_deficiencia.length === 0)) && 'Tipo de deficiência',
+                          !u.deficiencia_detalhes && 'Laudo/detalhes',
+                          !u.renda_familiar_bruta && 'Renda familiar',
+                          !u.pessoas_nucleo_familiar && 'Pessoas no núcleo',
+                        ].filter(Boolean)
+                        const faltandoBasico = [
+                          !u.cpf && 'CPF',
+                          !u.data_nascimento && 'Nascimento',
+                          !u.telefone && 'Telefone',
+                          !u.contato_familiar_nome && 'Contato familiar',
+                        ].filter(Boolean)
+                        return (
+                          <tr key={u.id}>
+                            <td style={s.td}>{u.nome}</td>
+                            <td style={s.td}>
+                              {faltandoAnexo1.length > 0 && <div style={{ color:'#A32D2D', fontWeight:600 }}>Anexo I: {faltandoAnexo1.join(', ')}</div>}
+                              {faltandoBasico.length > 0 && <div style={{ color:'#9199A2', fontSize:11, marginTop:faltandoAnexo1.length?2:0 }}>Básico: {faltandoBasico.join(', ')}</div>}
+                            </td>
+                            <td style={s.td}><button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button></td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {abaAtiva === 'relatorio' && (
+          <div>
+            <div style={s.card}>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Usuários por projeto</div>
+              {Object.entries(porProjeto).sort((a,b) => b[1].total-a[1].total).map(([nome, dados]) => (
+                <div key={nome} style={{ marginBottom:10 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:3 }}>
-                    <span>{faixa}</span><span style={{ color:'#888780' }}>{count} · {perc(count,totalTeacolher)}%</span>
+                    <span style={{ fontWeight:500 }}>{nome}</span>
+                    <span style={{ color:'#888780' }}><span style={{ color:VERDE, fontWeight:500 }}>{dados.ativo} ativos</span> · {dados.total} total</span>
                   </div>
                   <div style={{ height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
-                    <div style={{ height:'100%', width:`${perc(count,totalTeacolher)}%`, background:AZUL, borderRadius:99 }} />
+                    <div style={{ height:'100%', width:(dados.ativo/Math.max(...Object.values(porProjeto).map(d=>d.total))*100)+'%', background:AZUL, borderRadius:99 }} />
                   </div>
                 </div>
               ))}
             </div>
 
             <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Tipo de deficiência</div>
-              {Object.entries(deficienciasTeacolher).sort((a,b)=>b[1]-a[1]).map(([tipo, count]) => (
-                <div key={tipo} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
-                  <span>{tipo}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
-                </div>
-              ))}
-              {totalTeacolher === 0 && <div style={{ fontSize:12, color:'#888780' }}>Nenhum usuário vinculado ao TEAcolher.</div>}
-            </div>
-          </div>
-
-          <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:10, marginBottom:10 }}>
-            <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Gênero</div>
-              {Object.entries(generosTeacolher).sort((a,b)=>b[1]-a[1]).map(([genero, count]) => (
-                <div key={genero} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
-                  <span>{genero}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:600, marginBottom:'.85rem', color:'#06344F' }}>Bairros mais frequentes</div>
-              {Object.entries(bairrosTeacolher).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([bairro, count]) => (
-                <div key={bairro} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
-                  <span>{bairro}</span><span style={{ fontWeight:600, color:AZUL }}>{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={s.card}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginBottom:'.85rem', flexWrap:'wrap' }}>
-              <div>
-                <div style={{ fontSize:13, fontWeight:600, color:'#06344F' }}>Cadastros pendentes do Anexo I</div>
-                <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>Faltando laudo/deficiência, renda familiar ou núcleo familiar — exigidos para prestação de contas.</div>
+              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Usuários por situação</div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px,1fr))', gap:8 }}>
+                {SITUACOES.map(sit => {
+                  const count = usuarios.filter(u => u.situacao === sit).length
+                  const [bg,cor] = SITUACAO_COR[sit]||['#F1EFE8','#888780']
+                  return (
+                    <div key={sit} style={{ background:bg, borderRadius:10, padding:'.85rem 1rem' }}>
+                      <div style={{ fontSize:10, color:cor, marginBottom:3 }}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</div>
+                      <div style={{ fontSize:20, fontWeight:700, color:cor }}>{count}</div>
+                    </div>
+                  )
+                })}
               </div>
-              <span style={s.badge(incompletosTeacolher.length ? '#FFF6ED' : '#EAF3DE', incompletosTeacolher.length ? '#854F0B' : '#3B6D11')}>
-                {incompletosTeacolher.length} pendente(s)
-              </span>
             </div>
-            {incompletosTeacolher.length === 0 ? (
-              <div style={{ fontSize:12, color:'#3B6D11' }}>Todos os cadastros do TEAcolher estão com o Anexo I e os dados básicos completos.</div>
-            ) : (
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead><tr>{['Nome','Faltando','Ação'].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
-                  <tbody>
-                    {incompletosTeacolher.slice(0,12).map(u => {
-                      const faltandoAnexo1 = [
-                        !u.tipo_deficiencia && 'Tipo de deficiência',
-                        !u.deficiencia_detalhes && 'Laudo/detalhes',
-                        !u.renda_familiar_bruta && 'Renda familiar',
-                        !u.pessoas_nucleo_familiar && 'Pessoas no núcleo',
-                      ].filter(Boolean)
-                      const faltandoBasico = [
-                        !u.cpf && 'CPF',
-                        !u.data_nascimento && 'Nascimento',
-                        !u.telefone && 'Telefone',
-                        !u.contato_familiar_nome && 'Contato familiar',
-                      ].filter(Boolean)
-                      return (
-                        <tr key={u.id}>
-                          <td style={s.td}>{u.nome}</td>
-                          <td style={s.td}>
-                            {faltandoAnexo1.length > 0 && (
-                              <div style={{ color:'#A32D2D', fontWeight:600 }}>Anexo I: {faltandoAnexo1.join(', ')}</div>
-                            )}
-                            {faltandoBasico.length > 0 && (
-                              <div style={{ color:'#9199A2', fontSize:11, marginTop:faltandoAnexo1.length?2:0 }}>Básico: {faltandoBasico.join(', ')}</div>
-                            )}
-                          </td>
-                          <td style={s.td}><button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button></td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+
+            {usuarios.filter(u => u.motivo_saida).length > 0 && (
+              <div style={s.card}>
+                <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Motivos de saída</div>
+                {MOTIVOS_SAIDA.map(motivo => {
+                  const count = usuarios.filter(u => u.motivo_saida === motivo).length
+                  if (count === 0) return null
+                  return (
+                    <div key={motivo} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
+                      <span>{motivo}</span><span style={{ fontWeight:500, color:VERMELHO }}>{count}</span>
+                    </div>
+                  )
+                })}
               </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* ABA RELATÓRIO */}
-      {abaAtiva === 'relatorio' && (
-        <div>
-          {/* Por projeto */}
-          <div style={s.card}>
-            <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Usuários por projeto</div>
-            {Object.entries(porProjeto).sort((a,b) => b[1].total-a[1].total).map(([nome, dados]) => (
-              <div key={nome} style={{ marginBottom:10 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:3 }}>
-                  <span style={{ fontWeight:500 }}>{nome}</span>
-                  <span style={{ color:'#888780' }}>
-                    <span style={{ color:VERDE, fontWeight:500 }}>{dados.ativo} ativos</span> · {dados.total} total
-                  </span>
-                </div>
-                <div style={{ height:6, background:'#F1EFE8', borderRadius:99, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:(dados.ativo/Math.max(...Object.values(porProjeto).map(d=>d.total))*100)+'%', background:AZUL, borderRadius:99 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Por situação */}
-          <div style={s.card}>
-            <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Usuários por situação</div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px,1fr))', gap:8 }}>
-              {SITUACOES.map(sit => {
-                const count = usuarios.filter(u => u.situacao === sit).length
-                const [bg,cor] = SITUACAO_COR[sit]||['#F1EFE8','#888780']
-                return (
-                  <div key={sit} style={{ background:bg, borderRadius:10, padding:'.85rem 1rem' }}>
-                    <div style={{ fontSize:10, color:cor, marginBottom:3 }}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</div>
-                    <div style={{ fontSize:20, fontWeight:700, color:cor }}>{count}</div>
+            {(() => {
+              const comIdade = usuarios.filter(u => u.data_nascimento)
+              if (comIdade.length === 0) return null
+              const faixas = { '0-5':0, '6-11':0, '12-17':0, '18-29':0, '30-59':0, '60+':0 }
+              comIdade.forEach(u => {
+                const idade = calcIdade(u.data_nascimento)
+                if (idade <= 5) faixas['0-5']++
+                else if (idade <= 11) faixas['6-11']++
+                else if (idade <= 17) faixas['12-17']++
+                else if (idade <= 29) faixas['18-29']++
+                else if (idade <= 59) faixas['30-59']++
+                else faixas['60+']++
+              })
+              return (
+                <div style={s.card}>
+                  <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Faixa etária</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(100px,1fr))', gap:8 }}>
+                    {Object.entries(faixas).map(([faixa, count]) => (
+                      <div key={faixa} style={{ background:'#F8F7F2', borderRadius:10, padding:'.75rem', textAlign:'center' }}>
+                        <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{faixa} anos</div>
+                        <div style={{ fontSize:18, fontWeight:700, color:AZUL }}>{count}</div>
+                      </div>
+                    ))}
                   </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Por motivo de saída */}
-          {usuarios.filter(u => u.motivo_saida).length > 0 && (
-            <div style={s.card}>
-              <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Motivos de saída</div>
-              {MOTIVOS_SAIDA.map(motivo => {
-                const count = usuarios.filter(u => u.motivo_saida === motivo).length
-                if (count === 0) return null
-                return (
-                  <div key={motivo} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'0.5px solid #F1EFE8', fontSize:12 }}>
-                    <span>{motivo}</span>
-                    <span style={{ fontWeight:500, color:VERMELHO }}>{count}</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Faixa etária */}
-          {(() => {
-            const comIdade = usuarios.filter(u => u.data_nascimento)
-            if (comIdade.length === 0) return null
-            const faixas = { '0-5': 0, '6-11': 0, '12-17': 0, '18-29': 0, '30-59': 0, '60+': 0 }
-            comIdade.forEach(u => {
-              const idade = calcIdade(u.data_nascimento)
-              if (idade <= 5) faixas['0-5']++
-              else if (idade <= 11) faixas['6-11']++
-              else if (idade <= 17) faixas['12-17']++
-              else if (idade <= 29) faixas['18-29']++
-              else if (idade <= 59) faixas['30-59']++
-              else faixas['60+']++
-            })
-            return (
-              <div style={s.card}>
-                <div style={{ fontSize:13, fontWeight:500, marginBottom:'.85rem' }}>Faixa etária</div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(100px,1fr))', gap:8 }}>
-                  {Object.entries(faixas).map(([faixa, count]) => (
-                    <div key={faixa} style={{ background:'#F8F7F2', borderRadius:10, padding:'.75rem', textAlign:'center' }}>
-                      <div style={{ fontSize:10, color:'#888780', marginBottom:2 }}>{faixa} anos</div>
-                      <div style={{ fontSize:18, fontWeight:700, color:AZUL }}>{count}</div>
-                    </div>
-                  ))}
+                  <div style={{ fontSize:11, color:'#888780', marginTop:8 }}>*Apenas usuários com data de nascimento cadastrada ({comIdade.length} de {usuarios.length})</div>
                 </div>
-                <div style={{ fontSize:11, color:'#888780', marginTop:8 }}>*Apenas usuários com data de nascimento cadastrada ({comIdade.length} de {usuarios.length})</div>
+              )
+            })()}
+          </div>
+        )}
+
+        {confirmandoExcluir && (
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ background:'rgba(255,255,255,0.92)', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
+              <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
+              <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
+              <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
+              <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+                <button onClick={() => excluir(confirmandoExcluir)}
+                  style={{ padding:'8px 20px', borderRadius:8, border:'none', background:'#E8212A', color:'#fff', fontWeight:600, cursor:'pointer' }}>
+                  Excluir
+                </button>
+                <button onClick={() => setConfirmandoExcluir(null)}
+                  style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
+                  Cancelar
+                </button>
               </div>
-            )
-          })()}
-        </div>
-      )}
-      {/* Modal confirmação exclusão */}
-      {confirmandoExcluir && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius:12, padding:'1.5rem', maxWidth:340, width:'90%', textAlign:'center' }}>
-            <div style={{ marginBottom:8 }}><i className="ti ti-inbox" style={{fontSize:32, color:'#C8C6BC'}} /></div>
-            <div style={{ fontSize:14, fontWeight:600, marginBottom:8 }}>Confirmar exclusão</div>
-            <div style={{ fontSize:12, color:'#5F5E5A', marginBottom:'1.5rem' }}>Esta ação não pode ser desfeita.</div>
-            <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
-              <button onClick={() => excluir(confirmandoExcluir)}
-                style={{ padding:'8px 20px', borderRadius:8, border:'none', background:'#E8212A', color:'#fff', fontWeight:600, cursor:'pointer' }}>
-                Excluir
-              </button>
-              <button onClick={() => setConfirmandoExcluir(null)}
-                style={{ padding:'8px 20px', borderRadius:8, border:'0.5px solid #D3D1C7', background:'#fff', color:'#5F5E5A', cursor:'pointer' }}>
-                Cancelar
-              </button>
             </div>
           </div>
-        </div>
-      )}
-
-    </div>
+        )}
       </div>
+    </div>
   )
 }
