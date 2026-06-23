@@ -825,8 +825,33 @@ export default function Atendimentos() {
         </div>
       )}
 
-      {/* Filtros: colapsados por padrão, só abre quem precisa */}
-      <div style={{ ...s.card, marginBottom:'1rem', padding: mostrarFiltros ? undefined : '8px 14px' }}>
+      {/* Filtros — técnico vê inline sempre visível, admin/operacional mantém colapsável */}
+      {isTecnico ? (
+        <div style={{ ...s.card, marginBottom:'1rem', padding:'12px 14px' }}>
+          <div style={{ display:'grid', gridTemplateColumns:isMobile ? '1fr 1fr' : '1fr 1fr 1fr auto', gap:8, alignItems:'flex-end' }}>
+            <div>
+              <label style={s.label}>De</label>
+              <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
+            </div>
+            <div>
+              <label style={s.label}>Até</label>
+              <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
+            </div>
+            <div>
+              <label style={s.label}>Situação</label>
+              <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
+                <option value="">Todas</option>
+                {SITUACOES.map(sit => <option key={sit} value={sit}>{sit.charAt(0).toUpperCase()+sit.slice(1)}</option>)}
+              </select>
+            </div>
+            <div style={{ display:'flex', gap:6, paddingBottom:1 }}>
+              <button onClick={() => carregar(filtros, projetoTeacolherId)} style={s.btn(AZUL)}>Filtrar</button>
+              <button onClick={() => { const limpa = { dataInicio:'', dataFim:'', profissional_id:'', situacao:'' }; setFiltros(limpa); carregar(limpa, projetoTeacolherId) }} style={s.btn('#F1EFE8', '#5F5E5A')}>Limpar</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ ...s.card, marginBottom:'1rem', padding: mostrarFiltros ? undefined : '8px 14px' }}>
         <button onClick={() => setMostrarFiltros(v => !v)} style={{ border:'none', background:'none', cursor:'pointer', width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:0, fontSize:12, fontWeight:700, color:ESCURO }}>
           <span>🔍 Filtros{(filtros.dataInicio||filtros.dataFim||filtros.profissional_id||filtros.situacao) ? ' (ativos)' : ''}</span>
           <span style={{ color:'#888780' }}>{mostrarFiltros ? '▲ esconder' : '▼ mostrar'}</span>
@@ -841,15 +866,13 @@ export default function Atendimentos() {
               <label style={s.label}>Data fim</label>
               <input type="date" value={filtros.dataFim} onChange={e=>setFiltros(f=>({...f,dataFim:e.target.value}))} style={s.input} />
             </div>
-            {!isTecnico && (
-              <div>
-                <label style={s.label}>Profissional</label>
-                <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
-                  <option value="">Todos</option>
-                  {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
-                </select>
-              </div>
-            )}
+            <div>
+              <label style={s.label}>Profissional</label>
+              <select value={filtros.profissional_id} onChange={e=>setFiltros(f=>({...f,profissional_id:e.target.value}))} style={s.input}>
+                <option value="">Todos</option>
+                {equipeTEAcolher.map(e => <option key={e.id} value={e.id}>{e.nome.split(' ')[0]} {e.nome.split(' ')[1] || ''}</option>)}
+              </select>
+            </div>
             <div>
               <label style={s.label}>Situação</label>
               <select value={filtros.situacao} onChange={e=>setFiltros(f=>({...f,situacao:e.target.value}))} style={s.input}>
@@ -864,6 +887,7 @@ export default function Atendimentos() {
           </div>
         </>)}
       </div>
+      )}
 
       {/* Relatórios: só admin, colapsado por padrão */}
       {isAdmin && (
@@ -942,10 +966,12 @@ export default function Atendimentos() {
       )}
 
       <div style={s.card}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, gap:8, flexWrap:'wrap' }}>
           <div>
             <div style={{ fontSize:14, fontWeight:700, color:ESCURO }}>
-              {isTecnico ? `${atendimentos.length} atendimentos meus` : `${atendimentos.length} registros TEAcolher`}
+              {isTecnico
+                ? `${atendimentos.length} ${atendimentos.length === 1 ? 'atendimento' : 'atendimentos'} encontrado${atendimentos.length !== 1 ? 's' : ''}`
+                : `${atendimentos.length} registros TEAcolher`}
             </div>
             {(filtros.situacao || filtros.profissional_id || filtros.dataInicio || filtros.dataFim) && (
               <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
@@ -974,37 +1000,49 @@ export default function Atendimentos() {
             {podeAgendar && <button onClick={() => abrirNovoAgendamento()} style={{ marginTop:12, padding:'8px 20px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', background:AZUL, color:'#fff', cursor:'pointer' }}>+ Agendar atendimento</button>}
           </div>
         ) : isMobile ? (
-          /* MOBILE: cards em vez de tabela com scroll horizontal, que cortava colunas e botões */
+          /* MOBILE: cards fluidos — técnico vê ação principal em destaque */
           <div style={{ display:'grid', gap:8 }}>
             {atendimentos.map(a => {
               const [bg, cor] = SITUACAO_COR[a.situacao] || ['#F1EFE8', '#888780']
+              const ehAgend = ehAgendado(a)
+              const podeFinal = podeFinalizar && podeAtuarNoAtendimento(a) && ehAgend
+              const podeEditReg = podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgend
               return (
-                <div key={a.id} style={{ border:'0.5px solid #E8E6DE', borderRadius:12, padding:'12px 14px', background:'#fff' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8, marginBottom:6 }}>
-                    <div style={{ minWidth:0 }}>
-                      <div style={{ fontSize:14, fontWeight:800, color:ESCURO, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</div>
-                      <div style={{ fontSize:12, color:'#5F5E5A', marginTop:2 }}>{fmtData(a.data_atend)} {fmtHora(a.hora_inicio) ? `· ${fmtHora(a.hora_inicio)}` : ''}</div>
-                    </div>
-                    <span style={s.badge(bg, cor)}>{a.situacao}</span>
-                  </div>
-                  {!isTecnico && (
-                    <div style={{ fontSize:11.5, color:'#888780', marginBottom:8 }}>{profissionalNome(a.profissional_id)}</div>
-                  )}
-                  {(() => {
-                    const acoes = []
-                    if (podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a)) acoes.push({ label:'Finalizar', cor:VERDE, fn:() => montarForm(a, true) })
-                    if (podeEditarAgendamento && ehAgendado(a)) acoes.push({ label:'Editar agenda', cor:'#F1EFE8', txt:'#5F5E5A', fn:() => montarForm(a, false) })
-                    if (podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgendado(a)) acoes.push({ label:'Editar registro', cor:'#F1EFE8', txt:'#5F5E5A', fn:() => montarForm(a, true) })
-                    const [principal, ...resto] = acoes
-                    return (<>
-                      {principal && <button onClick={principal.fn} style={{ ...s.btn(principal.cor, principal.txt), width:'100%', marginTop:4, padding:'11px', fontSize:13 }}>{principal.label}</button>}
-                      <div style={{ display:'flex', gap:6, marginTop:6, flexWrap:'wrap' }}>
-                        {resto.map(b => <button key={b.label} onClick={b.fn} style={{ ...s.btn(b.cor, b.txt), flex:'1 1 100px' }}>{b.label}</button>)}
-                        <button onClick={() => imprimirFicha(a)} style={{ ...s.btn('#EEF2F7', '#334155'), flex:'1 1 100px' }}>Imprimir ficha</button>
-                        {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={{ ...s.btn('#FCEBEB', '#A32D2D'), flex:'1 1 100px' }}>Excluir</button>}
+                <div key={a.id} style={{ border:'0.5px solid #E8E6DE', borderRadius:12, overflow:'hidden', background:'#fff' }}>
+                  {/* Cabeçalho do card */}
+                  <div style={{ padding:'12px 14px', borderBottom: (podeFinal || podeEditReg) ? '0.5px solid #F1EFE8' : 'none' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                      <div style={{ minWidth:0 }}>
+                        <div style={{ fontSize:15, fontWeight:800, color:ESCURO, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nomeAtendido(a)}</div>
+                        <div style={{ fontSize:12, color:'#5F5E5A', marginTop:3 }}>
+                          {fmtData(a.data_atend)}{fmtHora(a.hora_inicio) !== '—' ? ` · ${fmtHora(a.hora_inicio)}` : ''}
+                          {a.etapa_fluxo ? <span style={{ color:'#888780' }}> · {a.etapa_fluxo}</span> : ''}
+                        </div>
                       </div>
-                    </>)
-                  })()}
+                      <span style={{ ...s.badge(bg, cor), flexShrink:0, marginTop:2 }}>{a.situacao}</span>
+                    </div>
+                    {!isTecnico && (
+                      <div style={{ fontSize:11.5, color:'#888780', marginTop:4 }}>{profissionalNome(a.profissional_id)}</div>
+                    )}
+                  </div>
+                  {/* Ações */}
+                  {(podeFinal || podeEditReg || podeEditarAgendamento) && (
+                    <div style={{ padding:'10px 14px', display:'flex', gap:6, flexWrap:'wrap', background:'#FAFAF8' }}>
+                      {podeFinal && (
+                        <button onClick={() => montarForm(a, true)} style={{ ...s.btn(VERDE), flex:'1 1 140px', padding:'10px', fontSize:13, fontWeight:700 }}>
+                          ✓ Finalizar atendimento
+                        </button>
+                      )}
+                      {podeEditarAgendamento && ehAgend && (
+                        <button onClick={() => montarForm(a, false)} style={{ ...s.btn('#F1EFE8', '#5F5E5A'), flex:'1 1 100px' }}>Editar agenda</button>
+                      )}
+                      {podeEditReg && (
+                        <button onClick={() => montarForm(a, true)} style={{ ...s.btn('#F1EFE8', '#5F5E5A'), flex:'1 1 100px' }}>Editar registro</button>
+                      )}
+                      <button onClick={() => imprimirFicha(a)} style={{ ...s.btn('#EEF2F7', '#334155'), flex:'1 1 100px' }}>Imprimir ficha</button>
+                      {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={{ ...s.btn('#FCEBEB', '#A32D2D'), flex:'1 1 80px' }}>Excluir</button>}
+                    </div>
+                  )}
                 </div>
               )
             })}
