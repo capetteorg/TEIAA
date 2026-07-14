@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { gerarPDFAgendaTecnicoTeacolher } from '../lib/pdf'
+import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
 const BLUE = '#0E7EA8', DARK = '#06344F', GREEN = '#6BBF2B', ORANGE = '#F4821F', RED = '#E63214'
 const card = { background:'rgba(255,255,255,0.94)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)' }
@@ -25,6 +26,7 @@ export default function PainelTecnico() {
   const [aba, setAba] = useState('agenda')
   const [usuarioExpandido, setUsuarioExpandido] = useState(null)
   const [evolucoes, setEvolucoes] = useState({})
+  const [prontuarioDe, setProntuarioDe] = useState(null)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -251,6 +253,10 @@ export default function PainelTecnico() {
 
                           {aberto && (
                             <div style={{ borderTop:'0.5px solid #F1EFE8', background:'#FAFAF8', padding:'12px 14px' }}>
+                              <button onClick={() => setProntuarioDe({ id:u.id, nome:u.nome })}
+                                style={{ marginBottom:10, fontSize:12, fontWeight:700, border:'none', borderRadius:8, background:DARK, color:'#fff', padding:'7px 14px', cursor:'pointer' }}>
+                                📋 Prontuário — anamnese, PIA e frequência
+                              </button>
                               <div style={{ fontSize:12, fontWeight:700, color:DARK, marginBottom:8 }}>Evoluções e registros técnicos</div>
                               {!evolucoes[u.id]
                                 ? <div style={{ fontSize:12, color:'#B4B2A9' }}>Carregando...</div>
@@ -299,6 +305,15 @@ export default function PainelTecnico() {
           </div>
         )}
       </div>
+
+      {prontuarioDe && (
+        <ProntuarioUsuario
+          usuario={prontuarioDe}
+          onClose={() => setProntuarioDe(null)}
+          podeEditar
+          profissionalPadrao={prof.id ? { id: prof.id, nome: prof.nome } : null}
+        />
+      )}
     </div>
   )
 }

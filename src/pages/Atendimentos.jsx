@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
-import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher } from '../lib/pdf'
+import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
 
 const VERDE = '#6BBF2B'
 const VERMELHO = '#E8212A'
@@ -959,6 +959,27 @@ export default function Atendimentos() {
             </button>
             <button onClick={gerarCronograma} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#0E7EA8')}>
               {gerandoRelatorio ? 'Gerando...' : 'Cronograma de execução (ações x meses)'}
+            </button>
+            <button
+              title={filtroRelatorio.usuario_id ? 'Folha de frequência individual do usuário selecionado' : 'Selecione um usuário/família no filtro acima'}
+              onClick={async () => {
+                if (!filtroRelatorio.usuario_id) return
+                setGerandoRelatorio(true); setMsg('')
+                try {
+                  let lista = await buscarTodosParaRelatorio()
+                  lista = lista.filter(a => String(a.usuario_atendido_id) === String(filtroRelatorio.usuario_id))
+                  if (filtroRelatorio.dataInicio) lista = lista.filter(a => a.data_atend >= filtroRelatorio.dataInicio)
+                  if (filtroRelatorio.dataFim) lista = lista.filter(a => a.data_atend <= filtroRelatorio.dataFim)
+                  const usuarioSel = usuariosTEAcolher.find(u => String(u.id) === String(filtroRelatorio.usuario_id)) || { id: filtroRelatorio.usuario_id }
+                  const periodoLabel = filtroRelatorio.dataInicio && filtroRelatorio.dataFim
+                    ? `${fmtData(filtroRelatorio.dataInicio)} a ${fmtData(filtroRelatorio.dataFim)}`
+                    : 'Todo o histórico'
+                  gerarPDFFrequenciaTeacolher(usuarioSel, lista, periodoLabel)
+                } catch(e) { setMsg('Erro: ' + e.message) } finally { setGerandoRelatorio(false) }
+              }}
+              disabled={gerandoRelatorio || !filtroRelatorio.usuario_id}
+              style={s.btn(gerandoRelatorio || !filtroRelatorio.usuario_id ? '#D3D1C7' : '#6B5FA8')}>
+              {gerandoRelatorio ? 'Gerando...' : 'Folha de frequência (usuário)'}
             </button>
           </div>
           </>)}

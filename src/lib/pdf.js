@@ -3310,3 +3310,174 @@ export function gerarPDFTermoAutorizacaoImagem(usuario = {}) {
   `
   abrirImpressao(html, `Termo de Autorização de Imagem - ${usuario.nome || ''}`, false)
 }
+
+// =============================================
+// PRONTUÁRIO TEACOLHER — Anamnese, PIA e Folha de Frequência
+// =============================================
+
+function idadeDe(dataNasc) {
+  if (!dataNasc) return null
+  const hoje = new Date()
+  const nasc = new Date(String(dataNasc).includes('T') ? dataNasc : dataNasc + 'T12:00:00')
+  if (Number.isNaN(nasc.getTime())) return null
+  let idade = hoje.getFullYear() - nasc.getFullYear()
+  const m = hoje.getMonth() - nasc.getMonth()
+  if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--
+  return idade
+}
+
+// Ficha de Anamnese TEAcolher — histórico de desenvolvimento, saúde, escola,
+// rotina e contexto sociofamiliar do usuário, no padrão timbrado do projeto.
+export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-ANAMNESE-${usuario.id || ''}`
+  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const fmtData = d => d ? new Date(String(d).includes('T') ? d : d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const idade = idadeDe(usuario.data_nascimento)
+  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value || '—')}</div></div>`
+  const secao = titulo => `<div style="background:#E3E0EE;border:1px solid #B9B4D6;border-radius:5px;padding:5px 10px;font-weight:800;font-size:10.5px;color:#3F3A82;margin:14px 0 8px;page-break-after:avoid">${titulo}</div>`
+  const bloco = (label, value) => `<div style="border:1px solid var(--line);border-radius:5px;padding:8px 12px;margin-bottom:6px;page-break-inside:avoid"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:4px;font-weight:700">${label}</div><div style="font-size:10.5px;line-height:1.55;color:#20252C;white-space:pre-wrap">${esc(value || '—')}</div></div>`
+
+  const html = `<div class="pg">
+    ${htmlCabecalhoTeacolher({ titulo:'Ficha de Anamnese — Projeto TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })}
+    <div class="info-grid-3">
+      ${item('Usuário(a)', usuario.nome)}
+      ${item('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`)}
+      ${item('Data da entrevista', fmtData(anamnese.data_entrevista))}
+      ${item('Entrevistado(a)', anamnese.entrevistado_nome)}
+      ${item('Parentesco / vínculo', anamnese.entrevistado_parentesco)}
+      ${item('Profissional responsável', anamnese.profissional_nome)}
+    </div>
+    ${secao('1. Queixa principal / motivo da procura')}
+    ${bloco('Queixa principal', anamnese.queixa_principal)}
+    ${secao('2. Histórico de desenvolvimento e saúde')}
+    ${bloco('Gestação e parto', anamnese.historico_gestacao_parto)}
+    ${bloco('Desenvolvimento inicial (marcos: sentar, andar, falar)', anamnese.desenvolvimento_inicial)}
+    ${bloco('Histórico de saúde (doenças, internações, cirurgias)', anamnese.historico_saude)}
+    ${bloco('Medicações em uso', anamnese.medicacoes_em_uso)}
+    ${bloco('Alergias e restrições', anamnese.alergias_restricoes)}
+    ${bloco('Acompanhamentos externos (saúde/terapias fora do projeto)', anamnese.acompanhamentos_externos)}
+    ${secao('3. Vida escolar')}
+    ${bloco('Escola atual', [anamnese.escola_atual, anamnese.escola_serie_turno].filter(Boolean).join(' · '))}
+    ${bloco('Histórico escolar (adaptações, mediador, dificuldades)', anamnese.historico_escolar)}
+    ${secao('4. Rotina e comunicação')}
+    ${bloco('Rotina diária', anamnese.rotina_diaria)}
+    ${bloco('Alimentação e sono', anamnese.alimentacao_sono)}
+    ${bloco('Comunicação e interação (como se comunica, interesses)', anamnese.comunicacao_interacao)}
+    ${secao('5. Contexto sociofamiliar')}
+    ${bloco('Composição e dinâmica familiar', anamnese.contexto_sociofamiliar)}
+    ${bloco('Benefícios sociais (BPC, Bolsa Família etc.)', anamnese.beneficios_sociais)}
+    ${bloco('Rede de apoio', anamnese.rede_apoio)}
+    ${anamnese.observacoes ? secao('6. Observações complementares') + bloco('Observações', anamnese.observacoes) : ''}
+    ${htmlAssinaturas(['Profissional responsável', 'Responsável / família'])}
+    ${htmlRodapeTeacolher({ protocolo })}
+  </div>`
+  abrirImpressao(html, `Anamnese TEAcolher - ${usuario.nome || ''}`, false)
+}
+
+// PIA — Plano Individual de Atendimento TEAcolher, com metas por área,
+// prazos e critérios de revisão (avaliação participativa trimestral).
+export function gerarPDFPiaTeacolher(usuario = {}, plano = {}, opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-PIA-${plano.id || usuario.id || ''}`
+  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const fmtData = d => d ? new Date(String(d).includes('T') ? d : d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const idade = idadeDe(usuario.data_nascimento)
+  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value || '—')}</div></div>`
+  const bloco = (label, value) => `<div style="border:1px solid var(--line);border-radius:5px;padding:8px 12px;margin-bottom:6px;page-break-inside:avoid"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:4px;font-weight:700">${label}</div><div style="font-size:10.5px;line-height:1.55;color:#20252C;white-space:pre-wrap">${esc(value || '—')}</div></div>`
+
+  const metas = Array.isArray(plano.metas) ? plano.metas : []
+  const linhasMetas = metas.map(m => `<tr>
+    <td style="font-weight:700;white-space:nowrap">${esc(m.area)}</td>
+    <td>${esc(m.objetivo)}</td>
+    <td>${esc(m.estrategias)}</td>
+    <td style="white-space:nowrap">${esc(m.prazo)}</td>
+    <td style="white-space:nowrap">${esc(m.situacao || 'Em andamento')}</td>
+  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#9199A2;padding:10px">Nenhuma meta registrada</td></tr>'
+
+  const html = `<div class="pg">
+    ${htmlCabecalhoTeacolher({ titulo:'Plano Individual de Atendimento (PIA) — TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })}
+    <div class="info-grid-3">
+      ${item('Usuário(a)', usuario.nome)}
+      ${item('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`)}
+      ${item('Situação do plano', plano.situacao || 'vigente')}
+      ${item('Elaborado em', fmtData(plano.data_elaboracao))}
+      ${item('Revisão prevista', fmtData(plano.data_revisao_prevista))}
+      ${item('Profissional responsável', plano.profissional_nome)}
+    </div>
+    ${bloco('Demandas identificadas', plano.demandas_identificadas)}
+    ${bloco('Objetivo geral do acompanhamento', plano.objetivo_geral)}
+    <div style="font-size:10px;font-weight:800;color:#3F3A82;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em;page-break-after:avoid">Metas e estratégias por área</div>
+    <table>
+      <thead><tr><th>Área</th><th>Objetivo específico</th><th>Estratégias</th><th>Prazo</th><th>Situação</th></tr></thead>
+      <tbody>${linhasMetas}</tbody>
+    </table>
+    <div style="height:8px"></div>
+    ${bloco('Frequência prevista de atendimentos', plano.frequencia_prevista)}
+    ${bloco('Participação da família', plano.participacao_familia)}
+    ${bloco('Encaminhamentos à rede (SUS, SUAS, Educação)', plano.encaminhamentos_rede)}
+    ${plano.resultado_revisao ? bloco('Resultado da revisão / avaliação participativa', plano.resultado_revisao) : ''}
+    ${plano.observacoes ? bloco('Observações', plano.observacoes) : ''}
+    ${htmlAssinaturas(['Profissional responsável', 'Responsável / família', 'Coordenação'])}
+    ${htmlRodapeTeacolher({ protocolo })}
+  </div>`
+  abrirImpressao(html, `PIA TEAcolher - ${usuario.nome || ''}`, false)
+}
+
+// Folha de Frequência individual TEAcolher — lista os atendimentos do usuário
+// no período com comparecimento e calcula a assiduidade. Sessões futuras
+// (agendadas) ficam fora da conta de assiduidade.
+export function gerarPDFFrequenciaTeacolher(usuario = {}, lista = [], periodoLabel, opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-FREQ-${usuario.id || ''}`
+  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const normal = v => String(v || '').toLowerCase().trim()
+  const nomeProf = a => a.profissional?.nome || a.equipe?.nome || a.profissional_nome || '—'
+
+  const itens = (Array.isArray(lista) ? lista : []).slice().sort((a,b) => (a.data_atend || '') > (b.data_atend || '') ? 1 : -1)
+  const agendados = itens.filter(a => ['agendado','reagendado'].includes(normal(a.situacao)))
+  const cancelados = itens.filter(a => normal(a.situacao) === 'cancelado')
+  const compareceu = itens.filter(a => normal(a.comparecimento) === 'compareceu' || (normal(a.situacao) === 'realizado' && !a.comparecimento))
+  const faltas = itens.filter(a => ['faltou','falta justificada'].includes(normal(a.comparecimento)))
+  const baseAssiduidade = compareceu.length + faltas.length
+  const assiduidade = baseAssiduidade > 0 ? Math.round(compareceu.length / baseAssiduidade * 100) : null
+
+  const statusDe = a => {
+    const c = normal(a.comparecimento)
+    if (c === 'compareceu') return ['✓ Compareceu', '#3B6D11']
+    if (c === 'faltou') return ['✗ Faltou', '#A32D2D']
+    if (c === 'falta justificada') return ['✗ Falta justificada', '#854F0B']
+    const s = normal(a.situacao)
+    if (s === 'realizado') return ['✓ Compareceu', '#3B6D11']
+    if (s === 'cancelado') return ['Cancelado', '#888780']
+    if (['agendado','reagendado'].includes(s)) return ['Agendado', '#185FA5']
+    return [a.situacao || '—', '#888780']
+  }
+
+  const linhas = itens.map(a => {
+    const [rotulo, cor] = statusDe(a)
+    return `<tr>
+      <td style="white-space:nowrap">${fmtData(a.data_atend)}</td>
+      <td style="white-space:nowrap">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
+      <td>${esc(a.area_atendimento || 'Interdisciplinar')}</td>
+      <td>${esc(nomeProf(a))}</td>
+      <td style="font-weight:700;color:${cor};white-space:nowrap">${rotulo}</td>
+    </tr>`
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:#9199A2;padding:12px">Nenhum atendimento no período</td></tr>'
+
+  const html = `<div class="pg">
+    ${htmlCabecalhoTeacolher({ titulo:'Folha de Frequência — Projeto TEAcolher', sub:`${esc(usuario.nome || 'Usuário/família')} · ${esc(periodoLabel || 'Período selecionado')}`, ref:protocolo })}
+    <div class="resumo-grid" style="margin-bottom:14px">
+      <div class="resumo-item"><div class="resumo-label">Sessões no período</div><div class="resumo-valor azul">${itens.length}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Compareceu</div><div class="resumo-valor verde">${compareceu.length}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Faltas</div><div class="resumo-valor vermelho">${faltas.length}</div></div>
+      <div class="resumo-item"><div class="resumo-label">Assiduidade</div><div class="resumo-valor">${assiduidade === null ? '—' : assiduidade + '%'}</div></div>
+    </div>
+    ${agendados.length || cancelados.length ? `<div style="font-size:8.5px;color:#9199A2;margin-bottom:8px">A assiduidade considera apenas sessões realizadas ou com falta registrada${agendados.length ? ` · ${agendados.length} agendada(s)` : ''}${cancelados.length ? ` · ${cancelados.length} cancelada(s)` : ''}.</div>` : ''}
+    <table>
+      <thead><tr><th>Data</th><th>Hora</th><th>Área</th><th>Profissional</th><th>Frequência</th></tr></thead>
+      <tbody>${linhas}</tbody>
+    </table>
+    ${htmlAssinaturas(['Profissional responsável', 'Responsável / família'])}
+    ${htmlRodapeTeacolher({ protocolo })}
+  </div>`
+  abrirImpressao(html, `Frequência TEAcolher - ${usuario.nome || ''}`, false)
+}

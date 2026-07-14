@@ -4,6 +4,7 @@ import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { gerarPDFListaUsuariosComProfissionais, gerarPDFAnexoOficialTeacolher, gerarPDFTermoAutorizacaoImagem } from '../lib/pdf'
+import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -84,6 +85,7 @@ export default function UsuariosAtendidos() {
   const [abaAtiva, setAbaAtiva] = useState('lista')
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [imprimindoLista, setImprimindoLista] = useState(false)
+  const [prontuarioDe, setProntuarioDe] = useState(null)
 
   useEffect(() => {
     supabase.from('projetos').select('id,nome').eq('aceita_atendimentos', true).order('nome').then(({ data }) => setProjetos(data || []))
@@ -660,6 +662,7 @@ export default function UsuariosAtendidos() {
                                   <button onClick={() => editar(u)} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>
                                 )}
                                 {podeImprimirAnexo && usuarioEhTeacolher(u) && (<>
+                                  <button onClick={() => setProntuarioDe(u)} style={s.btn('#06344F')}>Prontuário</button>
                                   <button onClick={() => gerarPDFAnexoOficialTeacolher(u)} style={s.btn('#0E7EA8')}>Imprimir Anexo I</button>
                                   <button onClick={() => gerarPDFTermoAutorizacaoImagem(u)} style={s.btn('#6B5FA8')}>Termo de Imagem</button>
                                 </>)}
@@ -897,6 +900,14 @@ export default function UsuariosAtendidos() {
               )
             })()}
           </div>
+        )}
+
+        {prontuarioDe && (
+          <ProntuarioUsuario
+            usuario={prontuarioDe}
+            onClose={() => setProntuarioDe(null)}
+            podeEditar={perfilAtual === 'admin'}
+          />
         )}
 
         {confirmandoExcluir && (
