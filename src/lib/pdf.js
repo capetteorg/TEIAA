@@ -3,6 +3,8 @@
 // Usa window.print() com CSS otimizado
 // =============================================
 
+import { SECOES_ANAMNESE } from './anamneseSchema'
+
 const TEIAA_INFO = {
   nome: 'Associação TEIAA - Troca de Experiências e Integração entre Amigos de Autistas',
   cnpj: '27.837.768/0001-70',
@@ -3326,51 +3328,156 @@ function idadeDe(dataNasc) {
   return idade
 }
 
-// Ficha de Anamnese TEAcolher — histórico de desenvolvimento, saúde, escola,
-// rotina e contexto sociofamiliar do usuário, no padrão timbrado do projeto.
+// Ficha de Anamnese TEAcolher — monta a ficha a partir do schema compartilhado
+// (anamneseSchema.js), o mesmo que desenha o formulário na tela.
+//
+// Vale para os dois usos: com a anamnese preenchida vira o registro do prontuário;
+// vazia (sem dados) vira o modelo em branco para imprimir e preencher à mão — por
+// isso as opções de seleção sempre saem como caixas ☐/☒ e os campos de texto sem
+// valor viram linha pontilhada, como nas fichas de papel.
 export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}) {
   const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-ANAMNESE-${usuario.id || ''}`
-  const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
-  const fmtData = d => d ? new Date(String(d).includes('T') ? d : d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const esc = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
+  const fmtData = d => d ? new Date(String(d).includes('T') ? d : d+'T12:00:00').toLocaleDateString('pt-BR') : ''
   const idade = idadeDe(usuario.data_nascimento)
-  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value || '—')}</div></div>`
-  const secao = titulo => `<div style="background:#E3E0EE;border:1px solid #B9B4D6;border-radius:5px;padding:5px 10px;font-weight:800;font-size:10.5px;color:#3F3A82;margin:14px 0 8px;page-break-after:avoid">${titulo}</div>`
-  const bloco = (label, value) => `<div style="border:1px solid var(--line);border-radius:5px;padding:8px 12px;margin-bottom:6px;page-break-inside:avoid"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:4px;font-weight:700">${label}</div><div style="font-size:10.5px;line-height:1.55;color:#20252C;white-space:pre-wrap">${esc(value || '—')}</div></div>`
+  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value) || '&nbsp;'}</div></div>`
+  const cx = marcado => marcado ? '☒' : '☐'
+  const rotulo = t => `<div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.09em;color:#6B7280;font-weight:700;margin-bottom:3px">${t}</div>`
+  const linhaVazia = alturaMm => `<div style="border-bottom:1px dotted #B9B4D6;height:${alturaMm}mm"></div>`
+  const caixa = interno => `<div style="border:1px solid var(--line);border-radius:5px;padding:6px 9px;margin-bottom:5px;page-break-inside:avoid;background:#FFFEFA">${interno}</div>`
 
-  const html = `<div class="pg">
-    ${htmlCabecalhoTeacolher({ titulo:'Ficha de Anamnese — Projeto TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })}
+  function campoHtml(c) {
+    const v = anamnese?.[c.k]
+    if (c.tipo === 'checks') {
+      const sel = Array.isArray(v) ? v : []
+      const itens = c.opcoes.map(o => `<div style="font-size:8.5px;line-height:1.6;color:#20252C">${cx(sel.includes(o))} ${esc(o)}</div>`).join('')
+      return caixa(rotulo(c.label) + `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">${itens}</div>`)
+    }
+    if (c.tipo === 'select') {
+      const itens = c.opcoes.map(o => `<span style="margin-right:13px;white-space:nowrap;font-size:8.5px;line-height:1.7;color:#20252C;display:inline-block">${cx(String(v || '') === o)} ${esc(o)}</span>`).join('')
+      return caixa(rotulo(c.label) + `<div>${itens}</div>`)
+    }
+    if (c.tipo === 'textarea') {
+      const texto = v ? `<div style="font-size:10px;line-height:1.5;color:#20252C;white-space:pre-wrap">${esc(v)}</div>` : (linhaVazia(6) + linhaVazia(6) + ((c.rows || 2) >= 3 ? linhaVazia(6) : ''))
+      return caixa(rotulo(c.label) + texto)
+    }
+    const texto = c.tipo === 'date' ? fmtData(v) : (v || '')
+    const valor = texto
+      ? `<div style="font-size:10px;font-weight:700;color:#20252C">${esc(texto)}</div>`
+      : linhaVazia(5)
+    return caixa(rotulo(c.label) + valor)
+  }
+
+  // Campos curtos entram numa grade de 3 colunas; select, checks e textarea
+  // ocupam a linha inteira.
+  const EH_CURTO = c => ['text', 'idade', 'date'].includes(c.tipo)
+  const tituloHtml = t => `<div style="background:#E3E0EE;border:1px solid #B9B4D6;border-radius:5px;padding:4px 10px;font-weight:800;font-size:10px;color:#3F3A82;margin:0 0 6px;page-break-after:avoid">${t}</div>`
+
+  // Altura estimada (mm) de cada bloco. O .pg do sistema é uma página fixa: sem
+  // quebrar na mão, o conteúdo passaria por cima da margem nas páginas do meio
+  // (mesmo problema já corrigido nos outros relatórios do sistema).
+  function pesoCampo(c) {
+    if (c.tipo === 'checks') return 10 + Math.ceil(c.opcoes.length / 2) * 4.2
+    if (c.tipo === 'select') {
+      const linhas = Math.max(1, Math.ceil(c.opcoes.join('').length / 62))
+      return 10 + linhas * 5.5
+    }
+    if (c.tipo === 'textarea') {
+      if (anamnese?.[c.k]) return 12 + Math.ceil(String(anamnese[c.k]).length / 110) * 5
+      return 10 + ((c.rows || 2) >= 3 ? 19 : 13)
+    }
+    return 13
+  }
+
+  // Cada seção vira uma fila de blocos já prontos, para as páginas serem
+  // preenchidas campo a campo — uma seção grande continua na página seguinte
+  // em vez de deixar meia página em branco.
+  const grupos = SECOES_ANAMNESE.map(sec => {
+    const blocos = []
+    let buffer = []
+    const flush = () => {
+      if (!buffer.length) return
+      blocos.push({
+        html: `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 5px">${buffer.map(campoHtml).join('')}</div>`,
+        peso: 13,
+      })
+      buffer = []
+    }
+    for (const c of sec.campos) {
+      if (EH_CURTO(c)) { buffer.push(c); if (buffer.length === 3) flush() }
+      else { flush(); blocos.push({ html: campoHtml(c), peso: pesoCampo(c) }) }
+    }
+    flush()
+    return { titulo: sec.titulo, blocos }
+  })
+
+  // Espaço útil por página, em mm, já descontados cabeçalho e rodapé. Os valores
+  // foram calibrados medindo as páginas geradas: sobram ~15mm de folga sobre a
+  // margem inferior, o bastante para a imprecisão da estimativa dos blocos.
+  const ALTURA_P1 = 190   // 1ª página: cabeçalho grande + grade de identificação
+  const ALTURA_PN = 232   // demais páginas: cabeçalho e rodapé compactos
+  const PESO_TITULO = 9
+  const PESO_FECHO = 68   // assinaturas + rodapé com apoiadores
+
+  const paginas = []
+  let atual = []
+  let peso = 0
+  const limite = () => (paginas.length === 0 ? ALTURA_P1 : ALTURA_PN)
+  const fecharPagina = () => { paginas.push(atual); atual = []; peso = 0 }
+
+  for (const grupo of grupos) {
+    let tituloNaPagina = false
+    let jaComecou = false
+    for (const bloco of grupo.blocos) {
+      const custoTitulo = tituloNaPagina ? 0 : PESO_TITULO
+      if (atual.length && peso + custoTitulo + bloco.peso > limite()) {
+        fecharPagina()
+        tituloNaPagina = false
+      }
+      if (!tituloNaPagina) {
+        atual.push(tituloHtml(grupo.titulo + (jaComecou ? ' <span style="font-weight:400;font-size:8.5px">(continuação)</span>' : '')))
+        peso += PESO_TITULO
+        tituloNaPagina = true
+        jaComecou = true
+      }
+      atual.push(bloco.html)
+      peso += bloco.peso
+    }
+  }
+  // As assinaturas e o rodapé institucional não podem espremer a última página:
+  // se não couberem no que sobrou, ganham uma página só para eles.
+  if (atual.length) {
+    const cabeOFecho = peso + PESO_FECHO <= limite()
+    fecharPagina()
+    if (!cabeOFecho) paginas.push([])
+  } else {
+    paginas.push([])
+  }
+
+  const identificacao = `
     <div class="info-grid-3">
       ${item('Usuário(a)', usuario.nome)}
       ${item('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`)}
-      ${item('Data da entrevista', fmtData(anamnese.data_entrevista))}
-      ${item('Entrevistado(a)', anamnese.entrevistado_nome)}
-      ${item('Parentesco / vínculo', anamnese.entrevistado_parentesco)}
-      ${item('Profissional responsável', anamnese.profissional_nome)}
-    </div>
-    ${secao('1. Queixa principal / motivo da procura')}
-    ${bloco('Queixa principal', anamnese.queixa_principal)}
-    ${secao('2. Histórico de desenvolvimento e saúde')}
-    ${bloco('Gestação e parto', anamnese.historico_gestacao_parto)}
-    ${bloco('Desenvolvimento inicial (marcos: sentar, andar, falar)', anamnese.desenvolvimento_inicial)}
-    ${bloco('Histórico de saúde (doenças, internações, cirurgias)', anamnese.historico_saude)}
-    ${bloco('Medicações em uso', anamnese.medicacoes_em_uso)}
-    ${bloco('Alergias e restrições', anamnese.alergias_restricoes)}
-    ${bloco('Acompanhamentos externos (saúde/terapias fora do projeto)', anamnese.acompanhamentos_externos)}
-    ${secao('3. Vida escolar')}
-    ${bloco('Escola atual', [anamnese.escola_atual, anamnese.escola_serie_turno].filter(Boolean).join(' · '))}
-    ${bloco('Histórico escolar (adaptações, mediador, dificuldades)', anamnese.historico_escolar)}
-    ${secao('4. Rotina e comunicação')}
-    ${bloco('Rotina diária', anamnese.rotina_diaria)}
-    ${bloco('Alimentação e sono', anamnese.alimentacao_sono)}
-    ${bloco('Comunicação e interação (como se comunica, interesses)', anamnese.comunicacao_interacao)}
-    ${secao('5. Contexto sociofamiliar')}
-    ${bloco('Composição e dinâmica familiar', anamnese.contexto_sociofamiliar)}
-    ${bloco('Benefícios sociais (BPC, Bolsa Família etc.)', anamnese.beneficios_sociais)}
-    ${bloco('Rede de apoio', anamnese.rede_apoio)}
-    ${anamnese.observacoes ? secao('6. Observações complementares') + bloco('Observações', anamnese.observacoes) : ''}
-    ${htmlAssinaturas(['Profissional responsável', 'Responsável / família'])}
-    ${htmlRodapeTeacolher({ protocolo })}
-  </div>`
+      ${item('Data da entrevista', fmtData(anamnese?.data_entrevista))}
+      ${item('Entrevistado(a)', anamnese?.entrevistado_nome)}
+      ${item('Parentesco / vínculo', anamnese?.entrevistado_parentesco)}
+      ${item('Profissional responsável', anamnese?.profissional_nome)}
+    </div>`
+
+  const html = paginas.map((secoes, i) => {
+    const primeira = i === 0
+    const ultima = i === paginas.length - 1
+    const cabecalho = primeira
+      ? htmlCabecalhoTeacolher({ titulo:'Ficha de Anamnese — Projeto TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })
+      : htmlCabecalhoTeacolherCompacto({ titulo:'Ficha de Anamnese — Projeto TEAcolher', sub:esc(usuario.nome) || 'Projeto TEAcolher', ref:`${protocolo} · pág. ${i + 1}/${paginas.length}` })
+    return `<div class="pg"${primeira ? '' : ' style="page-break-before:always"'}>
+      ${cabecalho}
+      ${primeira ? identificacao : ''}
+      ${secoes.join('')}
+      ${ultima ? htmlAssinaturas(['Profissional responsável', 'Responsável / família']) + htmlRodapeTeacolher({ protocolo }) : htmlRodapeTeacolherCompacto({ protocolo })}
+    </div>`
+  }).join('')
+
   abrirImpressao(html, `Anamnese TEAcolher - ${usuario.nome || ''}`, false)
 }
 

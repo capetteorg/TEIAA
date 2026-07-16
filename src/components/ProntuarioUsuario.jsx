@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { gerarPDFAnamneseTeacolher, gerarPDFPiaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
+import { SECOES_ANAMNESE, CAMPOS_ANAMNESE, CAMPOS_LISTA } from '../lib/anamneseSchema'
 
 const AZUL = '#0E7EA8', ESCURO = '#06344F', ROXO = '#6B5FA8'
 
@@ -12,47 +13,17 @@ const AREAS_PIA = [
 
 const SITUACOES_META = ['Em andamento', 'Atingida', 'Parcialmente atingida', 'Não atingida']
 
-// Seções da anamnese — mesma fonte para o formulário e para a visualização,
-// espelhando a ordem da ficha impressa.
-const SECOES_ANAMNESE = [
-  { titulo: '1. Queixa principal', campos: [
-    ['queixa_principal', 'Queixa principal / motivo da procura'],
-  ]},
-  { titulo: '2. Histórico de desenvolvimento e saúde', campos: [
-    ['historico_gestacao_parto', 'Gestação e parto'],
-    ['desenvolvimento_inicial', 'Desenvolvimento inicial (marcos: sentar, andar, falar)'],
-    ['historico_saude', 'Histórico de saúde (doenças, internações, cirurgias)'],
-    ['medicacoes_em_uso', 'Medicações em uso'],
-    ['alergias_restricoes', 'Alergias e restrições'],
-    ['acompanhamentos_externos', 'Acompanhamentos externos (saúde/terapias fora do projeto)'],
-  ]},
-  { titulo: '3. Vida escolar', campos: [
-    ['escola_atual', 'Escola atual'],
-    ['escola_serie_turno', 'Série / turma / turno'],
-    ['historico_escolar', 'Histórico escolar (adaptações, mediador, dificuldades)'],
-  ]},
-  { titulo: '4. Rotina e comunicação', campos: [
-    ['rotina_diaria', 'Rotina diária'],
-    ['alimentacao_sono', 'Alimentação e sono'],
-    ['comunicacao_interacao', 'Comunicação e interação (como se comunica, interesses)'],
-  ]},
-  { titulo: '5. Contexto sociofamiliar', campos: [
-    ['contexto_sociofamiliar', 'Composição e dinâmica familiar'],
-    ['beneficios_sociais', 'Benefícios sociais (BPC, Bolsa Família etc.)'],
-    ['rede_apoio', 'Rede de apoio'],
-  ]},
-  { titulo: '6. Observações complementares', campos: [
-    ['observacoes', 'Observações'],
-  ]},
-]
-
-const CAMPOS_TEXTO_ANAMNESE = SECOES_ANAMNESE.flatMap(s => s.campos.map(c => c[0]))
+// As seções da anamnese vêm do schema compartilhado (src/lib/anamneseSchema.js),
+// que também alimenta a ficha impressa — tela e papel nunca saem de sincronia.
 
 const ANAMNESE_VAZIA = {
   data_entrevista: new Date().toISOString().slice(0, 10),
   entrevistado_nome: '', entrevistado_parentesco: '', profissional_id: '',
-  ...Object.fromEntries(CAMPOS_TEXTO_ANAMNESE.map(c => [c, ''])),
+  ...Object.fromEntries(CAMPOS_ANAMNESE.map(c => [c.k, c.tipo === 'checks' ? [] : ''])),
 }
+
+// Campos curtos ficam lado a lado numa grade; textarea e checkboxes ocupam a linha toda.
+const TIPOS_COMPACTOS = ['text', 'idade', 'date', 'select']
 
 const META_VAZIA = { area: 'Interdisciplinar', objetivo: '', estrategias: '', prazo: '', situacao: 'Em andamento' }
 
@@ -139,9 +110,16 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
 
   // ---------- ANAMNESE ----------
   function abrirEdicaoAnamnese() {
-    setFormA(anamnese
-      ? { ...ANAMNESE_VAZIA, ...Object.fromEntries(Object.keys(ANAMNESE_VAZIA).map(k => [k, anamnese[k] ?? ''])) }
-      : { ...ANAMNESE_VAZIA, profissional_id: profissionalPadrao?.id || '' })
+    const base = { ...ANAMNESE_VAZIA, profissional_id: profissionalPadrao?.id || '' }
+    if (!anamnese) { setFormA(base); setEditandoA(true); return }
+    const preenchido = { ...base }
+    for (const k of Object.keys(base)) {
+      const v = anamnese[k]
+      if (v !== null && v !== undefined) preenchido[k] = v
+    }
+    // Colunas jsonb podem voltar null quando a anamnese foi criada antes da fase 2
+    for (const k of CAMPOS_LISTA) preenchido[k] = Array.isArray(anamnese[k]) ? anamnese[k] : []
+    setFormA(preenchido)
     setEditandoA(true)
   }
 
@@ -153,7 +131,10 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
       entrevistado_nome: formA.entrevistado_nome || null,
       entrevistado_parentesco: formA.entrevistado_parentesco || null,
       profissional_id: formA.profissional_id || null,
-      ...Object.fromEntries(CAMPOS_TEXTO_ANAMNESE.map(c => [c, formA[c] || null])),
+      ...Object.fromEntries(CAMPOS_ANAMNESE.map(c => [
+        c.k,
+        c.tipo === 'checks' ? (Array.isArray(formA[c.k]) ? formA[c.k] : []) : (formA[c.k] || null),
+      ])),
     }
     const { error } = anamnese
       ? await supabase.from('anamneses').update(dados).eq('id', anamnese.id)
@@ -281,6 +262,71 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
     </div>
   )
 
+  // Valor de um campo da anamnese já formatado para leitura (arrays viram lista,
+  // datas viram dd/mm/aaaa).
+  function valorAnamnese(c, dados) {
+    const v = dados?.[c.k]
+    if (c.tipo === 'checks') return Array.isArray(v) && v.length ? v.join(' · ') : ''
+    if (c.tipo === 'date') return v ? fmtData(v) : ''
+    return v || ''
+  }
+
+  // Junta campos curtos numa grade e deixa textarea/checkboxes ocupando a linha toda.
+  function agruparCampos(campos, render) {
+    const saida = []
+    let buffer = []
+    const flush = () => {
+      if (!buffer.length) return
+      saida.push(
+        <div key={'g' + saida.length} style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(190px, 1fr))', gap:8, marginBottom:8 }}>
+          {buffer.map(c => <div key={c.k}>{render(c)}</div>)}
+        </div>
+      )
+      buffer = []
+    }
+    for (const c of campos) {
+      if (TIPOS_COMPACTOS.includes(c.tipo)) buffer.push(c)
+      else { flush(); saida.push(<div key={c.k} style={{ marginBottom:8 }}>{render(c)}</div>) }
+    }
+    flush()
+    return saida
+  }
+
+  function campoEditavel(c) {
+    const valor = formA[c.k]
+    const set = v => setFormA(f => ({ ...f, [c.k]: v }))
+    if (c.tipo === 'textarea') {
+      return <textarea rows={c.rows || 2} value={valor || ''} onChange={e => set(e.target.value)} style={s.textarea} placeholder={c.ph} />
+    }
+    if (c.tipo === 'select') {
+      return (
+        <select value={valor || ''} onChange={e => set(e.target.value)} style={s.input}>
+          <option value="">—</option>
+          {c.opcoes.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      )
+    }
+    if (c.tipo === 'checks') {
+      const marcados = Array.isArray(valor) ? valor : []
+      return (
+        <div style={{ border:'0.5px solid #D3D1C7', borderRadius:8, padding:'7px 10px', background:'#fff', display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(215px, 1fr))', gap:'1px 10px' }}>
+          {c.opcoes.map(o => (
+            <label key={o} style={{ display:'flex', alignItems:'center', gap:6, padding:'3px 0', fontSize:11.5, cursor:'pointer', userSelect:'none', color:'#2C2C2A' }}>
+              <input type="checkbox" checked={marcados.includes(o)} style={{ accentColor:AZUL, flexShrink:0 }}
+                onChange={() => set(marcados.includes(o) ? marcados.filter(v => v !== o) : [...marcados, o])} />
+              {o}
+            </label>
+          ))}
+        </div>
+      )
+    }
+    if (c.tipo === 'date') {
+      return <input type="date" value={valor || ''} onChange={e => set(e.target.value)} style={s.input} />
+    }
+    return <input value={valor || ''} onChange={e => set(e.target.value)} style={s.input}
+      placeholder={c.ph || (c.tipo === 'idade' ? 'Ex.: 14 meses' : undefined)} />
+  }
+
   const selectProfissional = (valor, onChange) => (
     <select value={valor || ''} onChange={e => onChange(e.target.value)} style={s.input}>
       <option value="">Selecione o profissional...</option>
@@ -347,13 +393,29 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                       <button onClick={imprimirAnamnese} style={s.btn(ROXO)}>🖨 Imprimir anamnese</button>
                     </div>
                   </div>
+                  {/* Visualização mostra só o que foi preenchido — a leitura fica limpa.
+                      Para ver (e completar) todos os campos, é só entrar em Editar. */}
                   {SECOES_ANAMNESE.map(sec => {
-                    const preenchidos = sec.campos.filter(([k]) => anamnese[k])
-                    if (preenchidos.length === 0 && sec.titulo.startsWith('6')) return null
+                    const preenchidos = sec.campos.filter(c => valorAnamnese(c, anamnese))
+                    const faltam = sec.campos.length - preenchidos.length
                     return (
                       <div key={sec.titulo}>
                         <div style={s.secao}>{sec.titulo}</div>
-                        {sec.campos.map(([k, label]) => blocoVer(label, anamnese[k]))}
+                        {preenchidos.length === 0 ? (
+                          <div style={{ fontSize:11.5, color:'#B4B2A9', marginBottom:8 }}>Não preenchida.</div>
+                        ) : (<>
+                          {agruparCampos(preenchidos, c => (
+                            <div style={{ ...s.bloco, marginBottom:0, height:'100%' }}>
+                              <div style={s.blocoLabel}>{c.label}</div>
+                              <div style={s.blocoValor}>{valorAnamnese(c, anamnese)}</div>
+                            </div>
+                          ))}
+                          {faltam > 0 && (
+                            <div style={{ fontSize:10.5, color:'#C8C6BC', marginBottom:8 }}>
+                              {faltam} campo(s) desta seção ainda sem preenchimento.
+                            </div>
+                          )}
+                        </>)}
                       </div>
                     )
                   })}
@@ -384,14 +446,10 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                 {SECOES_ANAMNESE.map(sec => (
                   <div key={sec.titulo}>
                     <div style={s.secao}>{sec.titulo}</div>
-                    {sec.campos.map(([k, label]) => (
-                      <div key={k} style={{ marginBottom:8 }}>
-                        <label style={s.label}>{label}</label>
-                        {k === 'escola_atual' || k === 'escola_serie_turno'
-                          ? <input value={formA[k]} onChange={e => setFormA(f => ({ ...f, [k]: e.target.value }))} style={s.input} />
-                          : <textarea rows={k === 'queixa_principal' ? 3 : 2} value={formA[k]} onChange={e => setFormA(f => ({ ...f, [k]: e.target.value }))} style={s.textarea} />}
-                      </div>
-                    ))}
+                    {agruparCampos(sec.campos, c => (<>
+                      <label style={s.label}>{c.label}</label>
+                      {campoEditavel(c)}
+                    </>))}
                   </div>
                 ))}
                 <div style={{ display:'flex', gap:8, marginTop:12, position:'sticky', bottom:0, background:'#FDFDFB', padding:'10px 0' }}>
