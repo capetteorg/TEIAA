@@ -311,7 +311,7 @@ export default function PainelTecnico() {
           usuario={prontuarioDe}
           onClose={() => setProntuarioDe(null)}
           podeEditar
-          profissionalPadrao={prof.id ? { id: prof.id, nome: prof.nome } : null}
+          profissionalPadrao={prof.id ? { id: prof.id, nome: prof.nome, funcao: prof.funcao } : null}
         />
       )}
     </div>

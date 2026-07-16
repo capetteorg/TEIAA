@@ -4,6 +4,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
 import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
+import { areaPelaFuncao } from '../lib/areas'
 
 const VERDE = '#6BBF2B'
 const VERMELHO = '#E8212A'
@@ -53,27 +54,7 @@ const AREAS_TEACOLHER = [
   'Outro',
 ]
 
-// Liga a função/cargo do profissional (cadastro da equipe) à área de atendimento do TEAcolher,
-// pra área não ficar solta e desencontrada do profissional escolhido no agendamento.
-function areaPelaFuncao(funcao = '') {
-  const f = String(funcao || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  const mapa = [
-    [['psicolog'], 'Psicologia'],
-    [['fisioterap'], 'Fisioterapia'],
-    [['nutri'], 'Nutrição'],
-    [['psicomotric'], 'Psicomotricidade'],
-    [['neuropsicopedagog', 'psicopedagog'], 'Neuropsicopedagogia'],
-    [['fonoaudiolog', 'fono'], 'Fonoaudiologia'],
-    [['ocupacional'], 'Terapia ocupacional'],
-    [['assistente social', 'servico social'], 'Serviço social'],
-    [['socioeducad', 'socioeducativ'], 'Socioeducativo'],
-    [['orientador familiar', 'orientacao familiar'], 'Orientação familiar'],
-  ]
-  for (const [chaves, area] of mapa) {
-    if (chaves.some(c => f.includes(c))) return area
-  }
-  return null
-}
+// areaPelaFuncao vive em src/lib/areas.js — compartilhada com o prontuário.
 
 const MODALIDADES_TEACOLHER = [
   'Individual',

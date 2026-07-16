@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { gerarPDFAnamneseTeacolher, gerarPDFPiaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
 import { SECOES_ANAMNESE, CAMPOS_ANAMNESE, CAMPOS_LISTA } from '../lib/anamneseSchema'
+import { areaPelaFuncao } from '../lib/areas'
 
 const AZUL = '#0E7EA8', ESCURO = '#06344F', ROXO = '#6B5FA8'
 
@@ -58,6 +59,8 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   const [editandoA, setEditandoA] = useState(false)
   const [formA, setFormA] = useState(ANAMNESE_VAZIA)
   const [salvandoA, setSalvandoA] = useState(false)
+  // null = todas as seções abertas (admin/sem área); Set = só as do conjunto
+  const [secoesAbertas, setSecoesAbertas] = useState(null)
 
   const [planos, setPlanos] = useState([])
   const [planoSelId, setPlanoSelId] = useState(null)
@@ -108,8 +111,22 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   }
   const planoSel = planos.find(p => p.id === planoSelId) || null
 
+  // Área da profissional logada (técnico): vem da função no cadastro da equipe.
+  // Admin/operacional não têm área — para eles a anamnese aparece inteira.
+  const funcaoProfissional = profissionalPadrao?.funcao
+    || equipe.find(e => String(e.id) === String(profissionalPadrao?.id))?.funcao
+  const minhaArea = areaPelaFuncao(funcaoProfissional)
+  const secaoDaMinhaArea = sec => Boolean(minhaArea && Array.isArray(sec.areas) && sec.areas.includes(minhaArea))
+  // Comuns (sem "areas") pertencem a toda a equipe: ficam abertas para qualquer área
+  const secaoAbreParaMim = sec => !Array.isArray(sec.areas) || secaoDaMinhaArea(sec)
+
   // ---------- ANAMNESE ----------
   function abrirEdicaoAnamnese() {
+    // Guia por área: as seções da área da profissional (e as comuns) abrem;
+    // as das outras áreas começam recolhidas, mas continuam editáveis.
+    setSecoesAbertas(minhaArea
+      ? new Set(SECOES_ANAMNESE.filter(secaoAbreParaMim).map(sec => sec.titulo))
+      : null)
     const base = { ...ANAMNESE_VAZIA, profissional_id: profissionalPadrao?.id || '' }
     if (!anamnese) { setFormA(base); setEditandoA(true); return }
     const preenchido = { ...base }
@@ -400,7 +417,14 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                     const faltam = sec.campos.length - preenchidos.length
                     return (
                       <div key={sec.titulo}>
-                        <div style={s.secao}>{sec.titulo}</div>
+                        <div style={s.secao}>
+                          {sec.titulo}
+                          {secaoDaMinhaArea(sec) && (
+                            <span style={{ marginLeft:8, fontSize:9, fontWeight:700, color:'#0E7EA8', background:'rgba(14,126,168,0.1)', border:'0.5px solid rgba(14,126,168,0.3)', borderRadius:99, padding:'1px 8px', verticalAlign:'middle' }}>
+                              sua área
+                            </span>
+                          )}
+                        </div>
                         {preenchidos.length === 0 ? (
                           <div style={{ fontSize:11.5, color:'#B4B2A9', marginBottom:8 }}>Não preenchida.</div>
                         ) : (<>
@@ -443,15 +467,49 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                     {selectProfissional(formA.profissional_id, v => setFormA(f => ({ ...f, profissional_id: v })))}
                   </div>
                 </div>
-                {SECOES_ANAMNESE.map(sec => (
-                  <div key={sec.titulo}>
-                    <div style={s.secao}>{sec.titulo}</div>
-                    {agruparCampos(sec.campos, c => (<>
-                      <label style={s.label}>{c.label}</label>
-                      {campoEditavel(c)}
-                    </>))}
+                {minhaArea && (
+                  <div style={{ fontSize:11.5, color:'#0E7EA8', background:'rgba(14,126,168,0.07)', border:'0.5px solid rgba(14,126,168,0.25)', borderRadius:8, padding:'7px 11px', marginBottom:10 }}>
+                    As seções de <strong>{minhaArea}</strong> e as comuns da equipe vêm primeiro, já abertas.
+                    As demais áreas estão recolhidas — clique no título para abrir e preencher também.
                   </div>
-                ))}
+                )}
+                {(minhaArea
+                  ? [
+                      ...SECOES_ANAMNESE.filter(secaoDaMinhaArea),
+                      ...SECOES_ANAMNESE.filter(sec => !Array.isArray(sec.areas)),
+                      ...SECOES_ANAMNESE.filter(sec => Array.isArray(sec.areas) && !secaoDaMinhaArea(sec)),
+                    ]
+                  : SECOES_ANAMNESE
+                ).map(sec => {
+                  const aberta = !secoesAbertas || secoesAbertas.has(sec.titulo)
+                  const toggle = () => {
+                    if (!minhaArea) return
+                    setSecoesAbertas(prev => {
+                      const novo = new Set(prev || SECOES_ANAMNESE.map(x => x.titulo))
+                      novo.has(sec.titulo) ? novo.delete(sec.titulo) : novo.add(sec.titulo)
+                      return novo
+                    })
+                  }
+                  return (
+                    <div key={sec.titulo}>
+                      <div onClick={toggle} style={{ ...s.secao, cursor: minhaArea ? 'pointer' : 'default', display:'flex', justifyContent:'space-between', alignItems:'center', userSelect:'none' }}>
+                        <span>
+                          {sec.titulo}
+                          {secaoDaMinhaArea(sec) && (
+                            <span style={{ marginLeft:8, fontSize:9, fontWeight:700, color:'#0E7EA8', background:'rgba(14,126,168,0.1)', border:'0.5px solid rgba(14,126,168,0.3)', borderRadius:99, padding:'1px 8px', verticalAlign:'middle' }}>
+                              sua área
+                            </span>
+                          )}
+                        </span>
+                        {minhaArea && <span style={{ color:'#B4B2A9', fontSize:11 }}>{aberta ? '▾ recolher' : '▸ abrir'}</span>}
+                      </div>
+                      {aberta && agruparCampos(sec.campos, c => (<>
+                        <label style={s.label}>{c.label}</label>
+                        {campoEditavel(c)}
+                      </>))}
+                    </div>
+                  )
+                })}
                 <div style={{ display:'flex', gap:8, marginTop:12, position:'sticky', bottom:0, background:'#FDFDFB', padding:'10px 0' }}>
                   <button onClick={salvarAnamnese} disabled={salvandoA} style={s.btn(salvandoA ? '#D3D1C7' : AZUL)}>{salvandoA ? 'Salvando...' : 'Salvar anamnese'}</button>
                   <button onClick={() => setEditandoA(false)} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>

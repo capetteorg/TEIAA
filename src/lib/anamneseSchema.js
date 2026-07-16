@@ -54,6 +54,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '3. Marcos do desenvolvimento',
+    areas: ['Fisioterapia','Psicomotricidade','Neuropsicopedagogia','Fonoaudiologia','Terapia ocupacional'],
     campos: [
       { k: 'marco_rolou', label: 'Rolou', tipo: 'idade' },
       { k: 'marco_sentou', label: 'Sentou', tipo: 'idade' },
@@ -87,6 +88,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '5. Perfil sensorial e estereotipias',
+    areas: ['Terapia ocupacional','Psicomotricidade','Psicologia','Fonoaudiologia','Fisioterapia'],
     campos: [
       { k: 'sensibilidade_auditiva', label: 'Sensibilidade auditiva', tipo: 'select', opcoes: NIVEL_SENSORIAL },
       { k: 'sensibilidade_visual', label: 'Sensibilidade visual', tipo: 'select', opcoes: NIVEL_SENSORIAL },
@@ -106,6 +108,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '6. Comunicação e linguagem',
+    areas: ['Fonoaudiologia','Psicologia','Neuropsicopedagogia'],
     campos: [
       { k: 'forma_comunicacao', label: 'Como se comunica hoje', tipo: 'checks', opcoes: [
         'Verbal — frases completas', 'Verbal — palavras isoladas', 'Ecolalia', 'Gestos / apontar',
@@ -120,6 +123,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '7. Comportamento, interação e rotina',
+    areas: ['Psicologia','Terapia ocupacional','Socioeducativo','Orientação familiar'],
     campos: [
       { k: 'rotina_diaria', label: 'Descreva um dia da rotina (de quando acorda até dormir)', tipo: 'textarea', rows: 3 },
       { k: 'brincadeira_preferencia', label: 'Prefere brincar', tipo: 'select', opcoes: ['Sozinho', 'Em grupo', 'Indiferente', 'Não informado'] },
@@ -140,6 +144,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '8. Alimentação e sono',
+    areas: ['Nutrição','Fonoaudiologia','Terapia ocupacional'],
     campos: [
       { k: 'seletividade_alimentar', label: 'Seletividade alimentar', tipo: 'select', opcoes: ['Sim — intensa', 'Sim — moderada', 'Não', 'Não informado'] },
       { k: 'seletividade_detalhes', label: 'O que recusa / texturas, cores e temperaturas que evita ou prefere', tipo: 'textarea' },
@@ -159,6 +164,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '9. Vida escolar',
+    areas: ['Neuropsicopedagogia','Psicologia','Socioeducativo'],
     campos: [
       { k: 'escola_atual', label: 'Escola atual', tipo: 'text' },
       { k: 'escola_serie_turno', label: 'Série / turma / turno', tipo: 'text' },
@@ -171,6 +177,7 @@ export const SECOES_ANAMNESE = [
   },
   {
     titulo: '10. Contexto sociofamiliar e antecedentes',
+    areas: ['Serviço social','Orientação familiar'],
     campos: [
       { k: 'com_quem_mora', label: 'Com quem mora', tipo: 'text' },
       { k: 'contexto_sociofamiliar', label: 'Composição e dinâmica familiar', tipo: 'textarea' },
