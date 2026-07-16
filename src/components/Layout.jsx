@@ -8,21 +8,28 @@ const AG_GREEN = '#96C11F'
 const AG_RED   = '#E63214'
 
 function NavItem({ to, icon, label, visivel = true, onClick, badge, colapsado = false }) {
+  const location = useLocation()
   if (!visivel) return null
+  // Itens que apontam pra mesma página variando só o "?aba=" (ex.: Minha agenda
+  // e Meus usuários do técnico) precisam considerar a query — senão os dois
+  // acendem juntos no menu.
+  const [caminho, query] = to.split('?')
+  const ativo = location.pathname === caminho &&
+    (query ? location.search.includes(query) : !location.search.includes('aba='))
   return (
-    <NavLink to={to} onClick={onClick} className="nav-item" title={colapsado ? label : undefined} style={({ isActive }) => ({
+    <NavLink to={to} onClick={onClick} className="nav-item" title={colapsado ? label : undefined} style={{
       display: 'flex', alignItems: 'center', gap: 9,
       padding: colapsado ? '10px 0' : '9px 1.1rem',
       justifyContent: colapsado ? 'center' : 'flex-start',
       fontSize: 12.5,
-      color: isActive ? '#0E7EA8' : '#5F5E5A',
-      background: isActive ? 'rgba(14,126,168,0.08)' : 'transparent',
-      borderLeft: isActive ? `2px solid ${AG_BLUE}` : '2px solid transparent',
+      color: ativo ? '#0E7EA8' : '#5F5E5A',
+      background: ativo ? 'rgba(14,126,168,0.08)' : 'transparent',
+      borderLeft: ativo ? `2px solid ${AG_BLUE}` : '2px solid transparent',
       textDecoration: 'none',
       transition: 'background .15s ease, color .15s ease',
-      fontWeight: isActive ? 500 : 400,
+      fontWeight: ativo ? 500 : 400,
       position: 'relative',
-    })}>
+    }}>
       <i className={`ti ti-${icon}`} style={{ fontSize: colapsado ? 17 : 15, flexShrink: 0 }} />
       {!colapsado && <span style={{ flex: 1 }}>{label}</span>}
       {!colapsado && badge > 0 && (

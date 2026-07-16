@@ -32,8 +32,9 @@ export default function PainelTecnico() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    const abaParam = params.get('aba')
-    if (abaParam) setAba(abaParam)
+    // Sem ?aba= na URL volta pra agenda — senão "Minha agenda" não responde
+    // quando se está em "Meus usuários" (mesma página, só muda a query).
+    setAba(params.get('aba') || 'agenda')
   }, [location.search])
 
   useEffect(() => {

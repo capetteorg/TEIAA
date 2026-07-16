@@ -32,11 +32,12 @@ export default function PainelOperacional() {
   const [profImpressao, setProfImpressao] = useState('')
   const [imprimindo, setImprimindo] = useState(false)
 
-  // Lê ?aba= da URL pra o menu lateral poder abrir a aba certa diretamente
+  // Lê ?aba= da URL pra o menu lateral poder abrir a aba certa diretamente.
+  // Sem ?aba= volta pra aba inicial — senão o item sem query do menu não
+  // responde quando se está numa aba (mesma página, só muda a query).
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    const abaParam = params.get('aba')
-    if (abaParam) setAba(abaParam)
+    setAba(params.get('aba') || 'agenda')
   }, [location.search])
 
   useEffect(() => {
