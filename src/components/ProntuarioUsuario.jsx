@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { gerarPDFAnamneseTeacolher, gerarPDFPiaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
+import { gerarPDFAnamneseTeacolher, gerarPDFPiaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdfLazy'
 import { SECOES_ANAMNESE, CAMPOS_ANAMNESE, CAMPOS_LISTA } from '../lib/anamneseSchema'
 import { areaPelaFuncao, AREAS_EQUIPE } from '../lib/areas'
 
@@ -64,6 +64,8 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   // Rascunho local: nunca perder trabalho digitado (guardado neste navegador)
   const [rascunhoPendente, setRascunhoPendente] = useState(null)
   const [rascunhoInfo, setRascunhoInfo] = useState('')
+  const [rascunhoPendenteP, setRascunhoPendenteP] = useState(null)
+  const [rascunhoInfoP, setRascunhoInfoP] = useState('')
   // Recados da equipe (aba 💬)
   const [recados, setRecados] = useState([])
   const [recadosErro, setRecadosErro] = useState('')
@@ -229,7 +231,29 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   }
 
   // ---------- PIA ----------
+  // Mesmo esquema de rascunho da anamnese: o PIA em edição é guardado neste
+  // navegador a cada pausa na digitação — fechar no meio não perde nada.
+  const chaveRascunhoPia = `pia_rascunho_u${usuario.id}`
+  useEffect(() => {
+    if (!editandoP) return
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(chaveRascunhoPia, JSON.stringify({ quando: Date.now(), alvo: editandoP, form: formP }))
+        setRascunhoInfoP(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+      } catch { /* armazenamento cheio/bloqueado: segue sem rascunho */ }
+    }, 800)
+    return () => clearTimeout(t)
+  }, [formP, editandoP]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function abrirEdicaoPia(plano) {
+    // Oferece restaurar rascunho só se ele é do mesmo alvo (mesmo plano, ou um
+    // "novo" pra um novo) e mais novo que a última gravação
+    let rascunho = null
+    try { rascunho = JSON.parse(localStorage.getItem(chaveRascunhoPia) || 'null') } catch { /* rascunho corrompido: ignora */ }
+    const alvo = plano ? plano.id : 'novo'
+    const ultimaGravacao = plano?.updated_at ? new Date(plano.updated_at).getTime() : 0
+    setRascunhoPendenteP(rascunho?.form && rascunho.alvo === alvo && rascunho.quando > ultimaGravacao ? rascunho : null)
+    setRascunhoInfoP('')
     if (plano) {
       setFormP({
         ...PIA_VAZIO,
@@ -277,6 +301,9 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
       setPlanos(lp)
       setPlanoSelId(lp.find(p => p.situacao === 'vigente')?.id ?? lp[0]?.id ?? null)
       setEditandoP(null)
+      try { localStorage.removeItem(chaveRascunhoPia) } catch { /* sem acesso ao storage */ }
+      setRascunhoPendenteP(null)
+      setRascunhoInfoP('')
       setMsg('PIA salvo!')
       setTimeout(() => setMsg(m => m === 'PIA salvo!' ? '' : m), 3000)
     }
@@ -789,6 +816,19 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                 <div style={{ fontSize:13, fontWeight:800, color:ESCURO, marginBottom:10 }}>
                   {editandoP === 'novo' ? 'Novo Plano Individual de Atendimento' : 'Editar PIA'}
                 </div>
+                {rascunhoPendenteP && (
+                  <div style={{ fontSize:12, background:'#FAEEDA', border:'0.5px solid #E8C98A', color:'#854F0B', borderRadius:8, padding:'8px 12px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                    <span>📝 Existe um rascunho não salvo deste PIA de {new Date(rascunhoPendenteP.quando).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}.</span>
+                    <span style={{ display:'flex', gap:6 }}>
+                      <button onClick={() => {
+                        setFormP(f => ({ ...f, ...rascunhoPendenteP.form,
+                          metas: Array.isArray(rascunhoPendenteP.form.metas) && rascunhoPendenteP.form.metas.length ? rascunhoPendenteP.form.metas : f.metas }))
+                        setRascunhoPendenteP(null)
+                      }} style={s.btn('#854F0B')}>Continuar de onde parei</button>
+                      <button onClick={() => { try { localStorage.removeItem(chaveRascunhoPia) } catch { /* sem storage */ } setRascunhoPendenteP(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Descartar</button>
+                    </span>
+                  </div>
+                )}
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))', gap:8, marginBottom:8 }}>
                   <div>
                     <label style={s.label}>Elaborado em</label>
@@ -870,9 +910,10 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                   </div>
                 ))}
 
-                <div style={{ display:'flex', gap:8, marginTop:12, position:'sticky', bottom:0, background:'#FDFDFB', padding:'10px 0' }}>
+                <div style={{ display:'flex', gap:8, marginTop:12, position:'sticky', bottom:0, background:'#FDFDFB', padding:'10px 0', alignItems:'center', flexWrap:'wrap' }}>
                   <button onClick={salvarPia} disabled={salvandoP} style={s.btn(salvandoP ? '#D3D1C7' : AZUL)}>{salvandoP ? 'Salvando...' : 'Salvar PIA'}</button>
-                  <button onClick={() => setEditandoP(null)} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                  <button onClick={() => setEditandoP(null)} style={s.btn('#F1EFE8','#5F5E5A')}>Fechar edição</button>
+                  {rascunhoInfoP && <span style={{ fontSize:10.5, color:'#888780' }}>📝 Rascunho guardado às {rascunhoInfoP} — nada se perde se fechar</span>}
                 </div>
               </div>
             )}

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { confirmar } from '../lib/ui'
 import { auditar } from '../lib/auditoria'
-import { gerarPDFRelatorio } from '../lib/pdf'
+import { gerarPDFRelatorio } from '../lib/pdfLazy'
 import * as XLSX from 'xlsx'
 
 const VERDE = '#0E7EA8', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'

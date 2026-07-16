@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFListaUsuariosComProfissionais, gerarPDFAnexoOficialTeacolher, gerarPDFTermoAutorizacaoImagem } from '../lib/pdf'
+import { gerarPDFListaUsuariosComProfissionais, gerarPDFAnexoOficialTeacolher, gerarPDFTermoAutorizacaoImagem } from '../lib/pdfLazy'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'

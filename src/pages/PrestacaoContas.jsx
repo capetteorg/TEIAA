@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 
 const fimDe = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
-import { gerarPDFPrestacaoContas } from '../lib/pdf'
+import { gerarPDFPrestacaoContas } from '../lib/pdfLazy'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'
 

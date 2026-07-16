@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFParecer, gerarPDFParecerAnual } from '../lib/pdf'
+import { gerarPDFParecer, gerarPDFParecerAnual } from '../lib/pdfLazy'
 import { auditar } from '../lib/auditoria'
 import { confirmar } from '../lib/ui'
 

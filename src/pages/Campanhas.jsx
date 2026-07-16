@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFCampanha } from '../lib/pdf'
+import { gerarPDFCampanha } from '../lib/pdfLazy'
 
 const STATUS = ['ativa','pausada','concluída','cancelada']
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A'

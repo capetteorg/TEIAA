@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
 const AG_BLUE = '#0E7EA8'
 const AG_RED  = '#E63214'
@@ -19,6 +20,8 @@ export default function PainelAdmin() {
   const { perfil } = useAuth()
   const [dados, setDados] = useState(null)
   const [mensagensDev, setMensagensDev] = useState([])
+  const [recadosAdmin, setRecadosAdmin] = useState([])
+  const [prontuarioDe, setProntuarioDe] = useState(null)
 
   useEffect(() => { carregarDados() }, [])
 
@@ -37,6 +40,20 @@ export default function PainelAdmin() {
     const { data: msgs } = await supabase.from('mensagens_desenvolvedor')
       .select('*').order('criado_em', { ascending: false }).limit(20)
     setMensagensDev(msgs || [])
+
+    // Recados da equipe em aberto (coordenação acompanha todos)
+    try {
+      const { data: recs } = await supabase.from('prontuario_recados').select('*')
+        .eq('status', 'aberto').is('parent_id', null)
+        .order('created_at', { ascending: false }).limit(30)
+      let lista = recs || []
+      if (lista.length) {
+        const ids = [...new Set(lista.map(r => r.usuario_atendido_id))]
+        const { data: usrs } = await supabase.from('usuarios_atendidos').select('id,nome').in('id', ids)
+        lista = lista.map(r => ({ ...r, usuario_nome: (usrs || []).find(u => String(u.id) === String(r.usuario_atendido_id))?.nome || 'Usuário' }))
+      }
+      setRecadosAdmin(lista)
+    } catch { /* tabela de recados pode ainda não existir */ }
 
     setDados({
       pendAbertas: pendAbertas || 0,
@@ -150,6 +167,28 @@ export default function PainelAdmin() {
               </div>
             </div>
 
+            {/* RECADOS DA EQUIPE */}
+            {recadosAdmin.length > 0 && (
+              <div style={{ ...cardStyle, padding: 18, borderLeft: '3px solid #F4821F' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#854F0B', marginBottom: 12 }}>
+                  📬 Recados da equipe em aberto ({recadosAdmin.length})
+                </div>
+                {recadosAdmin.slice(0, 6).map((r, i) => (
+                  <button key={r.id} onClick={() => setProntuarioDe({ id: r.usuario_atendido_id, nome: r.usuario_nome })}
+                    style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '9px 0', borderBottom: i < Math.min(recadosAdmin.length, 6) - 1 ? '0.5px solid #F1EFE8' : 'none', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#2C2C2A' }}>
+                        {r.usuario_nome}
+                        <span style={{ fontWeight: 400, color: '#888780' }}> · {r.de_nome || 'equipe'} → {r.para_profissional_id ? 'profissional' : (r.para_area || 'equipe toda')}</span>
+                      </span>
+                      <span style={{ fontSize: 9.5, color: '#B4B2A9', whiteSpace: 'nowrap' }}>{new Date(r.created_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: '#5F5E5A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.texto}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
           </div>
 
           {/* COLUNA DIREITA */}
@@ -206,6 +245,15 @@ export default function PainelAdmin() {
         </div>
 
       </div>
+
+      {prontuarioDe && (
+        <ProntuarioUsuario
+          usuario={prontuarioDe}
+          onClose={() => { setProntuarioDe(null); carregarDados() }}
+          podeEditar
+          abaInicial="equipe"
+        />
+      )}
 
       <style>{`
         .acao-rapida:hover { border-color: #0E7EA8 !important; background: rgba(14,126,168,0.05) !important; }

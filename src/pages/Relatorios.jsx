@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
-import { gerarPDFRelatorio } from '../lib/pdf'
+import { gerarPDFRelatorio } from '../lib/pdfLazy'
 
 const fimMes = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 

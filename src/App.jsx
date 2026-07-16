@@ -1,29 +1,41 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Login from './pages/Login'
 import Layout from './components/Layout'
-import Painel from './pages/Painel'
-import Sociedade from './pages/Sociedade'
-import Instituicao from './pages/Instituicao'
-import Usuarios from './pages/Usuarios'
-import Configuracoes from './pages/Configuracoes'
-import Equipe from './pages/Equipe'
-import Projetos from './pages/Projetos'
-import Atendimentos from './pages/Atendimentos'
-import UsuariosAtendidos from './pages/UsuariosAtendidos'
-import PlanosExecucao from './pages/PlanosExecucao'
-import PainelOperacional from './pages/PainelOperacional'
-import PainelTecnico from './pages/PainelTecnico'
-import RelatoriosCentral from './pages/RelatoriosCentral'
-import PrestacaoContas from './pages/PrestacaoContas'
-import Backup from './pages/Backup'
-import MinhaConta from './pages/MinhaConta'
-import MensagensDesenvolvedor from './pages/MensagensDesenvolvedor'
-import PainelDiretoria from './pages/PainelDiretoria'
-import PainelAdmin from './pages/PainelAdmin'
-import Pendencias from './pages/Pendencias'
-import NovaSenha from './pages/NovaSenha'
+
+// Cada página vira um pedaço separado do app (lazy): quem entra baixa só as
+// telas do próprio perfil — o primeiro acesso fica leve mesmo no celular.
+const Sociedade = lazy(() => import('./pages/Sociedade'))
+const Instituicao = lazy(() => import('./pages/Instituicao'))
+const Usuarios = lazy(() => import('./pages/Usuarios'))
+const Configuracoes = lazy(() => import('./pages/Configuracoes'))
+const Equipe = lazy(() => import('./pages/Equipe'))
+const Projetos = lazy(() => import('./pages/Projetos'))
+const Atendimentos = lazy(() => import('./pages/Atendimentos'))
+const UsuariosAtendidos = lazy(() => import('./pages/UsuariosAtendidos'))
+const PlanosExecucao = lazy(() => import('./pages/PlanosExecucao'))
+const PainelOperacional = lazy(() => import('./pages/PainelOperacional'))
+const PainelTecnico = lazy(() => import('./pages/PainelTecnico'))
+const RelatoriosCentral = lazy(() => import('./pages/RelatoriosCentral'))
+const PrestacaoContas = lazy(() => import('./pages/PrestacaoContas'))
+const Backup = lazy(() => import('./pages/Backup'))
+const MinhaConta = lazy(() => import('./pages/MinhaConta'))
+const MensagensDesenvolvedor = lazy(() => import('./pages/MensagensDesenvolvedor'))
+const PainelDiretoria = lazy(() => import('./pages/PainelDiretoria'))
+const PainelAdmin = lazy(() => import('./pages/PainelAdmin'))
+const Pendencias = lazy(() => import('./pages/Pendencias'))
+const NovaSenha = lazy(() => import('./pages/NovaSenha'))
+
+function CarregandoTela() {
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'40vh', color:'#B4B2A9', fontSize:13, gap:8 }}>
+      <span className="spin" style={{ width:14, height:14, border:'2px solid #D3D1C7', borderTopColor:'#0E7EA8', borderRadius:'50%', display:'inline-block', animation:'girar .7s linear infinite' }} />
+      Carregando...
+      <style>{`@keyframes girar { to { transform: rotate(360deg) } }`}</style>
+    </div>
+  )
+}
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -55,6 +67,7 @@ export default function App() {
   if (loading) return null
 
   return (
+    <Suspense fallback={<CarregandoTela />}>
     <Routes>
       <Route path="/login" element={!user ? <Login /> : <RedirecionarPerfil />} />
       <Route path="transparencia" element={<Sociedade />} />
@@ -85,5 +98,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/painel" replace />} />
     </Routes>
+    </Suspense>
   )
 }

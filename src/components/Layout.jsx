@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { precarregarPDF } from '../lib/pdfLazy'
 
 const AG_BLUE  = '#0E7EA8'
 const AG_GREEN = '#96C11F'
@@ -79,6 +80,13 @@ export default function Layout() {
     const fn = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
+  }, [])
+
+  // Baixa o gerador de PDF (pesado por causa do timbrado) em segundo plano,
+  // depois que a tela já abriu — a primeira impressão sai instantânea.
+  useEffect(() => {
+    const t = setTimeout(precarregarPDF, 3500)
+    return () => clearTimeout(t)
   }, [])
 
   // Busca global: Ctrl+K / Cmd+K

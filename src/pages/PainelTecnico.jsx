@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { gerarPDFAgendaTecnicoTeacolher } from '../lib/pdf'
+import { gerarPDFAgendaTecnicoTeacolher } from '../lib/pdfLazy'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
 import { areaPelaFuncao } from '../lib/areas'
 
@@ -29,6 +29,9 @@ export default function PainelTecnico() {
   const [evolucoes, setEvolucoes] = useState({})
   const [prontuarioDe, setProntuarioDe] = useState(null)
   const [recadosPainel, setRecadosPainel] = useState([])
+  // Busca por qualquer criança do TEAcolher (não só as que este técnico já atendeu)
+  const [busca, setBusca] = useState('')
+  const [todosUsuarios, setTodosUsuarios] = useState(null)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -139,6 +142,19 @@ export default function PainelTecnico() {
 
   const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '–'
   const fmtHora = h => h ? String(h).slice(0,5) : ''
+  const semAcento = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+  // Carrega a lista completa de crianças do projeto uma vez, na primeira busca
+  async function carregarTodosUsuarios() {
+    if (todosUsuarios !== null || !projetoId) return
+    const { data } = await supabase.from('usuarios_atendidos')
+      .select('id,nome,situacao').eq('projeto_id', projetoId).order('nome').limit(1000)
+    setTodosUsuarios(data || [])
+  }
+
+  const resultadosBusca = busca.trim()
+    ? (todosUsuarios || []).filter(u => semAcento(u.nome).includes(semAcento(busca.trim()))).slice(0, 8)
+    : []
 
   async function abrirEvolucao(uid) {
     if (usuarioExpandido === uid) { setUsuarioExpandido(null); return }
@@ -271,6 +287,34 @@ export default function PainelTecnico() {
             <div style={{ fontSize:15, fontWeight:900, color:DARK, marginBottom:2 }}>👥 Meus usuários</div>
             <div style={{ fontSize:11.5, color:'#888780', marginBottom:12 }}>
               {meusUsuarios.length > 0 ? `${meusUsuarios.length} usuário(s) atendido(s) por você. Clique para ver as evoluções.` : 'Clique num usuário para ver a evolução completa de cada atendimento.'}
+            </div>
+
+            {/* Busca geral: encontra qualquer criança do projeto, mesmo sem atendimento com este técnico */}
+            <div style={{ ...card, padding:'11px 14px', marginBottom:12 }}>
+              <input value={busca} onFocus={carregarTodosUsuarios}
+                onChange={e => { setBusca(e.target.value); carregarTodosUsuarios() }}
+                placeholder="🔍 Buscar qualquer criança do TEAcolher pelo nome (para abrir o prontuário)..."
+                style={{ width:'100%', boxSizing:'border-box', border:'0.5px solid #D3D1C7', borderRadius:8, padding:'9px 11px', fontSize:13 }} />
+              {busca.trim() && (
+                todosUsuarios === null ? (
+                  <div style={{ fontSize:12, color:'#B4B2A9', padding:'10px 2px 2px' }}>Carregando lista...</div>
+                ) : resultadosBusca.length === 0 ? (
+                  <div style={{ fontSize:12, color:'#888780', padding:'10px 2px 2px' }}>Nenhuma criança encontrada com esse nome.</div>
+                ) : resultadosBusca.map((u, i) => (
+                  <div key={u.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 2px', borderBottom: i < resultadosBusca.length - 1 ? '0.5px solid #F1EFE8' : 'none' }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#2C2C2A' }}>{u.nome}</span>
+                      <span style={{ marginLeft:8, fontSize:10, borderRadius:99, padding:'1px 8px', fontWeight:600,
+                        background: u.situacao === 'ativo' ? '#EAF3DE' : '#F1EFE8',
+                        color: u.situacao === 'ativo' ? '#3B6D11' : '#888780' }}>{u.situacao || '—'}</span>
+                    </div>
+                    <button onClick={() => { setProntuarioDe({ id: u.id, nome: u.nome }); setBusca('') }}
+                      style={{ border:'none', borderRadius:8, background:DARK, color:'#fff', padding:'6px 12px', fontSize:11.5, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
+                      📋 Prontuário
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
             {loading
               ? <div style={{ ...card, padding:'2rem', textAlign:'center', color:'#B4B2A9', fontSize:13 }}>Carregando...</div>

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
-import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
+import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdfLazy'
 import { areaPelaFuncao } from '../lib/areas'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
