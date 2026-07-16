@@ -117,15 +117,17 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
     || equipe.find(e => String(e.id) === String(profissionalPadrao?.id))?.funcao
   const minhaArea = areaPelaFuncao(funcaoProfissional)
   const secaoDaMinhaArea = sec => Boolean(minhaArea && Array.isArray(sec.areas) && sec.areas.includes(minhaArea))
-  // Comuns (sem "areas") pertencem a toda a equipe: ficam abertas para qualquer área
-  const secaoAbreParaMim = sec => !Array.isArray(sec.areas) || secaoDaMinhaArea(sec)
+  // Trava por área: técnica edita as seções da própria área + as comuns da equipe
+  // (sem "areas" no schema). As demais ficam somente leitura. Admin/operacional e
+  // técnicas sem área mapeada na função não sofrem trava.
+  const podeEditarSecao = sec => !minhaArea || !Array.isArray(sec.areas) || secaoDaMinhaArea(sec)
 
   // ---------- ANAMNESE ----------
   function abrirEdicaoAnamnese() {
-    // Guia por área: as seções da área da profissional (e as comuns) abrem;
-    // as das outras áreas começam recolhidas, mas continuam editáveis.
+    // As seções que a profissional pode editar (da área dela + comuns) abrem;
+    // as das outras áreas começam recolhidas e são somente leitura.
     setSecoesAbertas(minhaArea
-      ? new Set(SECOES_ANAMNESE.filter(secaoAbreParaMim).map(sec => sec.titulo))
+      ? new Set(SECOES_ANAMNESE.filter(podeEditarSecao).map(sec => sec.titulo))
       : null)
     const base = { ...ANAMNESE_VAZIA, profissional_id: profissionalPadrao?.id || '' }
     if (!anamnese) { setFormA(base); setEditandoA(true); return }
@@ -142,13 +144,17 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
 
   async function salvarAnamnese() {
     setSalvandoA(true); setMsg('')
+    // Só envia os campos das seções que a profissional pode editar — assim o
+    // save de uma área nunca sobrescreve o que outra área registrou (mesmo
+    // que duas técnicas editem o prontuário quase ao mesmo tempo).
+    const camposPermitidos = SECOES_ANAMNESE.filter(podeEditarSecao).flatMap(sec => sec.campos)
     const dados = {
       usuario_atendido_id: usuario.id,
       data_entrevista: formA.data_entrevista || null,
       entrevistado_nome: formA.entrevistado_nome || null,
       entrevistado_parentesco: formA.entrevistado_parentesco || null,
       profissional_id: formA.profissional_id || null,
-      ...Object.fromEntries(CAMPOS_ANAMNESE.map(c => [
+      ...Object.fromEntries(camposPermitidos.map(c => [
         c.k,
         c.tipo === 'checks' ? (Array.isArray(formA[c.k]) ? formA[c.k] : []) : (formA[c.k] || null),
       ])),
@@ -469,8 +475,8 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                 </div>
                 {minhaArea && (
                   <div style={{ fontSize:11.5, color:'#0E7EA8', background:'rgba(14,126,168,0.07)', border:'0.5px solid rgba(14,126,168,0.25)', borderRadius:8, padding:'7px 11px', marginBottom:10 }}>
-                    As seções de <strong>{minhaArea}</strong> e as comuns da equipe vêm primeiro, já abertas.
-                    As demais áreas estão recolhidas — clique no título para abrir e preencher também.
+                    Você edita as seções de <strong>{minhaArea}</strong> e as comuns da equipe.
+                    As seções das outras áreas aparecem no final, para consulta — somente leitura.
                   </div>
                 )}
                 {(minhaArea
@@ -481,6 +487,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                     ]
                   : SECOES_ANAMNESE
                 ).map(sec => {
+                  const editavel = podeEditarSecao(sec)
                   const aberta = !secoesAbertas || secoesAbertas.has(sec.titulo)
                   const toggle = () => {
                     if (!minhaArea) return
@@ -492,7 +499,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                   }
                   return (
                     <div key={sec.titulo}>
-                      <div onClick={toggle} style={{ ...s.secao, cursor: minhaArea ? 'pointer' : 'default', display:'flex', justifyContent:'space-between', alignItems:'center', userSelect:'none' }}>
+                      <div onClick={toggle} style={{ ...s.secao, cursor: minhaArea ? 'pointer' : 'default', display:'flex', justifyContent:'space-between', alignItems:'center', userSelect:'none', ...(editavel ? {} : { color:'#888780' }) }}>
                         <span>
                           {sec.titulo}
                           {secaoDaMinhaArea(sec) && (
@@ -500,13 +507,32 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                               sua área
                             </span>
                           )}
+                          {!editavel && (
+                            <span style={{ marginLeft:8, fontSize:9, fontWeight:700, color:'#888780', background:'#F1EFE8', border:'0.5px solid #D3D1C7', borderRadius:99, padding:'1px 8px', verticalAlign:'middle' }}>
+                              🔒 outra área — somente leitura
+                            </span>
+                          )}
                         </span>
-                        {minhaArea && <span style={{ color:'#B4B2A9', fontSize:11 }}>{aberta ? '▾ recolher' : '▸ abrir'}</span>}
+                        {minhaArea && <span style={{ color:'#B4B2A9', fontSize:11 }}>{aberta ? '▾ recolher' : editavel ? '▸ abrir' : '▸ consultar'}</span>}
                       </div>
-                      {aberta && agruparCampos(sec.campos, c => (<>
-                        <label style={s.label}>{c.label}</label>
-                        {campoEditavel(c)}
-                      </>))}
+                      {aberta && (editavel
+                        ? agruparCampos(sec.campos, c => (<>
+                            <label style={s.label}>{c.label}</label>
+                            {campoEditavel(c)}
+                          </>))
+                        : (() => {
+                            // Consulta do que outra área registrou (valores do banco, não do formulário)
+                            const preenchidos = sec.campos.filter(c => valorAnamnese(c, anamnese))
+                            return preenchidos.length === 0
+                              ? <div style={{ fontSize:11.5, color:'#B4B2A9', marginBottom:8 }}>Ainda sem preenchimento pela área responsável.</div>
+                              : agruparCampos(preenchidos, c => (
+                                  <div style={{ ...s.bloco, marginBottom:0, height:'100%', opacity:.85 }}>
+                                    <div style={s.blocoLabel}>{c.label}</div>
+                                    <div style={s.blocoValor}>{valorAnamnese(c, anamnese)}</div>
+                                  </div>
+                                ))
+                          })()
+                      )}
                     </div>
                   )
                 })}
