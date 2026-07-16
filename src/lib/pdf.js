@@ -3411,13 +3411,15 @@ export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}
     return { titulo: sec.titulo, blocos }
   })
 
-  // Espaço útil por página, em mm, já descontados cabeçalho e rodapé. Os valores
-  // foram calibrados medindo as páginas geradas: sobram ~15mm de folga sobre a
-  // margem inferior, o bastante para a imprecisão da estimativa dos blocos.
-  const ALTURA_P1 = 190   // 1ª página: cabeçalho grande + grade de identificação
-  const ALTURA_PN = 232   // demais páginas: cabeçalho e rodapé compactos
+  // Espaço útil por página, em mm. Todas as páginas usam a folha timbrada
+  // oficial como fundo (padding 52mm topo / 36mm base → ~209mm úteis); a 1ª
+  // ainda carrega o título grande e a grade de identificação. Valores
+  // calibrados medindo as páginas geradas, com folga para a imprecisão
+  // da estimativa dos blocos.
+  const ALTURA_P1 = 170   // 1ª página: título + grade de identificação
+  const ALTURA_PN = 205   // demais páginas: só a linha de continuação
   const PESO_TITULO = 9
-  const PESO_FECHO = 68   // assinaturas + rodapé com apoiadores
+  const PESO_FECHO = 46   // bloco de assinaturas
 
   const paginas = []
   let atual = []
@@ -3464,17 +3466,40 @@ export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}
       ${item('Profissional responsável', anamnese?.profissional_nome)}
     </div>`
 
+  // A folha timbrada inteira (faixa superior, logo, marca d'água e rodapé com
+  // apoiadores) vai como fundo único de CADA página — mesma técnica do
+  // Formulário de Cadastro oficial. Assim o timbrado nunca sai distorcido nem
+  // precisa de versão "compacta" nas continuações.
+  const estiloPagina = `
+    background-image:url('${TEACOLHER_FOLHA_TIMBRADA}');
+    background-size:100% 100%;
+    background-repeat:no-repeat;
+    background-position:top left;
+    padding:52mm 16mm 36mm 16mm;
+    min-height:297mm;
+    box-sizing:border-box;
+  `
+  const tituloPagina1 = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;border-bottom:2px solid #6B63B5;padding-bottom:8px">
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#3F3A82">Ficha de Anamnese — Projeto TEAcolher</div>
+        <div style="font-size:10px;color:#6B7280;margin-top:2px">${TEIAA_INFO.nome}</div>
+      </div>
+      <div style="font-size:8px;color:#9199A2;text-align:right">${protocolo}</div>
+    </div>`
+  const tituloContinuacao = i => `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;border-bottom:1.5px solid #6B63B5;padding-bottom:5px">
+      <div style="font-size:11px;font-weight:800;color:#3F3A82">Ficha de Anamnese — ${esc(usuario.nome) || 'Projeto TEAcolher'}</div>
+      <div style="font-size:8px;color:#9199A2">${protocolo} · pág. ${i + 1}/${paginas.length}</div>
+    </div>`
+
   const html = paginas.map((secoes, i) => {
     const primeira = i === 0
     const ultima = i === paginas.length - 1
-    const cabecalho = primeira
-      ? htmlCabecalhoTeacolher({ titulo:'Ficha de Anamnese — Projeto TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })
-      : htmlCabecalhoTeacolherCompacto({ titulo:'Ficha de Anamnese — Projeto TEAcolher', sub:esc(usuario.nome) || 'Projeto TEAcolher', ref:`${protocolo} · pág. ${i + 1}/${paginas.length}` })
-    return `<div class="pg"${primeira ? '' : ' style="page-break-before:always"'}>
-      ${cabecalho}
-      ${primeira ? identificacao : ''}
+    return `<div class="pg" style="${estiloPagina}${primeira ? '' : 'page-break-before:always'}">
+      ${primeira ? tituloPagina1 + identificacao : tituloContinuacao(i)}
       ${secoes.join('')}
-      ${ultima ? htmlAssinaturas(['Profissional responsável', 'Responsável / família']) + htmlRodapeTeacolher({ protocolo }) : htmlRodapeTeacolherCompacto({ protocolo })}
+      ${ultima ? htmlAssinaturas(['Profissional responsável', 'Responsável / família']) + `<div style="font-size:7.5px;color:#B4B2A9;text-align:right;margin-top:6px">Gerado em ${new Date().toLocaleString('pt-BR')} · ${protocolo}</div>` : ''}
     </div>`
   }).join('')
 
