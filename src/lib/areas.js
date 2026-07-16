@@ -1,3 +1,10 @@
+// Áreas de atendimento do TEAcolher — usadas como destino dos recados da equipe
+// e no mapeamento função→área abaixo.
+export const AREAS_EQUIPE = [
+  'Psicologia', 'Fisioterapia', 'Nutrição', 'Psicomotricidade', 'Neuropsicopedagogia',
+  'Fonoaudiologia', 'Terapia ocupacional', 'Serviço social', 'Socioeducativo', 'Orientação familiar',
+]
+
 // Liga a função/cargo do profissional (cadastro da equipe) à área de atendimento
 // do TEAcolher. Usada no agendamento (pra área não ficar desencontrada do
 // profissional escolhido) e no prontuário (pra destacar as seções da anamnese

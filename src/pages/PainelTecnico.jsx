@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { gerarPDFAgendaTecnicoTeacolher } from '../lib/pdf'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
+import { areaPelaFuncao } from '../lib/areas'
 
 const BLUE = '#0E7EA8', DARK = '#06344F', GREEN = '#6BBF2B', ORANGE = '#F4821F', RED = '#E63214'
 const card = { background:'rgba(255,255,255,0.94)', border:'0.5px solid #E8E6DE', borderRadius:14, boxShadow:'0 2px 16px rgba(0,0,0,0.05)' }
@@ -27,6 +28,7 @@ export default function PainelTecnico() {
   const [usuarioExpandido, setUsuarioExpandido] = useState(null)
   const [evolucoes, setEvolucoes] = useState({})
   const [prontuarioDe, setProntuarioDe] = useState(null)
+  const [recadosPainel, setRecadosPainel] = useState([])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -102,11 +104,32 @@ export default function PainelTecnico() {
         return a.ultimaData < b.ultimaData ? 1 : -1
       })
 
+      // Recados da equipe endereçados a este técnico: para a área dele (pela
+      // função), para ele em pessoa, ou para a equipe toda — só os abertos.
+      let recadosLista = []
+      try {
+        const minhaArea = areaPelaFuncao(profData?.funcao)
+        const { data: recs } = await supabase.from('prontuario_recados').select('*')
+          .eq('status', 'aberto').is('parent_id', null)
+          .order('created_at', { ascending: false }).limit(50)
+        const meus = (recs || []).filter(r =>
+          ((!r.para_area && !r.para_profissional_id)
+            || (r.para_profissional_id && String(r.para_profissional_id) === String(eid))
+            || (r.para_area && minhaArea && r.para_area === minhaArea))
+          && String(r.de_profissional_id) !== String(eid))
+        if (meus.length) {
+          const ids = [...new Set(meus.map(r => r.usuario_atendido_id))]
+          const { data: usrs } = await supabase.from('usuarios_atendidos').select('id,nome').in('id', ids)
+          recadosLista = meus.map(r => ({ ...r, usuario_nome: (usrs || []).find(u => String(u.id) === String(r.usuario_atendido_id))?.nome || 'Usuário' }))
+        }
+      } catch { /* tabela de recados pode ainda não existir — segue sem o card */ }
+
       if (!mounted) return
       setProf({ id:eid, nome:profData?.nome||perfil?.nome||'Técnico', funcao:profData?.funcao||'' })
       setAgendaHoje(lH.data||[])
       setAtrasados(lA.data||[])
       setMeusUsuarios(lista)
+      setRecadosPainel(recadosLista)
       setLoading(false)
     }
     carregar()
@@ -189,6 +212,26 @@ export default function PainelTecnico() {
         {aba==='agenda' && (
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 240px', gap:12, alignItems:'start' }}>
             <div>
+              {recadosPainel.length > 0 && (
+                <div style={{ ...card, padding:14, marginBottom:10, borderLeft:`3px solid ${ORANGE}` }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:'#854F0B', marginBottom:8 }}>
+                    📬 Recados da equipe para você ({recadosPainel.length})
+                  </div>
+                  {recadosPainel.slice(0, 5).map((r, i) => (
+                    <button key={r.id} onClick={() => setProntuarioDe({ id: r.usuario_atendido_id, nome: r.usuario_nome, aba: 'equipe' })}
+                      style={{ width:'100%', border:'none', background:'#fff', textAlign:'left', padding:'9px 0', borderBottom: i < Math.min(recadosPainel.length, 5) - 1 ? '0.5px solid #F1EFE8' : 'none', cursor:'pointer' }}>
+                      <div style={{ fontSize:12.5, fontWeight:700, color:'#2C2C2A' }}>
+                        {r.usuario_nome}
+                        <span style={{ fontWeight:400, color:'#888780' }}> · de {r.de_nome || 'colega da equipe'}</span>
+                      </div>
+                      <div style={{ fontSize:11.5, color:'#5F5E5A', marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.texto}</div>
+                    </button>
+                  ))}
+                  {recadosPainel.length > 5 && (
+                    <div style={{ fontSize:10.5, color:'#B4B2A9', marginTop:6 }}>+ {recadosPainel.length - 5} recado(s) — abra o prontuário de cada usuário para ver todos.</div>
+                  )}
+                </div>
+              )}
               <div style={{ ...card, padding:14, marginBottom:10 }}>
                 <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:8 }}>Agenda de hoje</div>
                 {loading
@@ -312,6 +355,7 @@ export default function PainelTecnico() {
           onClose={() => setProntuarioDe(null)}
           podeEditar
           profissionalPadrao={prof.id ? { id: prof.id, nome: prof.nome, funcao: prof.funcao } : null}
+          abaInicial={prontuarioDe.aba || 'anamnese'}
         />
       )}
     </div>

@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
 import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
 import { areaPelaFuncao } from '../lib/areas'
+import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
 const VERDE = '#6BBF2B'
 const VERMELHO = '#E8212A'
@@ -222,6 +223,7 @@ export default function Atendimentos() {
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(null)
   const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', profissional_id: '', situacao: '' })
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false)
+  const [prontuarioDe, setProntuarioDe] = useState(null)
   const [recorrencia, setRecorrencia] = useState('unica')
   const [dataFimRecorrencia, setDataFimRecorrencia] = useState('')
   const [filtroRelatorio, setFiltroRelatorio] = useState({ tipo:'completo', profissional_id:'', usuario_id:'', dataInicio:'', dataFim:'' })
@@ -1131,6 +1133,16 @@ export default function Atendimentos() {
                     <option value="">Selecione o usuário atendido...</option>
                     {usuariosTEAcolher.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
                   </select>
+                  {form.usuario_atendido_id && (
+                    <button type="button"
+                      onClick={() => {
+                        const u = usuariosTEAcolher.find(x => String(x.id) === String(form.usuario_atendido_id))
+                        setProntuarioDe({ id: parseInt(form.usuario_atendido_id), nome: u?.nome || form.pessoa_atendida || 'Usuário' })
+                      }}
+                      style={{ marginTop:5, fontSize:11, border:'0.5px solid #D3D1C7', borderRadius:6, background:'#fff', padding:'4px 10px', cursor:'pointer', color:'#06344F', fontWeight:600 }}>
+                      📋 Abrir prontuário — anamnese, PIA e recados
+                    </button>
+                  )}
                 </div>
                 <div>
                   <label style={s.label}>Nome livre / família atendida</label>
@@ -1345,6 +1357,19 @@ export default function Atendimentos() {
         </div>
       )}
 
+
+      {prontuarioDe && (
+        <ProntuarioUsuario
+          usuario={prontuarioDe}
+          onClose={() => setProntuarioDe(null)}
+          podeEditar={['admin', 'tecnico'].includes(perfil?.perfil)}
+          profissionalPadrao={(() => {
+            if (perfil?.perfil !== 'tecnico' || !perfil?.equipe_id) return null
+            const e = equipe.find(x => String(x.id) === String(perfil.equipe_id))
+            return e ? { id: e.id, nome: e.nome, funcao: e.funcao } : null
+          })()}
+        />
+      )}
 
       {confirmandoExcluir && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999, display:'flex', alignItems:'center', justifyContent:'center' }}>

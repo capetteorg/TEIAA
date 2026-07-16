@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { gerarPDFAnamneseTeacolher, gerarPDFPiaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdf'
 import { SECOES_ANAMNESE, CAMPOS_ANAMNESE, CAMPOS_LISTA } from '../lib/anamneseSchema'
-import { areaPelaFuncao } from '../lib/areas'
+import { areaPelaFuncao, AREAS_EQUIPE } from '../lib/areas'
 
 const AZUL = '#0E7EA8', ESCURO = '#06344F', ROXO = '#6B5FA8'
 
@@ -48,8 +48,8 @@ const s = {
   secao: { fontSize:11.5, fontWeight:800, color:ESCURO, margin:'14px 0 7px', paddingBottom:4, borderBottom:'0.5px solid #E8E6DE' },
 }
 
-export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false, profissionalPadrao = null }) {
-  const [aba, setAba] = useState('anamnese')
+export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false, profissionalPadrao = null, abaInicial = 'anamnese' }) {
+  const [aba, setAba] = useState(abaInicial)
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [usuarioCompleto, setUsuarioCompleto] = useState(usuario)
@@ -61,6 +61,16 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   const [salvandoA, setSalvandoA] = useState(false)
   // null = todas as seções abertas (admin/sem área); Set = só as do conjunto
   const [secoesAbertas, setSecoesAbertas] = useState(null)
+  // Rascunho local: nunca perder trabalho digitado (guardado neste navegador)
+  const [rascunhoPendente, setRascunhoPendente] = useState(null)
+  const [rascunhoInfo, setRascunhoInfo] = useState('')
+  // Recados da equipe (aba 💬)
+  const [recados, setRecados] = useState([])
+  const [recadosErro, setRecadosErro] = useState('')
+  const [novoRecado, setNovoRecado] = useState({ para: '', texto: '' })
+  const [enviandoRecado, setEnviandoRecado] = useState(false)
+  const [respondendoA, setRespondendoA] = useState(null)
+  const [respostaTexto, setRespostaTexto] = useState('')
 
   const [planos, setPlanos] = useState([])
   const [planoSelId, setPlanoSelId] = useState(null)
@@ -77,11 +87,12 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
     let mounted = true
     async function carregar() {
       setLoading(true)
-      const [uRes, aRes, pRes, eRes] = await Promise.all([
+      const [uRes, aRes, pRes, eRes, rRes] = await Promise.all([
         supabase.from('usuarios_atendidos').select('*').eq('id', usuario.id).maybeSingle(),
         supabase.from('anamneses').select('*').eq('usuario_atendido_id', usuario.id).maybeSingle(),
         supabase.from('planos_individuais').select('*').eq('usuario_atendido_id', usuario.id).order('data_elaboracao', { ascending: false }).order('id', { ascending: false }),
         supabase.from('equipe').select('id,nome,funcao').order('nome'),
+        supabase.from('prontuario_recados').select('*').eq('usuario_atendido_id', usuario.id).order('created_at', { ascending: true }),
       ])
       if (!mounted) return
       // Se a RLS não deixar ler o cadastro completo, segue com o que veio por prop
@@ -96,6 +107,13 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
       setPlanos(lp)
       setPlanoSelId(lp.find(p => p.situacao === 'vigente')?.id ?? lp[0]?.id ?? null)
       setEquipe(eRes.data || [])
+      if (rRes.error) {
+        setRecadosErro(rRes.error.message.includes('does not exist') || rRes.error.message.includes('schema cache')
+          ? 'Os recados da equipe ainda não existem no banco. Rode o arquivo sql_recados_equipe.sql no SQL Editor do Supabase.'
+          : 'Erro ao carregar recados: ' + rRes.error.message)
+      } else {
+        setRecados(rRes.data || [])
+      }
       setLoading(false)
     }
     carregar()
@@ -123,13 +141,43 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   const podeEditarSecao = sec => !minhaArea || !Array.isArray(sec.areas) || secaoDaMinhaArea(sec)
 
   // ---------- ANAMNESE ----------
+  // Rascunho local: enquanto edita, o formulário é guardado neste navegador a
+  // cada pausa na digitação. Se a tela fechar sem salvar, nada se perde.
+  const chaveRascunho = `anamnese_rascunho_u${usuario.id}`
+  useEffect(() => {
+    if (!editandoA) return
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(chaveRascunho, JSON.stringify({ quando: Date.now(), form: formA }))
+        setRascunhoInfo(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+      } catch { /* armazenamento cheio/bloqueado: segue sem rascunho */ }
+    }, 800)
+    return () => clearTimeout(t)
+  }, [formA, editandoA]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function abrirEdicaoAnamnese() {
     // As seções que a profissional pode editar (da área dela + comuns) abrem;
     // as das outras áreas começam recolhidas e são somente leitura.
     setSecoesAbertas(minhaArea
       ? new Set(SECOES_ANAMNESE.filter(podeEditarSecao).map(sec => sec.titulo))
       : null)
-    const base = { ...ANAMNESE_VAZIA, profissional_id: profissionalPadrao?.id || '' }
+    // Se existe rascunho mais novo que a última gravação, oferece restaurar
+    let rascunho = null
+    try { rascunho = JSON.parse(localStorage.getItem(chaveRascunho) || 'null') } catch { /* rascunho corrompido: ignora */ }
+    const ultimaGravacao = anamnese?.updated_at ? new Date(anamnese.updated_at).getTime() : 0
+    setRascunhoPendente(rascunho?.form && rascunho.quando > ultimaGravacao ? rascunho : null)
+    setRascunhoInfo('')
+    // Pré-preenche com o que o sistema já sabe do cadastro — ela só confirma
+    const condicoes = Array.isArray(usuarioCompleto?.condicao_neurodesenvolvimento)
+      ? usuarioCompleto.condicao_neurodesenvolvimento.filter(v => !['Não informado', 'Não se aplica'].includes(v))
+      : []
+    const base = {
+      ...ANAMNESE_VAZIA,
+      profissional_id: profissionalPadrao?.id || '',
+      entrevistado_nome: usuarioCompleto?.contato_familiar_nome || '',
+      entrevistado_parentesco: usuarioCompleto?.contato_familiar_parentesco || '',
+      diagnostico: condicoes.join(', '),
+    }
     if (!anamnese) { setFormA(base); setEditandoA(true); return }
     const preenchido = { ...base }
     for (const k of Object.keys(base)) {
@@ -167,6 +215,9 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
       const { data } = await supabase.from('anamneses').select('*').eq('usuario_atendido_id', usuario.id).maybeSingle()
       setAnamnese(data || null)
       setEditandoA(false)
+      try { localStorage.removeItem(chaveRascunho) } catch { /* sem acesso ao storage */ }
+      setRascunhoPendente(null)
+      setRascunhoInfo('')
       setMsg('Anamnese salva!')
       setTimeout(() => setMsg(m => m === 'Anamnese salva!' ? '' : m), 3000)
     }
@@ -277,6 +328,77 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
     return { total: freqLista.length, compareceu, faltas, assiduidade: base > 0 ? Math.round(compareceu / base * 100) : null }
   })()
 
+  // ---------- RECADOS DA EQUIPE ----------
+  const nomeRemetente = profissionalPadrao?.nome || 'Coordenação'
+
+  // Um recado "é para mim" quando: endereçado à minha área, a mim, ou à equipe
+  // toda (sem destinatário). Admin sem área vê todos os abertos como pendentes.
+  const recadoParaMim = r => {
+    if (r.parent_id || r.status !== 'aberto') return false
+    if (!r.para_area && !r.para_profissional_id) return true
+    if (r.para_profissional_id && profissionalPadrao && String(r.para_profissional_id) === String(profissionalPadrao.id)) return true
+    if (r.para_area && minhaArea && r.para_area === minhaArea) return true
+    return !profissionalPadrao // admin/coordenação acompanha tudo que está aberto
+  }
+  const badgeRecados = recados.filter(recadoParaMim).length
+
+  const recadosRaiz = recados.filter(r => !r.parent_id).sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'aberto' ? -1 : 1
+    return a.created_at < b.created_at ? 1 : -1
+  })
+  const respostasDe = id => recados.filter(r => String(r.parent_id) === String(id))
+  const rotuloDestino = r => r.para_profissional_id
+    ? (nomeProf(r.para_profissional_id) || 'Profissional')
+    : (r.para_area || 'Equipe toda')
+
+  async function recarregarRecados() {
+    const { data, error } = await supabase.from('prontuario_recados').select('*')
+      .eq('usuario_atendido_id', usuario.id).order('created_at', { ascending: true })
+    if (!error) setRecados(data || [])
+  }
+
+  async function enviarRecado() {
+    if (!novoRecado.texto.trim()) return
+    setEnviandoRecado(true); setMsg('')
+    const [tipo, valor] = novoRecado.para.includes(':') ? novoRecado.para.split(':') : ['', '']
+    const { error } = await supabase.from('prontuario_recados').insert({
+      usuario_atendido_id: usuario.id,
+      de_profissional_id: profissionalPadrao?.id || null,
+      de_nome: nomeRemetente,
+      para_area: tipo === 'area' ? valor : null,
+      para_profissional_id: tipo === 'prof' ? valor : null,
+      texto: novoRecado.texto.trim(),
+    })
+    if (error) setMsg('Erro ao enviar recado: ' + error.message)
+    else { setNovoRecado({ para: '', texto: '' }); await recarregarRecados() }
+    setEnviandoRecado(false)
+  }
+
+  async function enviarResposta(recado) {
+    if (!respostaTexto.trim()) return
+    setEnviandoRecado(true); setMsg('')
+    const { error } = await supabase.from('prontuario_recados').insert({
+      usuario_atendido_id: usuario.id,
+      parent_id: recado.id,
+      de_profissional_id: profissionalPadrao?.id || null,
+      de_nome: nomeRemetente,
+      texto: respostaTexto.trim(),
+    })
+    if (error) setMsg('Erro ao responder: ' + error.message)
+    else { setRespostaTexto(''); setRespondendoA(null); await recarregarRecados() }
+    setEnviandoRecado(false)
+  }
+
+  async function alternarResolvido(recado) {
+    const resolvido = recado.status === 'aberto'
+    const { error } = await supabase.from('prontuario_recados').update(resolvido
+      ? { status: 'resolvido', resolvido_em: new Date().toISOString(), resolvido_por_nome: nomeRemetente }
+      : { status: 'aberto', resolvido_em: null, resolvido_por_nome: null }
+    ).eq('id', recado.id)
+    if (error) setMsg('Erro: ' + error.message)
+    else await recarregarRecados()
+  }
+
   // ---------- RENDER ----------
   const blocoVer = (label, valor) => (
     <div style={s.bloco} key={label}>
@@ -382,6 +504,14 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
           <button onClick={() => setAba('anamnese')} style={s.tab(aba==='anamnese')}>Anamnese</button>
           <button onClick={() => setAba('pia')} style={s.tab(aba==='pia')}>PIA — Plano Individual</button>
           <button onClick={() => setAba('frequencia')} style={s.tab(aba==='frequencia')}>Frequência</button>
+          <button onClick={() => setAba('equipe')} style={{ ...s.tab(aba==='equipe'), position:'relative' }}>
+            💬 Equipe
+            {badgeRecados > 0 && (
+              <span style={{ position:'absolute', top:-5, right:-5, background:'#E8212A', color:'#fff', fontSize:9, fontWeight:800, borderRadius:99, minWidth:16, height:16, display:'inline-flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                {badgeRecados}
+              </span>
+            )}
+          </button>
         </div>
 
         <div style={{ overflowY:'auto', padding:'14px 20px', flex:1 }}>
@@ -455,6 +585,38 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
 
             {aba === 'anamnese' && editandoA && (
               <div>
+                {rascunhoPendente && (
+                  <div style={{ fontSize:12, background:'#FAEEDA', border:'0.5px solid #E8C98A', color:'#854F0B', borderRadius:8, padding:'8px 12px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                    <span>📝 Existe um rascunho não salvo de {new Date(rascunhoPendente.quando).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })} guardado neste aparelho.</span>
+                    <span style={{ display:'flex', gap:6 }}>
+                      <button onClick={() => { setFormA(f => ({ ...f, ...rascunhoPendente.form })); setRascunhoPendente(null) }} style={s.btn('#854F0B')}>Continuar de onde parei</button>
+                      <button onClick={() => { try { localStorage.removeItem(chaveRascunho) } catch { /* sem storage */ } setRascunhoPendente(null) }} style={s.btn('#F1EFE8','#5F5E5A')}>Descartar</button>
+                    </span>
+                  </div>
+                )}
+                {/* Progresso por seção: ela vê o que falta da parte dela e vai preenchendo aos poucos */}
+                <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:10 }}>
+                  {SECOES_ANAMNESE.map(sec => {
+                    const total = sec.campos.length
+                    const feitos = sec.campos.filter(c => valorAnamnese(c, formA)).length
+                    const completo = feitos === total && total > 0
+                    const idSec = 'sec-' + sec.titulo.replace(/\W+/g, '-')
+                    const rotuloCurto = sec.titulo.split(' ').slice(0, 2).join(' ').replace(/,$/, '')
+                    return (
+                      <button key={sec.titulo} title={sec.titulo}
+                        onClick={() => {
+                          setSecoesAbertas(prev => prev ? new Set([...prev, sec.titulo]) : prev)
+                          setTimeout(() => document.getElementById(idSec)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+                        }}
+                        style={{ border:'0.5px solid ' + (completo ? '#9CC96B' : feitos > 0 ? 'rgba(14,126,168,0.4)' : '#D3D1C7'),
+                          background: completo ? '#EAF3DE' : feitos > 0 ? 'rgba(14,126,168,0.06)' : '#fff',
+                          color: completo ? '#3B6D11' : feitos > 0 ? '#0E7EA8' : '#888780',
+                          borderRadius:99, padding:'3px 10px', fontSize:10.5, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
+                        {rotuloCurto} {completo ? '✓' : `${feitos}/${total}`}
+                      </button>
+                    )
+                  })}
+                </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:8, marginBottom:6 }}>
                   <div>
                     <label style={s.label}>Data da entrevista</label>
@@ -498,7 +660,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                     })
                   }
                   return (
-                    <div key={sec.titulo}>
+                    <div key={sec.titulo} id={'sec-' + sec.titulo.replace(/\W+/g, '-')}>
                       <div onClick={toggle} style={{ ...s.secao, cursor: minhaArea ? 'pointer' : 'default', display:'flex', justifyContent:'space-between', alignItems:'center', userSelect:'none', ...(editavel ? {} : { color:'#888780' }) }}>
                         <span>
                           {sec.titulo}
@@ -536,9 +698,10 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                     </div>
                   )
                 })}
-                <div style={{ display:'flex', gap:8, marginTop:12, position:'sticky', bottom:0, background:'#FDFDFB', padding:'10px 0' }}>
+                <div style={{ display:'flex', gap:8, marginTop:12, position:'sticky', bottom:0, background:'#FDFDFB', padding:'10px 0', alignItems:'center', flexWrap:'wrap' }}>
                   <button onClick={salvarAnamnese} disabled={salvandoA} style={s.btn(salvandoA ? '#D3D1C7' : AZUL)}>{salvandoA ? 'Salvando...' : 'Salvar anamnese'}</button>
-                  <button onClick={() => setEditandoA(false)} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                  <button onClick={() => setEditandoA(false)} style={s.btn('#F1EFE8','#5F5E5A')}>Fechar edição</button>
+                  {rascunhoInfo && <span style={{ fontSize:10.5, color:'#888780' }}>📝 Rascunho guardado às {rascunhoInfo} — nada se perde se fechar</span>}
                 </div>
               </div>
             )}
@@ -788,6 +951,100 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                     </table>
                   </div>
                 </>)}
+              </div>
+            )}
+            {/* ============ RECADOS DA EQUIPE ============ */}
+            {aba === 'equipe' && (
+              <div>
+                {recadosErro && (
+                  <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, background:'#FCEBEB', color:'#A32D2D', marginBottom:10 }}>{recadosErro}</div>
+                )}
+                {podeEditar && !recadosErro && (
+                  <div style={{ border:'0.5px solid #E0DDD5', borderRadius:12, padding:'12px 14px', marginBottom:14, background:'#FAFAF8' }}>
+                    <div style={{ fontSize:12.5, fontWeight:800, color:ESCURO, marginBottom:8 }}>✍️ Novo recado sobre {usuarioCompleto?.nome || usuario.nome}</div>
+                    <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                      <div style={{ minWidth:230 }}>
+                        <label style={s.label}>Para</label>
+                        <select value={novoRecado.para} onChange={e => setNovoRecado(n => ({ ...n, para: e.target.value }))} style={s.input}>
+                          <option value="">Equipe toda</option>
+                          <optgroup label="Uma área (qualquer profissional dela vê)">
+                            {AREAS_EQUIPE.map(a => <option key={a} value={'area:' + a}>{a}</option>)}
+                          </optgroup>
+                          <optgroup label="Uma profissional específica">
+                            {equipe.map(e => <option key={e.id} value={'prof:' + e.id}>{e.nome}{e.funcao ? ` — ${e.funcao}` : ''}</option>)}
+                          </optgroup>
+                        </select>
+                      </div>
+                    </div>
+                    <textarea rows={2} value={novoRecado.texto} onChange={e => setNovoRecado(n => ({ ...n, texto: e.target.value }))}
+                      style={s.textarea} placeholder="Ex.: Recusa total de alimentos novos mesmo com fome. Podem observar se há componente de ansiedade?" />
+                    <div style={{ marginTop:8 }}>
+                      <button onClick={enviarRecado} disabled={enviandoRecado || !novoRecado.texto.trim()}
+                        style={s.btn(enviandoRecado || !novoRecado.texto.trim() ? '#D3D1C7' : AZUL)}>
+                        {enviandoRecado ? 'Enviando...' : 'Enviar recado'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!recadosErro && recadosRaiz.length === 0 && (
+                  <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:13 }}>
+                    Nenhum recado ainda. Use este espaço para a equipe conversar sobre {usuarioCompleto?.nome || usuario.nome} — pedidos de observação, pareceres entre áreas, combinados.
+                  </div>
+                )}
+                {recadosRaiz.map(r => {
+                  const respostas = respostasDe(r.id)
+                  const aberto = r.status === 'aberto'
+                  const paraMim = recadoParaMim(r)
+                  return (
+                    <div key={r.id} style={{ border:'0.5px solid ' + (aberto ? (paraMim ? 'rgba(244,130,31,0.5)' : '#E0DDD5') : '#E8E6DE'), borderRadius:12, padding:'11px 13px', marginBottom:10, background: aberto ? '#fff' : '#FAFAF8', opacity: aberto ? 1 : 0.8 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8, flexWrap:'wrap', marginBottom:6 }}>
+                        <div style={{ fontSize:12 }}>
+                          <strong style={{ color:ESCURO }}>{r.de_nome || 'Equipe'}</strong>
+                          <span style={{ color:'#888780' }}> → </span>
+                          <span style={{ fontSize:10.5, fontWeight:700, color:'#0E7EA8', background:'rgba(14,126,168,0.08)', borderRadius:99, padding:'1px 9px' }}>{rotuloDestino(r)}</span>
+                          {paraMim && <span style={{ marginLeft:6, fontSize:9.5, fontWeight:700, color:'#854F0B', background:'#FAEEDA', borderRadius:99, padding:'1px 8px' }}>para você</span>}
+                        </div>
+                        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                          <span style={{ fontSize:10, color:'#B4B2A9' }}>{new Date(r.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</span>
+                          <span style={{ fontSize:10, fontWeight:700, borderRadius:99, padding:'2px 9px', background: aberto ? '#FAEEDA' : '#EAF3DE', color: aberto ? '#854F0B' : '#3B6D11' }}>
+                            {aberto ? 'aberto' : 'resolvido'}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize:12.5, color:'#2C2C2A', lineHeight:1.55, whiteSpace:'pre-wrap' }}>{r.texto}</div>
+                      {!aberto && r.resolvido_por_nome && (
+                        <div style={{ fontSize:10.5, color:'#888780', marginTop:4 }}>Resolvido por {r.resolvido_por_nome}{r.resolvido_em ? ` em ${new Date(r.resolvido_em).toLocaleDateString('pt-BR')}` : ''}</div>
+                      )}
+                      {respostas.map(resp => (
+                        <div key={resp.id} style={{ marginTop:8, marginLeft:14, borderLeft:'2px solid #E0DDD5', paddingLeft:10 }}>
+                          <div style={{ fontSize:11 }}>
+                            <strong style={{ color:ESCURO }}>{resp.de_nome || 'Equipe'}</strong>
+                            <span style={{ color:'#B4B2A9', marginLeft:6, fontSize:10 }}>{new Date(resp.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</span>
+                          </div>
+                          <div style={{ fontSize:12, color:'#2C2C2A', lineHeight:1.5, whiteSpace:'pre-wrap' }}>{resp.texto}</div>
+                        </div>
+                      ))}
+                      {podeEditar && (
+                        <div style={{ display:'flex', gap:6, marginTop:10, flexWrap:'wrap' }}>
+                          {respondendoA === r.id ? (
+                            <div style={{ flex:1, minWidth:240 }}>
+                              <textarea rows={2} autoFocus value={respostaTexto} onChange={e => setRespostaTexto(e.target.value)} style={s.textarea} placeholder="Sua resposta..." />
+                              <div style={{ display:'flex', gap:6, marginTop:6 }}>
+                                <button onClick={() => enviarResposta(r)} disabled={enviandoRecado || !respostaTexto.trim()} style={s.btn(enviandoRecado || !respostaTexto.trim() ? '#D3D1C7' : AZUL)}>Responder</button>
+                                <button onClick={() => { setRespondendoA(null); setRespostaTexto('') }} style={s.btn('#F1EFE8','#5F5E5A')}>Cancelar</button>
+                              </div>
+                            </div>
+                          ) : (<>
+                            <button onClick={() => { setRespondendoA(r.id); setRespostaTexto('') }} style={s.btn('#F1EFE8','#5F5E5A')}>💬 Responder</button>
+                            <button onClick={() => alternarResolvido(r)} style={s.btn(aberto ? '#EAF3DE' : '#F1EFE8', aberto ? '#3B6D11' : '#5F5E5A')}>
+                              {aberto ? '✓ Marcar como resolvido' : '↩ Reabrir'}
+                            </button>
+                          </>)}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </>)}
