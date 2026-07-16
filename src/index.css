@@ -122,3 +122,20 @@ a { text-decoration: none; color: inherit; }
 tbody tr { transition: background .12s ease; }
 tbody tr:hover { background: rgba(14,126,168,0.04); }
 thead th { font-weight: 500; }
+
+/* ===== CELULAR: campos confortáveis =====
+   Fonte de 16px nos campos evita o zoom automático do iOS ao tocar num input
+   (Safari amplia a tela quando a fonte é menor que 16px) e aumenta o alvo de
+   toque — mais fácil pra equipe preencher ficha no celular. */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+    min-height: 40px;
+  }
+  textarea { min-height: 64px; }
+  input[type="checkbox"], input[type="radio"] {
+    min-height: 0;
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -863,7 +863,13 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                 <div style={s.secao}>Metas e estratégias por área</div>
                 {formP.metas.map((m, i) => (
                   <div key={i} style={{ border:'0.5px solid #E0DDD5', borderRadius:10, padding:'10px 12px', marginBottom:8, background:'#FAFAF8' }}>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr auto', gap:8, marginBottom:6 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                      <span style={{ fontSize:10.5, fontWeight:800, color:'#888780', textTransform:'uppercase', letterSpacing:'.06em' }}>Meta {i + 1}</span>
+                      <button onClick={() => setFormP(f => ({ ...f, metas: f.metas.filter((_, j) => j !== i) }))}
+                        title="Remover meta" style={{ ...s.btn('#FEF2F2','#A32D2D'), padding:'5px 10px', fontSize:11 }}>✕ remover</button>
+                    </div>
+                    {/* auto-fit: três colunas no computador, empilha no celular */}
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:8, marginBottom:6 }}>
                       <div>
                         <label style={s.label}>Área</label>
                         <select value={m.area} onChange={e => setMeta(i, 'area', e.target.value)} style={s.input}>
@@ -879,10 +885,6 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                         <select value={m.situacao} onChange={e => setMeta(i, 'situacao', e.target.value)} style={s.input}>
                           {SITUACOES_META.map(v => <option key={v} value={v}>{v}</option>)}
                         </select>
-                      </div>
-                      <div style={{ display:'flex', alignItems:'flex-end' }}>
-                        <button onClick={() => setFormP(f => ({ ...f, metas: f.metas.filter((_, j) => j !== i) }))}
-                          title="Remover meta" style={{ ...s.btn('#FEF2F2','#A32D2D'), padding:'7px 10px' }}>✕</button>
                       </div>
                     </div>
                     <div style={{ marginBottom:6 }}>
