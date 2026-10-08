@@ -179,6 +179,7 @@ export default function Layout() {
     { to:'/usuarios-atendidos', label:p==='operacional' ? 'Usuários/famílias' : 'Usuários Atendidos', icon:'users', ok:p==='admin'||p==='operacional' },
     { to:'/equipe', label:'Equipe', icon:'users-group', ok:p==='admin' },
     { to:'/relatorios', label:'Central de Relatórios', icon:'report-analytics', ok:p==='admin'||p==='diretoria' },
+    { to:'/censo-suas', label:'Censo SUAS', icon:'clipboard-data', ok:p==='admin'||p==='operacional' },
     { to:'/prestacao-contas', label:'Prestação de Contas', icon:'file-certificate', ok:p==='admin' },
     { to:'/transparencia', label:'Transparência Pública', icon:'world', ok:p==='admin' },
     { to:'/instituicao', label:'Instituição', icon:'building', ok:p==='admin' },
@@ -273,6 +274,8 @@ export default function Layout() {
           <NavItem colapsado={colapsado} to="/usuarios-atendidos" icon="user-plus" label="Cadastrar usuário" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/atendimentos" icon="list-check" label="Agenda completa" visivel onClick={fecharMenu} />
           <NavItem colapsado={colapsado} to="/painel-operacional?aba=profissionais" icon="users-group" label="Usuários" visivel onClick={fecharMenu} />
+          <NavSecao colapsado={colapsado} label="Relatórios" />
+          <NavItem colapsado={colapsado} to="/censo-suas" icon="clipboard-data" label="Censo SUAS" visivel onClick={fecharMenu} />
         </>) : (<>
           <NavSecao colapsado={colapsado} label="Principal" />
           <NavItem colapsado={colapsado} to="/painel-admin"       icon="layout-dashboard"  label="Painel"              visivel={p==='admin'} onClick={fecharMenu} />
@@ -295,6 +298,7 @@ export default function Layout() {
             <NavSecao colapsado={colapsado} label="Relatórios" aberta={secVisivel("Relatórios")} onToggle={() => toggleSec("Relatórios")} />
             {secVisivel("Relatórios") && (<>
               <NavItem colapsado={colapsado} to="/relatorios"       icon="report-analytics"  label="Central de Relatórios" visivel={p==='admin'||p==='diretoria'} onClick={fecharMenu} />
+              <NavItem colapsado={colapsado} to="/censo-suas"       icon="clipboard-data"    label="Censo SUAS"            visivel={p==='admin'} onClick={fecharMenu} />
               <NavItem colapsado={colapsado} to="/prestacao-contas" icon="file-certificate"  label="Prestação de Contas"   visivel={p==='admin'} onClick={fecharMenu} />
               <NavItem colapsado={colapsado} to="/transparencia"    icon="world"             label="Transparência Pública" visivel={p==='admin'} onClick={fecharMenu} />
             </>)}

@@ -61,7 +61,7 @@ const FORM_VAZIO = {
   tipo_deficiencia:[], deficiencia_detalhes:'',
   condicao_neurodesenvolvimento:[], condicao_neurodesenvolvimento_outro:'',
   contato_familiar_nome:'', contato_familiar_parentesco:'', contato_familiar_telefone:'',
-  renda_familiar_bruta:'', pessoas_nucleo_familiar:'',
+  renda_familiar_bruta:'', pessoas_nucleo_familiar:'', recebe_bpc:'',
 }
 
 export default function UsuariosAtendidos() {
@@ -172,6 +172,7 @@ export default function UsuariosAtendidos() {
       contato_familiar_telefone: form.contato_familiar_telefone || null,
       renda_familiar_bruta: parseMoedaBR(form.renda_familiar_bruta),
       pessoas_nucleo_familiar: form.pessoas_nucleo_familiar ? parseInt(form.pessoas_nucleo_familiar) : null,
+      recebe_bpc: form.recebe_bpc || null,
     }
     let error
     if (editando) {
@@ -195,7 +196,7 @@ export default function UsuariosAtendidos() {
       rg:u.rg||'', endereco:u.endereco||'', bairro:u.bairro||'', cidade:u.cidade||'Teresópolis',
       telefone:u.telefone||'', email:u.email||'',
       tipo_deficiencia: Array.isArray(u.tipo_deficiencia) ? u.tipo_deficiencia : (u.tipo_deficiencia ? [u.tipo_deficiencia] : []),
-      deficiencia_detalhes:u.deficiencia_detalhes||'',
+      deficiencia_detalhes:u.deficiencia_detalhes||'', recebe_bpc:u.recebe_bpc||'',
       condicao_neurodesenvolvimento: Array.isArray(u.condicao_neurodesenvolvimento) ? u.condicao_neurodesenvolvimento : (u.condicao_neurodesenvolvimento ? [u.condicao_neurodesenvolvimento] : []),
       condicao_neurodesenvolvimento_outro:u.condicao_neurodesenvolvimento_outro||'',
       contato_familiar_nome:u.contato_familiar_nome||'', contato_familiar_parentesco:u.contato_familiar_parentesco||'', contato_familiar_telefone:u.contato_familiar_telefone||'',
@@ -548,7 +549,7 @@ export default function UsuariosAtendidos() {
                     </div>
                   </div>
 
-                  <div style={s.grupo('1fr 1fr')}>
+                  <div style={s.grupo(isMobile ? '1fr' : '1fr 1fr 1fr')}>
                     <div>
                       <label style={s.label}>Renda familiar bruta</label>
                       <input value={form.renda_familiar_bruta} onChange={e=>setForm(f=>({...f,renda_familiar_bruta:e.target.value}))} placeholder="Ex.: 2500,00" style={s.input} />
@@ -556,6 +557,12 @@ export default function UsuariosAtendidos() {
                     <div>
                       <label style={s.label}>Número de pessoas no núcleo familiar</label>
                       <input type="number" min="0" value={form.pessoas_nucleo_familiar} onChange={e=>setForm(f=>({...f,pessoas_nucleo_familiar:e.target.value}))} style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Recebe BPC?</label>
+                      <select value={form.recebe_bpc} onChange={e=>setForm(f=>({...f,recebe_bpc:e.target.value}))} style={s.input}>
+                        <option value="">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option>
+                      </select>
                     </div>
                   </div>
                 </div>

@@ -68,6 +68,10 @@ const PROJETOS_FIXOS = [
 
 const CARGAS = ['4h', '6h', '8h', 'Sem carga horária fixa', 'Outro']
 
+// Mesma escala do Censo SUAS (questão 37) — a tela do Censo lê e grava aqui
+const ESCOLARIDADES = ['Sem Escolaridade','Ensino Fundamental Incompleto','Ensino Fundamental Completo','Ensino Médio Incompleto','Ensino Médio Completo','Ensino Superior Incompleto','Ensino Superior Completo','Especialização','Mestrado','Doutorado']
+const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
+
 const DIAS = [
   'Segunda a sexta', 'Segunda, quarta e sexta', 'Terça e quinta',
   'Finais de semana', 'Dias alternados', 'Conforme escala',
@@ -93,6 +97,7 @@ const SITUACAO_COR = {
 
 const FORM_VAZIO = {
   nome:'', cpf:'', data_nascimento:'', funcao:'Assistente Social',
+  sexo:'', rg_numero:'', rg_orgao:'', rg_uf:'RJ', email:'', escolaridade:'',
   tem_registro_prof: false, conselho_prof:'CRESS', num_registro:'', uf_registro:'',
   tipo_vinculo:'CLT / Funcionário próprio da TEIAA', orgao_origem:'TEIAA',
   instrumento_vinc:'Contrato direto com a TEIAA', parceria_id:'',
@@ -182,6 +187,8 @@ export default function Equipe() {
   function editarPessoa(p) {
     setForm({
       nome:p.nome, cpf:p.cpf, data_nascimento:p.data_nascimento||'',
+      sexo:p.sexo||'', rg_numero:p.rg_numero||'', rg_orgao:p.rg_orgao||'', rg_uf:p.rg_uf||'RJ',
+      email:p.email||'', escolaridade:p.escolaridade||'',
       funcao:p.funcao, tem_registro_prof:p.tem_registro_prof||false,
       conselho_prof:p.conselho_prof||'CRESS', num_registro:p.num_registro||'',
       uf_registro:p.uf_registro||'', tipo_vinculo:p.tipo_vinculo,
@@ -374,6 +381,40 @@ export default function Equipe() {
                 <input type="date" value={form.data_nascimento} onChange={e=>setForm(f=>({...f,data_nascimento:e.target.value}))} style={s.input} />
               </div>
             </div>
+            <div style={s.grupo('1fr 1.2fr 1fr 0.6fr')}>
+              <div>
+                <label style={s.label}>Sexo</label>
+                <select value={form.sexo} onChange={e=>setForm(f=>({...f,sexo:e.target.value}))} style={s.input}>
+                  <option value="">—</option><option value="F">Feminino</option><option value="M">Masculino</option>
+                </select>
+              </div>
+              <div>
+                <label style={s.label}>RG — número</label>
+                <input value={form.rg_numero} onChange={e=>setForm(f=>({...f,rg_numero:e.target.value}))} style={s.input} />
+              </div>
+              <div>
+                <label style={s.label}>RG — órgão emissor</label>
+                <input value={form.rg_orgao} onChange={e=>setForm(f=>({...f,rg_orgao:e.target.value}))} placeholder="DETRAN" style={s.input} />
+              </div>
+              <div>
+                <label style={s.label}>RG — UF</label>
+                <select value={form.rg_uf} onChange={e=>setForm(f=>({...f,rg_uf:e.target.value}))} style={s.input}>
+                  <option value="">—</option>{UFS.map(u => <option key={u}>{u}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={s.grupo('1fr 1fr')}>
+              <div>
+                <label style={s.label}>E-mail</label>
+                <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={s.input} />
+              </div>
+              <div>
+                <label style={s.label}>Escolaridade</label>
+                <select value={form.escolaridade} onChange={e=>setForm(f=>({...f,escolaridade:e.target.value}))} style={s.input}>
+                  <option value="">—</option>{ESCOLARIDADES.map(x => <option key={x}>{x}</option>)}
+                </select>
+              </div>
+            </div>
             <div style={s.grupo('1fr 1fr')}>
               <div>
                 <label style={s.label}>Função exercida na TEIAA *</label>
@@ -551,6 +592,10 @@ export default function Equipe() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))', gap:8, marginTop:12 }}>
               {[
                 ['CPF', pessoaSel.cpf],
+                ['RG', pessoaSel.rg_numero ? `${pessoaSel.rg_numero}${pessoaSel.rg_orgao ? ' · ' + pessoaSel.rg_orgao : ''}${pessoaSel.rg_uf ? '/' + pessoaSel.rg_uf : ''}` : '—'],
+                ['Sexo', { F:'Feminino', M:'Masculino' }[pessoaSel.sexo] || '—'],
+                ['E-mail', pessoaSel.email||'—'],
+                ['Escolaridade', pessoaSel.escolaridade||'—'],
                 ['Tipo de vínculo', pessoaSel.tipo_vinculo],
                 ['Órgão de origem', pessoaSel.orgao_origem||'—'],
                 ['Instrumento', pessoaSel.instrumento_vinc||'—'],

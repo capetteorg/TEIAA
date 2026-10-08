@@ -18,6 +18,7 @@ const PlanosExecucao = lazy(() => import('./pages/PlanosExecucao'))
 const PainelOperacional = lazy(() => import('./pages/PainelOperacional'))
 const PainelTecnico = lazy(() => import('./pages/PainelTecnico'))
 const RelatoriosCentral = lazy(() => import('./pages/RelatoriosCentral'))
+const CensoSuas = lazy(() => import('./pages/CensoSuas'))
 const PrestacaoContas = lazy(() => import('./pages/PrestacaoContas'))
 const Backup = lazy(() => import('./pages/Backup'))
 const MinhaConta = lazy(() => import('./pages/MinhaConta'))
@@ -101,6 +102,7 @@ export default function App() {
         <Route path="painel-tecnico" element={<RotaProtegida perfisPermitidos={['tecnico']}><PainelTecnico /></RotaProtegida>} />
         <Route path="painel-diretoria" element={<RotaProtegida perfisPermitidos={['diretoria']}><PainelDiretoria /></RotaProtegida>} />
         <Route path="relatorios" element={<RotaProtegida perfisPermitidos={['admin','diretoria']}><RelatoriosCentral /></RotaProtegida>} />
+        <Route path="censo-suas" element={<RotaProtegida perfisPermitidos={['admin','operacional']}><CensoSuas /></RotaProtegida>} />
         <Route path="prestacao-contas" element={<RotaProtegida perfisPermitidos={['admin']}><PrestacaoContas /></RotaProtegida>} />
         <Route path="instituicao" element={<RotaProtegida perfisPermitidos={['admin']}><Instituicao /></RotaProtegida>} />
         <Route path="pendencias" element={<RotaProtegida perfisPermitidos={['admin']}><Pendencias /></RotaProtegida>} />
