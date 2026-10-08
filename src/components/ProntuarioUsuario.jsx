@@ -23,6 +23,27 @@ const ANAMNESE_VAZIA = {
   ...Object.fromEntries(CAMPOS_ANAMNESE.map(c => [c.k, c.tipo === 'checks' ? [] : ''])),
 }
 
+// Rótulo legível por chave de campo — usado no histórico de alterações.
+const LABEL_CAMPO_ANAMNESE = Object.fromEntries([
+  ...CAMPOS_ANAMNESE.map(c => [c.k, c.label]),
+  ['data_entrevista', 'Data da entrevista'],
+  ['entrevistado_nome', 'Entrevistado(a)'],
+  ['entrevistado_parentesco', 'Parentesco / vínculo'],
+])
+const valorHistorico = v => Array.isArray(v) ? v.join(', ') : (v == null ? '' : String(v))
+
+// Agrupa as linhas do histórico por "lote" (um mesmo salvar), mais recente
+// primeiro, para a tela mostrar "Fulana, tal dia: mudou A, B e C".
+function agruparHistorico(linhas) {
+  const grupos = new Map()
+  for (const h of linhas) {
+    const chave = h.lote || `${h.created_at}·${h.editor_nome}`
+    if (!grupos.has(chave)) grupos.set(chave, { lote: chave, editor_nome: h.editor_nome, quando: h.lote || h.created_at, itens: [] })
+    grupos.get(chave).itens.push(h)
+  }
+  return [...grupos.values()].sort((a, b) => (a.quando < b.quando ? 1 : -1))
+}
+
 // Campos curtos ficam lado a lado numa grade; textarea e checkboxes ocupam a linha toda.
 const TIPOS_COMPACTOS = ['text', 'idade', 'date', 'select']
 
@@ -48,8 +69,10 @@ const s = {
   secao: { fontSize:11.5, fontWeight:800, color:ESCURO, margin:'14px 0 7px', paddingBottom:4, borderBottom:'0.5px solid #E8E6DE' },
 }
 
-export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false, profissionalPadrao = null, abaInicial = 'anamnese' }) {
-  const [aba, setAba] = useState(abaInicial)
+export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false, profissionalPadrao = null, abaInicial = 'anamnese', verClinico = true }) {
+  // verClinico=false (operacional): só vê Frequência (comparecimento). Anamnese,
+  // PIA e recados da equipe são clínicos — ficam só para admin/técnico.
+  const [aba, setAba] = useState(verClinico ? abaInicial : 'frequencia')
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [usuarioCompleto, setUsuarioCompleto] = useState(usuario)
@@ -59,6 +82,9 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   const [editandoA, setEditandoA] = useState(false)
   const [formA, setFormA] = useState(ANAMNESE_VAZIA)
   const [salvandoA, setSalvandoA] = useState(false)
+  // Histórico de alterações da anamnese (quem/o quê/quando) — só admin e técnico
+  const [historico, setHistorico] = useState(null)
+  const [mostrarHistorico, setMostrarHistorico] = useState(false)
   // null = todas as seções abertas (admin/sem área); Set = só as do conjunto
   const [secoesAbertas, setSecoesAbertas] = useState(null)
   // Rascunho local: nunca perder trabalho digitado (guardado neste navegador)
@@ -192,6 +218,38 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
     setEditandoA(true)
   }
 
+  // Quem está alterando: técnico traz o profissionalPadrao; admin (ou qualquer
+  // outro) é resolvido pelo usuário logado na tabela usuarios.
+  async function quemEdita() {
+    if (profissionalPadrao?.nome) return { nome: profissionalPadrao.nome, profissional_id: profissionalPadrao.id || null }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase.from('usuarios').select('nome').eq('id', user.id).maybeSingle()
+        return { nome: data?.nome || user.email || 'Usuário', profissional_id: null }
+      }
+    } catch { /* sem sessão: cai no genérico */ }
+    return { nome: 'Usuário', profissional_id: null }
+  }
+
+  // Grava o histórico da alteração. Best-effort: se a tabela ainda não existir
+  // (SQL não rodado) ou der qualquer erro, o save da anamnese não é afetado.
+  async function registrarHistorico(anamneseId, mudancas, criou) {
+    try {
+      const quem = await quemEdita()
+      const lote = new Date().toISOString()
+      const base = { anamnese_id: anamneseId || null, usuario_atendido_id: usuario.id, editor_nome: quem.nome, profissional_id: quem.profissional_id, lote }
+      if (criou) {
+        await supabase.from('anamnese_historico').insert({ ...base, campo: '__criacao__', campo_label: 'Anamnese criada', valor_antigo: '', valor_novo: '' })
+      } else if (mudancas.length) {
+        await supabase.from('anamnese_historico').insert(mudancas.map(m => ({
+          ...base, campo: m.campo, campo_label: m.label,
+          valor_antigo: m.antigo.slice(0, 2000), valor_novo: m.novo.slice(0, 2000),
+        })))
+      }
+    } catch { /* histórico nunca quebra o salvar da anamnese */ }
+  }
+
   async function salvarAnamnese() {
     setSalvandoA(true); setMsg('')
     // Só envia os campos das seções que a profissional pode editar — assim o
@@ -209,13 +267,28 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
         c.tipo === 'checks' ? (Array.isArray(formA[c.k]) ? formA[c.k] : []) : (formA[c.k] || null),
       ])),
     }
+
+    // Antes de gravar, apura o que mudou (campo, valor antigo -> novo) para o
+    // histórico. Só entram os campos que este save realmente escreve.
+    const camposDiff = [...camposPermitidos.map(c => c.k), 'data_entrevista', 'entrevistado_nome', 'entrevistado_parentesco']
+    const mudancas = []
+    if (anamnese) {
+      for (const k of camposDiff) {
+        const antigo = valorHistorico(anamnese[k])
+        const novo = valorHistorico(dados[k])
+        if (antigo !== novo) mudancas.push({ campo: k, label: LABEL_CAMPO_ANAMNESE[k] || k, antigo, novo })
+      }
+    }
+
     const { error } = anamnese
       ? await supabase.from('anamneses').update(dados).eq('id', anamnese.id)
       : await supabase.from('anamneses').insert(dados)
     if (error) setMsg('Erro ao salvar anamnese: ' + error.message)
     else {
       const { data } = await supabase.from('anamneses').select('*').eq('usuario_atendido_id', usuario.id).maybeSingle()
+      await registrarHistorico(data?.id || anamnese?.id, mudancas, !anamnese)
       setAnamnese(data || null)
+      setHistorico(null) // força recarregar a linha do tempo com a nova alteração
       setEditandoA(false)
       try { localStorage.removeItem(chaveRascunho) } catch { /* sem acesso ao storage */ }
       setRascunhoPendente(null)
@@ -226,8 +299,24 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
     setSalvandoA(false)
   }
 
+  async function carregarHistorico() {
+    if (!podeEditar) return // histórico com valores clínicos: só admin/técnico
+    try {
+      const { data } = await supabase.from('anamnese_historico')
+        .select('*').eq('usuario_atendido_id', usuario.id)
+        .order('created_at', { ascending: false }).limit(300)
+      setHistorico(data || [])
+    } catch { setHistorico([]) }
+  }
+  useEffect(() => {
+    if (aba === 'anamnese' && mostrarHistorico && historico === null) carregarHistorico()
+  }, [aba, mostrarHistorico, historico]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // O PDF é carregado sob demanda e abre em outra janela: sem o catch, uma falha
+  // (pop-up bloqueado no celular, chunk que não baixou) não dizia nada à técnica.
   function imprimirAnamnese() {
-    gerarPDFAnamneseTeacolher(usuarioCompleto, { ...anamnese, profissional_nome: nomeProf(anamnese?.profissional_id) })
+    Promise.resolve(gerarPDFAnamneseTeacolher(usuarioCompleto, { ...anamnese, profissional_nome: nomeProf(anamnese?.profissional_id) }))
+      .catch(e => setMsg('Erro ao gerar o PDF da anamnese: ' + (e?.message || 'tente novamente.')))
   }
 
   // ---------- PIA ----------
@@ -311,7 +400,8 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   }
 
   function imprimirPia(plano) {
-    gerarPDFPiaTeacolher(usuarioCompleto, { ...plano, profissional_nome: nomeProf(plano?.profissional_id) })
+    Promise.resolve(gerarPDFPiaTeacolher(usuarioCompleto, { ...plano, profissional_nome: nomeProf(plano?.profissional_id) }))
+      .catch(e => setMsg('Erro ao gerar o PDF do PIA: ' + (e?.message || 'tente novamente.')))
   }
 
   function setMeta(i, campo, valor) {
@@ -322,7 +412,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   async function buscarFrequencia() {
     setFreqLoading(true); setMsg('')
     let q = supabase.from('atendimentos')
-      .select('data_atend,hora_inicio,area_atendimento,situacao,comparecimento,profissional_id')
+      .select('data_atend,hora_inicio,area_atendimento,situacao,comparecimento,profissional_id,atendido_relacao,pessoa_atendida')
       .eq('usuario_atendido_id', usuario.id)
       .order('data_atend', { ascending: true })
     if (freqModo === 'mes' && freqMes) {
@@ -349,10 +439,15 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
   const freqResumo = (() => {
     if (!freqLista) return null
     const normal = v => String(v || '').toLowerCase()
-    const compareceu = freqLista.filter(a => normal(a.comparecimento) === 'compareceu' || (normal(a.situacao) === 'realizado' && !a.comparecimento)).length
-    const faltas = freqLista.filter(a => ['faltou', 'falta justificada'].includes(normal(a.comparecimento))).length
+    // Atendimentos com a família (mãe/pai/responsável) NÃO entram na assiduidade
+    // da criança — são contados à parte.
+    const ehDaCrianca = a => (a.atendido_relacao || 'usuario') === 'usuario'
+    const daCrianca = freqLista.filter(ehDaCrianca)
+    const familia = freqLista.length - daCrianca.length
+    const compareceu = daCrianca.filter(a => normal(a.comparecimento) === 'compareceu' || (normal(a.situacao) === 'realizado' && !a.comparecimento)).length
+    const faltas = daCrianca.filter(a => ['faltou', 'falta justificada'].includes(normal(a.comparecimento))).length
     const base = compareceu + faltas
-    return { total: freqLista.length, compareceu, faltas, assiduidade: base > 0 ? Math.round(compareceu / base * 100) : null }
+    return { total: daCrianca.length, familia, compareceu, faltas, assiduidade: base > 0 ? Math.round(compareceu / base * 100) : null }
   })()
 
   // ---------- RECADOS DA EQUIPE ----------
@@ -526,19 +621,19 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
           <button onClick={onClose} style={{ background:'none', border:'none', fontSize:22, color:'#B4B2A9', cursor:'pointer', lineHeight:1, padding:0 }}>×</button>
         </div>
 
-        {/* Abas */}
+        {/* Abas — operacional (verClinico=false) só enxerga Frequência */}
         <div style={{ display:'flex', gap:6, padding:'10px 20px', borderBottom:'0.5px solid #F1EFE8', flexWrap:'wrap' }}>
-          <button onClick={() => setAba('anamnese')} style={s.tab(aba==='anamnese')}>Anamnese</button>
-          <button onClick={() => setAba('pia')} style={s.tab(aba==='pia')}>PIA — Plano Individual</button>
+          {verClinico && <button onClick={() => setAba('anamnese')} style={s.tab(aba==='anamnese')}>Anamnese</button>}
+          {verClinico && <button onClick={() => setAba('pia')} style={s.tab(aba==='pia')}>PIA — Plano Individual</button>}
           <button onClick={() => setAba('frequencia')} style={s.tab(aba==='frequencia')}>Frequência</button>
-          <button onClick={() => setAba('equipe')} style={{ ...s.tab(aba==='equipe'), position:'relative' }}>
+          {verClinico && <button onClick={() => setAba('equipe')} style={{ ...s.tab(aba==='equipe'), position:'relative' }}>
             💬 Equipe
             {badgeRecados > 0 && (
               <span style={{ position:'absolute', top:-5, right:-5, background:'#E8212A', color:'#fff', fontSize:9, fontWeight:800, borderRadius:99, minWidth:16, height:16, display:'inline-flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
                 {badgeRecados}
               </span>
             )}
-          </button>
+          </button>}
         </div>
 
         <div style={{ overflowY:'auto', padding:'14px 20px', flex:1 }}>
@@ -552,7 +647,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
           ) : (<>
 
             {/* ============ ANAMNESE ============ */}
-            {aba === 'anamnese' && !editandoA && (
+            {verClinico && aba === 'anamnese' && !editandoA && (
               <div>
                 {!anamnese ? (
                   <div style={{ textAlign:'center', padding:'2rem 1rem', color:'#888780', fontSize:13 }}>
@@ -569,10 +664,49 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                       {anamnese.updated_at ? <> · atualizada em {new Date(anamnese.updated_at).toLocaleDateString('pt-BR')}</> : ''}
                     </div>
                     <div style={{ display:'flex', gap:6 }}>
+                      {podeEditar && <button onClick={() => setMostrarHistorico(v => !v)} style={s.btn(mostrarHistorico ? ESCURO : '#F1EFE8', mostrarHistorico ? '#fff' : '#5F5E5A')}>🕓 Histórico</button>}
                       {podeEditar && <button onClick={abrirEdicaoAnamnese} style={s.btn('#F1EFE8','#5F5E5A')}>Editar</button>}
                       <button onClick={imprimirAnamnese} style={s.btn(ROXO)}>🖨 Imprimir anamnese</button>
                     </div>
                   </div>
+
+                  {/* Histórico de alterações — quem mudou o quê e quando. Todas as
+                      técnicas editam; aqui fica o rastro de cada alteração. */}
+                  {podeEditar && mostrarHistorico && (
+                    <div style={{ border:'0.5px solid #E8E6DE', borderRadius:10, background:'#FAFAF8', padding:'12px 14px', marginBottom:12 }}>
+                      <div style={{ fontSize:12, fontWeight:800, color:ESCURO, marginBottom:8 }}>Histórico de alterações</div>
+                      {historico === null ? (
+                        <div style={{ fontSize:12, color:'#B4B2A9' }}>Carregando...</div>
+                      ) : historico.length === 0 ? (
+                        <div style={{ fontSize:12, color:'#888780', lineHeight:1.6 }}>
+                          Nenhuma alteração registrada ainda. A partir de agora, cada edição salva fica registrada aqui com quem alterou, o que mudou e quando.
+                        </div>
+                      ) : (
+                        agruparHistorico(historico).map(grupo => (
+                          <div key={grupo.lote} style={{ borderLeft:'2px solid #D3D1C7', paddingLeft:10, marginBottom:12 }}>
+                            <div style={{ fontSize:11, color:'#5F5E5A', marginBottom:5 }}>
+                              <strong style={{ color:'#2C2C2A' }}>{grupo.editor_nome || 'Equipe'}</strong>
+                              {' · '}{new Date(grupo.quando).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+                            </div>
+                            {grupo.itens.map(h => (
+                              <div key={h.id} style={{ fontSize:11.5, color:'#2C2C2A', marginBottom:4 }}>
+                                {h.campo === '__criacao__' ? (
+                                  <span style={{ color:'#3B6D11', fontWeight:600 }}>Anamnese criada</span>
+                                ) : (<>
+                                  <span style={{ fontWeight:700 }}>{h.campo_label}</span>
+                                  <div style={{ display:'flex', gap:6, alignItems:'baseline', flexWrap:'wrap', marginTop:2 }}>
+                                    <span style={{ fontSize:11, color:'#A32D2D', background:'#FCEBEB', borderRadius:5, padding:'1px 6px', textDecoration:'line-through', maxWidth:320, overflow:'hidden', textOverflow:'ellipsis' }}>{h.valor_antigo || '(vazio)'}</span>
+                                    <span style={{ color:'#B4B2A9' }}>→</span>
+                                    <span style={{ fontSize:11, color:'#3B6D11', background:'#EAF3DE', borderRadius:5, padding:'1px 6px', maxWidth:320, overflow:'hidden', textOverflow:'ellipsis' }}>{h.valor_novo || '(vazio)'}</span>
+                                  </div>
+                                </>)}
+                              </div>
+                            ))}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                   {/* Visualização mostra só o que foi preenchido — a leitura fica limpa.
                       Para ver (e completar) todos os campos, é só entrar em Editar. */}
                   {SECOES_ANAMNESE.map(sec => {
@@ -610,7 +744,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
               </div>
             )}
 
-            {aba === 'anamnese' && editandoA && (
+            {verClinico && aba === 'anamnese' && editandoA && (
               <div>
                 {rascunhoPendente && (
                   <div style={{ fontSize:12, background:'#FAEEDA', border:'0.5px solid #E8C98A', color:'#854F0B', borderRadius:8, padding:'8px 12px', marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap:'wrap' }}>
@@ -734,7 +868,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
             )}
 
             {/* ============ PIA ============ */}
-            {aba === 'pia' && !editandoP && (
+            {verClinico && aba === 'pia' && !editandoP && (
               <div>
                 {planos.length === 0 ? (
                   <div style={{ textAlign:'center', padding:'2rem 1rem', color:'#888780', fontSize:13 }}>
@@ -811,7 +945,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
               </div>
             )}
 
-            {aba === 'pia' && editandoP && (
+            {verClinico && aba === 'pia' && editandoP && (
               <div>
                 <div style={{ fontSize:13, fontWeight:800, color:ESCURO, marginBottom:10 }}>
                   {editandoP === 'novo' ? 'Novo Plano Individual de Atendimento' : 'Editar PIA'}
@@ -937,7 +1071,8 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                       <input type="month" value={freqMes} onChange={e => setFreqMes(e.target.value)} style={{ ...s.input, width:170 }} />
                     </div>
                   )}
-                  <button onClick={() => gerarPDFFrequenciaTeacolher(usuarioCompleto, freqLista || [], periodoLabelFreq())}
+                  <button onClick={() => Promise.resolve(gerarPDFFrequenciaTeacolher(usuarioCompleto, freqLista || [], periodoLabelFreq()))
+                      .catch(e => setMsg('Erro ao gerar a folha de frequência: ' + (e?.message || 'tente novamente.')))}
                     disabled={!freqLista || freqLista.length === 0} style={s.btn(!freqLista || freqLista.length === 0 ? '#D3D1C7' : ROXO)}>
                     🖨 Imprimir folha de frequência
                   </button>
@@ -947,12 +1082,13 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                 ) : !freqLista || freqLista.length === 0 ? (
                   <div style={{ textAlign:'center', padding:'1.5rem', color:'#888780', fontSize:13 }}>Nenhum atendimento no período selecionado.</div>
                 ) : (<>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))', gap:8, marginBottom:12 }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(110px, 1fr))', gap:8, marginBottom:12 }}>
                     {[
-                      ['Sessões', freqResumo.total, AZUL],
+                      ['Sessões da criança', freqResumo.total, AZUL],
                       ['Compareceu', freqResumo.compareceu, '#3B6D11'],
                       ['Faltas', freqResumo.faltas, '#A32D2D'],
                       ['Assiduidade', freqResumo.assiduidade === null ? '—' : freqResumo.assiduidade + '%', ESCURO],
+                      ...(freqResumo.familia > 0 ? [['À família', freqResumo.familia, '#854F0B']] : []),
                     ].map(([l, v, cor]) => (
                       <div key={l} style={{ background:'#fff', border:'0.5px solid #E8E6DE', borderRadius:12, padding:'10px 12px' }}>
                         <div style={{ fontSize:9.5, color:'#888780', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:3 }}>{l}</div>
@@ -971,8 +1107,11 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
                         {freqLista.map((a, i) => {
                           const c = String(a.comparecimento || '').toLowerCase()
                           const sit = String(a.situacao || '').toLowerCase()
+                          const rel = a.atendido_relacao || 'usuario'
+                          const relLabel = rel === 'mae' ? 'Mãe' : rel === 'pai' ? 'Pai' : rel === 'responsavel' ? 'Responsável' : rel === 'outro' ? 'Outro' : ''
                           const [rotulo, cor, bg] =
-                            c === 'compareceu' || (sit === 'realizado' && !a.comparecimento) ? ['✓ Compareceu', '#3B6D11', '#EAF3DE']
+                            rel !== 'usuario' ? [`👪 À família — ${relLabel}`, '#854F0B', '#FAEEDA']
+                            : c === 'compareceu' || (sit === 'realizado' && !a.comparecimento) ? ['✓ Compareceu', '#3B6D11', '#EAF3DE']
                             : c === 'faltou' ? ['✗ Faltou', '#A32D2D', '#FCEBEB']
                             : c === 'falta justificada' ? ['✗ Falta justificada', '#854F0B', '#FAEEDA']
                             : sit === 'cancelado' ? ['Cancelado', '#888780', '#F1EFE8']
@@ -997,7 +1136,7 @@ export default function ProntuarioUsuario({ usuario, onClose, podeEditar = false
               </div>
             )}
             {/* ============ RECADOS DA EQUIPE ============ */}
-            {aba === 'equipe' && (
+            {verClinico && aba === 'equipe' && (
               <div>
                 {recadosErro && (
                   <div style={{ fontSize:12, padding:'8px 12px', borderRadius:8, background:'#FCEBEB', color:'#A32D2D', marginBottom:10 }}>{recadosErro}</div>

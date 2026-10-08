@@ -37,6 +37,7 @@ export default function RelatoriosCentral() {
   const [dataFim, setDataFim] = useState('')
   const [dados, setDados] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
   const [instituicao, setInstituicao] = useState(null)
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function RelatoriosCentral() {
   async function gerar() {
     setLoading(true)
     setDados(null)
+    setMsg('')
     try {
       const pId = projetoSel ? parseInt(projetoSel) : null
       const plId = planoSel ? parseInt(planoSel) : null
@@ -73,7 +75,10 @@ export default function RelatoriosCentral() {
       else if (aba === 'atendimentos') await gerarAtendimentos(pId)
       else if (aba === 'doacoes') await gerarDoacoes(pId)
     } catch(e) {
- }
+      // Sem isto o relatório falhava calado: o botão voltava ao normal e a tela
+      // ficava vazia, sem dizer o que aconteceu.
+      setMsg('Não foi possível gerar o relatório: ' + (e?.message || 'erro inesperado.'))
+    }
     setLoading(false)
   }
 
@@ -276,8 +281,9 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarPlanoAcao(plId) {
-    if (!plId) { alert('Selecione um plano de ação.'); return }
+    if (!plId) { setMsg('Selecione um plano de ação.'); return }
     const { data: plano } = await supabase.from('planos').select('*').eq('id', plId).single()
+    if (!plano) { setMsg('Plano de ação não encontrado.'); return }
     const { data: pvRows } = await supabase.from('plano_projetos')
       .select('*, projeto:projetos(*)')
       .eq('plano_id', plId).order('ordem')
@@ -301,8 +307,9 @@ export default function RelatoriosCentral() {
   }
 
   async function gerarRelatAnual(plId) {
-    if (!plId) { alert('Selecione um plano de ação.'); return }
+    if (!plId) { setMsg('Selecione um plano de ação.'); return }
     const { data: plano } = await supabase.from('planos').select('*').eq('id', plId).single()
+    if (!plano) { setMsg('Plano de ação não encontrado.'); return }
     const { data: pvRows } = await supabase.from('plano_projetos')
       .select('*, projeto:projetos(*)')
       .eq('plano_id', plId).order('ordem')
@@ -458,8 +465,8 @@ export default function RelatoriosCentral() {
   return (
     <div style={{ }}>
       {/* Topbar */}
-      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Central de Relatórios</div>
+      <div style={{ height: 62, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: isMobile ? '0 12px' : '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
+        <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 700, color: '#06344F', letterSpacing: '-.022em' }}>Central de Relatórios</div>
       </div>
       <div style={{ padding: isMobile ? '.75rem' : '1.25rem 1.5rem' }}>
 {/* Abas */}
@@ -553,6 +560,11 @@ export default function RelatoriosCentral() {
           )}
           {dados && <button onClick={exportarPDF} style={s.btn('#0E7EA8')}><i className="ti ti-file" style={{marginRight:4}} /> Exportar PDF</button>}
         </div>
+        {msg && (
+          <div style={{ marginTop:10, fontSize:12, color:'#854F0B', background:'#FFF6ED', border:'0.5px solid #F5D9B8', borderRadius:8, padding:'8px 12px' }}>
+            {msg}
+          </div>
+        )}
       </div>
 
       {/* ===== PLANO DE AÇÃO ===== */}

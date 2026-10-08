@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFListaUsuariosComProfissionais, gerarPDFAnexoOficialTeacolher, gerarPDFTermoAutorizacaoImagem } from '../lib/pdfLazy'
+import { gerarPDFListaUsuariosComProfissionais, gerarPDFAnexoOficialTeacolher, gerarPDFTermoAutorizacaoImagem, reservarJanelaImpressao } from '../lib/pdfLazy'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
@@ -249,6 +249,8 @@ export default function UsuariosAtendidos() {
   const usuariosTeacolher = usuarios.filter(usuarioEhTeacolher)
 
   async function imprimirListaComProfissionais() {
+    const janela = reservarJanelaImpressao() // abre antes da consulta (pop-up no celular)
+    if (!janela) { alert('O navegador bloqueou a janela. Libere pop-ups para imprimir.'); return }
     setImprimindoLista(true)
     try {
       const ids = usuariosTeacolher.map(u => u.id)
@@ -276,6 +278,7 @@ export default function UsuariosAtendidos() {
       })
       gerarPDFListaUsuariosComProfissionais(listaParaImprimir)
     } catch (e) {
+      if(!janela.closed) janela.close()
       alert('Erro ao gerar a lista: ' + e.message)
     } finally {
       setImprimindoLista(false)

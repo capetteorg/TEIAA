@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { gerarPDFAgendaTeacolher } from '../lib/pdfLazy'
+import { gerarPDFAgendaTeacolher, gerarPDFListaPresencaTeacolher } from '../lib/pdfLazy'
 
 const BLUE = '#0E7EA8', DARK = '#06344F', GREEN = '#6BBF2B', ORANGE = '#F4821F', RED = '#E8212A'
 
@@ -104,7 +104,8 @@ export default function PainelOperacional() {
     if (!uid) return
     setFichaLoading(true); setFichaUsuario(null); setFichaAtendimentos([]); setFichaItemAberto(null)
     const hoje = new Date().toISOString().slice(0, 10)
-    const sel = 'id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id,registro_tecnico,orientacao_familia,proxima_acao,desfecho_teacolher'
+    // Operacional não recebe os campos de evolução clínica — nem chegam ao navegador dele.
+    const sel = 'id,data_atend,hora_inicio,etapa_fluxo,area_atendimento,situacao,comparecimento,profissional_id'
     // Futuros e passados em consultas separadas — um único limit() ordenado por data podia
     // cortar antes de chegar nos agendamentos futuros mais próximos quando há muitas sessões
     // recorrentes distantes, escondendo o atendimento que de fato vem primeiro.
@@ -130,18 +131,43 @@ export default function PainelOperacional() {
     return { ini: iso(ini), fim: iso(fim) }
   }
 
-  async function imprimir() {
-    if (!projetoId) return
-    setImprimindo(true)
+  // Busca os atendimentos do período (e profissional, se filtrado). Reaproveitada
+  // pela agenda e pela lista de presença.
+  async function buscarPeriodoImpressao() {
     const { ini, fim } = periodoLabel(periodoImpressao)
-    let q = supabase.from('atendimentos').select('id,data_atend,hora_inicio,pessoa_atendida,profissional_id,etapa_fluxo,situacao,comparecimento').eq('projeto_id', projetoId).gte('data_atend', ini).lte('data_atend', fim).order('data_atend', { ascending:true }).order('hora_inicio', { ascending:true })
+    let q = supabase.from('atendimentos')
+      .select('id,data_atend,hora_inicio,pessoa_atendida,profissional_id,etapa_fluxo,area_atendimento,situacao,comparecimento,atendido_relacao')
+      .eq('projeto_id', projetoId).gte('data_atend', ini).lte('data_atend', fim)
+      .order('data_atend', { ascending:true }).order('hora_inicio', { ascending:true })
     if (profImpressao) q = q.eq('profissional_id', parseInt(profImpressao))
     const { data } = await q
-    setImprimindo(false)
     const prof = profImpressao ? equipe.find(e => String(e.id)===String(profImpressao)) : null
-    const titulo = periodoImpressao==='dia' ? 'Agenda diária' : periodoImpressao==='semana' ? 'Agenda semanal' : 'Agenda mensal'
     const pl = periodoImpressao==='dia' ? fmtData(ini) : `${fmtData(ini)} a ${fmtData(fim)}`
-    gerarPDFAgendaTeacolher((data||[]).map(a=>({...a,profissional_nome:profNome(a.profissional_id)})), titulo+' TEAcolher', { subtitulo: prof ? `${prof.nome} — ${prof.funcao}` : 'Todos os profissionais · Projeto TEAcolher', periodoLabel:pl })
+    return { lista: (data||[]).map(a=>({ ...a, profissional_nome: profNome(a.profissional_id) })), prof, pl }
+  }
+
+  // buscarPeriodoImpressao consulta o banco (await) ANTES de gerar o PDF, então a
+  // janela precisa ser aberta aqui, dentro do clique, antes desse await — senão o
+  // celular bloqueia como pop-up.
+  async function imprimir() {
+    if (!projetoId) return
+    const janela = window.open('', '_blank')
+    if (!janela) return
+    setImprimindo(true)
+    const { lista, prof, pl } = await buscarPeriodoImpressao()
+    const titulo = periodoImpressao==='dia' ? 'Agenda diária' : periodoImpressao==='semana' ? 'Agenda semanal' : 'Agenda mensal'
+    Promise.resolve(gerarPDFAgendaTeacolher(lista, titulo+' TEAcolher', { subtitulo: prof ? `${prof.nome} — ${prof.funcao}` : 'Todos os profissionais · Projeto TEAcolher', periodoLabel:pl, janela })).catch(()=>{ if(!janela.closed) janela.close() })
+    setImprimindo(false)
+  }
+
+  async function imprimirPresenca() {
+    if (!projetoId) return
+    const janela = window.open('', '_blank')
+    if (!janela) return
+    setImprimindo(true)
+    const { lista, prof, pl } = await buscarPeriodoImpressao()
+    Promise.resolve(gerarPDFListaPresencaTeacolher(lista, { periodoLabel: pl, profissionalNome: prof ? `${prof.nome} — ${prof.funcao}` : 'Todos os profissionais', janela })).catch(()=>{ if(!janela.closed) janela.close() })
+    setImprimindo(false)
   }
 
   const linhaItem = (a, i, total) => (
@@ -208,9 +234,9 @@ export default function PainelOperacional() {
         {/* RESUMO DO DIA */}
         {aba==='agenda' && (
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'300px 1fr', gap:14, alignItems:'start' }}>
-            {/* Imprimir agenda */}
+            {/* Imprimir agenda / lista de presença */}
             <div style={{ ...card, padding:14 }}>
-              <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:10 }}>Imprimir agenda</div>
+              <div style={{ fontSize:13, fontWeight:800, color:DARK, marginBottom:10 }}>Imprimir</div>
               <div style={{ display:'grid', gap:7 }}>
                 <select value={periodoImpressao} onChange={e=>setPeriodoImpressao(e.target.value)} style={{ border:'0.5px solid #D3D1C7', borderRadius:8, padding:'8px 9px', fontSize:12 }}>
                   <option value="dia">Hoje</option>
@@ -222,8 +248,12 @@ export default function PainelOperacional() {
                   {equipe.map(e=><option key={e.id} value={e.id}>{e.nome.split(' ').slice(0,2).join(' ')} — {e.funcao}</option>)}
                 </select>
                 <button onClick={imprimir} disabled={imprimindo} style={{ border:'none', borderRadius:8, background:DARK, color:'#fff', padding:'9px', fontSize:12, fontWeight:800, cursor:'pointer', opacity:imprimindo?.65:1 }}>
-                  {imprimindo?'Gerando…':'🖨 Imprimir'}
+                  {imprimindo?'Gerando…':'🖨 Agenda'}
                 </button>
+                <button onClick={imprimirPresenca} disabled={imprimindo} style={{ border:`1px solid ${DARK}`, borderRadius:8, background:'#fff', color:DARK, padding:'9px', fontSize:12, fontWeight:800, cursor:'pointer', opacity:imprimindo?.65:1 }}>
+                  {imprimindo?'Gerando…':'✓ Lista de presença'}
+                </button>
+                <div style={{ fontSize:10.5, color:'#B4B2A9' }}>A lista de presença mostra quem compareceu, faltou ou justificou no período — sem registro clínico.</div>
               </div>
             </div>
 
@@ -330,7 +360,6 @@ export default function PainelOperacional() {
                 const prof = equipe.find(e=>String(e.id)===String(a.profissional_id))
                 const aberto = fichaItemAberto === a.id
                 const faltou = a.comparecimento && a.comparecimento !== 'Compareceu'
-                const temEvolucao = a.registro_tecnico || a.orientacao_familia || a.proxima_acao || a.desfecho_teacolher
                 return (
                   <div key={a.id} style={{ borderRadius:9, border:'0.5px solid #E8E6DE', marginBottom:5, overflow:'hidden', background:i%2===0?'#fff':'#FAFAF8' }}>
                     <button onClick={() => setFichaItemAberto(aberto ? null : a.id)} style={{ width:'100%', border:'none', background:'none', padding:'9px 11px', cursor:'pointer', textAlign:'left' }}>
@@ -346,17 +375,18 @@ export default function PainelOperacional() {
                     </button>
                     {aberto && (
                       <div style={{ borderTop:'0.5px solid #E8E6DE', background:'#FAFAF8', padding:'9px 11px' }}>
+                        {/* Operacional vê só o comparecimento — a evolução clínica
+                            (registro técnico, orientação, desfecho) é sigilo da técnica. */}
                         {faltou ? (
-                          <div style={{ fontSize:11.5, color:'#A32D2D' }}>{a.comparecimento} — sem evolução técnica.</div>
-                        ) : !temEvolucao ? (
-                          <div style={{ fontSize:11.5, color:'#B4B2A9' }}>{a.situacao==='realizado' ? 'Sem registro técnico nesta sessão.' : 'Atendimento ainda não finalizado pelo técnico.'}</div>
-                        ) : (<>
-                          {a.registro_tecnico && <div style={{ fontSize:12, color:'#2C2C2A', lineHeight:1.5, background:'#fff', borderRadius:7, padding:'7px 9px', border:'0.5px solid #E8E6DE', marginBottom:5 }}>{a.registro_tecnico}</div>}
-                          {a.orientacao_familia && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:3 }}><span style={{ fontWeight:600 }}>Orientação: </span>{a.orientacao_familia}</div>}
-                          {a.proxima_acao && <div style={{ fontSize:11, color:'#5F5E5A', marginTop:2 }}><span style={{ fontWeight:600 }}>Próxima ação: </span>{a.proxima_acao}</div>}
-                          {a.desfecho_teacolher && <div style={{ fontSize:11, color:'#888780', marginTop:2 }}><span style={{ fontWeight:600 }}>Desfecho: </span>{a.desfecho_teacolher}</div>}
-                        </>)}
-                        <button onClick={() => navigate(`/atendimentos?abrir=${a.id}`)} style={{ marginTop:8, border:'none', borderRadius:7, background:'#F1EFE8', color:DARK, fontSize:10.5, fontWeight:700, padding:'5px 9px', cursor:'pointer' }}>Abrir atendimento completo →</button>
+                          <div style={{ fontSize:11.5, fontWeight:600, color:'#A32D2D' }}>{a.comparecimento}</div>
+                        ) : a.situacao==='realizado' ? (
+                          <div style={{ fontSize:11.5, fontWeight:600, color:'#3B6D11' }}>✓ Compareceu</div>
+                        ) : ['agendado','reagendado'].includes(a.situacao) ? (
+                          <div style={{ fontSize:11.5, color:'#185FA5' }}>Atendimento ainda não realizado.</div>
+                        ) : (
+                          <div style={{ fontSize:11.5, color:'#888780' }}>{a.situacao}</div>
+                        )}
+                        <div style={{ fontSize:10.5, color:'#B4B2A9', marginTop:6 }}>O registro técnico da sessão é visível apenas para a profissional responsável.</div>
                       </div>
                     )}
                   </div>

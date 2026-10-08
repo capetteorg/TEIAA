@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
-const LOGO_LETRAS = [['C','#F5C800'],['A','#F4821F'],['P','#8B2FC9'],['E','#E8212A'],['T','#6BBF2B'],['T','#4A8FD4'],['E','#E8207A']]
+// Fallback de marca caso /logo.png não carregue (as letras eram de outro
+// sistema — escreviam "CAPETTE" na tela de login da TEIAA).
+const LOGO_LETRAS = [['T','#0E7EA8'],['E','#96C11F'],['I','#06344F'],['A','#0E7EA8'],['A','#96C11F']]
 
 export default function Login() {
   const { login } = useAuth()

@@ -187,18 +187,32 @@ export default function PainelTecnico() {
 
   async function imprimir() {
     if (!prof.id||!projetoId) return
-    setImprimindo(true)
+    // A janela abre dentro do clique, antes da consulta ao banco — senão o
+    // celular bloqueia o pop-up. Fecha nos casos sem dado/erro.
+    const janela = window.open('', '_blank')
+    if (!janela) { setMsg('O navegador bloqueou a janela. Libere pop-ups para imprimir.'); return }
+    setImprimindo(true); setMsg('')
     const {ini,fim} = periodoLabel(periodo)
     const {data,error} = await supabase.from('atendimentos')
       .select('id,data_atend,hora_inicio,hora_fim,pessoa_atendida,usuario_atendido_id,etapa_fluxo,situacao,area_atendimento,comparecimento,profissional_id')
       .eq('projeto_id',projetoId).eq('profissional_id',prof.id)
       .gte('data_atend',ini).lte('data_atend',fim)
       .order('data_atend',{ascending:true}).order('hora_inicio',{ascending:true})
-    setImprimindo(false)
-    if (error) { setMsg('Erro: '+error.message); return }
+    if (error) { if(!janela.closed) janela.close(); setMsg('Erro: '+error.message); setImprimindo(false); return }
+    if (!data || data.length === 0) {
+      if(!janela.closed) janela.close()
+      setMsg('Nenhum atendimento seu neste período — não há agenda para imprimir.')
+      setImprimindo(false); return
+    }
     const titulo = periodo==='dia'?'Agenda diária':periodo==='semana'?'Agenda semanal':'Agenda mensal'
     const pl = periodo==='dia' ? fmtData(ini) : `${fmtData(ini)} a ${fmtData(fim)}`
-    gerarPDFAgendaTecnicoTeacolher((data||[]).map(a=>({...a,profissional_nome:prof.nome})), { titulo:titulo+' TEAcolher', periodoLabel:pl, profissionalNome:prof.nome||perfil?.nome||'Técnico', funcao:prof.funcao||'', tipo:periodo })
+    try {
+      await gerarPDFAgendaTecnicoTeacolher((data||[]).map(a=>({...a,profissional_nome:prof.nome})), { titulo:titulo+' TEAcolher', periodoLabel:pl, profissionalNome:prof.nome||perfil?.nome||'Técnico', funcao:prof.funcao||'', tipo:periodo, janela })
+    } catch (e) {
+      if(!janela.closed) janela.close()
+      setMsg('Não foi possível gerar a agenda: ' + (e?.message || 'erro inesperado.'))
+    }
+    setImprimindo(false)
   }
 
   const itemAgenda = (a, i, total) => (

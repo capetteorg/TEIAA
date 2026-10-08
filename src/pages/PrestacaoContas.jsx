@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const fimDe = m => { const [y,mo] = m.split('-'); return `${m}-${new Date(+y,+mo,0).getDate()}` }
 import { gerarPDFPrestacaoContas } from '../lib/pdfLazy'
@@ -17,6 +18,7 @@ const TIPO_LABEL = {
 }
 
 export default function PrestacaoContas() {
+  const isMobile = useIsMobile()
   const [contas, setContas] = useState([])
   const [contaSel, setContaSel] = useState(null)
   const [periodo, setPeriodo] = useState('total')
@@ -206,7 +208,7 @@ export default function PrestacaoContas() {
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>
               Identificação — {TIPO_LABEL[dados.conta.tipo_conta] || dados.conta.tipo_conta}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, fontSize: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: 8, fontSize: 12 }}>
               {[
                 ['Conta', dados.conta.nome],
                 ['Banco', dados.conta.banco],
@@ -238,7 +240,7 @@ export default function PrestacaoContas() {
           {/* Resumo financeiro */}
           <div style={s.card}>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: '.85rem' }}>Resumo financeiro</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,minmax(0,1fr))' : 'repeat(4,1fr)', gap: 10, marginBottom: 10 }}>
               {[
                 { label: 'Repasses recebidos', val: fmt(dados.totalRepasses), cor: VERDE },
                 { label: 'Rendimentos', val: fmt(dados.totalRendimentos), cor: '#0E7EA8' },
@@ -252,7 +254,7 @@ export default function PrestacaoContas() {
                 </div>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: 10 }}>
               {[
                 { label: 'Saldo remanescente', val: fmt(dados.saldoFinal), cor: dados.saldoFinal >= 0 ? VERDE : VERMELHO },
                 { label: 'Movimentações', val: dados.totalMovs, cor: '#5F5E5A' },

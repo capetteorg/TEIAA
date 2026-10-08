@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
-import { gerarPDFParecer, gerarPDFParecerAnual } from '../lib/pdfLazy'
+import { gerarPDFParecer, gerarPDFParecerAnual, reservarJanelaImpressao } from '../lib/pdfLazy'
 import { auditar } from '../lib/auditoria'
 import { confirmar } from '../lib/ui'
 
@@ -44,6 +44,8 @@ export default function Fechamento() {
   const [gerandoPDF, setGerandoPDF] = useState(null)
 
   async function gerarParecer(competencia, fechamento) {
+    const janela = reservarJanelaImpressao() // abre antes da consulta (pop-up no celular)
+    if (!janela) return
     setGerandoPDF(competencia)
     const [y,m] = competencia.split('-')
     const ult = new Date(parseInt(y),parseInt(m),0).getDate()
@@ -67,6 +69,8 @@ export default function Fechamento() {
   })()
 
   async function parecerAnual(ano) {
+    const janela = reservarJanelaImpressao() // abre antes da consulta (pop-up no celular)
+    if (!janela) return
     setGerandoPDF('anual-'+ano)
     const { data: movData } = await fetchAll(() => supabase.from('extrato_movs')
       .select('valor').gte('data', `${ano}-01-01`).lte('data', `${ano}-12-31`))

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../hooks/useAuth'
 import { useLocation } from 'react-router-dom'
-import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher } from '../lib/pdfLazy'
+import { gerarPDFAtendimentos, gerarPDFCronogramaTeacolher, gerarPDFFrequenciaTeacolher, gerarPDFAgendaTeacolher, gerarPDFFichaAtendimentoTeacolher, reservarJanelaImpressao } from '../lib/pdfLazy'
 import { areaPelaFuncao } from '../lib/areas'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
@@ -136,6 +136,7 @@ const FORM_VAZIO = {
   projeto_id: '',
   usuario_atendido_id: '',
   pessoa_atendida: '',
+  atendido_relacao: 'usuario', // quem foi atendido: usuario | mae | pai | responsavel | outro
   profissional_id: '',
   equipe_ids: [],
   etapa_fluxo: 'Acolhimento inicial',
@@ -237,11 +238,16 @@ export default function Atendimentos() {
   const isTecnico = perfilAtual === 'tecnico'
   const tecnicoEquipeId = perfil?.equipe_id ? String(perfil.equipe_id) : ''
   const tecnicoNome = perfil?.nome || 'Técnico'
-  const podeAgendar = isAdmin || isOperacional
-  const podeEditarAgendamento = isAdmin || isOperacional
+  // Técnica também agenda — mas só na agenda dela (o profissional fica travado
+  // no próprio nome, ver formulário). Precisa estar vinculada a um profissional.
+  const podeAgendar = isAdmin || isOperacional || (isTecnico && !!tecnicoEquipeId)
+  const podeEditarAgendamento = isAdmin || isOperacional || (isTecnico && !!tecnicoEquipeId)
   const podeFinalizar = isAdmin || isTecnico
   const podeEditarRegistro = isAdmin || isTecnico
   const podeExcluir = isAdmin
+  // Evolução clínica (registro técnico, orientação, próxima ação, desfecho) é
+  // sigilo da técnica: o operacional vê no máximo se a pessoa compareceu.
+  const podeVerEvolucao = isAdmin || isTecnico
   const podeAcessarFormulario = modoResultado ? podeFinalizar : podeAgendar
 
   useEffect(() => {
@@ -289,7 +295,7 @@ export default function Atendimentos() {
       supabase.from('projetos').select('id,nome,tipo').eq('aceita_atendimentos', true).order('nome'),
       supabase.from('equipe').select('id,nome,funcao,projetos').eq('situacao', 'ativo').order('nome'),
       supabase.from('projeto_equipe').select('projeto_id,equipe_id'),
-      supabase.from('usuarios_atendidos').select('id,nome,situacao,projeto_id').eq('situacao', 'ativo').order('nome'),
+      supabase.from('usuarios_atendidos').select('id,nome,situacao,projeto_id,contato_familiar_nome,contato_familiar_parentesco').eq('situacao', 'ativo').order('nome'),
     ])
 
     const projetosData = projs.data || []
@@ -371,106 +377,35 @@ export default function Atendimentos() {
     const p = profissional(id)
     return p?.nome ? p.nome.split(' ').slice(0, 2).join(' ') : '—'
   }
-  const nomeAtendido = a => nomeUsuario(a.usuario_atendido_id) || a.pessoa_atendida || '—'
+  const nomeAtendido = a => {
+    const base = nomeUsuario(a.usuario_atendido_id) || a.pessoa_atendida || '—'
+    const rel = a.atendido_relacao
+    if (rel && rel !== 'usuario') {
+      const label = rel === 'mae' ? 'mãe' : rel === 'pai' ? 'pai' : rel === 'responsavel' ? 'responsável' : 'família'
+      return `${base} (${label})`
+    }
+    return base
+  }
   const etapaAtendimento = a => a.etapa_fluxo || a.tipo_atend || '—'
   const ehAgendado = a => ['agendado', 'reagendado'].includes(String(a.situacao || '').toLowerCase())
   const atendimentoDoTecnico = a => !isTecnico || (tecnicoEquipeId && String(a.profissional_id) === String(tecnicoEquipeId))
   const podeAtuarNoAtendimento = a => isAdmin || (isTecnico && atendimentoDoTecnico(a))
 
-  function escapeHtml(v = '') {
-    return String(v ?? '').replace(/[&<>"']/g, ch => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;',
-    }[ch]))
-  }
-
-  function abrirJanelaImpressao(titulo, conteudo) {
-    const win = window.open('', '_blank', 'width=960,height=720')
-    if (!win) {
-      setMsg('Erro: o navegador bloqueou a janela de impressão. Libere pop-ups para imprimir.')
-      return
-    }
-
-    win.document.write(`<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(titulo)}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #1f2937; margin: 0; padding: 24px; background: #fff; }
-    .topo { border-bottom: 2px solid #0E7EA8; padding-bottom: 12px; margin-bottom: 18px; }
-    .org { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; font-weight: 700; }
-    h1 { margin: 4px 0 2px; font-size: 22px; color: #06344F; }
-    .sub { font-size: 12px; color: #64748b; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
-    .campo { border: 1px solid #e5e7eb; border-radius: 10px; padding: 9px 10px; min-height: 44px; }
-    .rotulo { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-    .valor { font-size: 13px; color: #111827; white-space: pre-wrap; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th { text-align: left; font-size: 11px; color: #475569; background: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 8px; }
-    td { font-size: 12px; border-bottom: 1px solid #e5e7eb; padding: 8px; vertical-align: top; }
-    .assinatura { margin-top: 42px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
-    .linha { border-top: 1px solid #111827; text-align: center; padding-top: 6px; font-size: 11px; color: #334155; }
-    .rodape { margin-top: 18px; font-size: 10px; color: #94a3b8; }
-    @media print {
-      body { padding: 16mm; }
-      .no-print { display: none !important; }
-      .campo { break-inside: avoid; }
-      table { break-inside: auto; }
-      tr { break-inside: avoid; break-after: auto; }
-    }
-  </style>
-</head>
-<body>${conteudo}</body>
-</html>`)
-    win.document.close()
-    win.focus()
-    setTimeout(() => win.print(), 250)
-  }
 
   function imprimirAgenda() {
+    // O pdfLazy abre a janela dentro do clique (antes do await do import).
     const titulo = isTecnico ? 'Meus atendimentos TEAcolher' : 'Agenda TEAcolher'
-    const profissionalFiltro = isTecnico ? (profissional(tecnicoEquipeId)?.nome || tecnicoNome) : (filtros.profissional_id ? profissional(filtros.profissional_id)?.nome : 'Todos os profissionais')
-    const linhas = atendimentos.map(a => `
-      <tr>
-        <td>${escapeHtml(fmtData(a.data_atend))}</td>
-        <td>${escapeHtml(fmtHora(a.hora_inicio))}</td>
-        <td>${escapeHtml(nomeAtendido(a))}</td>
-        <td>${escapeHtml(etapaAtendimento(a))}</td>
-        <td>${escapeHtml(a.area_atendimento || '—')}</td>
-        <td>${escapeHtml(profissionalNome(a.profissional_id))}</td>
-        <td>${escapeHtml(a.situacao || '—')}</td>
-      </tr>
-    `).join('')
-
-    abrirJanelaImpressao(titulo, `
-      <div class="topo">
-        <div class="org">Associação TEIAA · Projeto TEAcolher</div>
-        <h1>${escapeHtml(titulo)}</h1>
-        <div class="sub">Lista limpa para conferência, execução e assinatura. Emitido em ${escapeHtml(new Date().toLocaleString('pt-BR'))}.</div>
-      </div>
-      <div class="grid">
-        <div class="campo"><div class="rotulo">Profissional</div><div class="valor">${escapeHtml(profissionalFiltro || '—')}</div></div>
-        <div class="campo"><div class="rotulo">Registros na lista</div><div class="valor">${atendimentos.length}</div></div>
-        <div class="campo"><div class="rotulo">Data início</div><div class="valor">${escapeHtml(filtros.dataInicio ? fmtData(filtros.dataInicio) : 'Não filtrado')}</div></div>
-        <div class="campo"><div class="rotulo">Data fim</div><div class="valor">${escapeHtml(filtros.dataFim ? fmtData(filtros.dataFim) : 'Não filtrado')}</div></div>
-      </div>
-      <table>
-        <thead>
-          <tr><th>Data</th><th>Hora</th><th>Usuário/família</th><th>Etapa</th><th>Área</th><th>Profissional</th><th>Situação</th></tr>
-        </thead>
-        <tbody>${linhas || '<tr><td colspan="7">Nenhum atendimento encontrado.</td></tr>'}</tbody>
-      </table>
-      <div class="assinatura">
-        <div class="linha">Assinatura do profissional</div>
-        <div class="linha">Coordenação / conferência</div>
-      </div>
-      <div class="rodape">Documento gerado pelo AGENDO Integra · TEAcolher.</div>
-    `)
+    const periodoLabel = (filtros.dataInicio || filtros.dataFim)
+      ? `${filtros.dataInicio ? fmtData(filtros.dataInicio) : 'início'} a ${filtros.dataFim ? fmtData(filtros.dataFim) : 'hoje'}`
+      : 'Todo o período'
+    const quem = isTecnico
+      ? (profissional(tecnicoEquipeId)?.nome || tecnicoNome)
+      : (filtros.profissional_id ? (profissional(filtros.profissional_id)?.nome || '—') : 'Todos os profissionais')
+    Promise.resolve(gerarPDFAgendaTeacolher(
+      atendimentos.map(a => ({ ...a, pessoa_atendida: nomeAtendido(a), profissional_nome: profissionalNome(a.profissional_id) })),
+      titulo,
+      { subtitulo: `${quem} · ${periodoLabel}`, periodoLabel, ocultarProfissional: isTecnico }
+    )).catch(e => setMsg('Erro ao gerar a agenda: ' + (e?.message || 'tente novamente.')))
   }
 
   // Busca TODOS os atendimentos do projeto, paginando de 1000 em 1000, sem depender do limite
@@ -498,6 +433,8 @@ export default function Atendimentos() {
   }
 
   async function gerarCronograma() {
+    const janela = reservarJanelaImpressao() // abre antes da consulta (pop-up no celular)
+    if (!janela) { setMsg('O navegador bloqueou a janela. Libere pop-ups para imprimir.'); return }
     setGerandoRelatorio(true)
     setMsg('')
     try {
@@ -507,6 +444,7 @@ export default function Atendimentos() {
       // troco esse valor pra bater 100% com o Mês 1 oficial do contrato.
       gerarPDFCronogramaTeacolher(tudo)
     } catch (e) {
+      if(!janela.closed) janela.close()
       setMsg('Erro ao gerar cronograma: ' + e.message)
     } finally {
       setGerandoRelatorio(false)
@@ -514,46 +452,11 @@ export default function Atendimentos() {
   }
 
   function imprimirFicha(a) {
-    const prof = profissional(a.profissional_id)
-    const campo = (rotulo, valor) => `
-      <div class="campo">
-        <div class="rotulo">${escapeHtml(rotulo)}</div>
-        <div class="valor">${escapeHtml(valor || '—')}</div>
-      </div>
-    `
-
-    abrirJanelaImpressao('Ficha de atendimento TEAcolher', `
-      <div class="topo">
-        <div class="org">Associação TEIAA · Projeto TEAcolher</div>
-        <h1>Ficha de atendimento TEAcolher</h1>
-        <div class="sub">Registro individual para agenda, execução técnica e prestação de contas.</div>
-      </div>
-      <div class="grid">
-        ${campo('Data', fmtData(a.data_atend))}
-        ${campo('Horário', `${fmtHora(a.hora_inicio)} às ${fmtHora(a.hora_fim)}`)}
-        ${campo('Usuário/família', nomeAtendido(a))}
-        ${campo('Profissional responsável', prof ? `${prof.nome} — ${prof.funcao || ''}` : '—')}
-        ${campo('Etapa do fluxo', etapaAtendimento(a))}
-        ${campo('Área / modalidade', `${a.area_atendimento || '—'} · ${a.modalidade_atendimento || '—'}`)}
-        ${campo('Situação', a.situacao)}
-        ${campo('Comparecimento', a.comparecimento)}
-        ${campo('Duração', a.duracao_minutos ? `${a.duracao_minutos} minutos` : '—')}
-        ${campo('Participantes', a.participantes_atendimento)}
-      </div>
-      ${campo('Objetivo / observação do agendamento', a.objetivo_atendimento || a.tema || a.descricao)}
-      ${campo('Demanda identificada', a.demanda_identificada)}
-      ${campo('Registro técnico / evolução', a.registro_tecnico)}
-      ${campo('Orientação prestada à família', a.orientacao_familia)}
-      ${campo('Devolutiva à família', a.devolutiva_familia)}
-      ${campo('Encaminhamento', [a.tipo_encaminhamento, a.rede_encaminhada, a.encaminhamentos].filter(Boolean).join(' · '))}
-      ${campo('Próxima ação', a.proxima_acao)}
-      ${campo('Desfecho TEAcolher', a.desfecho_teacolher)}
-      <div class="assinatura">
-        <div class="linha">Assinatura do profissional</div>
-        <div class="linha">Assinatura do responsável / conferência</div>
-      </div>
-      <div class="rodape">Documento gerado pelo AGENDO Integra · TEAcolher.</div>
-    `)
+    // O pdfLazy já abre a janela dentro do clique (antes do await do import), então
+    // aqui é só chamar. Erro fecha a janela e avisa.
+    Promise.resolve(gerarPDFFichaAtendimentoTeacolher(
+      { ...a, pessoa_atendida: nomeAtendido(a), profissional_nome: profissional(a.profissional_id)?.nome || '—' }
+    )).catch(e => setMsg('Erro ao gerar a ficha: ' + (e?.message || 'tente novamente.')))
   }
 
   function rolarParaFormulario() {
@@ -564,7 +467,16 @@ export default function Atendimentos() {
   }
 
   function abrirNovoAgendamento(teaId = projetoTeacolherId) {
-    setForm({ ...FORM_VAZIO, projeto_id: teaId || '' })
+    // Técnica agendando: já entra travada no próprio nome e com a área sugerida
+    // pela função dela — não precisa (nem pode) escolher outro profissional.
+    const prof = isTecnico ? equipeTEAcolher.find(e => String(e.id) === String(tecnicoEquipeId)) : null
+    const areaSugerida = prof ? areaPelaFuncao(prof.funcao) : null
+    setForm({
+      ...FORM_VAZIO,
+      projeto_id: teaId || '',
+      ...(isTecnico ? { profissional_id: tecnicoEquipeId } : {}),
+      ...(areaSugerida ? { area_atendimento: areaSugerida } : {}),
+    })
     setEditando(null)
     setModoResultado(false)
     setMostrarForm(true)
@@ -580,14 +492,37 @@ export default function Atendimentos() {
     setDataFimRecorrencia('')
   }
 
+  // Monta o nome de quem foi atendido conforme a relação escolhida. Mãe/pai/
+  // responsável puxam o contato do cadastro da criança quando existe.
+  function nomePessoaAtendida(u, relacao) {
+    if (!u) return ''
+    if (relacao === 'usuario') return u.nome || ''
+    const label = relacao === 'mae' ? 'Mãe' : relacao === 'pai' ? 'Pai' : relacao === 'responsavel' ? 'Responsável' : ''
+    if (!label) return '' // 'outro' → texto livre
+    return u.contato_familiar_nome ? `${label}: ${u.contato_familiar_nome}` : `${label} de ${u.nome || 'usuário'}`
+  }
+
   function preencherUsuario(id) {
     const u = usuariosAtendidos.find(x => String(x.id) === String(id))
-    setForm(f => ({ ...f, usuario_atendido_id: id, pessoa_atendida: u?.nome || f.pessoa_atendida }))
+    setForm(f => ({ ...f, usuario_atendido_id: id, pessoa_atendida: nomePessoaAtendida(u, f.atendido_relacao) || u?.nome || f.pessoa_atendida }))
+  }
+
+  function trocarRelacao(relacao) {
+    const u = usuariosAtendidos.find(x => String(x.id) === String(form.usuario_atendido_id))
+    // 'outro' deixa o nome livre para digitar; os demais preenchem automático.
+    setForm(f => ({ ...f, atendido_relacao: relacao, ...(relacao === 'outro' ? {} : { pessoa_atendida: nomePessoaAtendida(u, relacao) }) }))
   }
 
   function montarForm(a, finalizar = false) {
     if (finalizar && isTecnico && !atendimentoDoTecnico(a)) {
       setMsg('Erro: técnico só pode finalizar atendimento direcionado a ele.')
+      return
+    }
+    // Abrir um atendimento já realizado entra no formulário de finalização, que
+    // exibe a evolução clínica. Isso é só do técnico/admin — o operacional pára
+    // no comparecimento (que ele vê na lista de presença).
+    if (!podeVerEvolucao && (finalizar || !ehAgendado(a))) {
+      setMsg('Somente o técnico responsável registra ou consulta a evolução deste atendimento. Você pode ver o comparecimento na lista de presença.')
       return
     }
     const etapa = a.etapa_fluxo || a.tipo_atend || 'Acolhimento inicial'
@@ -598,6 +533,7 @@ export default function Atendimentos() {
       projeto_id: a.projeto_id || projetoTeacolherId || '',
       usuario_atendido_id: a.usuario_atendido_id || '',
       pessoa_atendida: a.pessoa_atendida || nomeUsuario(a.usuario_atendido_id) || '',
+      atendido_relacao: a.atendido_relacao || 'usuario',
       profissional_id: a.profissional_id || '',
       equipe_ids: (a.equipe_ids || []).map(String),
       etapa_fluxo: etapa,
@@ -668,6 +604,12 @@ export default function Atendimentos() {
       setMsg('Erro: técnico só pode finalizar atendimento direcionado a ele.')
       return
     }
+    // Técnica agendando: o profissional tem que ser ela mesma (o campo já vem
+    // travado, isto é só a rede de segurança contra dado manipulado).
+    if (!modoResultado && isTecnico && String(form.profissional_id) !== String(tecnicoEquipeId)) {
+      setMsg('Erro: você só pode agendar atendimentos na sua própria agenda.')
+      return
+    }
 
     setSalvando(true)
 
@@ -692,6 +634,7 @@ export default function Atendimentos() {
       projeto_id: form.projeto_id ? parseInt(form.projeto_id) : (projetoTeacolherId ? parseInt(projetoTeacolherId) : null),
       usuario_atendido_id: form.usuario_atendido_id ? parseInt(form.usuario_atendido_id) : null,
       pessoa_atendida: form.pessoa_atendida || null,
+      atendido_relacao: form.atendido_relacao || 'usuario',
       profissional_id: form.profissional_id ? parseInt(form.profissional_id) : null,
       equipe_ids: modoResultado ? form.equipe_ids.map(id => parseInt(id)) : [],
       tipo_atend: form.etapa_fluxo || 'Atendimento TEAcolher',
@@ -777,10 +720,10 @@ export default function Atendimentos() {
   }
 
   return (
-    <div style={{ padding:'1.25rem 1.5rem' }}>
+    <div style={{ padding: isMobile ? '.75rem' : '1.25rem 1.5rem' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:8 }}>
         <div>
-          <div style={{ fontSize:22, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>
+          <div style={{ fontSize:isMobile?17:22, fontWeight:800, letterSpacing:'-0.035em', color:ESCURO }}>
             {isTecnico ? 'Meus atendimentos TEAcolher' : 'Agenda e Execução TEAcolher'}
           </div>
           {!isTecnico && (
@@ -811,7 +754,9 @@ export default function Atendimentos() {
       {/* Filtros — técnico vê inline sempre visível, admin/operacional mantém colapsável */}
       {isTecnico ? (
         <div style={{ ...s.card, marginBottom:'1rem', padding:'12px 14px' }}>
-          <div style={{ display:'grid', gridTemplateColumns:isMobile ? '1fr 1fr' : '1fr 1fr 1fr auto', gap:8, alignItems:'flex-end' }}>
+          {/* minmax(0,1fr) preserva as 2 colunas no celular — a regra global de
+              mobile do index.css colapsa qualquer "1fr 1fr" para 1 coluna */}
+          <div style={{ display:'grid', gridTemplateColumns:isMobile ? 'repeat(2,minmax(0,1fr))' : '1fr 1fr 1fr auto', gap:8, alignItems:'flex-end' }}>
             <div>
               <label style={s.label}>De</label>
               <input type="date" value={filtros.dataInicio} onChange={e=>setFiltros(f=>({...f,dataInicio:e.target.value}))} style={s.input} />
@@ -925,6 +870,8 @@ export default function Atendimentos() {
           </div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
             <button onClick={async () => {
+              const janela = reservarJanelaImpressao() // abre antes da consulta (pop-up no celular)
+              if (!janela) { setMsg('O navegador bloqueou a janela. Libere pop-ups para imprimir.'); return }
               setGerandoRelatorio(true); setMsg('')
               try {
                 let lista = await buscarTodosParaRelatorio()
@@ -936,7 +883,7 @@ export default function Atendimentos() {
                   ? `${fmtData(filtroRelatorio.dataInicio)} a ${fmtData(filtroRelatorio.dataFim)}`
                   : filtroRelatorio.tipo === 'completo' ? 'Todo o histórico' : filtroRelatorio.tipo
                 gerarPDFAtendimentos({ lista }, periodoLabel)
-              } catch(e) { setMsg('Erro: ' + e.message) } finally { setGerandoRelatorio(false) }
+              } catch(e) { if(!janela.closed) janela.close(); setMsg('Erro: ' + e.message) } finally { setGerandoRelatorio(false) }
             }} disabled={gerandoRelatorio} style={s.btn(gerandoRelatorio ? '#D3D1C7' : '#06344F')}>
               {gerandoRelatorio ? 'Gerando...' : 'Relatório TEAcolher'}
             </button>
@@ -1043,7 +990,7 @@ export default function Atendimentos() {
                       {podeEditReg && (
                         <button onClick={() => montarForm(a, true)} style={{ ...s.btn('#F1EFE8', '#5F5E5A'), flex:'1 1 100px' }}>Editar registro</button>
                       )}
-                      <button onClick={() => imprimirFicha(a)} style={{ ...s.btn('#EEF2F7', '#334155'), flex:'1 1 100px' }}>Imprimir ficha</button>
+                      {podeVerEvolucao && <button onClick={() => imprimirFicha(a)} style={{ ...s.btn('#EEF2F7', '#334155'), flex:'1 1 100px' }}>Imprimir ficha</button>}
                       {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={{ ...s.btn('#FCEBEB', '#A32D2D'), flex:'1 1 80px' }}>Excluir</button>}
                     </div>
                   )}
@@ -1072,7 +1019,7 @@ export default function Atendimentos() {
                           {podeFinalizar && podeAtuarNoAtendimento(a) && ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn(VERDE)}>Finalizar atendimento</button>}
                           {podeEditarAgendamento && ehAgendado(a) && <button onClick={() => montarForm(a, false)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar agenda</button>}
                           {podeEditarRegistro && podeAtuarNoAtendimento(a) && !ehAgendado(a) && <button onClick={() => montarForm(a, true)} style={s.btn('#F1EFE8', '#5F5E5A')}>Editar registro</button>}
-                          <button onClick={() => imprimirFicha(a)} style={s.btn('#EEF2F7', '#334155')}>Imprimir ficha</button>
+                          {podeVerEvolucao && <button onClick={() => imprimirFicha(a)} style={s.btn('#EEF2F7', '#334155')}>Imprimir ficha</button>}
                           {podeExcluir && <button onClick={() => setConfirmandoExcluir(a.id)} style={s.btn('#FCEBEB', '#A32D2D')}>Excluir</button>}
                         </div>
                       </td>
@@ -1126,12 +1073,18 @@ export default function Atendimentos() {
 
               {/* situação fica sempre 'agendado' ao criar — não precisa de campo */}
 
-              <div style={s.grupo('1.2fr 1fr')}>
+              <div style={s.grupo('1.4fr 1fr 1fr')}>
                 <div>
                   <label style={s.label}>Usuário/família cadastrada *</label>
                   <select value={form.usuario_atendido_id} onChange={e=>preencherUsuario(e.target.value)} style={s.input} required>
                     <option value="">Selecione o usuário atendido...</option>
                     {usuariosTEAcolher.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                    {/* A lista só traz usuários ativos. Se a criança foi desligada depois
+                        do agendamento, o select ficava vazio e o "required" travava o
+                        técnico na finalização do atendimento já realizado. */}
+                    {form.usuario_atendido_id && !usuariosTEAcolher.some(u => String(u.id) === String(form.usuario_atendido_id)) && (
+                      <option value={form.usuario_atendido_id}>{form.pessoa_atendida || 'Usuário do atendimento'} (desligado)</option>
+                    )}
                   </select>
                   {form.usuario_atendido_id && (
                     <button type="button"
@@ -1140,13 +1093,27 @@ export default function Atendimentos() {
                         setProntuarioDe({ id: parseInt(form.usuario_atendido_id), nome: u?.nome || form.pessoa_atendida || 'Usuário' })
                       }}
                       style={{ marginTop:5, fontSize:11, border:'0.5px solid #D3D1C7', borderRadius:6, background:'#fff', padding:'4px 10px', cursor:'pointer', color:'#06344F', fontWeight:600 }}>
-                      📋 Abrir prontuário — anamnese, PIA e recados
+                      {/* O operacional só vê a frequência no prontuário — o texto não promete o que ele não verá. */}
+                      📋 Abrir prontuário{podeVerEvolucao ? ' — anamnese, PIA e recados' : ' — frequência'}
                     </button>
                   )}
                 </div>
                 <div>
-                  <label style={s.label}>Nome livre / família atendida</label>
-                  <input value={form.pessoa_atendida} onChange={e=>setForm(f=>({...f,pessoa_atendida:e.target.value}))} style={s.input} placeholder="Preenche automático ao selecionar" />
+                  <label style={s.label}>Quem será atendido *</label>
+                  <select value={form.atendido_relacao} onChange={e=>trocarRelacao(e.target.value)} style={s.input} required>
+                    <option value="usuario">O próprio usuário</option>
+                    <option value="mae">Mãe</option>
+                    <option value="pai">Pai</option>
+                    <option value="responsavel">Responsável</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                  {form.atendido_relacao !== 'usuario' && (
+                    <div style={{ fontSize:10.5, color:'#854F0B', marginTop:3 }}>Atendimento à família — não conta na frequência da criança.</div>
+                  )}
+                </div>
+                <div>
+                  <label style={s.label}>Nome livre / pessoa atendida</label>
+                  <input value={form.pessoa_atendida} onChange={e=>setForm(f=>({...f,pessoa_atendida:e.target.value}))} style={s.input} placeholder="Preenche automático" />
                 </div>
               </div>
 
@@ -1161,14 +1128,14 @@ export default function Atendimentos() {
                       const areaSugerida = prof ? areaPelaFuncao(prof.funcao) : null
                       setForm(f => ({ ...f, profissional_id: id, ...(areaSugerida ? { area_atendimento: areaSugerida } : {}) }))
                     }}
-                    style={{ ...s.input, background:modoResultado && isTecnico ? '#F8FAFC' : '#fff', color:modoResultado && isTecnico ? '#334155' : undefined }}
+                    style={{ ...s.input, background:isTecnico ? '#F8FAFC' : '#fff', color:isTecnico ? '#334155' : undefined }}
                     required
-                    disabled={modoResultado && isTecnico}
+                    disabled={isTecnico}
                   >
                     <option value="">Selecione...</option>
                     {(isTecnico ? equipeTEAcolher.filter(e => String(e.id) === String(tecnicoEquipeId)) : equipeTEAcolher).map(e => <option key={e.id} value={e.id}>{e.nome} — {e.funcao}</option>)}
                   </select>
-                  {modoResultado && isTecnico && <div style={{ fontSize:10.5, color:'#64748B', marginTop:3 }}>Travado no profissional logado.</div>}
+                  {isTecnico && <div style={{ fontSize:10.5, color:'#64748B', marginTop:3 }}>Travado no seu nome — você agenda na sua própria agenda.</div>}
                 </div>
                 <div>
                   <label style={s.label}>Área / especialidade *</label>
@@ -1363,6 +1330,7 @@ export default function Atendimentos() {
           usuario={prontuarioDe}
           onClose={() => setProntuarioDe(null)}
           podeEditar={['admin', 'tecnico'].includes(perfil?.perfil)}
+          verClinico={podeVerEvolucao}
           profissionalPadrao={(() => {
             if (perfil?.perfil !== 'tecnico' || !perfil?.equipe_id) return null
             const e = equipe.find(x => String(x.id) === String(perfil.equipe_id))

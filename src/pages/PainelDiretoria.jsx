@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { Line } from 'react-chartjs-2'
 import 'chart.js/auto'
 
@@ -10,6 +11,7 @@ const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F48
 
 
 export default function PainelDiretoria() {
+  const isMobile = useIsMobile()
   const [contas, setContas] = useState([])
   const [contaSel, setContaSel] = useState('todas')
   const [mes, setMes] = useState('')
@@ -142,15 +144,15 @@ export default function PainelDiretoria() {
   return (
     <div>
       {/* Topbar */}
-      <div style={{ height:62, background:'rgba(255,255,255,0.78)', borderBottom:'0.5px solid #E0DDD5', padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:5 }}>
-        <div>
-          <div style={{ fontSize:20, fontWeight:700, color:'#06344F', letterSpacing:'-.03em' }}>{saudacao}, Diretoria!</div>
-          <div style={{ fontSize:11, color:'#888780', marginTop:2 }}>
-            {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · acompanhamento financeiro
+      <div style={{ height:62, background:'rgba(255,255,255,0.78)', borderBottom:'0.5px solid #E0DDD5', padding:isMobile?'0 12px':'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:5 }}>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:isMobile?16:20, fontWeight:700, color:'#06344F', letterSpacing:'-.03em' }}>{saudacao}, Diretoria!</div>
+          <div style={{ fontSize:isMobile?10:11, color:'#888780', marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+            {new Date().toLocaleDateString('pt-BR', isMobile ? { day:'numeric', month:'short' } : { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · acompanhamento financeiro
           </div>
         </div>
       </div>
-      <div style={{ padding:'20px 24px', position:'relative' }}>
+      <div style={{ padding:isMobile?'12px':'20px 24px', position:'relative' }}>
 
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 8, marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -180,7 +182,7 @@ export default function PainelDiretoria() {
       </div>
 
       {/* Cards de resumo */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: 10, marginBottom: '1.25rem' }}>
         {[
           { label: 'Total entrou', val: fmt(resumo.entradas), cor: VERDE, icon: '↓', sub: mesLabel },
           { label: 'Total saiu', val: fmt(resumo.saidas), cor: VERMELHO, icon: '↑', sub: mesLabel },

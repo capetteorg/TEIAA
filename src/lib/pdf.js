@@ -457,12 +457,165 @@ function htmlAssinaturas(campos = ['Responsável Financeiro', 'Representante Leg
   </div>`
 }
 
+// =============================================
+// PADRÃO ANEXO I — linguagem visual única dos documentos impressos do TEAcolher.
+// Extraído do Formulário de Cadastro oficial (gerarPDFAnexoOficialTeacolher):
+// folha timbrada inteira como fundo da página, faixa de seção numerada em
+// lavanda, grade de rótulo fixo (230px) + valor, e bloco de assinatura.
+// Documento novo do projeto deve ser montado com estes helpers — não invente
+// cabeçalho/caixa própria, senão volta a existir uma aparência por tela.
+// =============================================
+const ANEXO_LINHA  = '#B9B4D6'
+const ANEXO_FAIXA  = '#E3E0EE'
+const ANEXO_TINTA  = '#20252C'
+const ANEXO_ROTULO = 230
+
+const escAnexo = v => String(v ?? '')
+  .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+  .replaceAll('"','&quot;').replaceAll("'",'&#039;')
+
+// Recuos medidos sobre a arte da folha timbrada (varredura de tinta da imagem):
+// o cabeçalho ocupa até ~40mm e a onda do rodapé começa em 240mm. Abaixo de
+// 57mm de recuo inferior o texto invade os logos de REALIZAÇÃO/APOIO.
+// A faixa de 89–208mm é só marca d'água — o conteúdo passa por cima de propósito.
+const ANEXO_TOPO_MM   = 52
+const ANEXO_RODAPE_MM = 60
+
+// Uma folha com o timbrado inteiro de fundo. O fundo NÃO se repete sozinho
+// quando o texto transborda, então documento longo precisa chamar isto uma vez
+// por página (ver anexoPaginarLinhas).
+function anexoPagina(conteudo, primeira = true) {
+  return `<div class="pg" style="font-family:Arial,Helvetica,sans-serif;background-image:url('${TEACOLHER_FOLHA_TIMBRADA}');background-size:100% 100%;background-repeat:no-repeat;background-position:top left;padding:${ANEXO_TOPO_MM}mm 16mm ${ANEXO_RODAPE_MM}mm 16mm;min-height:297mm;box-sizing:border-box;${primeira ? '' : 'page-break-before:always'}">${conteudo}</div>`
+}
+
+// Título do documento. O timbrado já traz a marca, então aqui vai só o nome do
+// documento, o identificador do usuário/período e o protocolo.
+function anexoTitulo(titulo, sub = '', ref = '') {
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px;border-bottom:1.5px solid ${ANEXO_LINHA};padding-bottom:7px">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:${ANEXO_TINTA};text-transform:uppercase;letter-spacing:.04em">${titulo}</div>
+      ${sub ? `<div style="font-size:9.5px;color:#5F6874;margin-top:3px">${sub}</div>` : ''}
+    </div>
+    ${ref ? `<div style="font-size:8px;color:#9199A2;text-align:right;white-space:nowrap">${ref}</div>` : ''}
+  </div>`
+}
+
+// Faixa de seção numerada — "1. DADOS PESSOAIS"
+function anexoSecao(titulo) {
+  return `<div style="background:${ANEXO_FAIXA};padding:6px 10px;font-weight:700;font-size:11px;color:${ANEXO_TINTA};border:1px solid ${ANEXO_LINHA};border-bottom:none">${titulo}</div>`
+}
+
+// Caixa que fecha as linhas de uma seção
+function anexoCaixa(interno, margem = 14) {
+  return `<div style="border:1px solid ${ANEXO_LINHA};margin-bottom:${margem}px;background:rgba(255,255,255,0.88)">${interno}</div>`
+}
+
+// Linha rótulo + valor. `ultima` tira a borda de baixo (a caixa já fecha).
+function anexoLinha(rotulo, valor, { ultima = false, alturaMin = 26 } = {}) {
+  return `<div style="display:flex;min-height:${alturaMin}px;${ultima ? '' : `border-bottom:1px solid ${ANEXO_LINHA}`}">
+    <div style="width:${ANEXO_ROTULO}px;flex-shrink:0;padding:5px 8px;font-size:9.5px;border-right:1px solid ${ANEXO_LINHA};display:flex;align-items:center">${rotulo}</div>
+    <div style="flex:1;padding:5px 8px;font-size:10px;display:flex;align-items:center;color:${ANEXO_TINTA};font-weight:600">${valor || ''}</div>
+  </div>`
+}
+
+// Linha de texto corrido (evolução, objetivo, orientação) — valor ocupa altura
+// maior e respeita quebras de linha digitadas pela profissional.
+function anexoTexto(rotulo, valor, alturaMin = 58) {
+  return `<div style="display:flex;min-height:${alturaMin}px;border-bottom:1px solid ${ANEXO_LINHA};page-break-inside:avoid">
+    <div style="width:${ANEXO_ROTULO}px;flex-shrink:0;padding:7px 8px;font-size:9.5px;border-right:1px solid ${ANEXO_LINHA}">${rotulo}</div>
+    <div style="flex:1;padding:7px 8px;font-size:9.5px;line-height:1.55;color:${ANEXO_TINTA};white-space:pre-wrap">${valor || ''}</div>
+  </div>`
+}
+
+// Tabela no mesmo desenho da grade (cabeçalho lavanda, fios #B9B4D6)
+function anexoTabela(cabecalhos, corpo, larguras = []) {
+  const th = cabecalhos.map((h, i) => `<th style="background:${ANEXO_FAIXA};border:1px solid ${ANEXO_LINHA};padding:5px 7px;font-size:9px;font-weight:700;text-align:left;color:${ANEXO_TINTA}${larguras[i] ? `;width:${larguras[i]}` : ''}">${h}</th>`).join('')
+  return `<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr>${th}</tr></thead><tbody>${corpo}</tbody></table>`
+}
+
+function anexoTd(conteudo, extra = '') {
+  return `<td style="border:1px solid ${ANEXO_LINHA};padding:5px 7px;font-size:9.5px;color:${ANEXO_TINTA};${extra}">${conteudo}</td>`
+}
+
+// Divide as linhas de uma tabela entre páginas. A primeira leva menos por causa
+// do título e do quadro-resumo.
+// Altura estimada (mm) de um campo rótulo+texto, para decidir quebra de página
+// sem precisar medir no navegador. ~80 caracteres por linha, ~3,6mm por linha.
+function anexoAlturaTexto(valor, minMm = 12) {
+  const linhas = Math.ceil((String(valor || '').length || 1) / 80)
+  return Math.max(minMm, 6 + linhas * 3.6)
+}
+
+// Monta um documento de seções paginado. Cada seção é { titulo, itens:[{html,mm}] };
+// se a seção não couber inteira, ela continua na folha seguinte com o título
+// repetido — mesmo comportamento do formulário oficial de cadastro.
+// Área útil por folha: 297 - 52 (topo) - 60 (rodapé) = 185mm, com margem.
+function anexoPaginarSecoes(secoes, primeiraMm = 170, demaisMm = 178) {
+  const paginas = []
+  let atual = [], soma = 0
+  const limite = () => (paginas.length === 0 ? primeiraMm : demaisMm)
+  const fechar = () => { if (atual.length) { paginas.push(atual.join('')); atual = []; soma = 0 } }
+
+  for (const sec of secoes) {
+    let abertos = []
+    const despejar = () => {
+      if (!abertos.length) return
+      atual.push(anexoSecao(sec.titulo) + anexoCaixa(abertos.join('')))
+      abertos = []
+    }
+    soma += 9 // faixa do título
+    for (const item of sec.itens) {
+      if (soma + item.mm > limite() && (abertos.length || atual.length)) {
+        despejar(); fechar(); soma = 9
+      }
+      abertos.push(item.html)
+      soma += item.mm
+    }
+    despejar()
+  }
+  fechar()
+  return paginas.length ? paginas : ['']
+}
+
+// Calibrado medindo a folha renderizada: com estes números o conteúdo termina
+// por volta de 225-235mm, antes dos 240mm onde começa a onda do rodapé.
+function anexoPaginarLinhas(linhas, naPrimeira = 18, nasDemais = 21) {
+  if (!linhas.length) return [[]]
+  const paginas = [linhas.slice(0, naPrimeira)]
+  for (let i = naPrimeira; i < linhas.length; i += nasDemais) paginas.push(linhas.slice(i, i + nasDemais))
+  return paginas
+}
+
+// Bloco de assinatura, no mesmo desenho da Declaração do formulário oficial.
+function anexoAssinatura(legendas = ['Profissional responsável']) {
+  const campos = legendas.map(l => `<div style="flex:1;min-width:190px;margin-top:52px">
+    <div style="border-top:1px solid ${ANEXO_TINTA};padding-top:4px;text-align:center;font-size:9px;color:#5F6874">${l}</div>
+  </div>`).join('')
+  return `<div style="margin-top:6px;page-break-inside:avoid">
+    <div style="font-size:9.5px;color:#5F6874;margin-bottom:2px">Teresópolis — RJ, _______ de _________________ de _______</div>
+    <div style="display:flex;gap:26px;flex-wrap:wrap">${campos}</div>
+  </div>`
+}
+
+// Rodapé discreto de protocolo (o timbrado já traz os apoiadores)
+function anexoProtocolo(protocolo) {
+  return `<div style="font-size:7.5px;color:#9199A2;text-align:right;margin-top:10px">Gerado em ${new Date().toLocaleString('pt-BR')} · ${protocolo}</div>`
+}
+
 // Formata moeda
 const fmt = v => 'R$ ' + Math.abs(Number(v)||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
 
-// Abre janela de impressão
-function abrirImpressao(html, titulo, paisagem = false) {
-  const win = window.open('', '_blank')
+// Janela pré-aberta pelo pdfLazy (dentro do clique, antes do await do import).
+// Sem isso o navegador do celular trata o window.open pós-await como pop-up
+// não solicitado e bloqueia. O pdfLazy chama __definirJanelaImpressao antes de
+// gerar; abrirImpressao a consome.
+let _janelaImpressao = null
+export function __definirJanelaImpressao(w) { _janelaImpressao = w }
+
+// Abre janela de impressão. Ordem: janela explícita > janela pré-aberta > abrir agora.
+function abrirImpressao(html, titulo, paisagem = false, janela = null) {
+  const win = janela || _janelaImpressao || (typeof window !== 'undefined' ? window.open('', '_blank') : null)
+  _janelaImpressao = null // consumida — não vaza pra próxima impressão
   if (!win) {
     alert('O navegador bloqueou a janela do relatório. Permita pop-ups para este site e tente novamente.')
     return
@@ -2491,33 +2644,46 @@ export function gerarPDFAgendaTeacolher(lista = [], titulo = 'Agenda TEAcolher',
     g.itens.push(a)
   })
 
-  const corpo = grupos.map(g => {
-    const linhaDia = `<tr><td colspan="${nCols}" style="background:var(--soft);font-weight:700;font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;color:#3F3A82;padding:7px 9px;border-bottom:1px solid var(--line)">${cabecalhoDia(g.chave)}</td></tr>`
-    const linhasItens = g.itens.map(a => `<tr style="border-left:3px solid ${corSituacao(a.situacao)}">
-      <td style="white-space:nowrap">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
-      <td><strong>${esc(nomeAtendido(a))}</strong></td>
-      ${ocultarProf ? '' : `<td>${esc(nomeProf(a))}</td>`}
-      <td>${esc(a.area_atendimento || a.etapa_fluxo || a.tipo_atend || 'Atendimento')}</td>
-      <td>${esc(a.situacao || 'agendado')}</td>
-    </tr>`).join('')
-    return linhaDia + linhasItens
-  }).join('')
+  // Uma lista achatada de <tr> (cabeçalho de dia + itens do dia) para poder
+  // paginar mantendo o timbrado em todas as folhas.
+  const linhas = []
+  grupos.forEach(g => {
+    linhas.push(`<tr><td colspan="${nCols}" style="background:${ANEXO_FAIXA};border:1px solid ${ANEXO_LINHA};font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:${ANEXO_TINTA};padding:5px 7px">${cabecalhoDia(g.chave)}</td></tr>`)
+    g.itens.forEach(a => linhas.push(`<tr>
+      ${anexoTd(a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—', 'white-space:nowrap')}
+      ${anexoTd(`<strong>${esc(nomeAtendido(a))}</strong>`)}
+      ${ocultarProf ? '' : anexoTd(esc(nomeProf(a)))}
+      ${anexoTd(esc(a.area_atendimento || a.etapa_fluxo || a.tipo_atend || 'Atendimento'))}
+      ${anexoTd(esc(a.situacao || 'agendado'), `white-space:nowrap;font-weight:600;color:${corSituacao(a.situacao)}`)}
+    </tr>`))
+  })
 
-  const html = `<div class="pg">
-    ${htmlCabecalhoTeacolher({ titulo, sub:subtitulo, ref:protocolo })}
-    <div class="resumo-grid" style="margin-bottom:16px">
-      <div class="resumo-item"><div class="resumo-label">Total no período</div><div class="resumo-valor azul">${total}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Realizados</div><div class="resumo-valor verde">${realizados}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Pendentes</div><div class="resumo-valor">${pendentes}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Período</div><div class="resumo-valor" style="font-size:10px">${esc(opts.periodoLabel || '—')}</div></div>
-    </div>
-    <table>
-      <thead><tr><th>Hora</th><th>Usuário/família</th>${ocultarProf ? '' : '<th>Profissional</th>'}<th>Atendimento</th><th>Situação</th></tr></thead>
-      <tbody>${corpo || `<tr><td colspan="${nCols}" style="text-align:center;color:#9199A2;padding:12px">Nenhum item na agenda</td></tr>`}</tbody>
-    </table>
-    ${htmlRodapeTeacolher({ protocolo })}
-  </div>`
-  abrirImpressao(html, titulo, false)
+  const cabecalhos = ['Hora', 'Usuário/família', ...(ocultarProf ? [] : ['Profissional']), 'Atendimento', 'Situação']
+  const larguras = ocultarProf ? ['12%','38%','30%','20%'] : ['10%','30%','24%','21%','15%']
+  const vazio = `<tr><td colspan="${nCols}" style="border:1px solid ${ANEXO_LINHA};text-align:center;color:#9199A2;padding:12px;font-size:9.5px">Nenhum item na agenda</td></tr>`
+
+  const resumo = anexoSecao('1. RESUMO DO PERÍODO') + anexoCaixa(
+    anexoLinha('Período', esc(opts.periodoLabel || '—')) +
+    anexoLinha('Total de atendimentos no período', String(total)) +
+    anexoLinha('Realizados', String(realizados)) +
+    anexoLinha('Pendentes', String(pendentes), { ultima: true })
+  )
+
+  const paginas = anexoPaginarLinhas(linhas)
+  const html = paginas.map((linhasPag, i) => {
+    const primeira = i === 0
+    const ultima = i === paginas.length - 1
+    const topo = primeira
+      ? anexoTitulo(titulo, subtitulo, protocolo) + resumo + anexoSecao('2. ATENDIMENTOS')
+      : anexoTitulo(titulo, `${subtitulo} · continuação`, `${protocolo} · pág. ${i + 1}/${paginas.length}`)
+    return anexoPagina(
+      topo +
+      anexoTabela(cabecalhos, (primeira && !linhas.length) ? vazio : linhasPag.join(''), larguras) +
+      (ultima ? anexoAssinatura(['Profissional responsável', 'Coordenação']) + anexoProtocolo(protocolo) : ''),
+      primeira
+    )
+  }).join('')
+  abrirImpressao(html, titulo, false, opts.janela)
 }
 
 // Ficha individual do atendimento TEAcolher
@@ -2527,33 +2693,48 @@ export function gerarPDFFichaAtendimentoTeacolher(a = {}, opts = {}) {
   const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
   const nomeAtendido = a.usuario_atendido?.nome || a.usuario?.nome || a.pessoa_atendida || 'Usuário/família'
   const nomeProf = a.profissional?.nome || a.equipe?.nome || a.profissional_nome || '—'
-  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value || '—')}</div></div>`
-  const bloco = (label, value) => `<div style="border:1px solid var(--line);border-radius:5px;padding:8px 12px;margin-bottom:6px"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:4px;font-weight:700">${label}</div><div style="font-size:10.5px;line-height:1.5;color:#20252C">${esc(value || '—')}</div></div>`
+  const campo = (rotulo, valor, minPx = 44) => ({
+    html: anexoTexto(rotulo, esc(valor), minPx),
+    mm: anexoAlturaTexto(valor, minPx / 3.78),
+  })
+  const dado = (rotulo, valor) => ({ html: anexoLinha(rotulo, esc(valor)), mm: 7 })
 
-  const html = `<div class="pg">
-    ${htmlCabecalhoTeacolher({ titulo:'Ficha de Atendimento TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })}
-    <div class="info-grid-3">
-      ${item('Usuário/família', nomeAtendido)}
-      ${item('Profissional', nomeProf)}
-      ${item('Data e hora', `${fmtData(a.data_atend)} · ${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}`)}
-      ${item('Área', a.area_atendimento || 'Interdisciplinar')}
-      ${item('Modalidade', a.modalidade_atendimento)}
-      ${item('Situação/comparecimento', a.comparecimento || a.situacao)}
-      ${item('Duração', a.duracao_minutos ? `${a.duracao_minutos} min` : '')}
-      ${item('Etapa do fluxo', a.etapa_fluxo || a.tipo_atend)}
-      ${item('Desfecho', a.desfecho_teacolher)}
-    </div>
-    ${bloco('Demanda identificada', a.demanda_identificada)}
-    ${bloco('Objetivo do atendimento', a.objetivo_atendimento || a.tema)}
-    ${bloco('Registro técnico / evolução', a.registro_tecnico || a.descricao)}
-    ${bloco('Orientação à família', a.orientacao_familia)}
-    ${bloco('Devolutiva familiar', a.devolutiva_familia)}
-    ${bloco('Encaminhamento / rede', [a.tipo_encaminhamento, a.rede_encaminhada, a.encaminhamentos].filter(Boolean).join(' · '))}
-    ${bloco('Próxima ação', a.proxima_acao)}
-    ${htmlAssinaturas(['Profissional responsável', 'Responsável/família', 'Coordenação'])}
-    ${htmlRodapeTeacolher({ protocolo })}
-  </div>`
-  abrirImpressao(html, 'Ficha de Atendimento TEAcolher', false)
+  const secoes = [
+    { titulo: '1. IDENTIFICAÇÃO DO ATENDIMENTO', itens: [
+      dado('Usuário/família', nomeAtendido),
+      dado('Profissional responsável', nomeProf),
+      { html: anexoLinha('Data e hora', `${fmtData(a.data_atend)} · ${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}`), mm: 7 },
+      dado('Área / especialidade', a.area_atendimento || 'Interdisciplinar'),
+      dado('Modalidade', a.modalidade_atendimento),
+      dado('Etapa do fluxo', a.etapa_fluxo || a.tipo_atend),
+      dado('Situação / comparecimento', a.comparecimento || a.situacao),
+      { html: anexoLinha('Duração', a.duracao_minutos ? `${a.duracao_minutos} min` : '—'), mm: 7 },
+      dado('Desfecho', a.desfecho_teacolher),
+    ]},
+    { titulo: '2. REGISTRO TÉCNICO', itens: [
+      campo('Demanda identificada', a.demanda_identificada),
+      campo('Objetivo do atendimento', a.objetivo_atendimento || a.tema),
+      campo('Registro técnico / evolução', a.registro_tecnico || a.descricao, 96),
+      campo('Orientação à família', a.orientacao_familia, 52),
+      campo('Devolutiva familiar', a.devolutiva_familia),
+      campo('Encaminhamento / rede', [a.tipo_encaminhamento, a.rede_encaminhada, a.encaminhamentos].filter(Boolean).join(' · ')),
+      campo('Próxima ação', a.proxima_acao),
+    ]},
+    { titulo: '3. ASSINATURAS', itens: [
+      { html: `<div style="padding:12px">${anexoAssinatura(['Profissional responsável', 'Responsável / família', 'Coordenação'])}</div>`, mm: 42 },
+    ]},
+  ]
+
+  const paginas = anexoPaginarSecoes(secoes)
+  const html = paginas.map((conteudo, i) => {
+    const primeira = i === 0
+    const ultima = i === paginas.length - 1
+    const topo = primeira
+      ? anexoTitulo('Ficha de Atendimento — Projeto TEAcolher', esc(nomeAtendido), protocolo)
+      : anexoTitulo('Ficha de Atendimento — Projeto TEAcolher', `${esc(nomeAtendido)} · continuação`, `${protocolo} · pág. ${i + 1}/${paginas.length}`)
+    return anexoPagina(topo + conteudo + (ultima ? anexoProtocolo(protocolo) : ''), primeira)
+  }).join('')
+  abrirImpressao(html, 'Ficha de Atendimento TEAcolher', false, opts.janela)
 }
 
 // Compatibilidade: nome explícito para relatórios técnicos do TEAcolher
@@ -3371,7 +3552,7 @@ export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}
   // Campos curtos entram numa grade de 3 colunas; select, checks e textarea
   // ocupam a linha inteira.
   const EH_CURTO = c => ['text', 'idade', 'date'].includes(c.tipo)
-  const tituloHtml = t => `<div style="background:#E3E0EE;border:1px solid #B9B4D6;border-radius:5px;padding:4px 10px;font-weight:800;font-size:10px;color:#3F3A82;margin:0 0 6px;page-break-after:avoid">${t}</div>`
+  const tituloHtml = t => `<div style="background:${ANEXO_FAIXA};border:1px solid ${ANEXO_LINHA};padding:6px 10px;font-weight:700;font-size:11px;color:${ANEXO_TINTA};margin:0 0 6px;page-break-after:avoid">${t}</div>`
 
   // Altura estimada (mm) de cada bloco. O .pg do sistema é uma página fixa: sem
   // quebrar na mão, o conteúdo passaria por cima da margem nas páginas do meio
@@ -3416,8 +3597,10 @@ export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}
   // ainda carrega o título grande e a grade de identificação. Valores
   // calibrados medindo as páginas geradas, com folga para a imprecisão
   // da estimativa dos blocos.
-  const ALTURA_P1 = 170   // 1ª página: título + grade de identificação
-  const ALTURA_PN = 205   // demais páginas: só a linha de continuação
+  // Reduzidos junto com o recuo inferior do timbrado (34mm → 60mm): a área útil
+  // caiu de ~209mm para 185mm por folha, senão o texto invade os logos do rodapé.
+  const ALTURA_P1 = 140   // 1ª página: título + grade de identificação
+  const ALTURA_PN = 181   // demais páginas: só a linha de continuação
   const PESO_TITULO = 9
   const PESO_FECHO = 46   // bloco de assinaturas
 
@@ -3456,54 +3639,34 @@ export function gerarPDFAnamneseTeacolher(usuario = {}, anamnese = {}, opts = {}
     paginas.push([])
   }
 
-  const identificacao = `
-    <div class="info-grid-3">
-      ${item('Usuário(a)', usuario.nome)}
-      ${item('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`)}
-      ${item('Data da entrevista', fmtData(anamnese?.data_entrevista))}
-      ${item('Entrevistado(a)', anamnese?.entrevistado_nome)}
-      ${item('Parentesco / vínculo', anamnese?.entrevistado_parentesco)}
-      ${item('Profissional responsável', anamnese?.profissional_nome)}
-    </div>`
+  const identificacao = anexoSecao('IDENTIFICAÇÃO') + anexoCaixa(
+    anexoLinha('Usuário(a)', esc(usuario.nome)) +
+    anexoLinha('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`) +
+    anexoLinha('Data da entrevista', fmtData(anamnese?.data_entrevista)) +
+    anexoLinha('Entrevistado(a)', esc(anamnese?.entrevistado_nome)) +
+    anexoLinha('Parentesco / vínculo', esc(anamnese?.entrevistado_parentesco)) +
+    anexoLinha('Profissional responsável', esc(anamnese?.profissional_nome), { ultima: true })
+  )
 
   // A folha timbrada inteira (faixa superior, logo, marca d'água e rodapé com
   // apoiadores) vai como fundo único de CADA página — mesma técnica do
   // Formulário de Cadastro oficial. Assim o timbrado nunca sai distorcido nem
   // precisa de versão "compacta" nas continuações.
-  const estiloPagina = `
-    background-image:url('${TEACOLHER_FOLHA_TIMBRADA}');
-    background-size:100% 100%;
-    background-repeat:no-repeat;
-    background-position:top left;
-    padding:52mm 16mm 36mm 16mm;
-    min-height:297mm;
-    box-sizing:border-box;
-  `
-  const tituloPagina1 = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;border-bottom:2px solid #6B63B5;padding-bottom:8px">
-      <div>
-        <div style="font-size:15px;font-weight:800;color:#3F3A82">Ficha de Anamnese — Projeto TEAcolher</div>
-        <div style="font-size:10px;color:#6B7280;margin-top:2px">${TEIAA_INFO.nome}</div>
-      </div>
-      <div style="font-size:8px;color:#9199A2;text-align:right">${protocolo}</div>
-    </div>`
-  const tituloContinuacao = i => `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;border-bottom:1.5px solid #6B63B5;padding-bottom:5px">
-      <div style="font-size:11px;font-weight:800;color:#3F3A82">Ficha de Anamnese — ${esc(usuario.nome) || 'Projeto TEAcolher'}</div>
-      <div style="font-size:8px;color:#9199A2">${protocolo} · pág. ${i + 1}/${paginas.length}</div>
-    </div>`
-
   const html = paginas.map((secoes, i) => {
     const primeira = i === 0
     const ultima = i === paginas.length - 1
-    return `<div class="pg" style="${estiloPagina}${primeira ? '' : 'page-break-before:always'}">
-      ${primeira ? tituloPagina1 + identificacao : tituloContinuacao(i)}
-      ${secoes.join('')}
-      ${ultima ? htmlAssinaturas(['Profissional responsável', 'Responsável / família']) + `<div style="font-size:7.5px;color:#B4B2A9;text-align:right;margin-top:6px">Gerado em ${new Date().toLocaleString('pt-BR')} · ${protocolo}</div>` : ''}
-    </div>`
+    const topo = primeira
+      ? anexoTitulo('Ficha de Anamnese — Projeto TEAcolher', esc(usuario.nome), protocolo) + identificacao
+      : anexoTitulo('Ficha de Anamnese — Projeto TEAcolher', `${esc(usuario.nome)} · continuação`, `${protocolo} · pág. ${i + 1}/${paginas.length}`)
+    return anexoPagina(
+      topo +
+      secoes.join('') +
+      (ultima ? anexoAssinatura(['Profissional responsável', 'Responsável / família']) + anexoProtocolo(protocolo) : ''),
+      primeira
+    )
   }).join('')
 
-  abrirImpressao(html, `Anamnese TEAcolher - ${usuario.nome || ''}`, false)
+  abrirImpressao(html, `Anamnese TEAcolher - ${usuario.nome || ''}`, false, opts.janela)
 }
 
 // PIA — Plano Individual de Atendimento TEAcolher, com metas por área,
@@ -3513,45 +3676,59 @@ export function gerarPDFPiaTeacolher(usuario = {}, plano = {}, opts = {}) {
   const esc = v => String(v ?? '—').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')
   const fmtData = d => d ? new Date(String(d).includes('T') ? d : d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
   const idade = idadeDe(usuario.data_nascimento)
-  const item = (label, value) => `<div class="info-item"><div class="info-label">${label}</div><div class="info-valor">${esc(value || '—')}</div></div>`
-  const bloco = (label, value) => `<div style="border:1px solid var(--line);border-radius:5px;padding:8px 12px;margin-bottom:6px;page-break-inside:avoid"><div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#6B7280;margin-bottom:4px;font-weight:700">${label}</div><div style="font-size:10.5px;line-height:1.55;color:#20252C;white-space:pre-wrap">${esc(value || '—')}</div></div>`
-
   const metas = Array.isArray(plano.metas) ? plano.metas : []
   const linhasMetas = metas.map(m => `<tr>
-    <td style="font-weight:700;white-space:nowrap">${esc(m.area)}</td>
-    <td>${esc(m.objetivo)}</td>
-    <td>${esc(m.estrategias)}</td>
-    <td style="white-space:nowrap">${esc(m.prazo)}</td>
-    <td style="white-space:nowrap">${esc(m.situacao || 'Em andamento')}</td>
-  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#9199A2;padding:10px">Nenhuma meta registrada</td></tr>'
+    ${anexoTd(esc(m.area), 'font-weight:700')}
+    ${anexoTd(esc(m.objetivo))}
+    ${anexoTd(esc(m.estrategias))}
+    ${anexoTd(esc(m.prazo), 'white-space:nowrap')}
+    ${anexoTd(esc(m.situacao || 'Em andamento'), 'white-space:nowrap')}
+  </tr>`).join('') || `<tr><td colspan="5" style="border:1px solid ${ANEXO_LINHA};text-align:center;color:#9199A2;padding:10px;font-size:9.5px">Nenhuma meta registrada</td></tr>`
 
-  const html = `<div class="pg">
-    ${htmlCabecalhoTeacolher({ titulo:'Plano Individual de Atendimento (PIA) — TEAcolher', sub:TEIAA_INFO.nome, ref:protocolo })}
-    <div class="info-grid-3">
-      ${item('Usuário(a)', usuario.nome)}
-      ${item('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`)}
-      ${item('Situação do plano', plano.situacao || 'vigente')}
-      ${item('Elaborado em', fmtData(plano.data_elaboracao))}
-      ${item('Revisão prevista', fmtData(plano.data_revisao_prevista))}
-      ${item('Profissional responsável', plano.profissional_nome)}
-    </div>
-    ${bloco('Demandas identificadas', plano.demandas_identificadas)}
-    ${bloco('Objetivo geral do acompanhamento', plano.objetivo_geral)}
-    <div style="font-size:10px;font-weight:800;color:#3F3A82;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em;page-break-after:avoid">Metas e estratégias por área</div>
-    <table>
-      <thead><tr><th>Área</th><th>Objetivo específico</th><th>Estratégias</th><th>Prazo</th><th>Situação</th></tr></thead>
-      <tbody>${linhasMetas}</tbody>
-    </table>
-    <div style="height:8px"></div>
-    ${bloco('Frequência prevista de atendimentos', plano.frequencia_prevista)}
-    ${bloco('Participação da família', plano.participacao_familia)}
-    ${bloco('Encaminhamentos à rede (SUS, SUAS, Educação)', plano.encaminhamentos_rede)}
-    ${plano.resultado_revisao ? bloco('Resultado da revisão / avaliação participativa', plano.resultado_revisao) : ''}
-    ${plano.observacoes ? bloco('Observações', plano.observacoes) : ''}
-    ${htmlAssinaturas(['Profissional responsável', 'Responsável / família', 'Coordenação'])}
-    ${htmlRodapeTeacolher({ protocolo })}
-  </div>`
-  abrirImpressao(html, `PIA TEAcolher - ${usuario.nome || ''}`, false)
+  const campo = (rotulo, valor, minPx = 44) => ({
+    html: anexoTexto(rotulo, esc(valor), minPx),
+    mm: anexoAlturaTexto(valor, minPx / 3.78),
+  })
+
+  const secoes = [
+    { titulo: '1. IDENTIFICAÇÃO', itens: [
+      { html: anexoLinha('Usuário(a)', esc(usuario.nome)), mm: 7 },
+      { html: anexoLinha('Data de nascimento', `${fmtData(usuario.data_nascimento)}${idade !== null ? ` · ${idade} anos` : ''}`), mm: 7 },
+      { html: anexoLinha('Situação do plano', esc(plano.situacao || 'vigente')), mm: 7 },
+      { html: anexoLinha('Elaborado em', fmtData(plano.data_elaboracao)), mm: 7 },
+      { html: anexoLinha('Revisão prevista', fmtData(plano.data_revisao_prevista)), mm: 7 },
+      { html: anexoLinha('Profissional responsável', esc(plano.profissional_nome)), mm: 7 },
+    ]},
+    { titulo: '2. DEMANDAS E OBJETIVO', itens: [
+      campo('Demandas identificadas', plano.demandas_identificadas, 60),
+      campo('Objetivo geral do acompanhamento', plano.objetivo_geral, 60),
+    ]},
+    { titulo: '3. METAS E ESTRATÉGIAS POR ÁREA', itens: [
+      { html: `<div style="padding:8px">${anexoTabela(['Área', 'Objetivo específico', 'Estratégias', 'Prazo', 'Situação'], linhasMetas, ['16%','27%','29%','14%','14%']).replace('margin-bottom:14px', 'margin-bottom:0')}</div>`,
+        mm: 14 + Math.max(1, metas.length) * 8 },
+    ]},
+    { titulo: '4. ACOMPANHAMENTO', itens: [
+      campo('Frequência prevista de atendimentos', plano.frequencia_prevista),
+      campo('Participação da família', plano.participacao_familia, 52),
+      campo('Encaminhamentos à rede (SUS, SUAS, Educação)', plano.encaminhamentos_rede, 52),
+      ...(plano.resultado_revisao ? [campo('Resultado da revisão / avaliação participativa', plano.resultado_revisao, 52)] : []),
+      campo('Observações', plano.observacoes),
+    ]},
+    { titulo: '5. ASSINATURAS', itens: [
+      { html: `<div style="padding:12px">${anexoAssinatura(['Profissional responsável', 'Responsável / família', 'Coordenação'])}</div>`, mm: 42 },
+    ]},
+  ]
+
+  const paginas = anexoPaginarSecoes(secoes)
+  const html = paginas.map((conteudo, i) => {
+    const primeira = i === 0
+    const ultima = i === paginas.length - 1
+    const topo = primeira
+      ? anexoTitulo('Plano Individual de Atendimento (PIA)', esc(usuario.nome), protocolo)
+      : anexoTitulo('Plano Individual de Atendimento (PIA)', `${esc(usuario.nome)} · continuação`, `${protocolo} · pág. ${i + 1}/${paginas.length}`)
+    return anexoPagina(topo + conteudo + (ultima ? anexoProtocolo(protocolo) : ''), primeira)
+  }).join('')
+  abrirImpressao(html, `PIA TEAcolher - ${usuario.nome || ''}`, false, opts.janela)
 }
 
 // Folha de Frequência individual TEAcolher — lista os atendimentos do usuário
@@ -3564,15 +3741,22 @@ export function gerarPDFFrequenciaTeacolher(usuario = {}, lista = [], periodoLab
   const normal = v => String(v || '').toLowerCase().trim()
   const nomeProf = a => a.profissional?.nome || a.equipe?.nome || a.profissional_nome || '—'
 
+  // Atendimentos à família (mãe/pai/responsável) não entram na assiduidade da criança.
+  const ehFamilia = a => (a.atendido_relacao || 'usuario') !== 'usuario'
+  const relLabel = a => { const r = a.atendido_relacao; return r === 'mae' ? 'Mãe' : r === 'pai' ? 'Pai' : r === 'responsavel' ? 'Responsável' : 'Outro' }
+
   const itens = (Array.isArray(lista) ? lista : []).slice().sort((a,b) => (a.data_atend || '') > (b.data_atend || '') ? 1 : -1)
-  const agendados = itens.filter(a => ['agendado','reagendado'].includes(normal(a.situacao)))
-  const cancelados = itens.filter(a => normal(a.situacao) === 'cancelado')
-  const compareceu = itens.filter(a => normal(a.comparecimento) === 'compareceu' || (normal(a.situacao) === 'realizado' && !a.comparecimento))
-  const faltas = itens.filter(a => ['faltou','falta justificada'].includes(normal(a.comparecimento)))
+  const daCrianca = itens.filter(a => !ehFamilia(a))
+  const familia = itens.length - daCrianca.length
+  const agendados = daCrianca.filter(a => ['agendado','reagendado'].includes(normal(a.situacao)))
+  const cancelados = daCrianca.filter(a => normal(a.situacao) === 'cancelado')
+  const compareceu = daCrianca.filter(a => normal(a.comparecimento) === 'compareceu' || (normal(a.situacao) === 'realizado' && !a.comparecimento))
+  const faltas = daCrianca.filter(a => ['faltou','falta justificada'].includes(normal(a.comparecimento)))
   const baseAssiduidade = compareceu.length + faltas.length
   const assiduidade = baseAssiduidade > 0 ? Math.round(compareceu.length / baseAssiduidade * 100) : null
 
   const statusDe = a => {
+    if (ehFamilia(a)) return [`👪 À família — ${relLabel(a)}`, '#854F0B']
     const c = normal(a.comparecimento)
     if (c === 'compareceu') return ['✓ Compareceu', '#3B6D11']
     if (c === 'faltou') return ['✗ Faltou', '#A32D2D']
@@ -3587,29 +3771,135 @@ export function gerarPDFFrequenciaTeacolher(usuario = {}, lista = [], periodoLab
   const linhas = itens.map(a => {
     const [rotulo, cor] = statusDe(a)
     return `<tr>
-      <td style="white-space:nowrap">${fmtData(a.data_atend)}</td>
-      <td style="white-space:nowrap">${a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—'}</td>
-      <td>${esc(a.area_atendimento || 'Interdisciplinar')}</td>
-      <td>${esc(nomeProf(a))}</td>
-      <td style="font-weight:700;color:${cor};white-space:nowrap">${rotulo}</td>
+      ${anexoTd(fmtData(a.data_atend), 'white-space:nowrap')}
+      ${anexoTd(a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—', 'white-space:nowrap')}
+      ${anexoTd(esc(a.area_atendimento || 'Interdisciplinar'))}
+      ${anexoTd(esc(nomeProf(a)))}
+      ${anexoTd(rotulo, `font-weight:700;color:${cor};white-space:nowrap`)}
     </tr>`
-  }).join('') || '<tr><td colspan="5" style="text-align:center;color:#9199A2;padding:12px">Nenhum atendimento no período</td></tr>'
+  })
+  const vazio = `<tr><td colspan="5" style="border:1px solid ${ANEXO_LINHA};text-align:center;color:#9199A2;padding:12px;font-size:9.5px">Nenhum atendimento no período</td></tr>`
 
-  const html = `<div class="pg">
-    ${htmlCabecalhoTeacolher({ titulo:'Folha de Frequência — Projeto TEAcolher', sub:`${esc(usuario.nome || 'Usuário/família')} · ${esc(periodoLabel || 'Período selecionado')}`, ref:protocolo })}
-    <div class="resumo-grid" style="margin-bottom:14px">
-      <div class="resumo-item"><div class="resumo-label">Sessões no período</div><div class="resumo-valor azul">${itens.length}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Compareceu</div><div class="resumo-valor verde">${compareceu.length}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Faltas</div><div class="resumo-valor vermelho">${faltas.length}</div></div>
-      <div class="resumo-item"><div class="resumo-label">Assiduidade</div><div class="resumo-valor">${assiduidade === null ? '—' : assiduidade + '%'}</div></div>
-    </div>
-    ${agendados.length || cancelados.length ? `<div style="font-size:8.5px;color:#9199A2;margin-bottom:8px">A assiduidade considera apenas sessões realizadas ou com falta registrada${agendados.length ? ` · ${agendados.length} agendada(s)` : ''}${cancelados.length ? ` · ${cancelados.length} cancelada(s)` : ''}.</div>` : ''}
-    <table>
-      <thead><tr><th>Data</th><th>Hora</th><th>Área</th><th>Profissional</th><th>Frequência</th></tr></thead>
-      <tbody>${linhas}</tbody>
-    </table>
-    ${htmlAssinaturas(['Profissional responsável', 'Responsável / família'])}
-    ${htmlRodapeTeacolher({ protocolo })}
-  </div>`
-  abrirImpressao(html, `Frequência TEAcolher - ${usuario.nome || ''}`, false)
+  const nota = (agendados.length || cancelados.length)
+    ? `<div style="font-size:8.5px;color:#5F6874;margin:-6px 0 12px">A assiduidade considera apenas sessões realizadas ou com falta registrada${agendados.length ? ` · ${agendados.length} agendada(s)` : ''}${cancelados.length ? ` · ${cancelados.length} cancelada(s)` : ''}.</div>`
+    : ''
+
+  const resumo = anexoSecao('1. RESUMO DA FREQUÊNCIA') + anexoCaixa(
+    anexoLinha('Usuário(a)', esc(usuario.nome || 'Usuário/família')) +
+    anexoLinha('Período', esc(periodoLabel || 'Período selecionado')) +
+    anexoLinha('Sessões da criança', String(daCrianca.length)) +
+    anexoLinha('Compareceu', String(compareceu.length)) +
+    anexoLinha('Faltas', String(faltas.length)) +
+    (familia > 0 ? anexoLinha('Atendimentos à família', String(familia)) : '') +
+    anexoLinha('Assiduidade', assiduidade === null ? '—' : assiduidade + '%', { ultima: true })
+  ) + nota
+
+  const paginas = anexoPaginarLinhas(linhas, 15, 21)  // resumo de 6 linhas ocupa mais que o da agenda
+  const html = paginas.map((linhasPag, i) => {
+    const primeira = i === 0
+    const ultima = i === paginas.length - 1
+    const topo = primeira
+      ? anexoTitulo('Folha de Frequência — Projeto TEAcolher', esc(usuario.nome), protocolo) + resumo + anexoSecao('2. SESSÕES DO PERÍODO')
+      : anexoTitulo('Folha de Frequência — Projeto TEAcolher', `${esc(usuario.nome)} · continuação`, `${protocolo} · pág. ${i + 1}/${paginas.length}`)
+    return anexoPagina(
+      topo +
+      anexoTabela(['Data', 'Hora', 'Área', 'Profissional', 'Frequência'], linhas.length ? linhasPag.join('') : vazio, ['14%','10%','26%','28%','22%']) +
+      (ultima ? anexoAssinatura(['Profissional responsável', 'Responsável / família']) + anexoProtocolo(protocolo) : ''),
+      primeira
+    )
+  }).join('')
+  abrirImpressao(html, `Frequência TEAcolher - ${usuario.nome || ''}`, false, opts.janela)
+}
+
+// =============================================
+// LISTA DE PRESENÇA — visão do operacional: quem compareceu / faltou / justificou
+// no período, entre todos os usuários e profissionais. Só presença, nenhum
+// registro clínico. Segue o padrão Anexo I (folha timbrada + seções numeradas).
+// =============================================
+export function gerarPDFListaPresencaTeacolher(lista = [], opts = {}) {
+  const protocolo = opts.protocolo || `AG-TEIAA-${new Date().getFullYear()}-PRESENCA`
+  const esc = v => escAnexo(v)
+  const fmtData = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—'
+  const normal = v => String(v || '').toLowerCase().trim()
+  const nomeUsuario = a => a.pessoa_atendida || a.usuario_atendido?.nome || 'Usuário/família'
+  const nomeProf = a => a.profissional_nome || a.profissional?.nome || '—'
+
+  const itens = (Array.isArray(lista) ? lista : []).slice().sort((a,b) => {
+    const da = (a.data_atend || '') + (a.hora_inicio || '')
+    const db = (b.data_atend || '') + (b.hora_inicio || '')
+    return da > db ? 1 : da < db ? -1 : 0
+  })
+
+  // Atendimentos à família (mãe/pai/responsável) contam à parte, fora da assiduidade.
+  const ehFamilia = a => (a.atendido_relacao || 'usuario') !== 'usuario'
+  const relLabel = a => { const r = a.atendido_relacao; return r === 'mae' ? 'Mãe' : r === 'pai' ? 'Pai' : r === 'responsavel' ? 'Responsável' : 'Outro' }
+
+  const daCrianca = itens.filter(a => !ehFamilia(a))
+  const familia = itens.length - daCrianca.length
+  const compareceu = daCrianca.filter(a => normal(a.comparecimento) === 'compareceu' || (normal(a.situacao) === 'realizado' && !a.comparecimento))
+  const faltas = daCrianca.filter(a => normal(a.comparecimento) === 'faltou')
+  const justificadas = daCrianca.filter(a => normal(a.comparecimento) === 'falta justificada')
+  const agendados = daCrianca.filter(a => ['agendado','reagendado'].includes(normal(a.situacao)))
+  const cancelados = daCrianca.filter(a => normal(a.situacao) === 'cancelado')
+  const base = compareceu.length + faltas.length + justificadas.length
+  const assiduidade = base > 0 ? Math.round(compareceu.length / base * 100) : null
+
+  const statusDe = a => {
+    if (ehFamilia(a)) return [`👪 À família — ${relLabel(a)}`, '#854F0B']
+    const c = normal(a.comparecimento)
+    if (c === 'compareceu') return ['✓ Compareceu', '#3B6D11']
+    if (c === 'faltou') return ['✗ Faltou', '#A32D2D']
+    if (c === 'falta justificada') return ['✗ Falta justificada', '#854F0B']
+    const s = normal(a.situacao)
+    if (s === 'realizado') return ['✓ Compareceu', '#3B6D11']
+    if (s === 'cancelado') return ['Cancelado', '#888780']
+    if (['agendado','reagendado'].includes(s)) return ['Agendado', '#185FA5']
+    return [a.situacao || '—', '#888780']
+  }
+
+  const linhas = itens.map(a => {
+    const [rotulo, cor] = statusDe(a)
+    return `<tr>
+      ${anexoTd(fmtData(a.data_atend), 'white-space:nowrap')}
+      ${anexoTd(a.hora_inicio ? String(a.hora_inicio).slice(0,5) : '—', 'white-space:nowrap')}
+      ${anexoTd(`<strong>${esc(nomeUsuario(a))}</strong>`)}
+      ${anexoTd(esc(nomeProf(a)))}
+      ${anexoTd(esc(a.area_atendimento || a.etapa_fluxo || 'Interdisciplinar'))}
+      ${anexoTd(rotulo, `font-weight:700;color:${cor};white-space:nowrap`)}
+    </tr>`
+  })
+  const vazio = `<tr><td colspan="6" style="border:1px solid ${ANEXO_LINHA};text-align:center;color:#9199A2;padding:12px;font-size:9.5px">Nenhum atendimento no período</td></tr>`
+
+  const nota = (agendados.length || cancelados.length)
+    ? `<div style="font-size:8.5px;color:#5F6874;margin:-6px 0 12px">A assiduidade considera só sessões realizadas ou com falta registrada${agendados.length ? ` · ${agendados.length} ainda agendada(s)` : ''}${cancelados.length ? ` · ${cancelados.length} cancelada(s)` : ''}.</div>`
+    : ''
+
+  const resumo = anexoSecao('1. RESUMO DA PRESENÇA') + anexoCaixa(
+    anexoLinha('Período', esc(opts.periodoLabel || '—')) +
+    anexoLinha('Profissional', esc(opts.profissionalNome || 'Todos os profissionais')) +
+    anexoLinha('Sessões da criança', String(daCrianca.length)) +
+    anexoLinha('Compareceram', String(compareceu.length)) +
+    anexoLinha('Faltas', String(faltas.length)) +
+    anexoLinha('Faltas justificadas', String(justificadas.length)) +
+    (familia > 0 ? anexoLinha('Atendimentos à família', String(familia)) : '') +
+    anexoLinha('Assiduidade', assiduidade === null ? '—' : assiduidade + '%', { ultima: true })
+  ) + nota
+
+  const paginas = anexoPaginarLinhas(linhas, familia > 0 ? 8 : 9, 21)  // resumo maior: 1ª folha leva menos
+  const titulo = 'Lista de Presença — Projeto TEAcolher'
+  const sub = `${esc(opts.profissionalNome || 'Todos os profissionais')} · ${esc(opts.periodoLabel || 'Período selecionado')}`
+  const html = paginas.map((linhasPag, i) => {
+    const primeira = i === 0
+    const ultima = i === paginas.length - 1
+    const topo = primeira
+      ? anexoTitulo(titulo, sub, protocolo) + resumo + anexoSecao('2. PRESENÇA POR ATENDIMENTO')
+      : anexoTitulo(titulo, `${sub} · continuação`, `${protocolo} · pág. ${i + 1}/${paginas.length}`)
+    return anexoPagina(
+      topo +
+      anexoTabela(['Data', 'Hora', 'Usuário/família', 'Profissional', 'Área', 'Presença'], linhas.length ? linhasPag.join('') : vazio, ['11%','8%','26%','23%','16%','16%']) +
+      (ultima ? anexoAssinatura(['Responsável pelo controle de presença', 'Coordenação']) + anexoProtocolo(protocolo) : ''),
+      primeira
+    )
+  }).join('')
+  abrirImpressao(html, titulo, false, opts.janela)
 }

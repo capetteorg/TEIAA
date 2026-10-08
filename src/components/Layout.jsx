@@ -423,15 +423,20 @@ export default function Layout() {
           </div>
         </div>
 
-        <div style={{ padding: '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#B4B2A9' }}>AGENDO Integra · TEIAA · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></span>
-          <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+        {/* No celular o rodapé completo não cabe em 360px e empurrava a página
+            inteira pro lado — sobra só a marca e o "Fale com o dev". */}
+        <div style={{ padding: isMobile ? '5px .75rem' : '5px 1.25rem', borderTop: '0.5px solid #E8E6DE', background: 'rgba(255,255,255,0.7)', display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 10, color: '#B4B2A9', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            AGENDO Integra · TEIAA
+            {!isMobile && <> · <span style={{ cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }} onClick={() => setBuscaAberta(true)}>busca rápida Ctrl+K</span></>}
+          </span>
+          <div style={{ display:'flex', gap:12, alignItems:'center', flexShrink: 0 }}>
             <button onClick={() => setFeedbackAberto(true)}
-              style={{ fontSize:10, color:'#B4B2A9', background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:3 }}
+              style={{ fontSize:10, color:'#B4B2A9', background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:3, whiteSpace:'nowrap' }}
               title="Fale com o desenvolvedor">
               <i className="ti ti-message-circle" style={{ fontSize:11 }} /> Fale com o dev
             </button>
-            <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>
+            {!isMobile && <span style={{ fontSize: 10, color: '#D3D1C7' }}>Agendo · CNPJ 56.059.476/0001-52</span>}
           </div>
         </div>
 

@@ -11,30 +11,75 @@ const carregar = () => import('./pdf')
 // pra janela de impressão nunca esbarrar no bloqueio de pop-up por demora).
 export function precarregarPDF() { carregar() }
 
-export const gerarPDFConciliacao = async (...args) => (await carregar()).gerarPDFConciliacao(...args)
-export const gerarPDFRelatorio = async (...args) => (await carregar()).gerarPDFRelatorio(...args)
-export const gerarPDFTransparencia = async (...args) => (await carregar()).gerarPDFTransparencia(...args)
-export const gerarPDFEvento = async (...args) => (await carregar()).gerarPDFEvento(...args)
-export const gerarPDFCampanha = async (...args) => (await carregar()).gerarPDFCampanha(...args)
-export const gerarPDFCobrancas = async (...args) => (await carregar()).gerarPDFCobrancas(...args)
-export const gerarPDFPrestacaoContas = async (...args) => (await carregar()).gerarPDFPrestacaoContas(...args)
-export const gerarPDFParecer = async (...args) => (await carregar()).gerarPDFParecer(...args)
-export const gerarPDFParecerAnual = async (...args) => (await carregar()).gerarPDFParecerAnual(...args)
-export const gerarPDFPlanoAcao = async (...args) => (await carregar()).gerarPDFPlanoAcao(...args)
-export const gerarPDFRelatAnual = async (...args) => (await carregar()).gerarPDFRelatAnual(...args)
-export const gerarPDFEquipe = async (...args) => (await carregar()).gerarPDFEquipe(...args)
-export const gerarPDFUsuariosAtendidos = async (...args) => (await carregar()).gerarPDFUsuariosAtendidos(...args)
-export const gerarPDFAtendimentos = async (...args) => (await carregar()).gerarPDFAtendimentos(...args)
-export const gerarPDFAgendaTeacolher = async (...args) => (await carregar()).gerarPDFAgendaTeacolher(...args)
-export const gerarPDFFichaAtendimentoTeacolher = async (...args) => (await carregar()).gerarPDFFichaAtendimentoTeacolher(...args)
-export const gerarPDFRelatorioTecnicoTeacolher = async (...args) => (await carregar()).gerarPDFRelatorioTecnicoTeacolher(...args)
-export const gerarPDFDoacoes = async (...args) => (await carregar()).gerarPDFDoacoes(...args)
-export const gerarPDFAnexoTeacolher = async (...args) => (await carregar()).gerarPDFAnexoTeacolher(...args)
-export const gerarPDFAgendaTecnicoTeacolher = async (...args) => (await carregar()).gerarPDFAgendaTecnicoTeacolher(...args)
-export const gerarPDFCronogramaTeacolher = async (...args) => (await carregar()).gerarPDFCronogramaTeacolher(...args)
-export const gerarPDFListaUsuariosComProfissionais = async (...args) => (await carregar()).gerarPDFListaUsuariosComProfissionais(...args)
-export const gerarPDFAnexoOficialTeacolher = async (...args) => (await carregar()).gerarPDFAnexoOficialTeacolher(...args)
-export const gerarPDFTermoAutorizacaoImagem = async (...args) => (await carregar()).gerarPDFTermoAutorizacaoImagem(...args)
-export const gerarPDFAnamneseTeacolher = async (...args) => (await carregar()).gerarPDFAnamneseTeacolher(...args)
-export const gerarPDFPiaTeacolher = async (...args) => (await carregar()).gerarPDFPiaTeacolher(...args)
-export const gerarPDFFrequenciaTeacolher = async (...args) => (await carregar()).gerarPDFFrequenciaTeacolher(...args)
+// Telas que consultam o banco ANTES de gerar o PDF chamam isto no início do
+// clique (antes do await da consulta) e depois só chamam o gerador normalmente.
+// A janela reservada é usada pelo gerador seguinte — sem precisar passá-la nos
+// argumentos nem editar cada função de PDF.
+let _janelaReservada = null
+export function reservarJanelaImpressao() {
+  // Limpa reserva anterior órfã (ex.: uma impressão que abortou antes de gerar).
+  if (_janelaReservada && !_janelaReservada.closed) _janelaReservada.close()
+  _janelaReservada = typeof window !== 'undefined' ? window.open('', '_blank') : null
+  return _janelaReservada
+}
+
+// Abre a janela de impressão AINDA dentro do clique, antes do await do import
+// sob demanda. Sem isso o navegador do celular trata o window.open que viria
+// depois do await como pop-up não solicitado e bloqueia. A janela é entregue ao
+// pdf.js via __definirJanelaImpressao; em caso de erro ela é fechada.
+function impressao(nome) {
+  return async (...args) => {
+    // Ordem da janela:
+    //  1) reservada por reservarJanelaImpressao() — telas que consultam antes de gerar;
+    //  2) opts.janela nos argumentos — chamador que já abriu e repassa (evita aba dupla);
+    //  3) senão, abre agora (chamador síncrono: ainda está dentro do clique).
+    const jaTem = args.some(a => a && typeof a === 'object' && a.janela)
+    let janela = _janelaReservada
+    _janelaReservada = null
+    if (janela && janela.closed) janela = null // reserva órfã já fechada pelo chamador
+    if (!janela && !jaTem && typeof window !== 'undefined') janela = window.open('', '_blank')
+    let mod
+    try {
+      mod = await carregar()
+    } catch (e) {
+      if (janela && !janela.closed) janela.close()
+      throw e
+    }
+    if (janela && mod.__definirJanelaImpressao) mod.__definirJanelaImpressao(janela)
+    try {
+      return await mod[nome](...args)
+    } catch (e) {
+      if (janela && !janela.closed) janela.close()
+      throw e
+    }
+  }
+}
+
+export const gerarPDFConciliacao = impressao('gerarPDFConciliacao')
+export const gerarPDFRelatorio = impressao('gerarPDFRelatorio')
+export const gerarPDFTransparencia = impressao('gerarPDFTransparencia')
+export const gerarPDFEvento = impressao('gerarPDFEvento')
+export const gerarPDFCampanha = impressao('gerarPDFCampanha')
+export const gerarPDFCobrancas = impressao('gerarPDFCobrancas')
+export const gerarPDFPrestacaoContas = impressao('gerarPDFPrestacaoContas')
+export const gerarPDFParecer = impressao('gerarPDFParecer')
+export const gerarPDFParecerAnual = impressao('gerarPDFParecerAnual')
+export const gerarPDFPlanoAcao = impressao('gerarPDFPlanoAcao')
+export const gerarPDFRelatAnual = impressao('gerarPDFRelatAnual')
+export const gerarPDFEquipe = impressao('gerarPDFEquipe')
+export const gerarPDFUsuariosAtendidos = impressao('gerarPDFUsuariosAtendidos')
+export const gerarPDFAtendimentos = impressao('gerarPDFAtendimentos')
+export const gerarPDFAgendaTeacolher = impressao('gerarPDFAgendaTeacolher')
+export const gerarPDFFichaAtendimentoTeacolher = impressao('gerarPDFFichaAtendimentoTeacolher')
+export const gerarPDFRelatorioTecnicoTeacolher = impressao('gerarPDFRelatorioTecnicoTeacolher')
+export const gerarPDFDoacoes = impressao('gerarPDFDoacoes')
+export const gerarPDFAnexoTeacolher = impressao('gerarPDFAnexoTeacolher')
+export const gerarPDFAgendaTecnicoTeacolher = impressao('gerarPDFAgendaTecnicoTeacolher')
+export const gerarPDFCronogramaTeacolher = impressao('gerarPDFCronogramaTeacolher')
+export const gerarPDFListaUsuariosComProfissionais = impressao('gerarPDFListaUsuariosComProfissionais')
+export const gerarPDFAnexoOficialTeacolher = impressao('gerarPDFAnexoOficialTeacolher')
+export const gerarPDFTermoAutorizacaoImagem = impressao('gerarPDFTermoAutorizacaoImagem')
+export const gerarPDFAnamneseTeacolher = impressao('gerarPDFAnamneseTeacolher')
+export const gerarPDFPiaTeacolher = impressao('gerarPDFPiaTeacolher')
+export const gerarPDFFrequenciaTeacolher = impressao('gerarPDFFrequenciaTeacolher')
+export const gerarPDFListaPresencaTeacolher = impressao('gerarPDFListaPresencaTeacolher')

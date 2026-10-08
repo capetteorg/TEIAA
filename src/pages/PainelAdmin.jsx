@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { supabase } from '../lib/supabase'
 import ProntuarioUsuario from '../components/ProntuarioUsuario'
 
@@ -18,6 +19,7 @@ const cardStyle = {
 export default function PainelAdmin() {
   const navigate = useNavigate()
   const { perfil } = useAuth()
+  const isMobile = useIsMobile()
   const [dados, setDados] = useState(null)
   const [mensagensDev, setMensagensDev] = useState([])
   const [recadosAdmin, setRecadosAdmin] = useState([])
@@ -67,10 +69,10 @@ export default function PainelAdmin() {
   return (
     <div>
       {/* TOPBAR — alinhada com o topo da sidebar */}
-      <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 5 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ height: TOPBAR_H, background: 'rgba(255,255,255,0.78)', borderBottom: '0.5px solid #E0DDD5', padding: isMobile ? '0 12px' : '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, position: 'sticky', top: 0, zIndex: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 9 : 12, minWidth: 0 }}>
           {/* Avatar */}
-          <div style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8E6DE', flexShrink: 0 }}>
+          <div style={{ width: isMobile ? 38 : 52, height: isMobile ? 38 : 52, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8E6DE', flexShrink: 0 }}>
             {perfil?.avatar_url ? (
               <img src={perfil.avatar_url} alt={perfil.nome} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${perfil.foto_position || '50%'}` }} />
             ) : (
@@ -79,32 +81,35 @@ export default function PainelAdmin() {
               </div>
             )}
           </div>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#06344F', letterSpacing: '-.03em', lineHeight: 1 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: isMobile ? 15 : 22, fontWeight: 700, color: '#06344F', letterSpacing: '-.03em', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Boa {new Date().getHours() < 12 ? 'manhã' : new Date().getHours() < 18 ? 'tarde' : 'noite'}, {perfil?.nome?.split(' ')[0] || 'Admin'}.
             </div>
-            <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>
-              {new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · painel administrativo
+            <div style={{ fontSize: isMobile ? 10 : 11, color: '#888780', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {new Date().toLocaleDateString('pt-BR', isMobile ? { day:'numeric', month:'short' } : { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · painel administrativo
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'k' }))} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <i className="ti ti-search" /> Busca rápida Ctrl+K
-          </button>
-          <button onClick={() => navigate('/relatorios')} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <i className="ti ti-report-analytics" /> Relatórios
-          </button>
-          <button onClick={() => navigate('/atendimentos')} style={{ padding: '7px 14px', border: 'none', borderRadius: 10, fontSize: 12, color: '#fff', background: '#0E7EA8', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600, boxShadow: '0 4px 12px rgba(14,126,168,.22)' }}>
-            <i className="ti ti-plus" /> Novo atendimento
+        {/* No celular só o botão principal cabe — os outros dois viram atalhos do menu */}
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {!isMobile && (<>
+            <button onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'k' }))} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <i className="ti ti-search" /> Busca rápida Ctrl+K
+            </button>
+            <button onClick={() => navigate('/relatorios')} style={{ padding: '7px 14px', border: '0.5px solid #D3D1C7', borderRadius: 10, fontSize: 12, color: '#5F5E5A', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <i className="ti ti-report-analytics" /> Relatórios
+            </button>
+          </>)}
+          <button onClick={() => navigate('/atendimentos')} title="Novo atendimento" style={{ padding: isMobile ? '8px 11px' : '7px 14px', border: 'none', borderRadius: 10, fontSize: 12, color: '#fff', background: '#0E7EA8', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600, boxShadow: '0 4px 12px rgba(14,126,168,.22)', whiteSpace: 'nowrap' }}>
+            <i className="ti ti-plus" /> {isMobile ? 'Atender' : 'Novo atendimento'}
           </button>
         </div>
       </div>
 
-      <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: isMobile ? '12px' : '20px 24px', display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}>
 
         {/* KPIs TEAcolher */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3,1fr)', gap: isMobile ? 8 : 12 }}>
           {[
             { label: 'Usuários ativos', val: d?.totalAtendidos ?? '—', sub: 'cadastrados no TEAcolher', cor: '#06344F', barra: AG_BLUE, rota: '/usuarios-atendidos' },
             { label: 'Atendimentos hoje', val: d?.atendimentosHoje ?? '—', sub: new Date().toLocaleDateString('pt-BR',{weekday:'long'}), cor: '#0E7EA8', barra: AG_BLUE, rota: '/atendimentos' },
@@ -120,7 +125,7 @@ export default function PainelAdmin() {
         </div>
 
         {/* GRID 2 COLUNAS */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 300px', gap: isMobile ? 12 : 16, alignItems: 'start' }}>
 
           {/* COLUNA ESQUERDA */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -130,7 +135,7 @@ export default function PainelAdmin() {
               <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 14 }}>
                 Ações rápidas
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
                 {[
                   { grupo: 'TEAcolher', itens: [
                     { icon: 'clipboard-list',   label: 'Atendimentos',    sub: 'agenda completa',    rota: '/atendimentos' },
@@ -147,7 +152,9 @@ export default function PainelAdmin() {
                 ].map(g => (
                   <div key={g.grupo}>
                     <div style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#B4B2A9', marginBottom: 8, paddingBottom: 5, borderBottom: '0.5px solid #E8E6DE' }}>{g.grupo}</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
+                    {/* minmax(0,1fr) em vez de "1fr 1fr": mantém os 4 atalhos em duas
+                        colunas no celular (a regra global de mobile colapsaria "1fr 1fr") */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 5 }}>
                       {g.itens.map(item => (
                         <button key={item.rota} onClick={() => navigate(item.rota)} className="acao-rapida"
                           style={{ background: 'rgba(255,255,255,0.8)', border: '0.5px solid #E8E6DE', borderRadius: 10, padding: '9px 5px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, position: 'relative', transition: 'border-color .12s, background .12s' }}>
