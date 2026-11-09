@@ -112,3 +112,42 @@ export function pessoaDaEquipe(p) {
     ref: `${p.funcao || '—'} · ${p.tipo_vinculo || '—'} · ${p.carga_horaria || '—'}`,
   }
 }
+
+// ---------------------------------------------------------------------
+// Fichas da equipe vindas do link (censo_equipe_abrir): CPF/RG chegam
+// mascarados (cpf_mask / rg_mask) e os campos cpf / rg_numero ficam vazios
+// — só são preenchidos se a pessoa for corrigir.
+// ---------------------------------------------------------------------
+export const novoMid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2))
+export const so = t => String(t || '').replace(/\D/g, '')
+export const mascaraCpf = t => so(t).length === 11 ? `***.${so(t).slice(3, 6)}.${so(t).slice(6, 9)}-**` : (t ? '•••' + String(t).slice(-3) : '')
+export const mascaraDoc = t => t ? '•••' + String(t).replace(/\s/g, '').slice(-3) : ''
+export const cheio = v => v != null && v !== ''
+
+// o que o Censo exige de cada pessoa (e-mail é opcional)
+export const OBRIGATORIOS = [['nascimento', 'nascimento'], ['sexo', 'sexo'], ['cpf', 'CPF'], ['rg', 'RG'], ['escolaridade', 'escolaridade'], ['profissao', 'formação'], ['vinculo', 'vínculo'], ['funcao', 'função'], ['carga', 'carga horária'], ['inicio', 'início na função']]
+export function faltando(p) {
+  return OBRIGATORIOS.filter(([c]) => {
+    if (c === 'cpf') return !p.cpf && !p.cpf_mask
+    if (c === 'rg') return !p.rg_numero && !p.rg_mask
+    return !cheio(p[c])
+  }).map(([, t]) => t)
+}
+
+// monta a ficha a partir do que o banco devolveu (Equipe + o que já está no Censo)
+export function fichaDaEquipe(e) {
+  const sug = pessoaDaEquipe({
+    id: e.equipe_id, nome: e.nome, funcao: e.funcao_equipe, tipo_vinculo: e.tipo_vinculo, carga_horaria: e.carga_horaria, dias_atuacao: e.dias_atuacao,
+    escolaridade: e.escolaridade_txt, formacao: e.formacao_txt, data_nascimento: e.nascimento, data_entrada: e.inicio,
+    sexo: e.sexo, rg_orgao: e.rg_orgao, rg_uf: e.rg_uf, email: e.email,
+  })
+  const doCenso = Object.fromEntries(Object.entries(e.censo || {}).filter(([, v]) => cheio(v)))
+  const f = { ...sug, ...doCenso }
+  // a Equipe é a ficha oficial dos dados pessoais
+  for (const [c, v] of [['nascimento', e.nascimento], ['inicio', e.inicio], ['sexo', e.sexo], ['rg_orgao', e.rg_orgao], ['rg_uf', e.rg_uf], ['email', e.email]]) if (cheio(v)) f[c] = v
+  if (e.escolaridade_txt) f.escolaridade = codigoDe(ESCOLARIDADE, e.escolaridade_txt) || f.escolaridade
+  if (e.formacao_txt) f.profissao = codigoDe(PROFISSAO, e.formacao_txt) || f.profissao
+  return { ...f, equipe_id: e.equipe_id, nome: e.nome, funcao_equipe: e.funcao_equipe, cpf: '', rg_numero: '', cpf_mask: e.cpf_mask, rg_mask: e.rg_mask, incluir: e.censo?.incluir ?? sug.incluir, link_em: e.censo?.link_em }
+}
+export const fichaManual = m => ({ ...m, cpf: '', rg_numero: '', incluir: m.incluir ?? true })
+

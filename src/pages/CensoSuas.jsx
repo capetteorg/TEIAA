@@ -3,7 +3,9 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe } from '../lib/censoCodigos'
+import { useParams } from 'react-router-dom'
+import CensoEquipeLink from './CensoEquipeLink'
+import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe, fichaDaEquipe, fichaManual } from '../lib/censoCodigos'
 
 // =====================================================================
 // Censo SUAS — Questionário "Centro Dia e outras unidades de habilitação e
@@ -372,10 +374,12 @@ async function calcularSugestoes() {
 // Campos da pessoa na Q37. Ao abrir a tela, guarda quais FALTAVAM: esses viram
 // campo (e continuam campo enquanto digita); o que já veio da Equipe aparece pronto.
 const CAMPOS_PESSOA = ['nome', 'nascimento', 'sexo', 'cpf', 'rg_numero', 'rg_orgao', 'email', 'escolaridade', 'profissao', 'vinculo', 'funcao', 'carga', 'inicio']
+// CPF/RG mascarados (vindos do link) contam como preenchidos
+const temCampo = (p, c) => c === 'cpf' ? (p.cpf || p.cpf_mask) : c === 'rg_numero' ? (p.rg_numero || p.rg_mask) : p[c]
 const chavePessoa = (p, i) => p.equipe_id ? 'e' + p.equipe_id : p.mid ? 'm' + p.mid : 'i' + i
 const novoMid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2))
 
-// O administrativo pode estar preenchendo pelo link (/censo-equipe/<token>)
+// O administrativo pode estar preenchendo pelo link (/censo/<token>)
 // enquanto esta tela está aberta. Antes de salvar, traz do banco quem foi
 // mexido pelo link (link_em diferente do que temos) pra não sobrescrever.
 function juntarEquipeDoLink(local, servidor) {
@@ -403,7 +407,17 @@ function Campo({ rotulo: rot, children, span = 1 }) {
 }
 
 // =====================================================================
-export default function CensoSuas() {
+// Página do LINK público (/censo/<token>): o mesmo Censo, sem login.
+export function CensoSuasLink() {
+  const { token } = useParams()
+  return <div style={{ minHeight: '100vh', background: '#F5F4EF' }}><CensoSuas token={token} /></div>
+}
+
+// token = aberto pelo link do administrativo (sem login): lê e grava só pelas
+// funções censo_link_* / censo_equipe_* (sql_censo_link_completo.sql); não
+// calcula sugestões (isso exige ler os cadastros das crianças).
+export default function CensoSuas({ token } = {}) {
+  const modoLink = !!token
   const { user, perfil } = useAuth()
   const isMobile = useIsMobile()
   const [carregando, setCarregando] = useState(true)
@@ -419,19 +433,27 @@ export default function CensoSuas() {
   const [abertos, setAbertos] = useState({})          // pessoas com "Corrigir" aberto
   const [link, setLink] = useState(null)              // link ativo do administrativo (censo_links)
   const [linkMsg, setLinkMsg] = useState('')
+  const [eqLink, setEqLink] = useState([])            // modo link: fichas da equipe (CPF/RG mascarados)
+  const [infoLink, setInfoLink] = useState(null)      // modo link: instituição, validade
+  const [editarMesmoAssim, setEditarMesmoAssim] = useState(false)
+  const precisaSalvar = useRef(false)                 // censo novo, ou respostas vazias que o sistema completou
   const timer = useRef(null)
   const baseEquipe = useRef({})                       // como cada pessoa está na Equipe (pra só gravar o que mudou)
   const primeiro = useRef(true)
 
-  useEffect(() => { carregar(); carregarLink() }, [])
+  useEffect(() => { carregar(); if (!modoLink) carregarLink() }, [])
+  // enquanto o administrativo tem o link, a tela do sistema fica só pra ver
+  const pausado = !modoLink && !!link && !editarMesmoAssim
+  const equipeVis = modoLink ? eqLink : (r.equipe || [])
 
   async function carregarLink() {
     const { data } = await supabase.from('censo_links').select('*').eq('ano', ANO).eq('ativo', true).gt('expira_em', new Date().toISOString()).order('criado_em', { ascending: false }).limit(1).maybeSingle()
     setLink(data || null)
   }
   async function gerarLink() {
+    await salvar()   // garante que o que o sistema pré-preencheu já está gravado antes do link abrir
     const { data, error } = await supabase.from('censo_links').insert({ ano: ANO, criado_por: user?.id || null }).select().single()
-    if (error) { setLinkMsg(/censo_links/.test(error.message) ? 'Rode sql_censo_link_equipe.sql no Supabase antes.' : 'Não gerou: ' + error.message); return }
+    if (error) { setLinkMsg(/censo_links/.test(error.message) ? 'Rode sql_censo_link_completo.sql no Supabase antes.' : 'Não gerou: ' + error.message); return }
     setLink(data); setLinkMsg('')
   }
   async function cancelarLink() {
@@ -439,27 +461,9 @@ export default function CensoSuas() {
     await supabase.from('censo_links').update({ ativo: false }).eq('id', link.id)
     setLink(null); setLinkMsg('Link cancelado.')
   }
-  // recarrega o que veio pelo link (botão na Q37)
-  async function trazerDoLink() {
-    const { data } = await supabase.from('censo_suas').select('respostas').eq('ano', ANO).eq('tipo', TIPO).maybeSingle()
-    const { data: eqAtiva } = await supabase.from('equipe').select('*').eq('situacao', 'ativo')
-    const of = Object.fromEntries((eqAtiva || []).map(e => [e.id, e]))
-    setR(prev => {
-      const junta = juntarEquipeDoLink(prev.equipe, data?.respostas?.equipe).map(p => {
-        const e = p.equipe_id && of[p.equipe_id]
-        if (!e) return p
-        const pe = dadosPessoaisDaEquipe(e), novo = { ...p }
-        for (const [c, col] of PESSOAIS) if (e[col]) novo[c] = pe[c]
-        return novo
-      })
-      return { ...prev, equipe: junta }
-    })
-    for (const e of eqAtiva || []) baseEquipe.current[e.id] = pessoaisParaEquipe({ ...dadosPessoaisDaEquipe(e), escolaridade: escolaridadeCod(e.escolaridade), profissao: codigoDe(PROFISSAO, e.formacao) })
-    setLinkMsg('Atualizado com o que veio pelo link.')
-  }
-
   async function carregar() {
     setCarregando(true)
+    if (modoLink) { await carregarPeloLink(); setCarregando(false); return }
     try {
       const { data: atual, error } = await supabase.from('censo_suas').select('*').eq('ano', ANO).eq('tipo', TIPO).maybeSingle()
       if (error) throw error
@@ -467,9 +471,13 @@ export default function CensoSuas() {
       setSug(sugestoes)
       let resp
       if (atual) {
-        resp = atual.respostas || {}
+        resp = { ...(atual.respostas || {}) }
         setRegistro(atual)
+        // o que estiver vazio (ex.: censo criado só pela equipe do link) o sistema completa
+        for (const k of ['ident', ...COM_SUGESTAO]) if (vazio(resp[k]) && sugestoes[k]) { resp[k] = sugestoes[k].valor; precisaSalvar.current = true }
+        if (!resp.resp) { resp.resp = { nome: perfil?.nome || '', email: user?.email || '', cargo: '', cpf: '', telefone: '', data: '' }; precisaSalvar.current = true }
       } else {
+        precisaSalvar.current = true
         // parte do censo do ano anterior, se houver; senão, do sistema
         const { data: ant } = await supabase.from('censo_suas').select('ano,respostas').eq('tipo', TIPO).lt('ano', ANO).order('ano', { ascending: false }).limit(1).maybeSingle()
         if (ant) {
@@ -508,22 +516,51 @@ export default function CensoSuas() {
     setCarregando(false)
   }
 
+  async function carregarPeloLink() {
+    const [{ data: c, error: e1 }, { data: eq, error: e2 }] = await Promise.all([
+      supabase.rpc('censo_link_abrir_censo', { p_token: token }),
+      supabase.rpc('censo_equipe_abrir', { p_token: token }),
+    ])
+    const er = e1 || e2
+    if (er) { setErro(/link_invalido/.test(er.message) ? 'Este link não está mais valendo (venceu ou foi cancelado). Peça um link novo.' : 'Não foi possível abrir: ' + er.message); return }
+    setInfoLink(c); setRegistro({ status: c.status })
+    setEqLink([...(eq.pessoas || []).map(fichaDaEquipe), ...(eq.manuais || []).map(fichaManual)])
+    const resp = { ...(c.respostas || {}) }
+    if (!resp.resp) resp.resp = { nome: '', email: '', cargo: '', cpf: '', telefone: '', data: '' }
+    primeiro.current = true
+    setR(resp)
+  }
+
   // salva sozinho 1,2s depois da última mudança
   useEffect(() => {
-    if (carregando || erro) return
-    if (primeiro.current) { primeiro.current = false; return }
+    if (carregando || (erro && !Object.keys(r).length)) return
+    if (primeiro.current) { primeiro.current = false; if (!precisaSalvar.current) return; precisaSalvar.current = false }
+    if (pausado) return
     clearTimeout(timer.current)
     timer.current = setTimeout(() => salvar(), 1200)
     return () => clearTimeout(timer.current)
   }, [r])
 
   async function salvar(status) {
+    if (modoLink) {
+      setSalvando(true)
+      const { equipe, ...semEquipe } = r
+      const { data, error } = await supabase.rpc('censo_link_salvar_censo', { p_token: token, p_respostas: semEquipe, p_terminei: status === 'enviado' })
+      setSalvando(false)
+      if (error) { setErro(/censo_concluido/.test(error.message) ? 'A TEIAA já concluiu este Censo — não dá mais pra mudar pelo link.' : /link_invalido/.test(error.message) ? 'O link venceu ou foi cancelado. Peça um link novo.' : 'Não salvou: ' + error.message); return }
+      setErro(''); setRegistro({ status: data?.status || registro?.status }); setSalvoEm(new Date())
+      return
+    }
     setSalvando(true)
     let resp = r
     const { data: srv } = await supabase.from('censo_suas').select('respostas').eq('ano', ANO).eq('tipo', TIPO).maybeSingle()
     if (srv?.respostas?.equipe) {
       const junta = juntarEquipeDoLink(r.equipe, srv.respostas.equipe)
       if (JSON.stringify(junta) !== JSON.stringify(r.equipe)) { resp = { ...r, equipe: junta }; setR(resp) }
+    }
+    // o administrativo salvou pelo link depois que esta tela abriu: vale o dele
+    if (srv?.respostas?._link_salvo_em && srv.respostas._link_salvo_em !== r._link_salvo_em) {
+      resp = { ...srv.respostas, equipe: resp.equipe }; setR(resp)
     }
     const dados = { ano: ANO, tipo: TIPO, respostas: resp, atualizado_em: new Date().toISOString(), atualizado_por: user?.id || null }
     if (status) dados.status = status
@@ -588,26 +625,26 @@ export default function CensoSuas() {
     if ((num(r.q31?.c0) || num(r.q31?.c7) || num(r.q31?.c15)) && !pub.some(p => p.startsWith('Criança'))) out.push(['amarelo', 'Q2 não marca crianças/adolescentes, mas a Q31 tem atendidos de 0 a 17 anos.'])
     if (num(r.q31?.a18) && !pub.some(p => p.startsWith('Adultas'))) out.push(['amarelo', 'Q2 não marca adultos, mas a Q31 tem atendidos de 18 a 59 anos.'])
 
-    const eq = (r.equipe || []).filter(p => p.incluir)
+    const eq = equipeVis.filter(p => p.incluir)
     const coords = eq.filter(p => p.funcao === '1')
     if (r.q36 && r.q36 !== SEM_COORD && coords.length === 0) out.push(['vermelho', 'Q36 diz que há coordenador(a), mas ninguém na equipe (Q37) está com a função "Coordenador(a)".'])
     if (r.q36 === SEM_COORD && coords.length) out.push(['vermelho', `Q36 diz que NÃO há coordenador(a), mas ${coords.map(p => p.nome).join(', ')} está como Coordenador(a) na Q37.`])
     if (!eq.length) out.push(['amarelo', 'Q37: nenhuma pessoa marcada na equipe.'])
     if (eq.length > 16) out.push(['amarelo', `Q37: ${eq.length} pessoas — o papel tem 16 linhas; no sistema do MDS dá pra incluir todas.`])
     for (const p of eq) {
-      const f = [['cpf', 'CPF'], ['nascimento', 'nascimento'], ['sexo', 'sexo'], ['rg_numero', 'RG'], ['escolaridade', 'escolaridade'], ['profissao', 'profissão'], ['vinculo', 'vínculo'], ['funcao', 'função'], ['carga', 'carga horária'], ['inicio', 'início na função']].filter(([c]) => !p[c]).map(([, t]) => t)
+      const f = [['cpf', 'CPF'], ['nascimento', 'nascimento'], ['sexo', 'sexo'], ['rg_numero', 'RG'], ['escolaridade', 'escolaridade'], ['profissao', 'profissão'], ['vinculo', 'vínculo'], ['funcao', 'função'], ['carga', 'carga horária'], ['inicio', 'início na função']].filter(([c]) => !temCampo(p, c)).map(([, t]) => t)
       if (f.length) out.push([f.includes('CPF') ? 'vermelho' : 'amarelo', `Q37 · ${p.nome || 'sem nome'}: falta ${f.join(', ')}.`])
     }
     if (!r.resp?.nome || !r.resp?.cpf) out.push(['amarelo', 'Responsável pelas informações: falta nome ou CPF.'])
     return out
-  }, [r])
+  }, [r, eqLink])
 
   const pendBloco = b => {
     let n = 0
     for (const q of b.questoes) {
       if (!visivel(q, r)) continue
       if (q.tipo === 'ident') n += ['nome', 'endereco', 'bairro', 'cep', 'municipio', 'data_implantacao'].filter(c => !r.ident?.[c]).length ? 1 : 0
-      else if (q.tipo === 'equipe') n += (r.equipe || []).some(p => p.incluir && !p.cpf) ? 1 : 0
+      else if (q.tipo === 'equipe') n += equipeVis.some(p => p.incluir && !temCampo(p, 'cpf')) ? 1 : 0
       else if (q.tipo === 'responsaveis') n += (!r.resp?.nome || !r.resp?.cpf) ? 1 : 0
       else n += semResposta(q, r) ? 1 : 0
     }
@@ -766,7 +803,13 @@ export default function CensoSuas() {
 
   function Questao({ q }) {
     if (q.tipo === 'ident') return Identificacao()
-    if (q.tipo === 'equipe') return QuadroEquipe({ q })
+    if (q.tipo === 'equipe') return modoLink ? (
+      <div style={s.q}>
+        <div style={s.qt}><span style={s.qn}>{q.n}</span>{q.texto}</div>
+        <div style={s.ajuda}>Toque no nome de cada pessoa, complete o que falta e clique em <b>Salvar</b> (cada pessoa é salva na hora). CPF e RG já cadastrados aparecem escondidos — só preencha se for corrigir.</div>
+        <div style={{ ...s.corpo, marginTop: 10 }}><CensoEquipeLink token={token} pessoas={eqLink} setPessoas={setEqLink} /></div>
+      </div>
+    ) : QuadroEquipe({ q })
     if (q.tipo === 'responsaveis') return Responsaveis()
     return (
       <div style={s.q}>
@@ -857,7 +900,6 @@ export default function CensoSuas() {
           <b> só o que falta vira campo pra preencher</b>. Se algo puxado estiver errado, use <b>Corrigir</b>. Desmarque quem não trabalha no serviço.
           Os dados pessoais que você preencher aqui (CPF, RG, sexo, e-mail, escolaridade…) <b>ficam gravados na ficha da pessoa na Equipe</b>.
         </div>
-        {QuadroLink({ eq })}
         <div style={{ ...s.corpo, marginTop: 10, fontSize: 12, color: CINZA }}>{dentro} de {eq.length} pessoa(s) entram no Censo.</div>
         <div style={{ display: 'grid', gap: 10, ...s.corpo }}>
           {eq.map((p, i) => {
@@ -913,25 +955,25 @@ export default function CensoSuas() {
     )
   }
 
-  function QuadroLink({ eq }) {
-    const url = link ? `${window.location.origin}/censo-equipe/${link.token}` : ''
-    const pelo = eq.filter(p => p.link_em).length
-    const msg = `Olá! Este é o link para preencher os dados da equipe da TEIAA para o Censo SUAS ${ANO}. Pode abrir no celular ou no computador, não precisa de senha. Preencha os dados de cada pessoa e clique em Salvar. Prazo: ${link ? new Date(link.expira_em).toLocaleDateString('pt-BR') : ''}.
+  function QuadroLink() {
+    const url = link ? `${window.location.origin}/censo/${link.token}` : ''
+    const pelo = (r.equipe || []).filter(p => p.link_em).length
+    const msg = `Olá! Este é o link para preencher o Censo SUAS ${ANO} da TEIAA. Pode abrir no computador ou no celular, não precisa de senha. Vá bloco por bloco: o que o sistema já sabia vem preenchido — confira e corrija as quantidades se precisar. Tudo salva sozinho. No fim, em Revisão, clique em Terminei. Prazo: ${link ? new Date(link.expira_em).toLocaleDateString('pt-BR') : ''}.
 
 ${url}`
     const copiar = async (t, ok) => { try { await navigator.clipboard.writeText(t); setLinkMsg(ok) } catch { window.prompt('Copie:', t) } }
     return (
       <div style={{ ...s.corpo, marginTop: 10, border: '0.5px solid #C9DCEB', background: '#F4F8FB', borderRadius: 10, padding: '10px 12px' }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: ESCURO, display: 'flex', alignItems: 'center', gap: 6 }}><i className="ti ti-link" /> Link para o administrativo preencher a equipe</div>
-        <div style={{ fontSize: 11.5, color: CINZA, margin: '3px 0 8px', lineHeight: 1.5 }}>Sem login. A pessoa vê só a equipe (não o resto do Censo nem do sistema). CPF e RG já cadastrados aparecem mascarados. O que ela salvar grava na Equipe e aqui na Q37.</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: ESCURO, display: 'flex', alignItems: 'center', gap: 6 }}><i className="ti ti-link" /> Link para o administrativo preencher o Censo</div>
+        <div style={{ fontSize: 11.5, color: CINZA, margin: '3px 0 8px', lineHeight: 1.5 }}>Sem login. A pessoa vê só o Censo (não o resto do sistema nem os cadastros das crianças). Os números do perfil vêm do que está salvo aqui e ela pode corrigir. CPF e RG já cadastrados aparecem mascarados. Enquanto o link estiver ativo, esta tela fica só pra ver.</div>
         {link ? (
           <>
             <div style={{ fontSize: 12, color: ESCURO, wordBreak: 'break-all', background: '#fff', border: '0.5px solid #D3D1C7', borderRadius: 8, padding: '6px 9px' }}>{url}</div>
-            <div style={{ fontSize: 11, color: '#888780', marginTop: 4 }}>Vale até {new Date(link.expira_em).toLocaleDateString('pt-BR')} · {pelo} pessoa(s) já preenchida(s) pelo link</div>
+            <div style={{ fontSize: 11, color: '#888780', marginTop: 4 }}>Vale até {new Date(link.expira_em).toLocaleDateString('pt-BR')} · {pelo} pessoa(s) da equipe já preenchida(s) pelo link{r._link_salvo_em ? ` · última mudança pelo link em ${new Date(r._link_salvo_em).toLocaleString('pt-BR')}` : ''}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
               <button type="button" style={s.btn(AZUL)} onClick={() => copiar(msg, 'Mensagem copiada — cole no WhatsApp.')}><i className="ti ti-brand-whatsapp" /> Copiar mensagem</button>
               <button type="button" style={s.btnTxt} onClick={() => copiar(url, 'Link copiado.')}>Copiar só o link</button>
-              <button type="button" style={s.btnTxt} onClick={trazerDoLink}><i className="ti ti-refresh" /> Atualizar com o que veio</button>
+              <button type="button" style={s.btnTxt} onClick={() => { carregar(); setLinkMsg('Atualizado com o que veio pelo link.') }}><i className="ti ti-refresh" /> Atualizar com o que veio</button>
               <button type="button" style={{ ...s.btnTxt, color: VERMELHO }} onClick={cancelarLink}>Cancelar link</button>
             </div>
           </>
@@ -984,7 +1026,7 @@ ${url}`
 
   function Revisao() {
     const linhas = linhasResumo()
-    const eq = (r.equipe || []).filter(p => p.incluir)
+    const eq = equipeVis.filter(p => p.incluir)
     const id = r.ident || {}
     let blocoAtual = ''
     return (
@@ -1000,9 +1042,13 @@ ${url}`
               </div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             <button style={s.btn(AZUL)} onClick={() => window.print()}><i className="ti ti-printer" /> Imprimir versão em papel</button>
-            {registro?.status === 'concluido'
-              ? <button style={s.btnTxt} onClick={() => salvar('rascunho')}>Reabrir (voltar a rascunho)</button>
-              : <button style={s.btn('#6BBF2B')} onClick={() => salvar('concluido')}><i className="ti ti-check" /> Marcar como concluído</button>}
+            {modoLink
+              ? (registro?.status === 'enviado'
+                  ? <span style={{ fontSize: 12.5, color: VERDE, alignSelf: 'center' }}><i className="ti ti-circle-check" /> Enviado para a TEIAA revisar. Se precisar, ainda dá pra corrigir — salva sozinho.</span>
+                  : <button style={s.btn('#6BBF2B')} onClick={() => salvar('enviado')}><i className="ti ti-send" /> Terminei — enviar para revisão</button>)
+              : registro?.status === 'concluido'
+                ? <button style={s.btnTxt} onClick={() => salvar('rascunho')}>Reabrir (voltar a rascunho)</button>
+                : <button style={s.btn('#6BBF2B')} onClick={() => salvar('concluido')}><i className="ti ti-check" /> Marcar como concluído</button>}
           </div>
         </div>
 
@@ -1060,7 +1106,7 @@ ${url}`
           {eq.map((p, i) => (
             <tr key={i}>
               <td style={td}>{i + 1}</td><td style={{ ...td, fontWeight: 600 }}>{p.nome}</td><td style={td}>{fmtData(p.nascimento)}</td><td style={td}>{p.sexo || '—'}</td>
-              <td style={{ ...td, whiteSpace: 'nowrap' }}>{p.cpf || '—'}</td><td style={td}>{p.rg_numero || '—'}</td><td style={td}>{p.rg_orgao || '—'}</td><td style={td}>{p.rg_uf || '—'}</td><td style={td}>{p.email || '—'}</td>
+              <td style={{ ...td, whiteSpace: 'nowrap' }}>{p.cpf || p.cpf_mask || '—'}</td><td style={td}>{p.rg_numero || p.rg_mask || '—'}</td><td style={td}>{p.rg_orgao || '—'}</td><td style={td}>{p.rg_uf || '—'}</td><td style={td}>{p.email || '—'}</td>
               <td style={td}>{cod(ESCOLARIDADE, p.escolaridade)}</td><td style={td}>{cod(PROFISSAO, p.profissao)}</td><td style={td}>{cod(VINCULO, p.vinculo)}</td>
               <td style={td}>{cod(FUNCAO, p.funcao)}</td><td style={td}>{cod(CARGA, p.carga)}</td><td style={td}>{fmtData(p.inicio)}</td>
             </tr>
@@ -1073,7 +1119,7 @@ ${url}`
   // ---------------------------------------------------------------- versão em papel (só na impressão)
   function VersaoPapel() {
     const id = r.ident || {}
-    const eq = (r.equipe || []).filter(p => p.incluir)
+    const eq = equipeVis.filter(p => p.incluir)
     const caixa = on => <span style={{ display: 'inline-block', width: 10, height: 10, border: '1px solid #333', marginRight: 5, textAlign: 'center', lineHeight: '9px', fontSize: 9, fontWeight: 700, verticalAlign: 'middle' }}>{on ? 'X' : ''}</span>
     const sec = t => <div style={{ background: '#0E7EA8', color: '#fff', fontWeight: 700, fontSize: 10.5, padding: '4px 8px', margin: '12px 0 6px', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>{t}</div>
     const cel = { border: '0.5px solid #999', padding: '2px 4px', fontSize: 8, verticalAlign: 'top' }
@@ -1185,18 +1231,36 @@ ${url}`
       {/* topo */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
         <div>
+          {modoLink && <div style={{ fontSize: 12, fontWeight: 700, color: AZUL, textTransform: 'uppercase', letterSpacing: '.05em' }}>{infoLink?.instituicao || 'TEIAA'}</div>}
           <div style={{ fontSize: 19, fontWeight: 700, color: ESCURO }}>Censo SUAS {ANO}</div>
           <div style={{ fontSize: 12.5, color: CINZA }}>Questionário Centro Dia (PSE para pessoas com deficiência) · mês de referência {MES_REF}</div>
         </div>
         <div style={{ textAlign: 'right', fontSize: 11.5, color: '#888780' }}>
-          <span style={{ display: 'inline-block', padding: '3px 9px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: registro?.status === 'concluido' ? '#EAF3DE' : '#FAEEDA', color: registro?.status === 'concluido' ? VERDE : LARANJA }}>
-            {registro?.status === 'concluido' ? 'Concluído' : 'Rascunho'}
+          <span style={{ display: 'inline-block', padding: '3px 9px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: registro?.status === 'concluido' ? '#EAF3DE' : registro?.status === 'enviado' ? '#E6F1FB' : '#FAEEDA', color: registro?.status === 'concluido' ? VERDE : registro?.status === 'enviado' ? AZUL : LARANJA }}>
+            {registro?.status === 'concluido' ? 'Concluído' : registro?.status === 'enviado' ? (modoLink ? 'Enviado' : 'Enviado pelo administrativo') : 'Rascunho'}
           </span>
           <div style={{ marginTop: 4 }}>{salvando ? 'Salvando…' : salvoEm ? `Salvo às ${salvoEm.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : registro ? 'Salvo' : 'Ainda não salvo'}</div>
         </div>
       </div>
 
       {erro && <div style={{ ...s.card, color: VERMELHO, fontSize: 12.5, padding: '8px 12px' }}><i className="ti ti-alert-octagon" /> {erro}</div>}
+      {modoLink && (
+        <div style={{ ...s.card, fontSize: 13, color: CINZA, lineHeight: 1.55, padding: '10px 14px' }}>
+          Vá <b>bloco por bloco</b>. O que o sistema já sabia vem preenchido: <b>confira e corrija</b> — principalmente as quantidades do bloco Perfil, que dependem dos cadastros.
+          Tudo <b>salva sozinho</b>; pode parar e voltar pelo mesmo link. No fim, em <b>Revisão</b>, clique em <b>Terminei</b>.
+          <div style={{ fontSize: 11.5, color: '#888780', marginTop: 4 }}>Link válido até {infoLink?.expira_em ? new Date(infoLink.expira_em).toLocaleDateString('pt-BR') : '—'}. Não compartilhe este link.</div>
+        </div>
+      )}
+      {!modoLink && QuadroLink()}
+      {pausado && (
+        <div style={{ ...s.card, fontSize: 12.5, color: AZUL, background: '#EEF6FB', padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+          <span><i className="ti ti-player-pause" /> O administrativo está preenchendo pelo link — esta tela está <b>só pra ver</b>, pra um não apagar o que o outro escreveu.</span>
+          <span style={{ display: 'flex', gap: 6 }}>
+            <button type="button" style={s.btnTxt} onClick={() => carregar()}><i className="ti ti-refresh" /> Atualizar</button>
+            <button type="button" style={s.btnTxt} onClick={() => setEditarMesmoAssim(true)}>Editar mesmo assim</button>
+          </span>
+        </div>
+      )}
       {origemAnterior && !registro && <div style={{ ...s.card, fontSize: 12.5, color: AZUL, padding: '8px 12px' }}><i className="ti ti-info-circle" /> Começou com as respostas do Censo {origemAnterior}. Confira o que mudou.</div>}
 
       {/* etapas */}
@@ -1222,7 +1286,7 @@ ${url}`
       </div>
 
       {naRevisao ? Revisao() : (
-        <div style={s.card}>
+        <div style={{ ...s.card, ...(pausado ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: AZUL, textTransform: 'uppercase', letterSpacing: '.05em' }}>Bloco {passo + 1}</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: ESCURO, marginBottom: 2 }}>{bloco.titulo}</div>
           {bloco.nota && <div style={{ fontSize: 11.5, color: '#888780' }}>{bloco.nota}</div>}

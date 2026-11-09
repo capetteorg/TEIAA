@@ -1,52 +1,18 @@
-import React, { useState, useEffect, useContext, createContext } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useState, useContext, createContext } from 'react'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, pessoaDaEquipe, rotulo, codigoDe } from '../lib/censoCodigos'
+import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, rotulo, novoMid, mascaraCpf, mascaraDoc, faltando, fichaDaEquipe, fichaManual } from '../lib/censoCodigos'
 
 // =====================================================================
-// Link público do Censo SUAS — só a EQUIPE (questão 37).
-// O admin gera o link na tela do Censo (Q37) e manda pro administrativo da
-// TEIAA, que preenche sem login. Tudo passa pelas funções
+// Bloco Equipe (questão 37) do Censo SUAS aberto pelo LINK público do
+// administrativo (CensoSuas com token). Cada ficha é salva na hora, pessoa
+// a pessoa. Tudo passa pelas funções
 // censo_equipe_abrir / censo_equipe_salvar / censo_equipe_remover
 // (sql_censo_link_equipe.sql): o navegador não lê nenhuma tabela direto.
 // CPF e RG já cadastrados chegam MASCARADOS; campo vazio não apaga nada.
 // =====================================================================
 
 const AZUL = '#0E7EA8', ESCURO = '#06344F', CINZA = '#5F5E5A', VERDE = '#3B6D11', LARANJA = '#854F0B', VERMELHO = '#A32D2D'
-
-const novoMid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2))
-const so = t => String(t || '').replace(/\D/g, '')
-const mascaraCpf = t => so(t).length === 11 ? `***.${so(t).slice(3, 6)}.${so(t).slice(6, 9)}-**` : (t ? '•••' + String(t).slice(-3) : '')
-const mascaraDoc = t => t ? '•••' + String(t).replace(/\s/g, '').slice(-3) : ''
-const cheio = v => v != null && v !== ''
-
-// o que o Censo exige de cada pessoa (e-mail é opcional)
-const OBRIGATORIOS = [['nascimento', 'nascimento'], ['sexo', 'sexo'], ['cpf', 'CPF'], ['rg', 'RG'], ['escolaridade', 'escolaridade'], ['profissao', 'formação'], ['vinculo', 'vínculo'], ['funcao', 'função'], ['carga', 'carga horária'], ['inicio', 'início na função']]
-function faltando(p) {
-  return OBRIGATORIOS.filter(([c]) => {
-    if (c === 'cpf') return !p.cpf && !p.cpf_mask
-    if (c === 'rg') return !p.rg_numero && !p.rg_mask
-    return !cheio(p[c])
-  }).map(([, t]) => t)
-}
-
-// monta a ficha a partir do que o banco devolveu (Equipe + o que já está no Censo)
-function fichaDaEquipe(e) {
-  const sug = pessoaDaEquipe({
-    id: e.equipe_id, nome: e.nome, funcao: e.funcao_equipe, tipo_vinculo: e.tipo_vinculo, carga_horaria: e.carga_horaria, dias_atuacao: e.dias_atuacao,
-    escolaridade: e.escolaridade_txt, formacao: e.formacao_txt, data_nascimento: e.nascimento, data_entrada: e.inicio,
-    sexo: e.sexo, rg_orgao: e.rg_orgao, rg_uf: e.rg_uf, email: e.email,
-  })
-  const doCenso = Object.fromEntries(Object.entries(e.censo || {}).filter(([, v]) => cheio(v)))
-  const f = { ...sug, ...doCenso }
-  // a Equipe é a ficha oficial dos dados pessoais
-  for (const [c, v] of [['nascimento', e.nascimento], ['inicio', e.inicio], ['sexo', e.sexo], ['rg_orgao', e.rg_orgao], ['rg_uf', e.rg_uf], ['email', e.email]]) if (cheio(v)) f[c] = v
-  if (e.escolaridade_txt) f.escolaridade = codigoDe(ESCOLARIDADE, e.escolaridade_txt) || f.escolaridade
-  if (e.formacao_txt) f.profissao = codigoDe(PROFISSAO, e.formacao_txt) || f.profissao
-  return { ...f, equipe_id: e.equipe_id, nome: e.nome, funcao_equipe: e.funcao_equipe, cpf: '', rg_numero: '', cpf_mask: e.cpf_mask, rg_mask: e.rg_mask, incluir: e.censo?.incluir ?? sug.incluir, link_em: e.censo?.link_em }
-}
-const fichaManual = m => ({ ...m, cpf: '', rg_numero: '', incluir: m.incluir ?? true })
 
 // Fica FORA da página (senão o campo perde o foco a cada letra)
 const MobileCtx = createContext(false)
@@ -60,30 +26,13 @@ function Campo({ rot, ajuda, children, inteiro }) {
   )
 }
 
-export default function CensoEquipeLink() {
-  const { token } = useParams()
+// pessoas/setPessoas vêm do CensoSuas (modo link), que carrega a equipe
+// com censo_equipe_abrir — assim a revisão e a impressão também enxergam.
+export default function CensoEquipeLink({ token, pessoas, setPessoas }) {
   const isMobile = useIsMobile()
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
-  const [info, setInfo] = useState(null)
-  const [pessoas, setPessoas] = useState([])
   const [aberta, setAberta] = useState(null)       // chave da pessoa com a ficha aberta
   const [salvando, setSalvando] = useState(null)
   const [aviso, setAviso] = useState({})           // chave → mensagem depois de salvar
-
-  useEffect(() => { abrir() }, [token])
-
-  async function abrir() {
-    setCarregando(true)
-    const { data, error } = await supabase.rpc('censo_equipe_abrir', { p_token: token })
-    if (error) {
-      setErro(/link_invalido/.test(error.message) ? 'Este link não está mais valendo (venceu ou foi cancelado). Peça um link novo.' : 'Não foi possível abrir: ' + error.message)
-    } else {
-      setInfo(data)
-      setPessoas([...(data.pessoas || []).map(fichaDaEquipe), ...(data.manuais || []).map(fichaManual)])
-    }
-    setCarregando(false)
-  }
 
   const chave = p => p.equipe_id ? 'e' + p.equipe_id : 'm' + p.mid
   const up = (k, c, v) => setPessoas(ps => ps.map(p => chave(p) === k ? { ...p, [c]: v } : p))
@@ -128,7 +77,7 @@ export default function CensoEquipeLink() {
 
   // ---------------------------------------------------------------- estilos
   const s = {
-    card: { background: '#fff', border: '0.5px solid #E8E6DE', borderRadius: 14, boxShadow: '0 2px 16px rgba(0,0,0,0.05)', padding: isMobile ? '1rem' : '1.2rem 1.4rem', marginBottom: 10 },
+    card: { background: '#fff', border: '0.5px solid #E0DED6', borderRadius: 10, padding: isMobile ? '12px' : '12px 14px', marginBottom: 8 },
     input: { width: '100%', padding: '9px 10px', fontSize: 16, borderRadius: 8, border: '0.5px solid #D3D1C7', background: '#fff', boxSizing: 'border-box', fontFamily: 'inherit' },
     label: { fontSize: 12, color: '#888780', marginBottom: 4, display: 'block' },
     btn: (bg, cor = '#fff') => ({ padding: '10px 16px', fontSize: 14, borderRadius: 9, border: 'none', background: bg, color: cor, cursor: 'pointer', fontWeight: 600 }),
@@ -136,13 +85,6 @@ export default function CensoEquipeLink() {
     grid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 },
     chip: (bg, cor) => ({ fontSize: 11.5, fontWeight: 600, color: cor, background: bg, borderRadius: 99, padding: '3px 9px', whiteSpace: 'nowrap' }),
   }
-
-  if (carregando) return <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#888780', fontSize: 14 }}>Abrindo…</div>
-  if (erro) return (
-    <div style={{ maxWidth: 520, margin: '3rem auto', padding: '0 16px' }}>
-      <div style={{ ...s.card, color: VERMELHO, fontSize: 14 }}><i className="ti ti-alert-octagon" /> {erro}</div>
-    </div>
-  )
 
   const ativas = pessoas.filter(p => p.incluir)
   const completas = ativas.filter(p => !faltando(p).length).length
@@ -203,18 +145,7 @@ export default function CensoEquipeLink() {
 
   return (
     <MobileCtx.Provider value={isMobile}>
-    <div style={{ minHeight: '100vh', background: '#F5F4EF' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: isMobile ? '16px' : '28px 20px 48px' }}>
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: AZUL, textTransform: 'uppercase', letterSpacing: '.05em' }}>{info?.instituicao || 'TEIAA'}</div>
-          <div style={{ fontSize: 21, fontWeight: 700, color: ESCURO }}>Censo SUAS {info?.ano} — Equipe</div>
-          <div style={{ fontSize: 13.5, color: CINZA, lineHeight: 1.55, marginTop: 6 }}>
-            Preencha os dados de <b>cada pessoa que trabalha no serviço</b>. Toque no nome, complete o que falta e clique em <b>Salvar</b>.
-            Pode parar e voltar depois pelo mesmo link — o que foi salvo fica guardado.
-          </div>
-          <div style={{ fontSize: 12, color: '#888780', marginTop: 6 }}>Link válido até {info?.expira_em ? new Date(info.expira_em).toLocaleDateString('pt-BR') : '—'}.</div>
-        </div>
-
+    <div>
         <div style={{ ...s.card, padding: '12px 14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: ESCURO, fontWeight: 600 }}>
             <span>{completas} de {ativas.length} pessoa(s) completa(s)</span>
@@ -259,10 +190,6 @@ export default function CensoEquipeLink() {
         })}
 
         <button type="button" style={{ ...s.btnTxt, marginTop: 4 }} onClick={incluirPessoa}><i className="ti ti-plus" /> Incluir pessoa que não está na lista</button>
-        <div style={{ fontSize: 11.5, color: '#888780', marginTop: 18, lineHeight: 1.5 }}>
-          Os dados ficam guardados no sistema da TEIAA e servem só para o Censo SUAS e para a ficha da equipe. Não compartilhe este link.
-        </div>
-      </div>
     </div>
     </MobileCtx.Provider>
   )

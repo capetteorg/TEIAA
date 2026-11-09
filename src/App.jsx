@@ -19,7 +19,7 @@ const PainelOperacional = lazy(() => import('./pages/PainelOperacional'))
 const PainelTecnico = lazy(() => import('./pages/PainelTecnico'))
 const RelatoriosCentral = lazy(() => import('./pages/RelatoriosCentral'))
 const CensoSuas = lazy(() => import('./pages/CensoSuas'))
-const CensoEquipeLink = lazy(() => import('./pages/CensoEquipeLink'))
+const CensoSuasLink = lazy(() => import('./pages/CensoSuas').then(m => ({ default: m.CensoSuasLink })))
 const PrestacaoContas = lazy(() => import('./pages/PrestacaoContas'))
 const Backup = lazy(() => import('./pages/Backup'))
 const MinhaConta = lazy(() => import('./pages/MinhaConta'))
@@ -94,7 +94,8 @@ export default function App() {
       <Route path="/login" element={!user ? <Login /> : <RedirecionarPerfil />} />
       <Route path="transparencia" element={<Sociedade />} />
       <Route path="/nova-senha" element={<NovaSenha />} />
-      <Route path="/censo-equipe/:token" element={<CensoEquipeLink />} />
+      <Route path="/censo/:token" element={<CensoSuasLink />} />
+      <Route path="/censo-equipe/:token" element={<CensoSuasLink />} />
 
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route index element={<RedirecionarPerfil />} />
