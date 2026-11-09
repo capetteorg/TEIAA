@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { PROFISSAO } from '../lib/censoCodigos'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
 
@@ -70,6 +71,8 @@ const CARGAS = ['4h', '6h', '8h', 'Sem carga horária fixa', 'Outro']
 
 // Mesma escala do Censo SUAS (questão 37) — a tela do Censo lê e grava aqui
 const ESCOLARIDADES = ['Sem Escolaridade','Ensino Fundamental Incompleto','Ensino Fundamental Completo','Ensino Médio Incompleto','Ensino Médio Completo','Ensino Superior Incompleto','Ensino Superior Completo','Especialização','Mestrado','Doutorado']
+// Formação = lista de profissões do Censo SUAS (questão 37)
+const FORMACOES = PROFISSAO.map(([, t]) => t)
 const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
 
 const DIAS = [
@@ -97,7 +100,7 @@ const SITUACAO_COR = {
 
 const FORM_VAZIO = {
   nome:'', cpf:'', data_nascimento:'', funcao:'Assistente Social',
-  sexo:'', rg_numero:'', rg_orgao:'', rg_uf:'RJ', email:'', escolaridade:'',
+  sexo:'', rg_numero:'', rg_orgao:'', rg_uf:'RJ', email:'', escolaridade:'', formacao:'',
   tem_registro_prof: false, conselho_prof:'CRESS', num_registro:'', uf_registro:'',
   tipo_vinculo:'CLT / Funcionário próprio da TEIAA', orgao_origem:'TEIAA',
   instrumento_vinc:'Contrato direto com a TEIAA', parceria_id:'',
@@ -188,7 +191,7 @@ export default function Equipe() {
     setForm({
       nome:p.nome, cpf:p.cpf, data_nascimento:p.data_nascimento||'',
       sexo:p.sexo||'', rg_numero:p.rg_numero||'', rg_orgao:p.rg_orgao||'', rg_uf:p.rg_uf||'RJ',
-      email:p.email||'', escolaridade:p.escolaridade||'',
+      email:p.email||'', escolaridade:p.escolaridade||'', formacao:p.formacao||'',
       funcao:p.funcao, tem_registro_prof:p.tem_registro_prof||false,
       conselho_prof:p.conselho_prof||'CRESS', num_registro:p.num_registro||'',
       uf_registro:p.uf_registro||'', tipo_vinculo:p.tipo_vinculo,
@@ -403,7 +406,7 @@ export default function Equipe() {
                 </select>
               </div>
             </div>
-            <div style={s.grupo('1fr 1fr')}>
+            <div style={s.grupo('1fr 1fr 1fr')}>
               <div>
                 <label style={s.label}>E-mail</label>
                 <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} style={s.input} />
@@ -412,6 +415,12 @@ export default function Equipe() {
                 <label style={s.label}>Escolaridade</label>
                 <select value={form.escolaridade} onChange={e=>setForm(f=>({...f,escolaridade:e.target.value}))} style={s.input}>
                   <option value="">—</option>{ESCOLARIDADES.map(x => <option key={x}>{x}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={s.label}>Formação</label>
+                <select value={form.formacao} onChange={e=>setForm(f=>({...f,formacao:e.target.value}))} style={s.input}>
+                  <option value="">—</option>{FORMACOES.map(x => <option key={x}>{x}</option>)}
                 </select>
               </div>
             </div>
@@ -596,6 +605,7 @@ export default function Equipe() {
                 ['Sexo', { F:'Feminino', M:'Masculino' }[pessoaSel.sexo] || '—'],
                 ['E-mail', pessoaSel.email||'—'],
                 ['Escolaridade', pessoaSel.escolaridade||'—'],
+                ['Formação', pessoaSel.formacao||'—'],
                 ['Tipo de vínculo', pessoaSel.tipo_vinculo],
                 ['Órgão de origem', pessoaSel.orgao_origem||'—'],
                 ['Instrumento', pessoaSel.instrumento_vinc||'—'],

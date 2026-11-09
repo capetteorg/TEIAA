@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/db'
 import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { areaPelaFuncao } from '../lib/areas'
+import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe } from '../lib/censoCodigos'
 
 // =====================================================================
 // Censo SUAS — Questionário "Centro Dia e outras unidades de habilitação e
@@ -31,109 +31,6 @@ const TIPO = 'centro_dia'
 
 const AZUL = '#0E7EA8', ESCURO = '#06344F', CINZA = '#5F5E5A', VERDE = '#3B6D11', LARANJA = '#854F0B', VERMELHO = '#A32D2D'
 
-// ---------------------------------------------------------------------
-// Códigos da questão 37 (legenda da pág. 11 do formulário)
-// ---------------------------------------------------------------------
-const ESCOLARIDADE = ['Sem Escolaridade','Ensino Fundamental Incompleto','Ensino Fundamental Completo','Ensino Médio Incompleto','Ensino Médio Completo','Ensino Superior Incompleto','Ensino Superior Completo','Especialização','Mestrado','Doutorado']
-  .map((t, i) => [String(i), t])
-const PROFISSAO = ['Assistente Social','Psicóloga(o)','Pedagoga(o)','Advogada(o)','Administrador(a)','Antropóloga(o)','Socióloga(o)','Fisioterapeuta','Cientista política(o)','Nutricionista','Médica(o)','Musicoterapeuta','Terapeuta Ocupacional','Economista','Economista Doméstica(o)','Enfermeira(o)','Analista de sistema','Programador(a)','Outro profissional de nível superior','Profissional de nível médio','Sem formação profissional']
-  .map((t, i) => [String(i + 1), t])
-const VINCULO = ['Comissionado','Servidor/Estatutário','Servidor Temporário','Empregado Público Celetista – CLT','Terceirizado','Empregado Celetista do setor privado – CLT','Outro vínculo não permanente','Voluntário']
-  .map((t, i) => [String(i + 1), t])
-const FUNCAO = ['Coordenador(a)','Técnico(a) de Nível Superior','Cuidador(a) social','Auxiliar de Cuidador','Educador(a) Social','Apoio administrativo','Estagiário(a)','Serviços Gerais','Outros']
-  .map((t, i) => [String(i + 1), t])
-const CARGA = ['Até 10 horas semanais','De 11 a 20 horas semanais','De 21 a 30 horas semanais','De 31 a 40 horas semanais','De 41 a 44 horas semanais','Mais de 44 horas semanais']
-  .map((t, i) => [String(i + 1), t])
-const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
-
-// Equipe (cadastro da TEIAA) → códigos do Censo. É só sugestão: dá pra trocar na tela.
-// Atenção: a ordem dos vínculos do Centro Dia é diferente da do Centro de Convivência.
-const VINCULO_DA_EQUIPE = {
-  'CLT / Funcionário próprio da TEIAA': '6',
-  'Servidor público / cedido por órgão público': '2',
-  'POT / Programa da Prefeitura': '7',
-  'Voluntário': '8',
-  'Jovem aprendiz / CAMP': '6',
-  'Apenado / Cumpridor de medida / CPMA': '7',
-  'Prestador de serviço': '7',
-  'Estagiário': '7',
-  'Colaborador parceiro': '7',
-  'Diretoria / Membro institucional': '8',
-}
-const FUNCAO_DA_EQUIPE = {
-  'Coordenação': '1', 'Direção': '1', 'Presidente': '1',
-  'Assistente Social': '2', 'Pedagoga': '2', 'Psicóloga': '2',
-  'Cuidador(a)': '3',
-  'Professor(a)': '5', 'Apoio socioeducativo': '5', 'Recreador(a)': '5', 'Facilitador(a) de grupo': '5',
-  'Oficineiro(a)': '5', 'Voluntário de atividade': '5',
-  'Auxiliar de escritório': '6', 'Apoio administrativo': '6',
-  'Cozinheiro(a)': '8', 'Zelador(a)': '8', 'Apoio operacional': '8',
-}
-// profissão pela função (palavra-chave). Neuropsicopedagogia/psicomotricidade
-// ficam em branco de propósito: a formação de base varia — a pessoa escolhe.
-const PROFISSAO_POR_PALAVRA = [
-  [['assistente social'], '1'], [['psicolog'], '2'], [['pedagog'], '3'], [['advog'], '4'], [['administrad'], '5'],
-  [['fisioterap'], '8'], [['nutri'], '10'], [['medic'], '11'], [['musicoterap'], '12'], [['ocupacional'], '13'],
-  [['enfermeir'], '16'], [['fono'], '19'],
-]
-const semAcento = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-function profissaoDaFuncao(funcao) {
-  const f = semAcento(funcao)
-  if (f.includes('neuropsicopedagog') || f.includes('psicopedagog') || f.includes('psicomotric')) return ''
-  return (PROFISSAO_POR_PALAVRA.find(([ch]) => ch.some(c => f.includes(c))) || [, ''])[1]
-}
-const DIAS_DA_EQUIPE = { 'Segunda a sexta': 5, 'Segunda, quarta e sexta': 3, 'Terça e quinta': 2, 'Finais de semana': 2 }
-// quem normalmente NÃO é equipe do serviço (dá pra marcar na mão)
-const FORA_POR_PADRAO = ['Diretoria / Membro institucional', 'Apenado / Cumpridor de medida / CPMA']
-
-function cargaCenso(carga, dias) {
-  const h = parseInt(carga)
-  if (!h) return ''
-  const sem = h * (DIAS_DA_EQUIPE[dias] || 5)
-  if (sem <= 10) return '1'
-  if (sem <= 20) return '2'
-  if (sem <= 30) return '3'
-  if (sem <= 40) return '4'
-  if (sem <= 44) return '5'
-  return '6'
-}
-
-// ---------------------------------------------------------------------
-// Dados PESSOAIS moram na Equipe (ficha oficial). O Censo lê de lá e, o que
-// for preenchido aqui, grava de volta lá (ver sincronizarEquipe). Os códigos
-// do Censo (vínculo, função, carga, profissão) ficam só no Censo.
-// [campo no Censo, coluna na Equipe]
-// ---------------------------------------------------------------------
-const PESSOAIS = [['nome', 'nome'], ['cpf', 'cpf'], ['nascimento', 'data_nascimento'], ['inicio', 'data_entrada'],
-  ['sexo', 'sexo'], ['rg_numero', 'rg_numero'], ['rg_orgao', 'rg_orgao'], ['rg_uf', 'rg_uf'], ['email', 'email']]
-const escolaridadeCod = txt => (ESCOLARIDADE.find(([, t]) => t === txt) || [''])[0]
-
-function dadosPessoaisDaEquipe(p) {
-  const out = Object.fromEntries(PESSOAIS.map(([c, col]) => [c, p[col] || '']))
-  if (!out.rg_uf) out.rg_uf = 'RJ'
-  return out
-}
-// valor que vai pra coluna da Equipe (escolaridade vai por extenso)
-function pessoaisParaEquipe(p) {
-  const out = Object.fromEntries(PESSOAIS.map(([c, col]) => [col, p[c] || '']))
-  out.escolaridade = p.escolaridade ? rotulo(ESCOLARIDADE, p.escolaridade) : ''
-  return out
-}
-
-function pessoaDaEquipe(p) {
-  const prof = profissaoDaFuncao(p.funcao)
-  let funcao = FUNCAO_DA_EQUIPE[p.funcao] || (areaPelaFuncao(p.funcao) ? '2' : '9')
-  if (p.tipo_vinculo === 'Estagiário') funcao = '7'
-  return {
-    equipe_id: p.id,
-    incluir: !FORA_POR_PADRAO.includes(p.tipo_vinculo),
-    ...dadosPessoaisDaEquipe(p),
-    escolaridade: escolaridadeCod(p.escolaridade) || (prof && prof !== '20' && prof !== '21' ? '6' : ''), profissao: prof,
-    vinculo: VINCULO_DA_EQUIPE[p.tipo_vinculo] || '', funcao,
-    carga: cargaCenso(p.carga_horaria, p.dias_atuacao),
-    ref: `${p.funcao || '—'} · ${p.tipo_vinculo || '—'} · ${p.carga_horaria || '—'}`,
-  }
-}
 
 // ---------------------------------------------------------------------
 // O questionário. Cada pergunta: n (número no formulário), k (chave na
@@ -280,7 +177,6 @@ const COM_SUGESTAO = ['q1', 'q2', 'q4', 'q5', 'q8', 'q10', 'q20', 'q31', 'q32', 
 // ---------------------------------------------------------------------
 const vazio = v => v == null || v === '' || (Array.isArray(v) && v.length === 0) || (typeof v === 'object' && !Array.isArray(v) && Object.values(v).every(x => x === '' || x == null))
 const fmtData = d => d ? d.split('-').reverse().join('/') : ''
-const rotulo = (lista, cod) => (lista.find(([c]) => c === cod) || [, ''])[1]
 const visivel = (q, r) => !q.mostrar || q.mostrar(r)
 const pedeTexto = (q, o) => Array.isArray(q.outro) ? q.outro.includes(o) : q.outro === o
 const qual = (r, q, o) => (r[q.k + '_qual'] || {})[o] || ''
@@ -476,7 +372,23 @@ async function calcularSugestoes() {
 // Campos da pessoa na Q37. Ao abrir a tela, guarda quais FALTAVAM: esses viram
 // campo (e continuam campo enquanto digita); o que já veio da Equipe aparece pronto.
 const CAMPOS_PESSOA = ['nome', 'nascimento', 'sexo', 'cpf', 'rg_numero', 'rg_orgao', 'email', 'escolaridade', 'profissao', 'vinculo', 'funcao', 'carga', 'inicio']
-const chavePessoa = (p, i) => p.equipe_id ? 'e' + p.equipe_id : 'm' + i
+const chavePessoa = (p, i) => p.equipe_id ? 'e' + p.equipe_id : p.mid ? 'm' + p.mid : 'i' + i
+const novoMid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2))
+
+// O administrativo pode estar preenchendo pelo link (/censo-equipe/<token>)
+// enquanto esta tela está aberta. Antes de salvar, traz do banco quem foi
+// mexido pelo link (link_em diferente do que temos) pra não sobrescrever.
+function juntarEquipeDoLink(local, servidor) {
+  const doServ = Object.fromEntries((servidor || []).map((p, i) => [chavePessoa(p, i), p]))
+  const vistos = new Set()
+  const junta = (local || []).map((p, i) => {
+    const k = chavePessoa(p, i); vistos.add(k)
+    const sv = doServ[k]
+    return sv?.link_em && sv.link_em !== p.link_em ? { ...p, ...sv } : p
+  })
+  for (const [k, sv] of Object.entries(doServ)) if (!vistos.has(k) && sv.link_em && (sv.mid || sv.equipe_id)) junta.push(sv)
+  return junta
+}
 
 // Campo com rótulo. Fica FORA do componente da página (senão o input perde
 // o foco a cada letra); sabe se é celular pelo contexto.
@@ -505,11 +417,46 @@ export default function CensoSuas() {
   const [origemAnterior, setOrigemAnterior] = useState(null)
   const [faltavam, setFaltavam] = useState({})        // campos da Q37 que faltavam ao abrir (viram campo; o resto aparece pronto)
   const [abertos, setAbertos] = useState({})          // pessoas com "Corrigir" aberto
+  const [link, setLink] = useState(null)              // link ativo do administrativo (censo_links)
+  const [linkMsg, setLinkMsg] = useState('')
   const timer = useRef(null)
   const baseEquipe = useRef({})                       // como cada pessoa está na Equipe (pra só gravar o que mudou)
   const primeiro = useRef(true)
 
-  useEffect(() => { carregar() }, [])
+  useEffect(() => { carregar(); carregarLink() }, [])
+
+  async function carregarLink() {
+    const { data } = await supabase.from('censo_links').select('*').eq('ano', ANO).eq('ativo', true).gt('expira_em', new Date().toISOString()).order('criado_em', { ascending: false }).limit(1).maybeSingle()
+    setLink(data || null)
+  }
+  async function gerarLink() {
+    const { data, error } = await supabase.from('censo_links').insert({ ano: ANO, criado_por: user?.id || null }).select().single()
+    if (error) { setLinkMsg(/censo_links/.test(error.message) ? 'Rode sql_censo_link_equipe.sql no Supabase antes.' : 'Não gerou: ' + error.message); return }
+    setLink(data); setLinkMsg('')
+  }
+  async function cancelarLink() {
+    if (!link || !window.confirm('Cancelar o link? Quem estiver com ele não consegue mais abrir.')) return
+    await supabase.from('censo_links').update({ ativo: false }).eq('id', link.id)
+    setLink(null); setLinkMsg('Link cancelado.')
+  }
+  // recarrega o que veio pelo link (botão na Q37)
+  async function trazerDoLink() {
+    const { data } = await supabase.from('censo_suas').select('respostas').eq('ano', ANO).eq('tipo', TIPO).maybeSingle()
+    const { data: eqAtiva } = await supabase.from('equipe').select('*').eq('situacao', 'ativo')
+    const of = Object.fromEntries((eqAtiva || []).map(e => [e.id, e]))
+    setR(prev => {
+      const junta = juntarEquipeDoLink(prev.equipe, data?.respostas?.equipe).map(p => {
+        const e = p.equipe_id && of[p.equipe_id]
+        if (!e) return p
+        const pe = dadosPessoaisDaEquipe(e), novo = { ...p }
+        for (const [c, col] of PESSOAIS) if (e[col]) novo[c] = pe[c]
+        return novo
+      })
+      return { ...prev, equipe: junta }
+    })
+    for (const e of eqAtiva || []) baseEquipe.current[e.id] = pessoaisParaEquipe({ ...dadosPessoaisDaEquipe(e), escolaridade: escolaridadeCod(e.escolaridade), profissao: codigoDe(PROFISSAO, e.formacao) })
+    setLinkMsg('Atualizado com o que veio pelo link.')
+  }
 
   async function carregar() {
     setCarregando(true)
@@ -548,9 +495,10 @@ export default function CensoSuas() {
         const of = dadosPessoaisDaEquipe(e), novo = { ...p }
         for (const [c, col] of PESSOAIS) if (e[col]) novo[c] = of[c]
         if (e.escolaridade) novo.escolaridade = escolaridadeCod(e.escolaridade) || p.escolaridade
+        if (e.formacao) novo.profissao = codigoDe(PROFISSAO, e.formacao) || p.profissao
         return novo
       })
-      baseEquipe.current = Object.fromEntries(sugestoes.equipeBruta.map(e => [e.id, pessoaisParaEquipe({ ...dadosPessoaisDaEquipe(e), escolaridade: escolaridadeCod(e.escolaridade) })]))
+      baseEquipe.current = Object.fromEntries(sugestoes.equipeBruta.map(e => [e.id, pessoaisParaEquipe({ ...dadosPessoaisDaEquipe(e), escolaridade: escolaridadeCod(e.escolaridade), profissao: codigoDe(PROFISSAO, e.formacao) })]))
       setFaltavam(Object.fromEntries(resp.equipe.map((p, i) => [chavePessoa(p, i), CAMPOS_PESSOA.filter(c => !p[c] || (c === 'rg_orgao' && !p.rg_numero))])))
       primeiro.current = true
       setR(resp)
@@ -571,19 +519,25 @@ export default function CensoSuas() {
 
   async function salvar(status) {
     setSalvando(true)
-    const dados = { ano: ANO, tipo: TIPO, respostas: r, atualizado_em: new Date().toISOString(), atualizado_por: user?.id || null }
+    let resp = r
+    const { data: srv } = await supabase.from('censo_suas').select('respostas').eq('ano', ANO).eq('tipo', TIPO).maybeSingle()
+    if (srv?.respostas?.equipe) {
+      const junta = juntarEquipeDoLink(r.equipe, srv.respostas.equipe)
+      if (JSON.stringify(junta) !== JSON.stringify(r.equipe)) { resp = { ...r, equipe: junta }; setR(resp) }
+    }
+    const dados = { ano: ANO, tipo: TIPO, respostas: resp, atualizado_em: new Date().toISOString(), atualizado_por: user?.id || null }
     if (status) dados.status = status
     const { data, error } = await supabase.from('censo_suas').upsert(dados, { onConflict: 'ano,tipo' }).select().single()
     setSalvando(false)
     if (error) { setErro('Não salvou: ' + error.message); return }
-    const errEq = await sincronizarEquipe()
+    const errEq = await sincronizarEquipe(resp)
     setErro(errEq ? 'Censo salvo, mas não gravou na Equipe: ' + errEq : ''); setRegistro(data); setSalvoEm(new Date())
   }
 
   // Grava na Equipe os dados pessoais preenchidos aqui. Só o que mudou e não
   // está vazio (apagar um campo no Censo nunca apaga a ficha da Equipe).
-  async function sincronizarEquipe() {
-    for (const p of r.equipe || []) {
+  async function sincronizarEquipe(resp = r) {
+    for (const p of resp.equipe || []) {
       if (!p.equipe_id) continue
       const base = baseEquipe.current[p.equipe_id] || {}
       const atual = pessoaisParaEquipe(p)
@@ -903,6 +857,7 @@ export default function CensoSuas() {
           <b> só o que falta vira campo pra preencher</b>. Se algo puxado estiver errado, use <b>Corrigir</b>. Desmarque quem não trabalha no serviço.
           Os dados pessoais que você preencher aqui (CPF, RG, sexo, e-mail, escolaridade…) <b>ficam gravados na ficha da pessoa na Equipe</b>.
         </div>
+        {QuadroLink({ eq })}
         <div style={{ ...s.corpo, marginTop: 10, fontSize: 12, color: CINZA }}>{dentro} de {eq.length} pessoa(s) entram no Censo.</div>
         <div style={{ display: 'grid', gap: 10, ...s.corpo }}>
           {eq.map((p, i) => {
@@ -920,6 +875,7 @@ export default function CensoSuas() {
                     {p.nome || 'Pessoa sem nome'}
                   </label>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {p.link_em && <span title={'Preenchido pelo link em ' + new Date(p.link_em).toLocaleString('pt-BR')} style={{ fontSize: 11, fontWeight: 600, color: AZUL, background: '#E6F1FB', borderRadius: 99, padding: '2px 8px' }}><i className="ti ti-link" /> pelo link</span>}
                     {p.incluir && (aindaFalta
                       ? <span style={{ fontSize: 11, fontWeight: 600, color: LARANJA, background: '#FAEEDA', borderRadius: 99, padding: '2px 8px' }}>falta {aindaFalta}</span>
                       : <span style={{ fontSize: 11, fontWeight: 600, color: VERDE, background: '#EAF3DE', borderRadius: 99, padding: '2px 8px' }}><i className="ti ti-check" /> completo</span>)}
@@ -949,10 +905,38 @@ export default function CensoSuas() {
               </div>
             )
           })}
-          <button type="button" style={{ ...s.btnTxt, justifySelf: 'start' }} onClick={() => set('equipe', [...eq, { incluir: true, nome: '', nascimento: '', sexo: '', cpf: '', rg_numero: '', rg_orgao: '', rg_uf: 'RJ', email: '', escolaridade: '', profissao: '', vinculo: '', funcao: '', carga: '', inicio: '' }])}>
+          <button type="button" style={{ ...s.btnTxt, justifySelf: 'start' }} onClick={() => set('equipe', [...eq, { mid: novoMid(), incluir: true, nome: '', nascimento: '', sexo: '', cpf: '', rg_numero: '', rg_orgao: '', rg_uf: 'RJ', email: '', escolaridade: '', profissao: '', vinculo: '', funcao: '', carga: '', inicio: '' }])}>
             <i className="ti ti-plus" /> Incluir pessoa que não está na Equipe
           </button>
         </div>
+      </div>
+    )
+  }
+
+  function QuadroLink({ eq }) {
+    const url = link ? `${window.location.origin}/censo-equipe/${link.token}` : ''
+    const pelo = eq.filter(p => p.link_em).length
+    const msg = `Olá! Este é o link para preencher os dados da equipe da TEIAA para o Censo SUAS ${ANO}. Pode abrir no celular ou no computador, não precisa de senha. Preencha os dados de cada pessoa e clique em Salvar. Prazo: ${link ? new Date(link.expira_em).toLocaleDateString('pt-BR') : ''}.
+
+${url}`
+    const copiar = async (t, ok) => { try { await navigator.clipboard.writeText(t); setLinkMsg(ok) } catch { window.prompt('Copie:', t) } }
+    return (
+      <div style={{ ...s.corpo, marginTop: 10, border: '0.5px solid #C9DCEB', background: '#F4F8FB', borderRadius: 10, padding: '10px 12px' }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: ESCURO, display: 'flex', alignItems: 'center', gap: 6 }}><i className="ti ti-link" /> Link para o administrativo preencher a equipe</div>
+        <div style={{ fontSize: 11.5, color: CINZA, margin: '3px 0 8px', lineHeight: 1.5 }}>Sem login. A pessoa vê só a equipe (não o resto do Censo nem do sistema). CPF e RG já cadastrados aparecem mascarados. O que ela salvar grava na Equipe e aqui na Q37.</div>
+        {link ? (
+          <>
+            <div style={{ fontSize: 12, color: ESCURO, wordBreak: 'break-all', background: '#fff', border: '0.5px solid #D3D1C7', borderRadius: 8, padding: '6px 9px' }}>{url}</div>
+            <div style={{ fontSize: 11, color: '#888780', marginTop: 4 }}>Vale até {new Date(link.expira_em).toLocaleDateString('pt-BR')} · {pelo} pessoa(s) já preenchida(s) pelo link</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              <button type="button" style={s.btn(AZUL)} onClick={() => copiar(msg, 'Mensagem copiada — cole no WhatsApp.')}><i className="ti ti-brand-whatsapp" /> Copiar mensagem</button>
+              <button type="button" style={s.btnTxt} onClick={() => copiar(url, 'Link copiado.')}>Copiar só o link</button>
+              <button type="button" style={s.btnTxt} onClick={trazerDoLink}><i className="ti ti-refresh" /> Atualizar com o que veio</button>
+              <button type="button" style={{ ...s.btnTxt, color: VERMELHO }} onClick={cancelarLink}>Cancelar link</button>
+            </div>
+          </>
+        ) : <button type="button" style={s.btn(AZUL)} onClick={gerarLink}><i className="ti ti-link-plus" /> Gerar link (vale 30 dias)</button>}
+        {linkMsg && <div style={{ fontSize: 11.5, color: VERDE, marginTop: 6 }}>{linkMsg}</div>}
       </div>
     )
   }
