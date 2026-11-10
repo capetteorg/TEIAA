@@ -282,8 +282,8 @@ export default function CensoImpressao({ blocos, r, equipe, ano, mesRef }) {
                 <tbody>
                   {linhasEq.map((p, i) => (
                     <tr key={i}>
-                      <td>{i + 1}) {p?.nome}</td><td className="centro">{fmtData(p?.nascimento)}</td>
-                      <td className="centro" style={{ whiteSpace: 'nowrap' }}><Q on={p?.sexo === 'F'} />F <Q on={p?.sexo === 'M'} />M</td>
+                      <td>{i + 1}) {p?.nome}</td><td className="centro nw">{fmtData(p?.nascimento)}</td>
+                      <td className="centro nw"><Q on={p?.sexo === 'F'} />F <Q on={p?.sexo === 'M'} />M</td>
                       <td className="centro">{p ? (p.cpf || p.cpf_mask || '') : ''}</td><td className="centro">{p ? (p.rg_numero || p.rg_mask || '') : ''}</td><td className="centro">{p?.rg_orgao}</td><td className="centro">{p?.rg_uf}</td>
                       <td style={{ wordBreak: 'break-all' }}>{p?.email}</td>
                       <td className="centro"><Num v={cod(p?.escolaridade)} w={18} /></td><td className="centro"><Num v={cod(p?.profissao)} w={24} /></td><td className="centro"><Num v={cod(p?.vinculo)} w={18} /></td>
@@ -346,7 +346,9 @@ const CSS = `
   #censo-mds .cx { display: inline-block; width: 15px; height: 11px; border: 1px solid #000; border-top: 0; text-align: center; font-weight: 700; font-size: 10px; line-height: 11px; vertical-align: -1px; margin-right: 3px; }
   #censo-mds .num { display: inline-block; height: 13px; border: 1px solid #000; border-top: 0; text-align: center; font-weight: 700; line-height: 13px; padding: 0 3px; vertical-align: -2px; }
   #censo-mds .preench { display: inline-block; min-width: 140px; border-bottom: 1px solid #000; font-weight: 700; padding: 0 3px; }
-  #censo-mds table.grade { border-collapse: collapse; }
+  #censo-mds table.grade { border-collapse: collapse; display: table !important; overflow: visible !important; white-space: normal !important; }
+  /* a folha A4 tem menos de 768px: anula as regras de celular do index.css (tabela com rolagem, texto sem quebra) */
+  #censo-mds thead { display: table-header-group !important; } #censo-mds tbody { display: table-row-group !important; } #censo-mds tr { display: table-row !important; }
   #censo-mds table.grade th, #censo-mds table.grade td { border: 1px solid #000; padding: 2px 5px; font-size: 9.5px; vertical-align: middle; }
   #censo-mds table.grade th { font-weight: 700; }
   #censo-mds table.grade tr.cinza th, #censo-mds table.grade tr.cinza td { background: #E7E6E6; }
@@ -355,6 +357,7 @@ const CSS = `
   #censo-mds th.vert span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: normal; font-size: 8.5px; display: inline-block; max-height: 145px; }
   #censo-mds .paisagem { page: deitada; break-before: page; }
   #censo-mds table.equipe { width: 100%; }
+  #censo-mds table.equipe td.nw { white-space: nowrap; }
   #censo-mds table.equipe td { height: 17px; font-size: 8.5px; }
   #censo-mds table.equipe th { font-size: 8.5px; }
   #censo-mds table.equipe th.vert { height: 90px; }
