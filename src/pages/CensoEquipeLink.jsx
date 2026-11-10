@@ -1,7 +1,8 @@
 import React, { useState, useContext, createContext } from 'react'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, rotulo, novoMid, mascaraCpf, mascaraDoc, faltando, fichaDaEquipe, fichaManual } from '../lib/censoCodigos'
+import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, rotulo, novoMid, mascaraCpf, mascaraDoc, faltando, fichaDaEquipe, fichaManual, codigosDaCasa } from '../lib/censoCodigos'
+import { TIPOS_VINCULO, FUNCOES, CARGAS, DIAS } from '../lib/equipeListas'
 
 // =====================================================================
 // Bloco Equipe (questão 37) do Censo SUAS aberto pelo LINK público do
@@ -48,6 +49,7 @@ export default function CensoEquipeLink({ token, pessoas, setPessoas }) {
       escolaridade: f.escolaridade, escolaridade_txt: f.escolaridade ? rotulo(ESCOLARIDADE, f.escolaridade) : '',
       profissao: f.profissao, formacao_txt: f.profissao ? rotulo(PROFISSAO, f.profissao) : '',
       vinculo: f.vinculo, funcao: f.funcao, carga: f.carga, inicio: f.inicio,
+      ...(f.equipe_id ? {} : { casa: f.casa || {} }),
     }
     const { data, error } = await supabase.rpc('censo_equipe_salvar', { p_token: token, p_pessoa: envio })
     setSalvando(null)
@@ -55,12 +57,17 @@ export default function CensoEquipeLink({ token, pessoas, setPessoas }) {
       setAviso(a => ({ ...a, [k]: ['erro', /link_invalido/.test(error.message) ? 'O link venceu ou foi cancelado. Peça um link novo.' : 'Não salvou: ' + error.message] }))
       return false
     }
+    const criada = data?.equipe_id
     setPessoas(ps => ps.map(x => chave(x) !== k ? x : {
       ...x, ...extra, link_em: data?.link_em,
+      ...(criada ? { equipe_id: criada, mid: undefined, funcao_equipe: f.casa?.funcao } : {}),
       cpf: '', rg_numero: '',
       cpf_mask: f.cpf ? mascaraCpf(f.cpf) : x.cpf_mask, rg_mask: f.rg_numero ? mascaraDoc(f.rg_numero) : x.rg_mask,
     }))
-    setAviso(a => ({ ...a, [k]: ['ok', 'Salvo!'] }))
+    const faltaRh = !f.equipe_id && !criada && [[!f.cpf, 'CPF'], [!f.inicio, 'início na função'], [!f.casa?.funcao, 'função'], [!f.casa?.tipo_vinculo, 'tipo de vínculo']].filter(([x]) => x).map(([, t]) => t)
+    const msg = criada ? 'Salvo e cadastrado na Equipe!' : faltaRh?.length ? `Salvo no Censo. Pra entrar na Equipe falta: ${faltaRh.join(', ')}.` : 'Salvo!'
+    const nova = criada ? 'e' + criada : k
+    setAviso(a => ({ ...a, [nova]: ['ok', msg] }))
     return true
   }
 
@@ -125,9 +132,28 @@ export default function CensoEquipeLink({ token, pessoas, setPessoas }) {
           <Campo rot="E-mail (opcional)">{txt('email', { type: 'email' })}</Campo>
           <Campo rot="Escolaridade">{sel('escolaridade', ESCOLARIDADE)}</Campo>
           <Campo rot="Formação / profissão">{sel('profissao', PROFISSAO)}</Campo>
-          <Campo rot="Tipo de vínculo" ajuda="Funcionário com carteira assinada da TEIAA = Empregado Celetista do setor privado – CLT">{sel('vinculo', VINCULO)}</Campo>
-          <Campo rot="Função na unidade">{sel('funcao', FUNCAO)}</Campo>
-          <Campo rot="Carga horária por semana">{sel('carga', CARGA)}</Campo>
+          {p.equipe_id ? (
+            <>
+              <Campo rot="Tipo de vínculo" ajuda="Funcionário com carteira assinada da TEIAA = Empregado Celetista do setor privado – CLT">{sel('vinculo', VINCULO)}</Campo>
+              <Campo rot="Função na unidade">{sel('funcao', FUNCAO)}</Campo>
+              <Campo rot="Carga horária por semana">{sel('carga', CARGA)}</Campo>
+            </>
+          ) : (
+            <>
+              {[['funcao', 'Função', FUNCOES], ['tipo_vinculo', 'Tipo de vínculo', TIPOS_VINCULO], ['carga_horaria', 'Carga horária por dia', CARGAS], ['dias_atuacao', 'Dias de atuação', DIAS]].map(([c, rot, lista]) => (
+                <Campo key={c} rot={rot}>
+                  <select style={s.input} value={p.casa?.[c] || ''} onChange={e => {
+                    const casa = { ...(p.casa || {}), [c]: e.target.value }
+                    const cod = Object.fromEntries(Object.entries(codigosDaCasa(casa)).filter(([, x]) => x))
+                    setPessoas(ps => ps.map(x => chave(x) === k ? { ...x, casa, ...cod } : x))
+                  }}>
+                    <option value="">—</option>{lista.map(o => <option key={o}>{o}</option>)}
+                  </select>
+                </Campo>
+              ))}
+              <div style={{ gridColumn: '1 / -1', fontSize: 11.5, color: '#888780' }}>Com nome, CPF, início na função, função e vínculo preenchidos, ao salvar a pessoa também é cadastrada na Equipe da TEIAA.</div>
+            </>
+          )}
           <Campo rot="Começou nesta função em">{txt('inicio', { type: 'date' })}</Campo>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 14 }}>

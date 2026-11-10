@@ -1,23 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { TIPOS_VINCULO, FUNCOES, CARGAS, DIAS } from '../lib/equipeListas'
 import { useAuth } from '../hooks/useAuth'
 import { PROFISSAO } from '../lib/censoCodigos'
 
 const VERDE = '#6BBF2B', VERMELHO = '#E8212A', AZUL = '#0E7EA8', LARANJA = '#F4821F'
-
-const TIPOS_VINCULO = [
-  'CLT / Funcionário próprio da TEIAA',
-  'Servidor público / cedido por órgão público',
-  'POT / Programa da Prefeitura',
-  'Voluntário',
-  'Jovem aprendiz / CAMP',
-  'Apenado / Cumpridor de medida / CPMA',
-  'Prestador de serviço',
-  'Estagiário',
-  'Colaborador parceiro',
-  'Diretoria / Membro institucional',
-  'Outro',
-]
 
 const ORGAOS_ORIGEM = [
   'TEIAA',
@@ -46,15 +33,6 @@ const INSTRUMENTOS_FIXOS = [
   'Outro',
 ]
 
-const FUNCOES = [
-  'Assistente Social', 'Pedagoga', 'Psicóloga', 'Professor(a)',
-  'Apoio socioeducativo', 'Auxiliar de escritório', 'Recreador(a)',
-  'Cozinheiro(a)', 'Zelador(a)', 'Apoio operacional', 'Apoio administrativo',
-  'Facilitador(a) de grupo', 'Oficineiro(a)', 'Cuidador(a)',
-  'Coordenação', 'Direção', 'Presidente', 'Voluntário de atividade',
-  'Prestador de serviço', 'Outro',
-]
-
 const FUNCOES_COM_REGISTRO = ['Assistente Social', 'Pedagoga', 'Psicóloga', 'Professor(a)', 'Cuidador(a)', 'Coordenação']
 const CONSELHOS = ['CRESS', 'CRP', 'CRN', 'CREFITO', 'CRC', 'OAB', 'CRM', 'CREA', 'Outro']
 
@@ -67,19 +45,11 @@ const PROJETOS_FIXOS = [
   'Outro',
 ]
 
-const CARGAS = ['4h', '6h', '8h', 'Sem carga horária fixa', 'Outro']
-
 // Mesma escala do Censo SUAS (questão 37) — a tela do Censo lê e grava aqui
 const ESCOLARIDADES = ['Sem Escolaridade','Ensino Fundamental Incompleto','Ensino Fundamental Completo','Ensino Médio Incompleto','Ensino Médio Completo','Ensino Superior Incompleto','Ensino Superior Completo','Especialização','Mestrado','Doutorado']
 // Formação = lista de profissões do Censo SUAS (questão 37)
 const FORMACOES = PROFISSAO.map(([, t]) => t)
 const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
-
-const DIAS = [
-  'Segunda a sexta', 'Segunda, quarta e sexta', 'Terça e quinta',
-  'Finais de semana', 'Dias alternados', 'Conforme escala',
-  'Conforme demanda', 'Sem dias fixos', 'Outro',
-]
 
 const SITUACOES = ['ativo', 'desligado', 'afastado', 'encerrado', 'outro']
 
@@ -259,7 +229,6 @@ export default function Equipe() {
     setConfirmandoExcluir(null)
     carregar()
   }
-
 
   return (
     <div style={{ }}>

@@ -7,7 +7,8 @@ import { useParams } from 'react-router-dom'
 import CensoEquipeLink from './CensoEquipeLink'
 import CensoImpressao from '../components/CensoImpressao'
 import { areaPelaFuncao } from '../lib/areas'
-import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe, fichaDaEquipe, fichaManual } from '../lib/censoCodigos'
+import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe, fichaDaEquipe, fichaManual, codigosDaCasa } from '../lib/censoCodigos'
+import { TIPOS_VINCULO, FUNCOES, CARGAS, DIAS } from '../lib/equipeListas'
 
 // =====================================================================
 // Censo SUAS — Questionário "Centro Dia e outras unidades de habilitação e
@@ -449,6 +450,7 @@ export default function CensoSuas({ token } = {}) {
   const [salvando, setSalvando] = useState(false)
   const [origemAnterior, setOrigemAnterior] = useState(null)
   const [faltavam, setFaltavam] = useState({})        // campos da Q37 que faltavam ao abrir (viram campo; o resto aparece pronto)
+  const [cadastrando, setCadastrando] = useState(null)  // índice da pessoa sendo cadastrada na Equipe
   const [abertos, setAbertos] = useState({})          // pessoas com "Corrigir" aberto
   const [link, setLink] = useState(null)              // link ativo do administrativo (censo_links)
   const [linkMsg, setLinkMsg] = useState('')
@@ -880,6 +882,32 @@ export default function CensoSuas({ token } = {}) {
     )
   }
 
+  // Pessoa incluída à mão -> ficha nova na Equipe (ativa). A partir daí ela é
+  // uma pessoa da Equipe como as outras (aparece sozinha nos próximos Censos).
+  const faltaCadastro = p => [[!p.nome?.trim(), 'nome'], [!p.cpf, 'CPF'], [!p.inicio, 'início na função'], [!p.casa?.funcao, 'função na casa'], [!p.casa?.tipo_vinculo, 'tipo de vínculo']]
+    .filter(([f]) => f).map(([, t]) => t).join(', ')
+  async function cadastrarNaEquipe(i) {
+    const p = (r.equipe || [])[i]
+    const c = p.casa || {}
+    setCadastrando(i)
+    const dados = {
+      nome: p.nome.trim(), cpf: p.cpf, data_nascimento: p.nascimento || null, data_entrada: p.inicio || null,
+      sexo: p.sexo || null, rg_numero: p.rg_numero || null, rg_orgao: p.rg_orgao || null, rg_uf: p.rg_uf || null, email: p.email || null,
+      escolaridade: p.escolaridade ? rotulo(ESCOLARIDADE, p.escolaridade) : null,
+      formacao: p.profissao ? rotulo(PROFISSAO, p.profissao) : null,
+      funcao: c.funcao, tipo_vinculo: c.tipo_vinculo, carga_horaria: c.carga_horaria || null, dias_atuacao: c.dias_atuacao || null,
+      situacao: 'ativo', orgao_origem: 'TEIAA', observacoes: `Cadastrada pelo Censo SUAS ${ANO}`,
+    }
+    const { data, error } = await supabase.from('equipe').insert(dados).select().single()
+    setCadastrando(null)
+    if (error) { setErro('Não cadastrou na Equipe: ' + error.message); return }
+    const { mid, casa, ...resto } = p
+    const novo = { ...resto, equipe_id: data.id, ref: `${c.funcao} · ${c.tipo_vinculo} · ${c.carga_horaria || '—'}` }
+    baseEquipe.current[data.id] = pessoaisParaEquipe(novo)
+    setFaltavam(fv => ({ ...fv, ['e' + data.id]: CAMPOS_PESSOA.filter(c => !novo[c] || (c === 'rg_orgao' && !novo.rg_numero)) }))
+    setR(prev => ({ ...prev, equipe: (prev.equipe || []).map((x, j) => j === i ? novo : x) }))
+  }
+
   function QuadroEquipe({ q }) {
     const eq = r.equipe || []
     const up = (i, c, v) => set('equipe', eq.map((p, j) => j === i ? { ...p, [c]: v } : p))
@@ -953,6 +981,33 @@ export default function CensoSuas({ token } = {}) {
                         <div style={{ color: ESCURO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={mostra(p) || ''}>{mostra(p) || '—'}</div>
                       </div>
                     ))}
+                  </div>
+                )}
+                {p.incluir && !p.equipe_id && (
+                  <div style={{ marginTop: 10, border: '0.5px solid #C9DCEB', background: '#F4F8FB', borderRadius: 8, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: AZUL, marginBottom: 6 }}>Como na Equipe (RH) — os códigos do Censo abaixo saem daqui</div>
+                    <div style={s.grid(4)}>
+                      {[['funcao', 'Função na casa', FUNCOES], ['tipo_vinculo', 'Tipo de vínculo', TIPOS_VINCULO], ['carga_horaria', 'Carga horária por dia', CARGAS], ['dias_atuacao', 'Dias de atuação', DIAS]].map(([c, rot, lista]) => (
+                        <Campo key={c} rotulo={rot}>
+                          <select style={s.input} value={p.casa?.[c] || ''} onChange={e => {
+                            const casa = { ...(p.casa || {}), [c]: e.target.value }
+                            const cod = Object.fromEntries(Object.entries(codigosDaCasa(casa)).filter(([, x]) => x))
+                            set('equipe', eq.map((x, j) => j === i ? { ...x, casa, ...cod } : x))
+                          }}>
+                            <option value="">—</option>{lista.map(o => <option key={o}>{o}</option>)}
+                          </select>
+                        </Campo>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+                      <button type="button" disabled={!!faltaCadastro(p) || cadastrando === i} onClick={() => cadastrarNaEquipe(i)}
+                        style={{ ...s.btn(AZUL), opacity: faltaCadastro(p) || cadastrando === i ? 0.45 : 1, cursor: faltaCadastro(p) ? 'not-allowed' : 'pointer' }}>
+                        <i className="ti ti-user-plus" /> {cadastrando === i ? 'Cadastrando…' : 'Cadastrar na Equipe'}
+                      </button>
+                      <span style={{ fontSize: 11.5, color: faltaCadastro(p) ? LARANJA : '#888780' }}>
+                        {faltaCadastro(p) ? `Pra cadastrar falta: ${faltaCadastro(p)}.` : 'Cria a ficha na Equipe (ativa). Nos próximos Censos ela já aparece sozinha.'}
+                      </span>
+                    </div>
                   </div>
                 )}
                 {p.incluir && preencher.length > 0 && (

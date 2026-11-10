@@ -151,3 +151,11 @@ export function fichaDaEquipe(e) {
 }
 export const fichaManual = m => ({ ...m, cpf: '', rg_numero: '', incluir: m.incluir ?? true })
 
+
+// Pessoa incluída direto no Censo responde no formato da Equipe (RH): função,
+// vínculo, carga por dia e dias. Os códigos do MDS saem daqui, do mesmo jeito
+// que saem pra quem já está na Equipe (a tradução RH -> Censo é exata).
+export function codigosDaCasa(casa = {}) {
+  const p = pessoaDaEquipe({ funcao: casa.funcao, tipo_vinculo: casa.tipo_vinculo, carga_horaria: casa.carga_horaria, dias_atuacao: casa.dias_atuacao })
+  return { vinculo: p.vinculo, funcao: casa.funcao ? p.funcao : '', carga: p.carga, profissao: p.profissao }
+}
