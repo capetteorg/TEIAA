@@ -350,6 +350,8 @@ const CSS = `
   /* a folha A4 tem menos de 768px: anula as regras de celular do index.css (tabela com rolagem, texto sem quebra) */
   #censo-mds thead { display: table-header-group !important; } #censo-mds tbody { display: table-row-group !important; } #censo-mds tr { display: table-row !important; }
   #censo-mds table.grade th, #censo-mds table.grade td { border: 1px solid #000; padding: 2px 5px; font-size: 9.5px; vertical-align: middle; }
+  /* a regra de celular do menu (Layout) corta célula em 140px com "…" — na folha tem que sair inteiro */
+  #censo-mds table.grade th, #censo-mds table.grade td { max-width: none !important; overflow: visible !important; text-overflow: clip !important; white-space: normal !important; }
   #censo-mds table.grade th { font-weight: 700; }
   #censo-mds table.grade tr.cinza th, #censo-mds table.grade tr.cinza td { background: #E7E6E6; }
   #censo-mds .centro { text-align: center; }
@@ -357,7 +359,7 @@ const CSS = `
   #censo-mds th.vert span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: normal; font-size: 8.5px; display: inline-block; max-height: 145px; }
   #censo-mds .paisagem { page: deitada; break-before: page; }
   #censo-mds table.equipe { width: 100%; }
-  #censo-mds table.equipe td.nw { white-space: nowrap; }
+  #censo-mds table.equipe td.nw { white-space: nowrap !important; }
   #censo-mds table.equipe td { height: 17px; font-size: 8.5px; }
   #censo-mds table.equipe th { font-size: 8.5px; }
   #censo-mds table.equipe th.vert { height: 90px; }
