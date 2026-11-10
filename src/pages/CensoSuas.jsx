@@ -6,6 +6,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 import { useParams } from 'react-router-dom'
 import CensoEquipeLink from './CensoEquipeLink'
 import CensoImpressao from '../components/CensoImpressao'
+import { areaPelaFuncao } from '../lib/areas'
 import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe, fichaDaEquipe, fichaManual } from '../lib/censoCodigos'
 
 // =====================================================================
@@ -254,7 +255,7 @@ async function calcularSugestoes() {
   const sug = {}
   const desde = new Date(); desde.setFullYear(desde.getFullYear() - 1)
   const desdeStr = desde.toISOString().slice(0, 10)
-  const [{ data: inst }, { data: equipe }, { data: atendidos }, { data: atAgo }, { data: at12 }, { data: parcerias }, anam, pias] = await Promise.all([
+  const [{ data: inst }, { data: equipe }, { data: atendidos }, { data: atAgo }, { data: at12 }, { data: parcerias }, anam, pias, { data: diretoria }] = await Promise.all([
     supabase.from('instituicao').select('*').limit(1).maybeSingle(),
     supabase.from('equipe').select('*').eq('situacao', 'ativo').order('nome'),
     fetchAll(() => supabase.from('usuarios_atendidos').select('id,data_nascimento,situacao,tipo_deficiencia,condicao_neurodesenvolvimento,recebe_bpc')),
@@ -263,6 +264,7 @@ async function calcularSugestoes() {
     supabase.from('parcerias').select('tipo,orgao_concedente,situacao,nome_projeto'),
     supabase.from('anamneses').select('id', { count: 'exact', head: true }),
     supabase.from('planos_individuais').select('id', { count: 'exact', head: true }),
+    supabase.from('diretoria').select('nome,cargo,cpf,telefone,email').order('nome'),
   ])
 
   sug.ident = { valor: identDaInstituicao(inst), motivo: 'da tela Instituição' }
@@ -271,6 +273,7 @@ async function calcularSugestoes() {
   sug.q1 = { valor: 'Municipal/Distrital', motivo: 'unidade de gestão municipal (Teresópolis)' }
   sug.equipe = (equipe || []).map(pessoaDaEquipe)
   sug.equipeBruta = equipe || []
+  sug.diretoria = diretoria || []
 
   // Q10 — conselhos pelos registros da tela Instituição
   const cons = [], porqueCons = []
@@ -395,6 +398,21 @@ function juntarEquipeDoLink(local, servidor) {
   return junta
 }
 
+// Responsável pelo preenchimento (Bloco 7): quem pode ser escolhido no menu
+// "Puxar da Diretoria ou da Equipe". Só o que existe no cadastro; o resto fica pra digitar.
+function cargoResp(f = '') {
+  if (/coordena|dire[cç][aã]o/i.test(f)) return { cargo: CARGO_RESP[0] }
+  if (['Assistente Social', 'Pedagoga', 'Psicóloga'].includes(f) || areaPelaFuncao(f)) return { cargo: CARGO_RESP[1] }
+  return { cargo: 'Outros', cargo_outro: f }
+}
+function pessoasParaResp(sug) {
+  const d = (sug.diretoria || []).filter(p => p.nome).map(p => ({ grupo: 'Diretoria', rotulo: `${p.nome}${p.cargo ? ' — ' + p.cargo : ''}`,
+    dados: { nome: p.nome, cpf: p.cpf || '', telefone: p.telefone || '', email: p.email || '', cargo: 'Outros', cargo_outro: p.cargo || '' } }))
+  const e = (sug.equipeBruta || []).filter(p => p.nome).map(p => ({ grupo: 'Equipe', rotulo: `${p.nome}${p.funcao ? ' — ' + p.funcao : ''}`,
+    dados: { nome: p.nome, cpf: p.cpf || '', telefone: '', email: p.email || '', cargo_outro: '', ...cargoResp(p.funcao) } }))
+  return [...d, ...e]
+}
+
 // Campo com rótulo. Fica FORA do componente da página (senão o input perde
 // o foco a cada letra); sabe se é celular pelo contexto.
 const MobileCtx = createContext(false)
@@ -476,7 +494,7 @@ export default function CensoSuas({ token } = {}) {
         setRegistro(atual)
         // o que estiver vazio (ex.: censo criado só pela equipe do link) o sistema completa
         for (const k of ['ident', ...COM_SUGESTAO]) if (vazio(resp[k]) && sugestoes[k]) { resp[k] = sugestoes[k].valor; precisaSalvar.current = true }
-        if (!resp.resp) { resp.resp = { nome: perfil?.nome || '', email: user?.email || '', cargo: '', cpf: '', telefone: '', data: '' }; precisaSalvar.current = true }
+        if (!resp.resp) { resp.resp = { nome: '', email: '', cargo: '', cpf: '', telefone: '', data: '' }; precisaSalvar.current = true }
       } else {
         precisaSalvar.current = true
         // parte do censo do ano anterior, se houver; senão, do sistema
@@ -490,7 +508,7 @@ export default function CensoSuas({ token } = {}) {
         } else {
           resp = {}
           for (const k of ['ident', ...COM_SUGESTAO]) if (sugestoes[k]) resp[k] = sugestoes[k].valor
-          resp.resp = { nome: perfil?.nome || '', email: user?.email || '', cargo: '', cpf: '', telefone: '', data: '' }
+          resp.resp = { nome: '', email: '', cargo: '', cpf: '', telefone: '', data: '' }
         }
       }
       // equipe: junta quem entrou na Equipe depois (sem duplicar; quem já está mantém o que foi preenchido)
@@ -985,12 +1003,29 @@ ${url}`
   }
 
   function Responsaveis() {
+    const pessoasResp = pessoasParaResp(sug)
     const bloco = (k, titulo, cargos) => {
       const v = r[k] || {}
       const up = (c, x) => set(k, { ...v, [c]: x })
       return (
         <div style={s.q}>
           <div style={{ ...s.qt, marginBottom: 10 }}>{titulo}</div>
+          {k === 'resp' && !modoLink && pessoasResp.length > 0 && (
+            <div style={{ marginBottom: 10, maxWidth: 460 }}>
+              <select style={{ ...s.input, borderColor: AZUL, color: AZUL }} value="" onChange={e => {
+                const p = pessoasResp[e.target.value]
+                if (p) set('resp', { ...v, ...p.dados, data: v.data || new Date().toLocaleDateString('sv-SE') })
+              }}>
+                <option value="">Puxar da Diretoria ou da Equipe…</option>
+                {['Diretoria', 'Equipe'].map(g => pessoasResp.some(p => p.grupo === g) && (
+                  <optgroup key={g} label={g}>
+                    {pessoasResp.map((p, i) => p.grupo === g && <option key={i} value={i}>{p.rotulo}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+              <div style={{ fontSize: 11, color: '#888780', marginTop: 3 }}>Preenche nome, CPF, e-mail, telefone e cargo do cadastro. Dá pra corrigir depois.</div>
+            </div>
+          )}
           <div style={s.grid(4)}>
             <Campo rotulo="Nome" span={2}><input style={s.input} value={v.nome || ''} onChange={e => up('nome', e.target.value)} /></Campo>
             <Campo rotulo="CPF"><input style={s.input} value={v.cpf || ''} onChange={e => up('cpf', e.target.value)} placeholder="000.000.000-00" /></Campo>
