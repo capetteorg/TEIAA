@@ -5,6 +5,8 @@ import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useParams } from 'react-router-dom'
 import CensoEquipeLink from './CensoEquipeLink'
+import CensoEnvios, { resumoEnvio } from '../components/CensoEnvios'
+import { gerarPDFOficio } from '../lib/pdfLazy'
 import CensoImpressao from '../components/CensoImpressao'
 import { areaPelaFuncao } from '../lib/areas'
 import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe, fichaDaEquipe, fichaManual, codigosDaCasa } from '../lib/censoCodigos'
@@ -454,6 +456,7 @@ export default function CensoSuas({ token } = {}) {
   const [abertos, setAbertos] = useState({})          // pessoas com "Corrigir" aberto
   const [link, setLink] = useState(null)              // link ativo do administrativo (censo_links)
   const [linkMsg, setLinkMsg] = useState('')
+  const [envios, setEnvios] = useState([])            // registro de envio à Secretaria (censo_suas.envios)
   const [eqLink, setEqLink] = useState([])            // modo link: fichas da equipe (CPF/RG mascarados)
   const [infoLink, setInfoLink] = useState(null)      // modo link: instituição, validade
   const [editarMesmoAssim, setEditarMesmoAssim] = useState(false)
@@ -494,6 +497,7 @@ export default function CensoSuas({ token } = {}) {
       if (atual) {
         resp = { ...(atual.respostas || {}) }
         setRegistro(atual)
+        setEnvios(atual.envios || [])
         // o que estiver vazio (ex.: censo criado só pela equipe do link) o sistema completa
         for (const k of ['ident', ...COM_SUGESTAO]) if (vazio(resp[k]) && sugestoes[k]) { resp[k] = sugestoes[k].valor; precisaSalvar.current = true }
         if (!resp.resp) { resp.resp = { nome: '', email: '', cargo: '', cpf: '', telefone: '', data: '' }; precisaSalvar.current = true }
@@ -1135,13 +1139,22 @@ ${url}`
             <button style={s.btn(AZUL)} onClick={() => window.print()}><i className="ti ti-printer" /> Imprimir versão em papel</button>
             {modoLink
               ? (registro?.status === 'enviado'
-                  ? <span style={{ fontSize: 12.5, color: VERDE, alignSelf: 'center' }}><i className="ti ti-circle-check" /> Enviado para a TEIAA revisar. Se precisar, ainda dá pra corrigir — salva sozinho.</span>
+                  ? <span style={{ fontSize: 12.5, color: VERDE, alignSelf: 'center' }}><i className="ti ti-circle-check" /> Respondido! A TEIAA vai revisar. Se precisar, ainda dá pra corrigir — salva sozinho.</span>
                   : <button style={s.btn('#6BBF2B')} onClick={() => salvar('enviado')}><i className="ti ti-send" /> Terminei — enviar para revisão</button>)
               : registro?.status === 'concluido'
                 ? <button style={s.btnTxt} onClick={() => salvar('rascunho')}>Reabrir (voltar a rascunho)</button>
                 : <button style={s.btn('#6BBF2B')} onClick={() => salvar('concluido')}><i className="ti ti-check" /> Marcar como concluído</button>}
           </div>
         </div>
+
+        {!modoLink && (
+          <CensoEnvios ano={ANO} tipo={TIPO} org="TEIAA" s={s}
+            questionario="Centro Dia e outras unidades de habilitação e reabilitação de pessoas com deficiência"
+            mesRef={MES_REF}
+            envios={envios} setEnvios={setEnvios} diretoria={sug.diretoria}
+            pessoas={[...new Set(pessoasParaResp(sug).map(p => p.dados.nome))]}
+            gerarOficio={gerarPDFOficio} />
+        )}
 
         <div style={s.card}>
           <div style={{ fontSize: 14, fontWeight: 700, color: ESCURO }}>Resumo para digitar no sistema do MDS</div>
@@ -1229,8 +1242,9 @@ ${url}`
         </div>
         <div style={{ textAlign: 'right', fontSize: 11.5, color: '#888780' }}>
           <span style={{ display: 'inline-block', padding: '3px 9px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: registro?.status === 'concluido' ? '#EAF3DE' : registro?.status === 'enviado' ? '#E6F1FB' : '#FAEEDA', color: registro?.status === 'concluido' ? VERDE : registro?.status === 'enviado' ? AZUL : LARANJA }}>
-            {registro?.status === 'concluido' ? 'Concluído' : registro?.status === 'enviado' ? (modoLink ? 'Enviado' : 'Enviado pelo administrativo') : 'Rascunho'}
+            {registro?.status === 'concluido' ? 'Concluído' : registro?.status === 'enviado' ? (modoLink ? 'Respondido' : 'Respondido pelo administrativo') : 'Rascunho'}
           </span>
+          {!modoLink && envios.length > 0 && <div style={{ marginTop: 4, color: VERDE, fontWeight: 600 }}><i className="ti ti-send" /> {resumoEnvio(envios)}</div>}
           <div style={{ marginTop: 4 }}>{salvando ? 'Salvando…' : salvoEm ? `Salvo às ${salvoEm.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : registro ? 'Salvo' : 'Ainda não salvo'}</div>
         </div>
       </div>

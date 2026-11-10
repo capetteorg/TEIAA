@@ -3903,3 +3903,56 @@ export function gerarPDFListaPresencaTeacolher(lista = [], opts = {}) {
   }).join('')
   abrirImpressao(html, titulo, false, opts.janela)
 }
+
+// =============================================
+// OFÍCIO no papel da TEIAA (mesmo modelo da CAPETTE). Usado pelo Censo SUAS
+// (ofício de encaminhamento). oficio: { numero, ano, data, assunto, corpo,
+// destinatario, cargo_destinatario, orgao_destinatario, rep_nome, rep_cargo, rep_cpf }
+// =============================================
+export function gerarPDFOficio({ oficio, instituicao, assinaturaDataUri }) {
+  const esc = s => String(s ?? '').replace(/</g, '&lt;').replace(/\n/g, '<br>')
+  const dataExtenso = new Date((oficio.data || new Date().toISOString().slice(0, 10)) + 'T12:00:00')
+    .toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const rep = oficio.rep_nome || ''
+  const repCargo = oficio.rep_cargo || 'Presidente'
+  const repCpf = oficio.rep_cpf || ''
+  const usarAssinatura = oficio.com_assinatura && assinaturaDataUri
+  const assinaturaHtml = usarAssinatura
+    ? `<img src="${assinaturaDataUri}" alt="assinatura" style="height:56px;width:auto;object-fit:contain;display:block;margin:6px 0 -8px" />`
+    : `<div style="height:52px"></div>`
+
+  const html = `
+  <div class="pg">
+    ${htmlCabecalho({ tipo: 'full' })}
+
+    <div style="text-align:right;font-size:11px;color:#303842;margin:8px 0 18px">Teresópolis — RJ, ${dataExtenso}.</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--agendo-dark);margin-bottom:4px">OFÍCIO Nº ${oficio.numero}/${oficio.ano}</div>
+    <div style="font-size:11.5px;font-weight:700;color:#20252C;margin-bottom:22px;text-transform:uppercase;letter-spacing:.02em">ASSUNTO: ${esc(oficio.assunto)}</div>
+
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:12px;line-height:1.9;color:#20252C;text-align:justify">
+      ${esc(oficio.corpo)}
+    </div>
+
+    <div style="margin-top:34px;text-align:center;width:360px;margin-left:auto;margin-right:auto">
+      ${assinaturaHtml}
+      <div style="border-top:1px solid #6B7480;padding-top:6px">
+        <div style="font-size:11.5px;font-weight:700;color:#06344F">${rep}</div>
+        <div style="font-size:10px;color:#485058">${repCargo}${repCpf ? ' · CPF ' + repCpf : ''}</div>
+        <div style="font-size:9.5px;color:#66717E">${instituicao?.nome_completo || 'TEIAA'}</div>
+      </div>
+    </div>
+
+    ${oficio.destinatario || oficio.orgao_destinatario ? `
+    <div style="margin-top:40px;font-size:11px;color:#303842;line-height:1.6">
+      <div>À</div>
+      ${oficio.destinatario ? `<div style="font-weight:700">${esc(oficio.destinatario)}</div>` : ''}
+      ${oficio.cargo_destinatario ? `<div>${esc(oficio.cargo_destinatario)}</div>` : ''}
+      ${oficio.orgao_destinatario ? `<div>${esc(oficio.orgao_destinatario)}</div>` : ''}
+    </div>` : ''}
+
+    ${htmlRodape({})}
+  </div>`
+
+  abrirImpressao(html, `Ofício ${oficio.numero}-${oficio.ano}`)
+}
