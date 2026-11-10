@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useParams } from 'react-router-dom'
 import CensoEquipeLink from './CensoEquipeLink'
+import CensoImpressao from '../components/CensoImpressao'
 import { ESCOLARIDADE, PROFISSAO, VINCULO, FUNCAO, CARGA, UFS, semAcento, PESSOAIS, escolaridadeCod, dadosPessoaisDaEquipe, pessoaisParaEquipe, pessoaDaEquipe, rotulo, codigoDe, fichaDaEquipe, fichaManual } from '../lib/censoCodigos'
 
 // =====================================================================
@@ -1116,96 +1117,6 @@ ${url}`
     )
   }
 
-  // ---------------------------------------------------------------- versão em papel (só na impressão)
-  function VersaoPapel() {
-    const id = r.ident || {}
-    const eq = equipeVis.filter(p => p.incluir)
-    const caixa = on => <span style={{ display: 'inline-block', width: 10, height: 10, border: '1px solid #333', marginRight: 5, textAlign: 'center', lineHeight: '9px', fontSize: 9, fontWeight: 700, verticalAlign: 'middle' }}>{on ? 'X' : ''}</span>
-    const sec = t => <div style={{ background: '#0E7EA8', color: '#fff', fontWeight: 700, fontSize: 10.5, padding: '4px 8px', margin: '12px 0 6px', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>{t}</div>
-    const cel = { border: '0.5px solid #999', padding: '2px 4px', fontSize: 8, verticalAlign: 'top' }
-    const assinatura = (k, titulo, rotData) => {
-      const v = r[k] || {}
-      return (
-        <div style={{ border: '0.5px solid #999', padding: '8px 10px', marginTop: 8, fontSize: 9.5, breakInside: 'avoid' }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>{titulo}</div>
-          <div>Nome: <b>{v.nome}</b></div>
-          <div>CPF: <b>{v.cpf}</b> &nbsp;&nbsp; {rotData}: <b>{fmtData(v.data) || '___/___/______'}</b></div>
-          <div>Cargo/Função: <b>{cargoTxt(v)}</b></div>
-          <div>Telefone: <b>{v.telefone}</b> &nbsp;&nbsp; E-mail: <b>{v.email}</b></div>
-          <div style={{ marginTop: 22, borderTop: '0.5px solid #333', width: 280, paddingTop: 2 }}>Assinatura</div>
-        </div>
-      )
-    }
-    const corpo = q => {
-      const v = r[q.k]
-      if (q.tipo === 'unica' || q.tipo === 'multi') return (
-        <div style={{ columns: q.opcoes.length > 8 ? 2 : 1, columnGap: 14, marginTop: 2 }}>
-          {q.opcoes.map(o => {
-            const on = q.tipo === 'unica' ? v === o : (v || []).includes(o)
-            const n = on && q.qtd?.includes(o) ? (r[q.k + '_qtd'] || {})[o] : ''
-            const t = on && pedeTexto(q, o) ? qual(r, q, o) : ''
-            return <div key={o} style={{ breakInside: 'avoid' }}>{caixa(on)}{o}{n ? ` — ${n}` : ''}{t ? `: ${t}` : ''}</div>
-          })}
-        </div>
-      )
-      if (q.tipo === 'texto') return <div>Resposta: <b>{v || '________'}</b></div>
-      if (q.tipo === 'numeros') return q.campos.length <= 2
-        ? <div>Resposta: <b>{textoResposta(q, r) || '________'}</b></div>
-        : <table style={{ borderCollapse: 'collapse', width: '100%' }}><tbody>{q.campos.map(campo => {
-            const val = valorCampo(q, v, campo)
-            return <tr key={campo[0]}><td style={cel}>{campo[1]}</td><td style={{ ...cel, width: 90, textAlign: 'center', fontWeight: 700 }}>{v?.[campo[0] + '_ns'] ? 'Não sabe' : (val === '' ? '' : val)}</td></tr>
-          })}</tbody></table>
-      if (q.tipo === 'matriz') return (
-        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          <thead><tr><th style={cel} />{q.colunas.map((c, j) => <th key={c} style={{ ...cel, fontWeight: 600, fontSize: 7 }}>{(q.curtas && q.colunas.length > 4) ? q.curtas[j] : c}</th>)}</tr></thead>
-          <tbody>{q.linhas.map((l, i) => {
-            const marc = q.modo === 'unica' ? (v?.[i] ? [v[i]] : []) : (v?.[i] || [])
-            return <tr key={l}><td style={cel}>{l === q.linhaOutro && r[q.k + '_linha'] ? `${l}: ${r[q.k + '_linha']}` : l}</td>{q.colunas.map(c => <td key={c} style={{ ...cel, textAlign: 'center' }}>{caixa(marc.includes(c))}</td>)}</tr>
-          })}</tbody>
-        </table>
-      )
-      return null
-    }
-    return (
-      <div id="censo-papel" style={{ fontFamily: 'Arial, sans-serif', color: '#000', fontSize: 9.5 }}>
-        <div style={{ textAlign: 'center', borderBottom: '1.5px solid #0E7EA8', paddingBottom: 6 }}>
-          <div style={{ fontWeight: 700, fontSize: 13 }}>CENSO SUAS {ANO} — Centro Dia e outras unidades de habilitação e reabilitação de pessoas com deficiência</div>
-          <div>Serviço de Proteção Social Especial para pessoas com deficiência, idosas e suas famílias</div>
-        </div>
-        {sec('BLOCO 1 – IDENTIFICAÇÃO DA UNIDADE')}
-        <div>Nome: <b>{id.nome}</b></div>
-        <div>Endereço: <b>{[id.tipo_logradouro, id.endereco].filter(Boolean).join(' ')}</b>, nº <b>{id.numero}</b> {id.complemento && <>— {id.complemento}</>} · Bairro: <b>{id.bairro}</b></div>
-        <div>CEP: <b>{id.cep}</b> · Município: <b>{id.municipio}</b> · UF: <b>{id.uf}</b></div>
-        <div>E-mail: <b>{id.email}</b> · Telefone: <b>({id.ddd}) {id.telefone}</b>{id.ramal && <> · Ramal {id.ramal}</>} · Data de implantação: <b>{fmtData(id.data_implantacao)}</b></div>
-        {BLOCOS.slice(1, -1).map((b, bi) => (
-          <div key={b.id}>
-            {sec(`BLOCO ${bi + 2} – ${b.titulo.toUpperCase()}`)}
-            {b.questoes.map(q => {
-              if (!q.n || q.tipo === 'equipe') return null
-              const pul = !visivel(q, r)
-              return (
-                <div key={q.k} style={{ marginBottom: 6, breakInside: 'avoid', opacity: pul ? 0.5 : 1 }}>
-                  <div style={{ fontWeight: 700 }}>{q.n}. {q.texto}{pul && ' — (pulada conforme o questionário)'}</div>
-                  {!pul && corpo(q)}
-                </div>
-              )
-            })}
-            {b.id === 'b6' && (
-              <div style={{ breakInside: 'avoid' }}>
-                <div style={{ fontWeight: 700, margin: '6px 0 3px' }}>37. Equipe desta Unidade (códigos conforme a legenda do formulário)</div>
-                {TabelaEquipe({ eq, papel: true })}
-              </div>
-            )}
-          </div>
-        ))}
-        {sec(`BLOCO ${BLOCOS.length} – RESPONSÁVEL PELO PREENCHIMENTO`)}
-        {assinatura('resp', '38. Pessoa responsável pelas informações prestadas pela Unidade', 'Data de preenchimento')}
-        {assinatura('gestor', 'Agente público responsável, no Órgão Gestor da Assistência Social, pelas informações declaradas', 'Data de validação')}
-        <div style={{ marginTop: 8, fontSize: 8.5, fontStyle: 'italic' }}>Este formulário original, após a digitação dos dados, deve permanecer arquivado na Secretaria Municipal de Assistência Social ou Secretaria Estadual de Assistência Social (ou congênere).</div>
-      </div>
-    )
-  }
-
   // ---------------------------------------------------------------- render
   if (carregando) return <div style={{ padding: '2.5rem', textAlign: 'center', color: '#888780', fontSize: 13 }}>Carregando o Censo e puxando dados do sistema…</div>
   if (erro && !Object.keys(r).length) return <div style={{ ...s.card, color: VERMELHO, fontSize: 13, margin: '1.5rem' }}><i className="ti ti-alert-octagon" /> {erro}</div>
@@ -1218,15 +1129,6 @@ ${url}`
   return (
     <MobileCtx.Provider value={isMobile}>
     <div style={{ maxWidth: 920, margin: '0 auto', padding: isMobile ? '0.75rem' : '1.25rem 1.5rem 3rem' }}>
-      <style>{`
-        #censo-papel { display: none; }
-        @media print {
-          @page { size: A4; margin: 12mm; }
-          body * { visibility: hidden !important; }
-          #censo-papel, #censo-papel * { visibility: visible !important; }
-          #censo-papel { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
-        }
-      `}</style>
 
       {/* topo */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -1299,7 +1201,7 @@ ${url}`
         {!naRevisao && <button type="button" style={s.btn(AZUL)} onClick={() => { setPasso(p => p + 1); window.scrollTo({ top: 0 }) }}>{passo === BLOCOS.length - 1 ? 'Revisar e imprimir →' : 'Próximo bloco →'}</button>}
       </div>
 
-      {VersaoPapel()}
+      <CensoImpressao blocos={BLOCOS} r={r} equipe={equipeVis} ano={ANO} mesRef={MES_REF} />
     </div>
     </MobileCtx.Provider>
   )
